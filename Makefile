@@ -8,7 +8,7 @@ bin:
 
 kernel:
 	cd kernel && cargo build --target wasm32-unknown-unknown
-	cp ./kernel/target/wasm32-unknown-unknown/debug/tezos_kernel.wasm ./bin/
+	cp ./kernel/target/wasm32-unknown-unknown/debug/tez_kernel.wasm ./bin/
 
 repl:
-	./bin/octez-wasm-repl ./bin/tezos_kernel.wasm
+	./bin/octez-wasm-repl ./bin/tez_kernel.wasm --inputs ./test/input.json

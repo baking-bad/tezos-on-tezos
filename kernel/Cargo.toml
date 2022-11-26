@@ -1,7 +1,14 @@
 [package]
-name = "tezos-kernel"
+name = "tez_kernel"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+kernel = { git = "https://gitlab.com/tezos/kernel" }
+kernel_core = { git = "https://gitlab.com/tezos/kernel", package = "kernel-core" }
+host = { git = "https://gitlab.com/tezos/kernel" }
+mock_runtime = { git = "https://gitlab.com/tezos/kernel" }
+debug = { git = "https://gitlab.com/tezos/kernel" }
