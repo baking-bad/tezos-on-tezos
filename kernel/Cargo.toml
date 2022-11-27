@@ -7,8 +7,11 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-kernel = { git = "https://gitlab.com/tezos/kernel" }
-kernel_core = { git = "https://gitlab.com/tezos/kernel", package = "kernel-core" }
-host = { git = "https://gitlab.com/tezos/kernel" }
-mock_runtime = { git = "https://gitlab.com/tezos/kernel" }
-debug = { git = "https://gitlab.com/tezos/kernel" }
+kernel = { git = "https://gitlab.com/tezos/kernel", package = "kernel" }
+host = { git = "https://gitlab.com/tezos/kernel", package = "host" }
+mock_runtime = { git = "https://gitlab.com/tezos/kernel", package = "mock_runtime" }
+debug = { git = "https://gitlab.com/tezos/kernel", package = "debug" }
+tezos_operation = { git = "https://github.com/airgap-it/tezos-rust-sdk", package = "tezos-operation" }
+tezos_core = { git = "https://github.com/airgap-it/tezos-rust-sdk", package = "tezos-core" }
+hex-literal = "0.3.4"
+hex = "0.4.3"
