@@ -1,3 +1,5 @@
+pub mod tezos;
+
 use debug::debug_msg;
 use kernel::kernel_entry;
 use host::{
@@ -5,9 +7,8 @@ use host::{
     rollup_core::{RawRollupCore, MAX_INPUT_MESSAGE_SIZE},
     runtime::Runtime,
 };
-use tezos_core::{Error, types::encoded::ImplicitAddress};
 use hex;
-use tezos_operation::operations::{UnsignedOperation, Transaction, OperationContent};
+use tezos_operation::operations::{UnsignedOperation};
 
 
 pub fn tez_kernel_run<Host: RawRollupCore>(host: &mut Host) {
@@ -20,8 +21,7 @@ pub fn tez_kernel_run<Host: RawRollupCore>(host: &mut Host) {
                 message.level
             );
             
-            if let Err(err) = process_payload(host, message.as_ref())
-            {
+            if let Err(err) = process_payload(host, message.as_ref()) {
                 debug_msg!(Host, "Error processing payload {}", err);
             }
         }
