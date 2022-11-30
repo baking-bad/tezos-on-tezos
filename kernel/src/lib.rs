@@ -1,4 +1,7 @@
-pub mod tezos;
+pub mod context;
+pub mod validator;
+pub mod error;
+pub mod executor;
 
 use debug::debug_msg;
 use kernel::kernel_entry;
@@ -7,11 +10,15 @@ use host::{
     rollup_core::{RawRollupCore, MAX_INPUT_MESSAGE_SIZE},
     runtime::Runtime,
 };
-use hex;
-use tezos_operation::operations::{UnsignedOperation};
+
+use crate::context::EphemeralContext;
+use crate::validator::{parse_operation, validate_operation};
+use crate::executor::execute_operation;
 
 
 pub fn tez_kernel_run<Host: RawRollupCore>(host: &mut Host) {
+    let mut context = EphemeralContext::new();
+
     match host.read_input(MAX_INPUT_MESSAGE_SIZE) {
         Ok(Some(Input::Message(message))) => {
             debug_msg!(
@@ -21,8 +28,16 @@ pub fn tez_kernel_run<Host: RawRollupCore>(host: &mut Host) {
                 message.level
             );
             
-            if let Err(err) = process_payload(host, message.as_ref()) {
-                debug_msg!(Host, "Error processing payload {}", err);
+            if let Ok(opg) = parse_operation(message.as_ref()) {
+                if validate_operation(host, &mut context, &opg).is_ok() {
+                    match execute_operation(host, &mut context, &opg) {
+                        Ok(res) => {
+                            context.store_operation_receipt(&message.level, &message.id, &res);
+                            context.commit(host);
+                        },
+                        Err(_) => context.rollback()
+                    }
+                }
             }
         }
         Ok(Some(Input::Slot(_message))) => todo!("handle slot message"),
@@ -31,46 +46,41 @@ pub fn tez_kernel_run<Host: RawRollupCore>(host: &mut Host) {
     }
 }
 
-fn process_payload<'a, Host: RawRollupCore>(host: &mut Host, payload: &'a [u8]) -> Result<(), tezos_operation::Error> {
-    println!("payload: {}", hex::encode(payload));
-
-    let signature = &payload[payload.len() - 64..].to_vec();
-    println!("signature: {:?}", hex::encode(signature));
-
-    let body = &payload[..payload.len() - 64].to_vec();
-    println!("body: {:?}", hex::encode(signature));
-
-    let opg = UnsignedOperation::from_forged_bytes(body)?;
-    println!("branch: {:?}", opg.branch);
-
-    for content in opg.contents.iter() {
-        println!("{:?}", content);
-    }
-
-    Ok(())
-}
-
 kernel_entry!(tez_kernel_run);
 
 #[cfg(test)]
 mod test {
     use crate::tez_kernel_run;
+    use crate::context::EphemeralContext;
+
     use mock_runtime::host::{MockHost, check_debug_log};
     use tezos_operation::operations::{SignedOperation, Transaction, Operation};
     use tezos_core::types::{
-        encoded::{Encoded}
+        encoded::{Encoded, PublicKey},
+        mutez::Mutez,
+        number::Nat
     };
     use host::rollup_core::Input;
 
     #[test]
     fn send_tez() {
-        let mut mock_runtime = MockHost::default();
+        let mut host = MockHost::default();
+        let mut context = EphemeralContext::new();
+
+        let source = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU".try_into().unwrap();
+        let public_key = PublicKey::try_from("edpktipCJ3SkjvtdcrwELhvupnyYJSmqoXu3kdzK1vL6fT5cY8FTEa").unwrap();
+        let initial_balance: Mutez = 10000000u32.into();
+
+        context.set_balance(&source, &initial_balance);
+        context.set_public_key(&source, &public_key);
+        context.set_counter(&source, &Nat::try_from("100000").unwrap());
+        context.commit(&mut host);
 
         let message = SignedOperation::new(
             "BMNvSHmWUkdonkG2oFwwQKxHUdrYQhUXqxLaSRX9wjMGfLddURC".try_into().unwrap(),
             vec![
                 Transaction::new(
-                    "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU".try_into().unwrap(),
+                    source.clone(),
                     417u32.into(),
                     2336132u32.into(),
                     1527u32.into(),
@@ -88,15 +98,20 @@ mod test {
         let input: Vec<u8> = [forged_bytes.unwrap(), signature_bytes.unwrap()].concat();
 
         let level = 10;
-        mock_runtime.as_mut().set_ready_for_input(level);
-        mock_runtime
+        host.as_mut().set_ready_for_input(level);
+        host
             .as_mut()
             .add_next_inputs(10, vec![(Input::MessageData, input)].iter());
 
-        tez_kernel_run(&mut mock_runtime);
+        tez_kernel_run(&mut host);
 
         check_debug_log(|debug_log| {
             assert!(!debug_log.is_empty());
         });
+
+        let receipt = context.get_operation_receipt(&host, &10i32, &0i32);
+        assert!(receipt.is_some());
+
+        println!("{:?}", receipt);
     }
 }

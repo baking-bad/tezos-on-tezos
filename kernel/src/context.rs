@@ -3,36 +3,35 @@ use tezos_core::{
     types::{
         encoded::{Encoded, PublicKey, Address, ImplicitAddress},
         mutez::Mutez,
-        number::Nat,
-    },
-    Result
+        number::Nat
+    }
 };
-use tezos_rpc::models::{
-    operation::Operation,
-    block::Header
+use tezos_rpc::models::operation::{
+    Operation as OperationReceipt
 };
 use host::{
     runtime::{Runtime, ValueType},
     path::RefPath
 };
+use serde_json;
+
+use crate::error::Result;
 
 #[derive(Debug)]
-enum ContextNode {
+pub enum ContextNode {
     Mutez(Mutez),
     Nat(Nat),
     PublicKey(PublicKey),
-    Operation(Operation),
-    BlockHeader(Header),
+    OperationReceipt(OperationReceipt)
 }
 
 impl ContextNode {
-    pub fn to_vec(&self) -> Vec<u8> {
+    pub fn to_vec(&self) -> Result<Vec<u8>> {
         match self {
-            Self::Mutez(val) => val.to_bytes().unwrap(),
-            Self::Nat(val) => val.to_bytes().unwrap(),
-            Self::PublicKey(val) => val.to_bytes().unwrap(),
-            Self::Operation(_) => todo!("serialize operation with metadata"),
-            Self::BlockHeader(_) => todo!("serialize block header")
+            Self::Mutez(value) => value.to_bytes().map_err(|e| e.into()),
+            Self::Nat(value) => value.to_bytes().map_err(|e| e.into()),
+            Self::PublicKey(value) => value.to_bytes().map_err(|e| e.into()),
+            Self::OperationReceipt(value) => serde_json::to_vec(value).map_err(|e| e.into())
         }
     }
 }
@@ -47,7 +46,7 @@ impl ContextType for Mutez {
     fn parse(bytes: &[u8]) -> Result<ContextNode> {
         match Mutez::from_bytes(bytes) {
             Ok(value) => Ok(ContextNode::Mutez(value)),
-            Err(error) => Err(error)
+            Err(error) => Err(error.into())
         }
     }
 
@@ -67,7 +66,7 @@ impl ContextType for Nat {
     fn parse(bytes: &[u8]) -> Result<ContextNode> {
         match Nat::from_bytes(bytes) {
             Ok(value) => Ok(ContextNode::Nat(value)),
-            Err(error) => Err(error)
+            Err(error) => Err(error.into())
         }
     }
 
@@ -87,7 +86,7 @@ impl ContextType for PublicKey {
     fn parse(bytes: &[u8]) -> Result<ContextNode> {
         match PublicKey::from_bytes(bytes) {
             Ok(value) => Ok(ContextNode::PublicKey(value)),
-            Err(error) => Err(error)
+            Err(error) => Err(error.into())
         }
     }
 
@@ -103,41 +102,27 @@ impl ContextType for PublicKey {
     }
 }
 
-impl ContextType for Operation {
+impl ContextType for OperationReceipt {
     fn parse(bytes: &[u8]) -> Result<ContextNode> {
-        todo!()
+        match serde_json::from_slice(bytes) {
+            Ok(value) => Ok(ContextNode::OperationReceipt(value)),
+            Err(error) => Err(error.into())
+        }
     }
 
     fn unwrap(node: &ContextNode) -> Self {
         match node {
-            ContextNode::Operation(value) => value.clone(),
+            ContextNode::OperationReceipt(value) => value.clone(),
             _ => panic!("Type mismatch (expected operation)")
         }
     }
 
     fn wrap(value: &Self) -> ContextNode {
-        return ContextNode::Operation(value.clone());
+        return ContextNode::OperationReceipt(value.clone());
     }
 }
 
-impl ContextType for Header {
-    fn parse(bytes: &[u8]) -> Result<ContextNode> {
-        todo!()
-    }
-
-    fn unwrap(node: &ContextNode) -> Self {
-        match node {
-            ContextNode::BlockHeader(value) => value.clone(),
-            _ => panic!("Type mismatch (expected block header)")
-        }
-    }
-
-    fn wrap(value: &Self) -> ContextNode {
-        return ContextNode::BlockHeader(value.clone());
-    }
-}
-
-struct EphemeralContext {
+pub struct EphemeralContext {
     state: HashMap<String, ContextNode>,
     modified_keys: Vec<String>
 }
@@ -147,11 +132,25 @@ impl EphemeralContext {
         return EphemeralContext { state: HashMap::new(), modified_keys: Vec::new() };
     }
 
+    fn has(&self, host: &impl Runtime, key: String) -> bool {
+        match self.state.contains_key(&key) {
+            true => true,
+            false => {
+                let path = RefPath::assert_from(key.as_bytes());
+                match host.store_has(&path) {
+                    Ok(Some(ValueType::Value)) => true,
+                    Err(_) => panic!("Could not read store: {}", key),
+                    _ => false
+                }
+            }
+        }
+    }
+
     fn get<V: ContextType>(&mut self, host: &impl Runtime, key: String) -> Option<V> {
-        let path = RefPath::assert_from(key.as_bytes());
         match self.state.get(&key) {
             Some(cached_value) => return Some(V::unwrap(cached_value)),
             None => {
+                let path = RefPath::assert_from(key.as_bytes());
                 if let Ok(Some(ValueType::Value)) = host.store_has(&path) {
                     if let Ok(stored_value) = host.store_read(&path, 0, 1024) {
                         if let Ok(value) = V::parse(stored_value.as_slice()) {
@@ -180,11 +179,16 @@ impl EphemeralContext {
         self.modified_keys.push(key);
     }
 
+    pub fn has_pending_changes(&self) -> bool {
+        return !self.modified_keys.is_empty();
+    }
+
     pub fn commit(&mut self, host: &mut impl Runtime) {
         for key in self.modified_keys.iter() {
             let path = RefPath::assert_from(key.as_bytes());
             let cached_value = self.state.get(key).unwrap();
-            match host.store_write(&path, cached_value.to_vec().as_slice(), 0) {
+            let raw_value = cached_value.to_vec().unwrap();
+            match host.store_write(&path, raw_value.as_slice(), 0) {
                 Ok(_) => continue,
                 Err(err) => panic!("Failed to write store at {}: {:?}", key, err)
             }
@@ -192,11 +196,26 @@ impl EphemeralContext {
         self.modified_keys.clear();
     }
 
-    pub fn get_balance(&mut self, host: &impl Runtime, address: &Address) -> Option<Mutez> {
+    pub fn clear(&mut self) {
+        self.state.clear();
+    }
+
+    pub fn rollback(&mut self) {
+        for key in self.modified_keys.iter() {
+            self.state.remove(key);
+        }
+        self.modified_keys.clear();
+    }
+
+    pub fn get_balance(&mut self, host: &impl Runtime, address: &ImplicitAddress) -> Option<Mutez> {
         return self.get(host, format!("/context/contracts/{}/balance", address.value()));
     }
 
-    pub fn set_balance(&mut self, address: &Address, balance: &Mutez) {
+    pub fn set_balance(&mut self, address: &ImplicitAddress, balance: &Mutez) {
+        return self.set(format!("/context/contracts/{}/balance", address.value()), balance);
+    }
+
+    pub fn set_contract_balance(&mut self, address: &Address, balance: &Mutez) {
         return self.set(format!("/context/contracts/{}/balance", address.value()), balance);
     }
 
@@ -209,18 +228,51 @@ impl EphemeralContext {
     }
 
     pub fn get_public_key(&mut self, host: &impl Runtime, address: &ImplicitAddress) -> Option<PublicKey> {
-        return self.get(host, format!("/context/contracts/{}/manager_key", address.value()));
+        return self.get(host, format!("/context/contracts/{}/pubkey", address.value()));
     }
 
     pub fn set_public_key(&mut self, address: &ImplicitAddress, public_key: &PublicKey) {
-        return self.set(format!("/context/contracts/{}/manager_key", address.value()), public_key);
+        return self.set(format!("/context/contracts/{}/pubkey", address.value()), public_key);
     }
 
-    pub fn set_operation(&mut self, level: &u64, index: &u32, operation: &Operation) {
-        return self.set(format!("/context/blocks/{}/operations/{}", level, index), operation);
+    pub fn has_public_key(&self, host: &impl Runtime, address: &ImplicitAddress) -> bool {
+        return self.has(host, format!("/context/contracts/{}/pubkey", address.value()));
     }
 
-    pub fn set_block_header(&mut self, level: &u64, block_header: &Header) {
-        return self.set(format!("/context/blocks/{}/header", level), block_header);
+    pub fn store_operation_receipt(&mut self, level: &i32, index: &i32, receipt: &OperationReceipt) {
+        return self.set(format!("/context/blocks/{}/operations/{}", level, index), receipt);
+    }
+
+    pub fn get_operation_receipt(&mut self, host: &impl Runtime, level: &i32, index: &i32) -> Option<OperationReceipt> {
+        return self.get(host, format!("/context/blocks/{}/operations/{}", level, index));
+    }
+}
+
+
+#[cfg(test)]
+mod test {
+    use crate::context::EphemeralContext;
+    use mock_runtime::host::MockHost;
+    use tezos_core::types::{
+        encoded::ImplicitAddress,
+        mutez::Mutez
+    };
+
+    #[test]
+    fn store_balance() {
+        let mut host = MockHost::default();
+        let mut context = EphemeralContext::new();
+
+        let address = ImplicitAddress::try_from("tz1Mj7RzPmMAqDUNFBn5t5VbXmWW4cSUAdtT").unwrap();
+        let balance = Mutez::try_from(1000u32).unwrap();
+
+        assert!(context.get_balance(&host, &address).is_none());  // both host and cache accessed
+
+        context.set_balance(&address, &balance);  // cached
+        context.commit(&mut host);  // sent to the host
+        context.clear();  // cache cleared
+
+        assert!(context.get_balance(&host, &address).is_some());  // cached
+        assert_eq!(context.get_balance(&host, &address).unwrap(), balance);  // served from the cache
     }
 }
