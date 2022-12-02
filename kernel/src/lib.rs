@@ -2,6 +2,7 @@ pub mod context;
 pub mod validator;
 pub mod error;
 pub mod executor;
+pub mod crypto;
 
 use debug::debug_msg;
 use kernel::kernel_entry;

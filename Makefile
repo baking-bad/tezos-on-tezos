@@ -1,4 +1,4 @@
-.PHONY: bin test
+.PHONY: bin test kernel
 
 bin:
 	docker build -t tezos-bin ./build/octez-wasm-repl
@@ -6,8 +6,8 @@ bin:
 	docker cp "$$container_id:/octez-wasm-repl" ./bin/octez-wasm-repl
 	docker rm "$$container_id"
 
-build:
-	cd kernel && cargo build --target wasm32-unknown-unknown
+kernel:
+	cd kernel && cargo build --target wasm32-unknown-unknown --release
 	cp ./kernel/target/wasm32-unknown-unknown/debug/tez_kernel.wasm ./bin/
 
 test:

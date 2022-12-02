@@ -12,9 +12,10 @@ host = { git = "https://gitlab.com/tezos/kernel", package = "host" }
 mock_runtime = { git = "https://gitlab.com/tezos/kernel", package = "mock_runtime" }
 debug = { git = "https://gitlab.com/tezos/kernel", package = "debug" }
 tezos_operation = { git = "https://github.com/airgap-it/tezos-rust-sdk", package = "tezos-operation" }
-tezos_core = { git = "https://github.com/airgap-it/tezos-rust-sdk", package = "tezos-core", features = ["ed25519"] }
-tezos_rpc = { git = "https://github.com/airgap-it/tezos-rust-sdk", package = "tezos-rpc" }
+tezos_core = { git = "https://github.com/airgap-it/tezos-rust-sdk", package = "tezos-core" }
+tezos_rpc = { git = "https://github.com/airgap-it/tezos-rust-sdk", package = "tezos-rpc", default-features = false }
 hex-literal = "0.3.4"
 hex = "0.4.3"
+ed25519-dalek = "1.0.1"
 num-traits = "*"
 serde_json = "*"

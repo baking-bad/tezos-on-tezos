@@ -6,11 +6,13 @@ use tezos_operation::{
 use tezos_core::{
     types::{
         encoded::{Signature, Encoded, ImplicitAddress}
-    }
+    },
+    Tezos
 };
 
 use crate::{context::{EphemeralContext}, validation_error};
 use crate::error::{Error, Result};
+use crate::crypto::WasmCryptoConfig;
 
 const SIGNATURE_SIZE: usize = 64;
 
@@ -107,7 +109,8 @@ pub fn validate_operation<'a>(host: &mut impl Runtime, context: &mut EphemeralCo
         }
     };
 
-    match opg.verify(&public_key) {
+    let tezos = Tezos::new(Box::from(WasmCryptoConfig));
+    match opg.verify_with(&public_key, &tezos) {
         Ok(true) => (),
         Ok(false) => return validation_error!("Signature is invalid"),
         Err(error) => return validation_error!("{}", error.to_string())
