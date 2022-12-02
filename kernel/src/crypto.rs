@@ -34,7 +34,6 @@ impl CryptoProvider for Ed25519CryptoProvider {
 #[cfg(test)]
 mod test {
     use super::{Ed25519CryptoProvider, Result};
-    use hex;
     use tezos_core::types::{
         encoded::{Signature, Ed25519PublicKey, Encoded}
     };
@@ -56,14 +55,8 @@ mod test {
 
         for (pk, sig, msg) in values {
             let public_key = Ed25519PublicKey::try_from(pk).unwrap().to_bytes()?;
-            println!("pk: {}", hex::encode(&public_key));
-
             let signature = Signature::try_from(sig).unwrap().to_bytes()?;
-            println!("sig: {}", hex::encode(&signature));
-
-            println!("msg: {}", hex::encode(&msg));
             let message = cp.blake2b(msg, 32)?;  // this is Tezos-specific step, be careful
-
             let result = cp.verify_ed25519(&message, &signature, &public_key)?;
             assert!(result);
         }
