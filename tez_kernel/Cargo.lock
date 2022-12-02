@@ -128,12 +128,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "16b0a3d9ed01224b22057780a37bb8c5dbfe1be8ba48678e7bf57ec4b385411f"
 dependencies = [
  "iana-time-zone",
- "js-sys",
  "num-integer",
  "num-traits",
  "serde",
- "time",
- "wasm-bindgen",
  "winapi",
 ]
 
@@ -338,15 +335,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dlmalloc"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "203540e710bfadb90e5e29930baf5d10270cec1f43ab34f46f78b147b2de715a"
-dependencies = [
- "libc",
-]
-
-[[package]]
 name = "ecdsa"
 version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -424,7 +412,7 @@ checksum = "8fc3cb4d91f53b50155bdcfd23f6a4c39ae1969c2ae85982b135750cccaf5fce"
 dependencies = [
  "cfg-if",
  "libc",
- "wasi 0.9.0+wasi-snapshot-preview1",
+ "wasi",
 ]
 
 [[package]]
@@ -458,12 +446,6 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
-
-[[package]]
-name = "hex-literal"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ebdb29d2ea9ed0083cd8cece49bbd968021bd99b0849edb4a9a7ee0fdf6a4e0"
 
 [[package]]
 name = "hmac"
@@ -527,17 +509,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49409df3e3bf0856b916e2ceaca09ee28e6871cf7d9ce97a692cacfdb2a25a47"
 dependencies = [
  "wasm-bindgen",
-]
-
-[[package]]
-name = "kernel"
-version = "0.1.0"
-source = "git+https://gitlab.com/tezos/kernel#dc0ae2fbf11d309754fad33d78fcd373a3e5182d"
-dependencies = [
- "debug",
- "dlmalloc",
- "host",
- "panic_handler",
 ]
 
 [[package]]
@@ -705,16 +676,6 @@ dependencies = [
  "ecdsa",
  "elliptic-curve",
  "sha2",
-]
-
-[[package]]
-name = "panic_handler"
-version = "0.1.0"
-source = "git+https://gitlab.com/tezos/kernel#dc0ae2fbf11d309754fad33d78fcd373a3e5182d"
-dependencies = [
- "debug",
- "host",
- "mock_runtime",
 ]
 
 [[package]]
@@ -958,10 +919,7 @@ version = "0.1.0"
 dependencies = [
  "debug",
  "ed25519-dalek",
- "hex",
- "hex-literal",
  "host",
- "kernel",
  "mock_runtime",
  "num-traits",
  "serde_json",
@@ -973,7 +931,7 @@ dependencies = [
 [[package]]
 name = "tezos-core"
 version = "0.1.3"
-source = "git+https://github.com/airgap-it/tezos-rust-sdk#620b7df3698bd68551d85d2a80459a9affe2c6c1"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=fix/deps-disable-default-features#e1641cd91864dbfd23889afae53d9aa22122f514"
 dependencies = [
  "blake2",
  "bs58",
@@ -991,7 +949,7 @@ dependencies = [
 [[package]]
 name = "tezos-michelson"
 version = "0.1.3"
-source = "git+https://github.com/airgap-it/tezos-rust-sdk#620b7df3698bd68551d85d2a80459a9affe2c6c1"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=fix/deps-disable-default-features#e1641cd91864dbfd23889afae53d9aa22122f514"
 dependencies = [
  "chrono",
  "derive_more",
@@ -1007,7 +965,7 @@ dependencies = [
 [[package]]
 name = "tezos-operation"
 version = "0.1.3"
-source = "git+https://github.com/airgap-it/tezos-rust-sdk#620b7df3698bd68551d85d2a80459a9affe2c6c1"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=fix/deps-disable-default-features#e1641cd91864dbfd23889afae53d9aa22122f514"
 dependencies = [
  "chrono",
  "derive_more",
@@ -1021,7 +979,7 @@ dependencies = [
 [[package]]
 name = "tezos-rpc"
 version = "0.1.3"
-source = "git+https://github.com/airgap-it/tezos-rust-sdk#620b7df3698bd68551d85d2a80459a9affe2c6c1"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=fix/deps-disable-default-features#e1641cd91864dbfd23889afae53d9aa22122f514"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1052,17 +1010,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "time"
-version = "0.1.45"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b797afad3f312d1c66a56d11d0316f916356d11bd158fbc6ca6389ff6bf805a"
-dependencies = [
- "libc",
- "wasi 0.10.0+wasi-snapshot-preview1",
- "winapi",
 ]
 
 [[package]]
@@ -1106,12 +1053,6 @@ name = "wasi"
 version = "0.9.0+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cccddf32554fecc6acb585f82a32a72e28b48f8c4c1883ddfeeeaa96f7d8e519"
-
-[[package]]
-name = "wasi"
-version = "0.10.0+wasi-snapshot-preview1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a143597ca7c7793eff794def352d41792a93c481eb1042423ff7ff72ba2c31f"
 
 [[package]]
 name = "wasm-bindgen"

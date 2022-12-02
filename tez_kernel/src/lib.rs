@@ -4,8 +4,6 @@ pub mod error;
 pub mod executor;
 pub mod crypto;
 
-use debug::debug_msg;
-use kernel::kernel_entry;
 use host::{
     input::{Input},
     rollup_core::{RawRollupCore, MAX_INPUT_MESSAGE_SIZE},
@@ -21,14 +19,7 @@ pub fn tez_kernel_run<Host: RawRollupCore>(host: &mut Host) {
     let mut context = EphemeralContext::new();
 
     match host.read_input(MAX_INPUT_MESSAGE_SIZE) {
-        Ok(Some(Input::Message(message))) => {
-            debug_msg!(
-                Host,
-                "Processing MessageData {} at level {}",
-                message.id,
-                message.level
-            );
-            
+        Ok(Some(Input::Message(message))) => {          
             if let Ok(opg) = parse_operation(message.as_ref()) {
                 if validate_operation(host, &mut context, &opg).is_ok() {
                     match execute_operation(host, &mut context, &opg) {
@@ -47,14 +38,19 @@ pub fn tez_kernel_run<Host: RawRollupCore>(host: &mut Host) {
     }
 }
 
-kernel_entry!(tez_kernel_run);
+#[cfg(target_arch = "wasm32")]
+#[no_mangle]
+pub extern "C" fn kernel_run() {
+    let mut host = unsafe { host::wasm_host::WasmHost::new() };
+    tez_kernel_run(&mut host)
+}
 
 #[cfg(test)]
 mod test {
     use crate::tez_kernel_run;
     use crate::context::EphemeralContext;
 
-    use mock_runtime::host::{MockHost, check_debug_log};
+    use mock_runtime::host::{MockHost};
     use tezos_operation::operations::{SignedOperation, Transaction, Operation};
     use tezos_core::types::{
         encoded::{Encoded, PublicKey},
@@ -106,9 +102,9 @@ mod test {
 
         tez_kernel_run(&mut host);
 
-        check_debug_log(|debug_log| {
-            assert!(!debug_log.is_empty());
-        });
+        // check_debug_log(|debug_log| {
+        //     assert!(!debug_log.is_empty());
+        // });
 
         let receipt = context.get_operation_receipt(&host, &10i32, &0i32);
         assert!(receipt.is_some());

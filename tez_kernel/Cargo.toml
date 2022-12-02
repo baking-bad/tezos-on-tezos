@@ -1,0 +1,24 @@
+[package]
+name = "tez_kernel"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+host = { git = "https://gitlab.com/tezos/kernel", package = "host" }
+tezos_operation = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "fix/deps-disable-default-features", package = "tezos-operation" }
+tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "fix/deps-disable-default-features", package = "tezos-core" }
+tezos_rpc = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "fix/deps-disable-default-features", package = "tezos-rpc", default-features = false }
+ed25519-dalek = "1.0.1"
+num-traits = "*"
+serde_json = "*"
+
+[dev-dependencies]
+mock_runtime = { git = "https://gitlab.com/tezos/kernel", package = "mock_runtime" }
+debug = { git = "https://gitlab.com/tezos/kernel", package = "debug" }
+
+[profile.release]
+lto = true
+opt-level = 's'
