@@ -20,14 +20,14 @@ jobs:
           components: rustfmt, clippy
           target: wasm32-unknown-unknown
 
-      - name: Run tests
+      - name: Run tez_kernel tests
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --manifest-path ./kernel/Cargo.toml
+          args: --manifest-path ./tez_kernel/Cargo.toml
 
-      - name: Build kernel
+      - name: Build tez_kernel
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --manifest-path ./kernel/Cargo.toml --target wasm32-unknown-unknown --release
+          args: --manifest-path ./tez_kernel/Cargo.toml --target wasm32-unknown-unknown --release
