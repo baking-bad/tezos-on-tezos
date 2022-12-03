@@ -1,4 +1,8 @@
 use tezos_core::{CryptoProvider, CryptoConfig, Result, Error};
+use tezos_core::{
+    internal::crypto::Crypto,
+    types::encoded::{OperationHash, Encoded}
+};
 use ed25519_dalek::{Signature, PublicKey, Verifier};
 
 pub struct WasmCryptoConfig;
@@ -29,6 +33,12 @@ impl CryptoProvider for Ed25519CryptoProvider {
         let signature = Signature::from_bytes(signature).map_err(|_| Error::InvalidSignatureBytes)?;
         Ok(public_key.verify(message, &signature).is_ok())
     }
+}
+
+pub fn operation_hash<'a>(payload: &'a [u8]) -> Result<OperationHash> {
+    let crypto = Crypto::new(None, None, None);
+    let hash = crypto.blake2b(payload, 32)?;
+    OperationHash::from_bytes(&hash).map_err(|e| e.into())
 }
 
 #[cfg(test)]

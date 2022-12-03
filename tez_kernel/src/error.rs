@@ -2,6 +2,7 @@ use tezos_core;
 use tezos_operation;
 use std::result;
 use serde_json;
+use host::runtime;
 
 #[derive(Debug)]
 pub enum Error {
@@ -19,24 +20,36 @@ pub enum Error {
     },
     SerializationError {
         source: serde_json::Error
+    },
+    WasmHostError {
+        source: host::runtime::RuntimeError
+    },
+    StorageError {
+        message: String
     }
 }
 
 impl From<tezos_core::Error> for Error {
     fn from(error: tezos_core::Error) -> Self {
-        return Self::TezosCoreError { source: error }
+        Self::TezosCoreError { source: error }
     }
 }
 
 impl From<tezos_operation::Error> for Error {
     fn from(error: tezos_operation::Error) -> Self {
-        return Self::TezosOperationError { source: error }
+        Self::TezosOperationError { source: error }
     }
 }
 
 impl From<serde_json::Error> for Error {
     fn from(error: serde_json::Error) -> Self {
-        return Self::SerializationError { source: error }
+        Self::SerializationError { source: error }
+    }
+}
+
+impl From<runtime::RuntimeError> for Error {
+    fn from(error: runtime::RuntimeError) -> Self {
+        Self::WasmHostError { source: error }
     }
 }
 
@@ -53,5 +66,12 @@ macro_rules! validation_error {
 macro_rules! execution_error {
     ($($arg:tt)*) => {
         Err(crate::error::Error::ExecutionError { message: format!($($arg)*) })
+    };
+}
+
+#[macro_export]
+macro_rules! storage_error {
+    ($($arg:tt)*) => {
+        Err(crate::error::Error::StorageError { message: format!($($arg)*) })
     };
 }

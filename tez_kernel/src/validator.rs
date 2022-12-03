@@ -5,13 +5,13 @@ use tezos_operation::{
 };
 use tezos_core::{
     types::{
-        encoded::{Signature, Encoded, ImplicitAddress}
+        encoded::{Signature, Encoded, ImplicitAddress}, mutez::Mutez, number::Nat
     },
     Tezos
 };
 
 use crate::{context::{EphemeralContext}, validation_error};
-use crate::error::{Error, Result};
+use crate::error::Result;
 use crate::crypto::WasmCryptoConfig;
 
 const SIGNATURE_SIZE: usize = 64;
@@ -21,77 +21,44 @@ pub fn parse_operation<'a>(payload: &'a [u8]) -> Result<SignedOperation> {
         return validation_error!("Payload too short");
     }
 
-    let signature = match Signature::from_bytes(&payload[payload.len() - SIGNATURE_SIZE..]) {
-        Ok(value) => value,
-        Err(error) => return Err(Error::from(error))
-    };
-
-    let opg = match UnsignedOperation::from_forged_bytes(&payload[..payload.len() - SIGNATURE_SIZE]) {
-        Ok(value) => value,
-        Err(error) => return Err(Error::from(error))
-    };
-    
+    let opg = UnsignedOperation::from_forged_bytes(&payload[..payload.len() - SIGNATURE_SIZE])?;  
+    let signature = Signature::from_bytes(&payload[payload.len() - SIGNATURE_SIZE..])?;
     Ok(SignedOperation::from(opg, signature))
 }
-
-trait SupportedManagerContent {
-    fn is_supported(&self) -> bool;
-    fn source(&self) -> &ImplicitAddress;
-    fn spent(&self) -> u64;
-    fn counter(&self) -> u64;
+pub struct OperationExecutionPlan {
+    pub source: ImplicitAddress,
+    pub balance: Mutez,
+    pub total_fees: Mutez,
+    pub last_counter: Nat
 }
 
-impl SupportedManagerContent for OperationContent {
-    fn is_supported(&self) -> bool {
-        match self {
-            OperationContent::Reveal(_) => true,
-            OperationContent::Transaction(_) => true,
-            OperationContent::Origination(_) => true,
-            _ => false
-        }
-    }
+pub fn validate_operation(host: &mut impl Runtime, context: &mut EphemeralContext, opg: &SignedOperation) -> Result<OperationExecutionPlan> {
+    let mut source = None;
+    let mut total_fees: Mutez = 0u32.into();
 
-    fn source(&self) -> &ImplicitAddress {
-        match self {
+    for content in opg.contents.iter() {
+        let address = match content {
             OperationContent::Reveal(reveal) => &reveal.source,
             OperationContent::Transaction(transaction) => &transaction.source,
             OperationContent::Origination(origination) => &origination.source,
-            _ => panic!("Not supported")
+            _ => return validation_error!("Unsupported operation kind: {:?}", content)
+        };
+
+        if source.is_none() {
+            source = Some(address);
+        } else if source.unwrap() != address {
+            return validation_error!("Multiple sources in a group (expected {:?}, found {:?})", source.unwrap(), address);
         }
+
+        total_fees += content.fee();
     }
 
-    fn spent(&self) -> u64 {
-        let spent = match self {
-            OperationContent::Reveal(reveal) => reveal.fee,
-            OperationContent::Transaction(transaction) => transaction.amount + transaction.fee,
-            OperationContent::Origination(origination) => origination.balance + origination.fee,
-            _ => panic!("Not supported")
-        };
-        spent.to_u64().unwrap()
+    if source.is_none() {
+        return validation_error!("Empty operation group");
     }
 
-    fn counter(&self) -> u64 {
-        let counter = match self {
-            OperationContent::Reveal(reveal) => &reveal.counter,
-            OperationContent::Transaction(transaction) => &transaction.counter,
-            OperationContent::Origination(origination) => &origination.counter,
-            _ => panic!("Not supported")
-        };
-        counter.to_integer().unwrap()
-    }
-}
-
-pub fn validate_operation<'a>(host: &mut impl Runtime, context: &mut EphemeralContext, opg: &SignedOperation) -> Result<()> {
-    if opg.contents.iter().any(|x| !x.is_supported()) {
-        return validation_error!("Unsupported operation content");
-    }
-    
-    let source = match opg.contents.iter().last() {
-        Some(content) => content.source(),
-        None => return validation_error!("At least one operation content required")
-    };
-
-    let public_key = match context.get_public_key(host, source) {
+    let source = source.unwrap();
+    let public_key = match context.get_public_key(host, source)? {
         Some(value) => value,
         None => {
             let revealed_key = opg.contents.iter().filter_map(|content| {
@@ -116,31 +83,40 @@ pub fn validate_operation<'a>(host: &mut impl Runtime, context: &mut EphemeralCo
         Err(error) => return validation_error!("{}", error.to_string())
     };
 
-    let mut counter: u64 = match context.get_counter(host, source) {
-        Some(value) => value.to_integer().unwrap(),
-        None => return validation_error!("Counter not initialized for {}", source.value())
-    };
 
-    let mut balance = match context.get_balance(host, &source) {
-        Some(value) => value.to_u64().unwrap(),
+    let balance = match context.get_balance(host, &source.value())? {
+        Some(value) => value,
         None => return validation_error!("Balance not initialized for {}", source.value())
     };
 
+    if balance.to_i64().unwrap() < total_fees.to_i64().unwrap() {
+        return validation_error!("Account {} tries to spent more than it has", source.value());
+    }
+
+    let mut counter = match context.get_counter(host, source)? {
+        Some(value) => value.to_integer()?,
+        None => return validation_error!("Counter not initialized for {}", source.value())
+    };
+
     for content in opg.contents.iter() {
-        let next_counter = content.counter();
+        let next_counter: u64 = match content {
+            OperationContent::Reveal(reveal) => &reveal.counter,
+            OperationContent::Transaction(transaction) => &transaction.counter,
+            OperationContent::Origination(origination) => &origination.counter,
+            _ => return validation_error!("Unsupported operation kind: {:?}", content)
+        }.to_integer()?;
         if next_counter <= counter {
             return validation_error!("Account {} tries to reuse counter {}", source.value(), next_counter);
         }
         counter = next_counter;
-
-        let spent = content.spent();
-        if spent > balance {
-            return validation_error!("Account {} tries to spent more than it has", source.value());
-        }
-        balance -= spent;
     }
 
-    Ok(())
+    Ok(OperationExecutionPlan {
+        balance,
+        source: source.to_owned(),
+        total_fees,
+        last_counter: counter.into()
+    })
 }
 
 #[cfg(test)]
@@ -152,7 +128,7 @@ mod test {
         operations::{SignedOperation, Transaction}
     };
     use tezos_core::types::{
-        encoded::{ImplicitAddress, PublicKey},
+        encoded::{ImplicitAddress, PublicKey, Encoded},
         mutez::Mutez,
         number::Nat
     };
@@ -165,7 +141,7 @@ mod test {
         let mut context = EphemeralContext::new();
 
         let address = ImplicitAddress::try_from("tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU").unwrap();
-        context.set_balance(&address, &Mutez::from(1000000000u32));
+        context.set_balance(&address.value(), &Mutez::from(1000000000u32));
         context.set_counter(&address, &Nat::try_from("100000").unwrap());
         context.set_public_key(&address, &PublicKey::try_from("edpktipCJ3SkjvtdcrwELhvupnyYJSmqoXu3kdzK1vL6fT5cY8FTEa").unwrap());
 
@@ -173,7 +149,7 @@ mod test {
             "BMNvSHmWUkdonkG2oFwwQKxHUdrYQhUXqxLaSRX9wjMGfLddURC".try_into().unwrap(),
             vec![
                 Transaction::new(
-                    "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU".try_into().unwrap(),
+                    address.clone(),
                     417u32.into(),
                     2336132u32.into(),
                     1527u32.into(),
@@ -186,6 +162,10 @@ mod test {
             "sigw1WNdYweqz1c7zKcvZFHQ18swSv4HBWje5quRmixxitPk7z8jtY63qXgKLPVfTM6XGxExPatBWJP44Bknyu3hDHDKJZgY".try_into().unwrap()
         );
 
-        validate_operation(&mut host, &mut context, &opg)        
+        let plan = validate_operation(&mut host, &mut context, &opg)?;
+        assert_eq!(plan.total_fees, 417u32.into());
+        assert_eq!(plan.last_counter, 2336132u32.into());
+
+        Ok(())    
     }
 }

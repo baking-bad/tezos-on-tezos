@@ -5,36 +5,45 @@ pub mod executor;
 pub mod crypto;
 
 use host::{
-    input::{Input},
+    input::Input,
     rollup_core::{RawRollupCore, MAX_INPUT_MESSAGE_SIZE},
     runtime::Runtime,
 };
 
 use crate::context::EphemeralContext;
-use crate::validator::{parse_operation, validate_operation};
+use crate::validator::parse_operation;
 use crate::executor::execute_operation;
+use crate::crypto::operation_hash;
+use crate::error::Result;
 
+fn process_message<'a>(
+    host: &mut impl Runtime, 
+    context: &mut EphemeralContext, 
+    payload: &'a [u8],
+    level: &i32,
+    index: &i32
+) -> Result<()> {
+    let opg = parse_operation(payload)?;
+    let mut receipt = execute_operation(host, context, &opg)?;
+    receipt.hash = Some(operation_hash(payload)?);
+    context.store_operation_receipt(level, &index, &receipt)?;
+    context.commit(host)?;
+    Ok(())
+}
 
 pub fn tez_kernel_run<Host: RawRollupCore>(host: &mut Host) {
     let mut context = EphemeralContext::new();
-
-    match host.read_input(MAX_INPUT_MESSAGE_SIZE) {
-        Ok(Some(Input::Message(message))) => {          
-            if let Ok(opg) = parse_operation(message.as_ref()) {
-                if validate_operation(host, &mut context, &opg).is_ok() {
-                    match execute_operation(host, &mut context, &opg) {
-                        Ok(res) => {
-                            context.store_operation_receipt(&message.level, &message.id, &res);
-                            context.commit(host);
-                        },
-                        Err(_) => context.rollback()
-                    }
-                }
-            }
-        }
+    let res = match host.read_input(MAX_INPUT_MESSAGE_SIZE) {
+        Ok(Some(Input::Message(message))) => {
+            process_message(host, &mut context, message.as_ref(), &message.level, &message.id)
+        },
         Ok(Some(Input::Slot(_message))) => todo!("handle slot message"),
-        Ok(None) => {},
+        Ok(None) => Ok(()),
         Err(_) => todo!("handle runtime errors")
+    };
+    if let Err(error) = res {
+        println!("{:?}", error);
+        context.clear();
     }
 }
 
@@ -49,6 +58,7 @@ pub extern "C" fn kernel_run() {
 mod test {
     use crate::tez_kernel_run;
     use crate::context::EphemeralContext;
+    use crate::error::Result;
 
     use mock_runtime::host::{MockHost};
     use tezos_operation::operations::{SignedOperation, Transaction, Operation};
@@ -60,24 +70,24 @@ mod test {
     use host::rollup_core::Input;
 
     #[test]
-    fn send_tez() {
+    fn send_tez() -> Result<()> {
         let mut host = MockHost::default();
         let mut context = EphemeralContext::new();
 
-        let source = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU".try_into().unwrap();
+        let source = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
         let public_key = PublicKey::try_from("edpktipCJ3SkjvtdcrwELhvupnyYJSmqoXu3kdzK1vL6fT5cY8FTEa").unwrap();
         let initial_balance: Mutez = 10000000u32.into();
 
-        context.set_balance(&source, &initial_balance);
-        context.set_public_key(&source, &public_key);
-        context.set_counter(&source, &Nat::try_from("100000").unwrap());
-        context.commit(&mut host);
+        context.set_balance(&source, &initial_balance)?;
+        context.set_public_key(&source, &public_key)?;
+        context.set_counter(&source, &Nat::try_from("100000").unwrap())?;
+        context.commit(&mut host)?;
 
         let message = SignedOperation::new(
             "BMNvSHmWUkdonkG2oFwwQKxHUdrYQhUXqxLaSRX9wjMGfLddURC".try_into().unwrap(),
             vec![
                 Transaction::new(
-                    source.clone(),
+                    source.try_into().unwrap(),
                     417u32.into(),
                     2336132u32.into(),
                     1527u32.into(),
@@ -106,9 +116,9 @@ mod test {
         //     assert!(!debug_log.is_empty());
         // });
 
-        let receipt = context.get_operation_receipt(&host, &10i32, &0i32);
+        let receipt = context.get_operation_receipt(&host, &10i32, &0i32)?;
         assert!(receipt.is_some());
 
-        println!("{:?}", receipt);
+        Ok(())
     }
 }

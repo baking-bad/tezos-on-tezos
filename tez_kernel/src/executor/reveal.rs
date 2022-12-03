@@ -1,83 +1,66 @@
 use host::runtime::Runtime;
 use tezos_operation::operations::Reveal;
-use tezos_core::types::{
-        encoded::Encoded
-};
 use tezos_rpc::models::operation::{
-    OperationContent as OperationContentWithResult
-};
-use tezos_rpc::models::operation::{
-    operation_contents_and_result::{
-        reveal::{Reveal as RevealWithResult, RevealMetadata}
+    operation_result::{
+        operations::reveal::RevealOperationResult,
+        OperationResultStatus
     },
-    operation_result::operations::{
-        reveal::RevealOperationResult
-    },
-    operation_result::OperationResultStatus,
-    kind::{OperationKind},
-};
-use tezos_rpc::models::{
-    balance_update,
-    error::RpcError
+    operation_contents_and_result::reveal::{
+        Reveal as RevealReceipt, 
+        RevealMetadata
+    }
 };
 
+use crate::executor::{
+    runtime_error::RuntimeErrors,
+    balance_update::BalanceUpdates
+};
 use crate::error::Result;
 use crate::context::EphemeralContext;
 
-pub fn execute_reveal(host: &mut impl Runtime, context: &mut EphemeralContext, reveal: &Reveal) -> Result<OperationContentWithResult> {
-    let mut balance = context.get_balance(host, &reveal.source).unwrap();  // already checked by validator
-    balance -= reveal.fee;  // TODO: need additional check?
-    context.set_balance(&reveal.source, &balance);
-    context.set_counter(&reveal.source, &reveal.counter);
+pub fn skip_reveal(reveal: Reveal) -> RevealReceipt {
+    RevealReceipt {
+        metadata: Some(RevealMetadata {
+            operation_result: RevealOperationResult {
+                status: OperationResultStatus::Skipped,
+                consumed_gas: None,
+                consumed_milligas: None,
+                errors: None
+            },
+            balance_updates: vec![]
+        }),
+        ..reveal.into()
+    }
+}
 
-    let status;
-    let errors;
+pub fn execute_reveal(host: &mut impl Runtime, context: &mut EphemeralContext, reveal: &Reveal) -> Result<RevealReceipt> {
+    let mut errors = RuntimeErrors::new();
+    let charges =  BalanceUpdates::fee(&reveal.source, &reveal.fee);
 
-    if context.has_public_key(host, &reveal.source) {
-        status = OperationResultStatus::Failed;
-        errors = Some(vec![
-            RpcError {
-                kind: "permanent".into(),
-                id: "contract.previously_revealed_key".into(),
-                amount: None,
-                balance: None,
-                contract: None,
-                message: None,
-                msg: None
+    macro_rules! make_receipt {
+        ($a: expr) => {
+            RevealReceipt {
+                metadata: Some(RevealMetadata {
+                    operation_result: RevealOperationResult {
+                        status: $a,
+                        consumed_gas: None,
+                        consumed_milligas: Some("0".into()),
+                        errors: errors.into()
+                    },
+                    balance_updates: charges.unwrap()
+                }),
+                ..reveal.to_owned().into()
             }
-        ]);
-    } else {
-        context.set_public_key(&reveal.source, &reveal.public_key);
-        status = OperationResultStatus::Applied;
-        errors = None;
+        }
     }
 
-    let res = RevealWithResult {
-        kind: OperationKind::Reveal,
-        source: reveal.source.clone(),
-        counter: reveal.counter.to_string(),
-        fee: reveal.fee,
-        gas_limit: reveal.gas_limit.to_string(),
-        storage_limit: reveal.storage_limit.to_string(),
-        public_key: reveal.public_key.clone(),
-        metadata: Some(RevealMetadata { 
-            operation_result: RevealOperationResult { 
-                status,
-                consumed_gas: None, 
-                consumed_milligas: Some("0".into()), 
-                errors
-            }, 
-            balance_updates: vec![
-                balance_update::BalanceUpdate::Contract(balance_update::Contract {
-                    kind: balance_update::Kind::Contract,
-                    contract: reveal.source.value().into(),
-                    change: format!("-{}", reveal.fee),
-                    origin: None  // TODO: increase sequencer's balance
-                })
-            ]
-        })
-    };
-    Ok(OperationContentWithResult::Reveal(res))
+    if context.has_public_key(host, &reveal.source)? {
+        errors.previously_revealed_key(&reveal.source);
+        return Ok(make_receipt!(OperationResultStatus::Failed))
+    }
+
+    context.set_public_key(&reveal.source, &reveal.public_key)?;
+    Ok(make_receipt!(OperationResultStatus::Applied))
 }
 
 #[cfg(test)]
@@ -89,7 +72,7 @@ mod test {
         operations::Reveal
     };
     use tezos_core::types::{
-        encoded::{ImplicitAddress, PublicKey},
+        encoded::{ImplicitAddress, PublicKey, Encoded},
         mutez::Mutez,
         number::Nat
     };
@@ -104,8 +87,8 @@ mod test {
         let address = ImplicitAddress::try_from("tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU").unwrap();
         let public_key = PublicKey::try_from("edpktipCJ3SkjvtdcrwELhvupnyYJSmqoXu3kdzK1vL6fT5cY8FTEa").unwrap();
 
-        context.set_balance(&address, &Mutez::from(1000000000u32));
-        context.set_counter(&address, &Nat::try_from("100000").unwrap());
+        context.set_balance(&address.value(), &Mutez::from(1000000000u32))?;
+        context.set_counter(&address, &Nat::try_from("100000").unwrap())?;
 
         let reveal = Reveal {
             source: address.clone(),
@@ -116,11 +99,12 @@ mod test {
             public_key: public_key.clone()
         };
 
-        let result = execute_reveal(&mut host, &mut context, &reveal);
-        assert!(result.is_ok());
+        let receipt = execute_reveal(&mut host, &mut context, &reveal);
+        assert!(receipt.is_ok());
+        assert!(receipt.unwrap().metadata.is_some());
 
-        assert_eq!(context.get_public_key(&host, &address).unwrap(), public_key);
-        assert_eq!(context.get_balance(&host, &address).unwrap(), Mutez::from(1000000000u32 - 1000u32));
+        assert_eq!(context.get_public_key(&host, &address)?.expect("Public key expected"), public_key);
+        assert_eq!(context.get_balance(&host, &address.value())?.expect("Balance expected"), Mutez::from(1000000000u32 - 1000u32));
         
         Ok(())
     }

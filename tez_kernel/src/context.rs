@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::Deref};
 use tezos_core::{
     types::{
         encoded::{Encoded, PublicKey, Address, ImplicitAddress},
@@ -15,7 +15,8 @@ use host::{
 };
 use serde_json;
 
-use crate::error::Result;
+use crate::error::{Result, Error};
+use crate::storage_error;
 
 #[derive(Debug)]
 pub enum ContextNode {
@@ -53,12 +54,12 @@ impl ContextType for Mutez {
     fn unwrap(node: &ContextNode) -> Self {
         match node {
             ContextNode::Mutez(value) => value.clone(),
-            _ => panic!("Type mismatch (expected mutez)")
+            node => panic!("Type mismatch (expected Mutez, got {:?})", node)
         }
     }
 
-    fn wrap(value: &Self) -> ContextNode {
-        return ContextNode::Mutez(value.clone());
+    fn wrap(value: &Self) -> ContextNode {  
+        ContextNode::Mutez(value.clone())
     }
 }
 
@@ -73,12 +74,12 @@ impl ContextType for Nat {
     fn unwrap(node: &ContextNode) -> Self {
         match node {
             ContextNode::Nat(value) => value.clone(),
-            _ => panic!("Type mismatch (expected nat)")
+            node => panic!("Type mismatch (expected Nat, got {:?})", node)
         }
     }
 
     fn wrap(value: &Self) -> ContextNode {
-        return ContextNode::Nat(value.clone());
+        ContextNode::Nat(value.clone())
     }
 }
 
@@ -93,12 +94,12 @@ impl ContextType for PublicKey {
     fn unwrap(node: &ContextNode) -> Self {
         match node {
             ContextNode::PublicKey(value) => value.clone(),
-            _ => panic!("Type mismatch (expected public key)")
+            node => panic!("Type mismatch (expected PublicKey, got {:?})", node)
         }
     }
 
     fn wrap(value: &Self) -> ContextNode {
-        return ContextNode::PublicKey(value.clone());
+        ContextNode::PublicKey(value.clone())
     }
 }
 
@@ -113,12 +114,34 @@ impl ContextType for OperationReceipt {
     fn unwrap(node: &ContextNode) -> Self {
         match node {
             ContextNode::OperationReceipt(value) => value.clone(),
-            _ => panic!("Type mismatch (expected operation)")
+            node => panic!("Type mismatch (expected OperationReceipt, got {:?})", node)
         }
     }
 
     fn wrap(value: &Self) -> ContextNode {
-        return ContextNode::OperationReceipt(value.clone());
+        ContextNode::OperationReceipt(value.clone())
+    }
+}
+
+pub trait TezosAddress {
+    fn to_string(&self) -> &str;
+}
+
+impl TezosAddress for ImplicitAddress {
+    fn to_string(&self) -> &str {
+        self.to_string()
+    }
+}
+
+impl TezosAddress for Address {
+    fn to_string(&self) -> &str {
+        self.to_string()
+    }
+}
+
+impl TezosAddress for &str {
+    fn to_string(&self) -> &str {
+        self.deref()
     }
 }
 
@@ -129,71 +152,68 @@ pub struct EphemeralContext {
 
 impl EphemeralContext {
     pub fn new() -> Self {
-        return EphemeralContext { state: HashMap::new(), modified_keys: Vec::new() };
+        EphemeralContext {
+            state: HashMap::new(),
+            modified_keys: Vec::new()
+        }
     }
 
-    fn has(&self, host: &impl Runtime, key: String) -> bool {
+    fn has(&self, host: &impl Runtime, key: String) -> Result<bool> {
         match self.state.contains_key(&key) {
-            true => true,
+            true => Ok(true),
             false => {
                 let path = RefPath::assert_from(key.as_bytes());
                 match host.store_has(&path) {
-                    Ok(Some(ValueType::Value)) => true,
-                    Err(_) => panic!("Could not read store: {}", key),
-                    _ => false
+                    Ok(Some(ValueType::Value)) => Ok(true),
+                    Err(error) => Err(error.into()),
+                    _ => Ok(false)
                 }
             }
         }
     }
 
-    fn get<V: ContextType>(&mut self, host: &impl Runtime, key: String) -> Option<V> {
+    fn get<V: ContextType>(&mut self, host: &impl Runtime, key: String) -> Result<Option<V>> {
         match self.state.get(&key) {
-            Some(cached_value) => return Some(V::unwrap(cached_value)),
+            Some(cached_value) => Ok(Some(V::unwrap(cached_value))),
             None => {
                 let path = RefPath::assert_from(key.as_bytes());
-                if let Ok(Some(ValueType::Value)) = host.store_has(&path) {
-                    if let Ok(stored_value) = host.store_read(&path, 0, 1024) {
-                        if let Ok(value) = V::parse(stored_value.as_slice()) {
-                            let inner_value = V::unwrap(&value);
-                            self.state.insert(key, value);
-                            return Some(inner_value);
-                        } else {
-                            panic!("Could not decode stored value: {}", key)
-                        }
-                    } else {
-                        panic!("Could not read store: {}", key)
-                    }
+                match host.store_has(&path) {
+                    Ok(Some(ValueType::Value)) => {
+                        let stored_value = host
+                            .store_read(&path, 0, 1024)?;
+
+                        let value = V::parse(&stored_value)?;
+                        let inner_value = V::unwrap(&value);
+                        self.state.insert(key, value);
+                        Ok(Some(inner_value))
+                    },
+                    Ok(Some(node_type)) => storage_error!("Unexpected node type {:?}", node_type),
+                    Ok(None) => Ok(None),
+                    Err(error) => Err(error.into())
                 }
-                return None;
             }
         }
     }
 
-    fn set<V: ContextType>(&mut self, key: String, val: &V) {
-        let value = V::wrap(val);
-        if let Some(cached_value) = self.state.get_mut(&key) {
-            *cached_value = value  // FIXME: possible trailing garbage
-        } else {
-            self.state.insert(key.clone(), value);
-        }
+    fn set<V: ContextType>(&mut self, key: String, val: &V) -> Result<()> {
+        self.state.insert(key.clone(), V::wrap(val));
         self.modified_keys.push(key);
+        Ok(())
     }
 
     pub fn has_pending_changes(&self) -> bool {
-        return !self.modified_keys.is_empty();
+        !self.modified_keys.is_empty()
     }
 
-    pub fn commit(&mut self, host: &mut impl Runtime) {
+    pub fn commit(&mut self, host: &mut impl Runtime) -> Result<()> {
         for key in self.modified_keys.iter() {
             let path = RefPath::assert_from(key.as_bytes());
-            let cached_value = self.state.get(key).unwrap();
-            let raw_value = cached_value.to_vec().unwrap();
-            match host.store_write(&path, raw_value.as_slice(), 0) {
-                Ok(_) => continue,
-                Err(err) => panic!("Failed to write store at {}: {:?}", key, err)
-            }
+            let cached_value = self.state.get(key).expect("Modified value has to be cached");
+            let raw_value = cached_value.to_vec()?;
+            host.store_write(&path, raw_value.as_slice(), 0).map_err(|e| Error::from(e))?;
         }
         self.modified_keys.clear();
+        Ok(())
     }
 
     pub fn clear(&mut self) {
@@ -207,43 +227,39 @@ impl EphemeralContext {
         self.modified_keys.clear();
     }
 
-    pub fn get_balance(&mut self, host: &impl Runtime, address: &ImplicitAddress) -> Option<Mutez> {
-        return self.get(host, format!("/context/contracts/{}/balance", address.value()));
+    pub fn get_balance(&mut self, host: &impl Runtime, address: &impl TezosAddress) -> Result<Option<Mutez>> {
+        return self.get(host, format!("/context/contracts/{}/balance", address.to_string()));
     }
 
-    pub fn set_balance(&mut self, address: &ImplicitAddress, balance: &Mutez) {
-        return self.set(format!("/context/contracts/{}/balance", address.value()), balance);
+    pub fn set_balance(&mut self, address: &impl TezosAddress, balance: &Mutez) -> Result<()> {
+        return self.set(format!("/context/contracts/{}/balance", address.to_string()), balance);
     }
 
-    pub fn set_contract_balance(&mut self, address: &Address, balance: &Mutez) {
-        return self.set(format!("/context/contracts/{}/balance", address.value()), balance);
+    pub fn get_counter(&mut self, host: &impl Runtime, address: &impl TezosAddress) -> Result<Option<Nat>> {
+        return self.get(host, format!("/context/contracts/{}/counter", address.to_string()));
     }
 
-    pub fn get_counter(&mut self, host: &impl Runtime, address: &ImplicitAddress) -> Option<Nat> {
-        return self.get(host, format!("/context/contracts/{}/counter", address.value()));
+    pub fn set_counter(&mut self, address: &impl TezosAddress, counter: &Nat) -> Result<()> {
+        return self.set(format!("/context/contracts/{}/counter", address.to_string()), counter);
     }
 
-    pub fn set_counter(&mut self, address: &ImplicitAddress, counter: &Nat) {
-        return self.set(format!("/context/contracts/{}/counter", address.value()), counter);
+    pub fn get_public_key(&mut self, host: &impl Runtime, address: &impl TezosAddress) -> Result<Option<PublicKey>> {
+        return self.get(host, format!("/context/contracts/{}/pubkey", address.to_string()));
     }
 
-    pub fn get_public_key(&mut self, host: &impl Runtime, address: &ImplicitAddress) -> Option<PublicKey> {
-        return self.get(host, format!("/context/contracts/{}/pubkey", address.value()));
+    pub fn set_public_key(&mut self, address: &impl TezosAddress, public_key: &PublicKey) -> Result<()> {
+        return self.set(format!("/context/contracts/{}/pubkey", address.to_string()), public_key);
     }
 
-    pub fn set_public_key(&mut self, address: &ImplicitAddress, public_key: &PublicKey) {
-        return self.set(format!("/context/contracts/{}/pubkey", address.value()), public_key);
+    pub fn has_public_key(&self, host: &impl Runtime, address: &impl TezosAddress) -> Result<bool> {
+        return self.has(host, format!("/context/contracts/{}/pubkey", address.to_string()));
     }
 
-    pub fn has_public_key(&self, host: &impl Runtime, address: &ImplicitAddress) -> bool {
-        return self.has(host, format!("/context/contracts/{}/pubkey", address.value()));
-    }
-
-    pub fn store_operation_receipt(&mut self, level: &i32, index: &i32, receipt: &OperationReceipt) {
+    pub fn store_operation_receipt(&mut self, level: &i32, index: &i32, receipt: &OperationReceipt) -> Result<()> {
         return self.set(format!("/context/blocks/{}/operations/{}", level, index), receipt);
     }
 
-    pub fn get_operation_receipt(&mut self, host: &impl Runtime, level: &i32, index: &i32) -> Option<OperationReceipt> {
+    pub fn get_operation_receipt(&mut self, host: &impl Runtime, level: &i32, index: &i32) -> Result<Option<OperationReceipt>> {
         return self.get(host, format!("/context/blocks/{}/operations/{}", level, index));
     }
 }
@@ -253,26 +269,25 @@ impl EphemeralContext {
 mod test {
     use crate::context::EphemeralContext;
     use mock_runtime::host::MockHost;
-    use tezos_core::types::{
-        encoded::ImplicitAddress,
-        mutez::Mutez
-    };
+    use crate::error::Result;
 
     #[test]
-    fn store_balance() {
+    fn store_balance() -> Result<()> {
         let mut host = MockHost::default();
         let mut context = EphemeralContext::new();
 
-        let address = ImplicitAddress::try_from("tz1Mj7RzPmMAqDUNFBn5t5VbXmWW4cSUAdtT").unwrap();
-        let balance = Mutez::try_from(1000u32).unwrap();
+        let address = "tz1Mj7RzPmMAqDUNFBn5t5VbXmWW4cSUAdtT";
+        let balance = 1000u32.into();
 
-        assert!(context.get_balance(&host, &address).is_none());  // both host and cache accessed
+        assert!(context.get_balance(&host, &address)?.is_none());  // both host and cache accessed
 
-        context.set_balance(&address, &balance);  // cached
+        context.set_balance(&address, &balance)?;  // cached
         context.commit(&mut host);  // sent to the host
         context.clear();  // cache cleared
 
-        assert!(context.get_balance(&host, &address).is_some());  // cached
-        assert_eq!(context.get_balance(&host, &address).unwrap(), balance);  // served from the cache
+        assert!(context.get_balance(&host, &address)?.is_some());  // cached
+        assert_eq!(context.get_balance(&host, &address)?.expect("Balance must not be null"), balance);  // served from the cache
+
+        Ok(())
     }
 }
