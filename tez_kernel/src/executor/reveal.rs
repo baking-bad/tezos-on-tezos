@@ -104,7 +104,7 @@ mod test {
         assert!(receipt.unwrap().metadata.is_some());
 
         assert_eq!(context.get_public_key(&host, &address)?.expect("Public key expected"), public_key);
-        assert_eq!(context.get_balance(&host, &address.value())?.expect("Balance expected"), Mutez::from(1000000000u32 - 1000u32));
+        assert_eq!(context.get_balance(&host, &address.value())?.expect("Balance expected"), Mutez::from(1000000000u32));
         
         Ok(())
     }

@@ -151,7 +151,7 @@ mod test {
         assert!(receipt.is_ok());
         assert!(receipt.unwrap().metadata.is_some());
 
-        assert_eq!(context.get_balance(&host, &source)?.unwrap(), Mutez::from(1000000000u32 - 1000u32 - 1000u32 - 500000000u32));
+        assert_eq!(context.get_balance(&host, &source)?.unwrap(), Mutez::from(1000000000u32 - 1000u32 - 500000000u32));
         assert_eq!(context.get_balance(&host, &destination)?.unwrap(), Mutez::from(500000000u32));
         
         Ok(())

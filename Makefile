@@ -24,7 +24,7 @@ test-tez-kernel:
 	cd tez_kernel && cargo test -- --nocapture
 
 test:
-	$(MAKE) test-tez-kernel
+	RUST_BACKTRACE=1 $(MAKE) test-tez-kernel
 
 repl:
 	./bin/octez-wasm-repl ./bin/tez_kernel.wasm --inputs ./test/input.json
