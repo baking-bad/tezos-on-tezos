@@ -129,13 +129,13 @@ pub trait TezosAddress {
 
 impl TezosAddress for ImplicitAddress {
     fn to_string(&self) -> &str {
-        self.to_string()
+        self.value()
     }
 }
 
 impl TezosAddress for Address {
     fn to_string(&self) -> &str {
-        self.to_string()
+        self.value()
     }
 }
 
@@ -282,7 +282,7 @@ mod test {
         assert!(context.get_balance(&host, &address)?.is_none());  // both host and cache accessed
 
         context.set_balance(&address, &balance)?;  // cached
-        context.commit(&mut host);  // sent to the host
+        context.commit(&mut host)?;  // sent to the host
         context.clear();  // cache cleared
 
         assert!(context.get_balance(&host, &address)?.is_some());  // cached

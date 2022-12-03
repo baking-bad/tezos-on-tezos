@@ -141,9 +141,9 @@ mod test {
         let mut context = EphemeralContext::new();
 
         let address = ImplicitAddress::try_from("tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU").unwrap();
-        context.set_balance(&address.value(), &Mutez::from(1000000000u32));
-        context.set_counter(&address, &Nat::try_from("100000").unwrap());
-        context.set_public_key(&address, &PublicKey::try_from("edpktipCJ3SkjvtdcrwELhvupnyYJSmqoXu3kdzK1vL6fT5cY8FTEa").unwrap());
+        context.set_balance(&address.value(), &Mutez::from(1000000000u32))?;
+        context.set_counter(&address, &Nat::try_from("100000").unwrap())?;
+        context.set_public_key(&address, &PublicKey::try_from("edpktipCJ3SkjvtdcrwELhvupnyYJSmqoXu3kdzK1vL6fT5cY8FTEa").unwrap())?;
 
         let opg = SignedOperation::new(
             "BMNvSHmWUkdonkG2oFwwQKxHUdrYQhUXqxLaSRX9wjMGfLddURC".try_into().unwrap(),
