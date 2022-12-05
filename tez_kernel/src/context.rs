@@ -172,7 +172,7 @@ impl EphemeralContext {
         }
     }
 
-    fn get<V: ContextType>(&mut self, host: &impl Runtime, key: String) -> Result<Option<V>> {
+    fn get<V: ContextType>(&mut self, host: &impl Runtime, key: String, max_bytes: usize) -> Result<Option<V>> {
         match self.state.get(&key) {
             Some(cached_value) => Ok(Some(V::unwrap(cached_value))),
             None => {
@@ -180,7 +180,7 @@ impl EphemeralContext {
                 match host.store_has(&path) {
                     Ok(Some(ValueType::Value)) => {
                         let stored_value = host
-                            .store_read(&path, 0, 1024)?;
+                            .store_read(&path, 0, max_bytes)?;
 
                         let value = V::parse(&stored_value)?;
                         let inner_value = V::unwrap(&value);
@@ -208,8 +208,9 @@ impl EphemeralContext {
     pub fn commit(&mut self, host: &mut impl Runtime) -> Result<()> {
         for key in self.modified_keys.iter() {
             let path = RefPath::assert_from(key.as_bytes());
-            let cached_value = self.state.get(key).expect("Modified value has to be cached");
+            let cached_value = self.state.get(key).expect("Modified value expected to be in state");
             let raw_value = cached_value.to_vec()?;
+            // FIXME: trailing garbage?
             host.store_write(&path, raw_value.as_slice(), 0).map_err(|e| Error::from(e))?;
         }
         self.modified_keys.clear();
@@ -228,7 +229,7 @@ impl EphemeralContext {
     }
 
     pub fn get_balance(&mut self, host: &impl Runtime, address: &impl TezosAddress) -> Result<Option<Mutez>> {
-        return self.get(host, format!("/context/contracts/{}/balance", address.to_string()));
+        return self.get(host, format!("/context/contracts/{}/balance", address.to_string()), 64);
     }
 
     pub fn set_balance(&mut self, address: &impl TezosAddress, balance: &Mutez) -> Result<()> {
@@ -236,7 +237,7 @@ impl EphemeralContext {
     }
 
     pub fn get_counter(&mut self, host: &impl Runtime, address: &impl TezosAddress) -> Result<Option<Nat>> {
-        return self.get(host, format!("/context/contracts/{}/counter", address.to_string()));
+        return self.get(host, format!("/context/contracts/{}/counter", address.to_string()), 64);
     }
 
     pub fn set_counter(&mut self, address: &impl TezosAddress, counter: &Nat) -> Result<()> {
@@ -244,10 +245,11 @@ impl EphemeralContext {
     }
 
     pub fn get_public_key(&mut self, host: &impl Runtime, address: &impl TezosAddress) -> Result<Option<PublicKey>> {
-        return self.get(host, format!("/context/contracts/{}/pubkey", address.to_string()));
+        return self.get(host, format!("/context/contracts/{}/pubkey", address.to_string()), 33);
     }
 
     pub fn set_public_key(&mut self, address: &impl TezosAddress, public_key: &PublicKey) -> Result<()> {
+        // FIXME: Underscores are not supported
         return self.set(format!("/context/contracts/{}/pubkey", address.to_string()), public_key);
     }
 
@@ -260,7 +262,8 @@ impl EphemeralContext {
     }
 
     pub fn get_operation_receipt(&mut self, host: &impl Runtime, level: &i32, index: &i32) -> Result<Option<OperationReceipt>> {
-        return self.get(host, format!("/context/blocks/{}/operations/{}", level, index));
+        // TODO: support larger files (read loop)
+        return self.get(host, format!("/context/blocks/{}/operations/{}", level, index), 4096);
     }
 }
 

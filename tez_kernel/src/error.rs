@@ -53,6 +53,13 @@ impl From<runtime::RuntimeError> for Error {
     }
 }
 
+impl Error {
+    pub fn to_string(&self) -> String {
+        // TODO: better formatting
+        format!("{:?}", self)
+    }
+}
+
 pub type Result<T> = result::Result<T, Error>;
 
 #[macro_export]

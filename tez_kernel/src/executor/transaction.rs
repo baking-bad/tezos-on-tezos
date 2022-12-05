@@ -77,7 +77,7 @@ pub fn execute_transaction(host: &mut impl Runtime, context: &mut EphemeralConte
                     internal_operation_results: vec![],
                     balance_updates: charges.unwrap()
                 }),
-                ..transaction.to_owned().into()
+                ..transaction.clone().into()
             }
         }
     }

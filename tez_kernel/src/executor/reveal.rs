@@ -49,7 +49,7 @@ pub fn execute_reveal(host: &mut impl Runtime, context: &mut EphemeralContext, r
                     },
                     balance_updates: charges.unwrap()
                 }),
-                ..reveal.to_owned().into()
+                ..reveal.clone().into()
             }
         }
     }

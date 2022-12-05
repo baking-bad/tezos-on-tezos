@@ -9,9 +9,10 @@ use host::{
     rollup_core::{RawRollupCore, MAX_INPUT_MESSAGE_SIZE},
     runtime::Runtime,
 };
+use debug::debug_str;
 
 use crate::context::EphemeralContext;
-use crate::validator::parse_operation;
+use crate::validator::{parse_operation, validate_operation};
 use crate::executor::execute_operation;
 use crate::crypto::operation_hash;
 use crate::error::Result;
@@ -24,9 +25,10 @@ fn process_message<'a>(
     index: &i32
 ) -> Result<()> {
     let opg = parse_operation(payload)?;
+    let opg = validate_operation(host, context, opg)?;
     let mut receipt = execute_operation(host, context, &opg)?;
     receipt.hash = Some(operation_hash(payload)?);
-    context.store_operation_receipt(level, &index, &receipt)?;
+    context.store_operation_receipt(level, index, &receipt)?;
     context.commit(host)?;
     Ok(())
 }
@@ -42,7 +44,7 @@ pub fn tez_kernel_run<Host: RawRollupCore>(host: &mut Host) {
         Err(_) => todo!("handle runtime errors")
     };
     if let Err(error) = res {
-        println!("{:?}", error);
+        debug_str!(Host, error.to_string().as_str());
         context.clear();
     }
 }
@@ -60,7 +62,7 @@ mod test {
     use crate::context::EphemeralContext;
     use crate::error::Result;
 
-    use mock_runtime::host::{MockHost};
+    use mock_runtime::host::MockHost;
     use tezos_operation::operations::{SignedOperation, Transaction, Operation};
     use tezos_core::types::{
         encoded::{Encoded, PublicKey},
@@ -116,8 +118,10 @@ mod test {
         //     assert!(!debug_log.is_empty());
         // });
 
-        let receipt = context.get_operation_receipt(&host, &10i32, &0i32)?;
-        assert!(receipt.is_some());
+        let receipt = context.get_operation_receipt(&host, &level, &0i32)?;
+        //println!("Receipt: {:#?}", receipt);
+        assert!(receipt.is_some(), "Expected operation receipt");
+        assert!(receipt.unwrap().hash.is_some(), "Expected operation hash");
 
         Ok(())
     }

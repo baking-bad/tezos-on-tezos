@@ -25,14 +25,19 @@ pub fn parse_operation<'a>(payload: &'a [u8]) -> Result<SignedOperation> {
     let signature = Signature::from_bytes(&payload[payload.len() - SIGNATURE_SIZE..])?;
     Ok(SignedOperation::from(opg, signature))
 }
-pub struct OperationExecutionPlan {
+
+pub struct ManagerOperation {
+    pub origin: SignedOperation,
     pub source: ImplicitAddress,
-    pub balance: Mutez,
     pub total_fees: Mutez,
     pub last_counter: Nat
 }
 
-pub fn validate_operation(host: &mut impl Runtime, context: &mut EphemeralContext, opg: &SignedOperation) -> Result<OperationExecutionPlan> {
+pub fn validate_operation(host: &mut impl Runtime, context: &mut EphemeralContext, opg: SignedOperation) -> Result<ManagerOperation> {
+    if context.has_pending_changes() {
+        return validation_error!("Cannot proceed with uncommited state changes");
+    }
+    
     let mut source = None;
     let mut total_fees: Mutez = 0u32.into();
 
@@ -57,8 +62,8 @@ pub fn validate_operation(host: &mut impl Runtime, context: &mut EphemeralContex
         return validation_error!("Empty operation group");
     }
 
-    let source = source.unwrap();
-    let public_key = match context.get_public_key(host, source)? {
+    let source = source.unwrap().clone();
+    let public_key = match context.get_public_key(host, &source)? {
         Some(value) => value,
         None => {
             let revealed_key = opg.contents.iter().filter_map(|content| {
@@ -93,7 +98,7 @@ pub fn validate_operation(host: &mut impl Runtime, context: &mut EphemeralContex
         return validation_error!("Account {} tries to spent more than it has", source.value());
     }
 
-    let mut counter = match context.get_counter(host, source)? {
+    let mut counter = match context.get_counter(host, &source)? {
         Some(value) => value.to_integer()?,
         None => return validation_error!("Counter not initialized for {}", source.value())
     };
@@ -111,9 +116,9 @@ pub fn validate_operation(host: &mut impl Runtime, context: &mut EphemeralContex
         counter = next_counter;
     }
 
-    Ok(OperationExecutionPlan {
-        balance,
-        source: source.to_owned(),
+    Ok(ManagerOperation {
+        origin: opg,
+        source: source.clone(),
         total_fees,
         last_counter: counter.into()
     })
@@ -121,7 +126,7 @@ pub fn validate_operation(host: &mut impl Runtime, context: &mut EphemeralContex
 
 #[cfg(test)]
 mod test {
-    use crate::context::EphemeralContext;
+    use crate::{context::EphemeralContext};
     use crate::error::Result;
     use mock_runtime::host::MockHost;
     use tezos_operation::{
@@ -144,6 +149,7 @@ mod test {
         context.set_balance(&address.value(), &Mutez::from(1000000000u32))?;
         context.set_counter(&address, &Nat::try_from("100000").unwrap())?;
         context.set_public_key(&address, &PublicKey::try_from("edpktipCJ3SkjvtdcrwELhvupnyYJSmqoXu3kdzK1vL6fT5cY8FTEa").unwrap())?;
+        context.commit(&mut host)?;
 
         let opg = SignedOperation::new(
             "BMNvSHmWUkdonkG2oFwwQKxHUdrYQhUXqxLaSRX9wjMGfLddURC".try_into().unwrap(),
@@ -162,9 +168,9 @@ mod test {
             "sigw1WNdYweqz1c7zKcvZFHQ18swSv4HBWje5quRmixxitPk7z8jtY63qXgKLPVfTM6XGxExPatBWJP44Bknyu3hDHDKJZgY".try_into().unwrap()
         );
 
-        let plan = validate_operation(&mut host, &mut context, &opg)?;
-        assert_eq!(plan.total_fees, 417u32.into());
-        assert_eq!(plan.last_counter, 2336132u32.into());
+        let op = validate_operation(&mut host, &mut context, opg)?;
+        assert_eq!(op.total_fees, 417u32.into());
+        assert_eq!(op.last_counter, 2336132u32.into());
 
         Ok(())    
     }

@@ -1,0 +1,11 @@
+[workspace]
+members = [
+  "tez_kernel",
+  "genesis_kernel",
+  "dac_coder"
+]
+
+[profile.release]
+lto = true
+opt-level = 'z'
+panic = "abort"
