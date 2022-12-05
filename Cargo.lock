@@ -369,7 +369,7 @@ dependencies = [
 [[package]]
 name = "debug"
 version = "0.1.0"
-source = "git+https://gitlab.com/m-kus/kernel?branch=imp/installer-rlib#5bf455a76a830c4b1b03e2a0dcc9aeaea5e960c0"
+source = "git+https://gitlab.com/tezos/kernel#7783269254baac5c26374e3cf3adc2b5a6a5f8d5"
 dependencies = [
  "host",
 ]
@@ -593,7 +593,7 @@ dependencies = [
 [[package]]
 name = "host"
 version = "0.1.0"
-source = "git+https://gitlab.com/m-kus/kernel?branch=imp/installer-rlib#5bf455a76a830c4b1b03e2a0dcc9aeaea5e960c0"
+source = "git+https://gitlab.com/tezos/kernel#7783269254baac5c26374e3cf3adc2b5a6a5f8d5"
 
 [[package]]
 name = "iana-time-zone"
@@ -769,7 +769,7 @@ checksum = "0ee1c47aaa256ecabcaea351eae4a9b01ef39ed810004e298d2511ed284b1525"
 [[package]]
 name = "mock_runtime"
 version = "0.1.0"
-source = "git+https://gitlab.com/m-kus/kernel?branch=imp/installer-rlib#5bf455a76a830c4b1b03e2a0dcc9aeaea5e960c0"
+source = "git+https://gitlab.com/tezos/kernel#7783269254baac5c26374e3cf3adc2b5a6a5f8d5"
 dependencies = [
  "crypto",
  "host",
@@ -1305,7 +1305,7 @@ dependencies = [
 [[package]]
 name = "tezos_rollup_encoding"
 version = "0.1.0"
-source = "git+https://gitlab.com/m-kus/kernel?branch=imp/installer-rlib#5bf455a76a830c4b1b03e2a0dcc9aeaea5e960c0"
+source = "git+https://gitlab.com/tezos/kernel#7783269254baac5c26374e3cf3adc2b5a6a5f8d5"
 dependencies = [
  "host",
  "nom",

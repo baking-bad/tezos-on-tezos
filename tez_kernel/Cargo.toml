@@ -7,8 +7,8 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-host = { git = "https://gitlab.com/m-kus/kernel", branch = "imp/installer-rlib" }
-debug = { git = "https://gitlab.com/m-kus/kernel", branch = "imp/installer-rlib", default-features = false }
+host = { git = "https://gitlab.com/tezos/kernel" }
+debug = { git = "https://gitlab.com/tezos/kernel", default-features = false }
 tezos_operation = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "fix/deps-disable-default-features", package = "tezos-operation" }
 tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "fix/deps-disable-default-features", package = "tezos-core" }
 tezos_rpc = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "fix/deps-disable-default-features", package = "tezos-rpc", default-features = false }
@@ -17,4 +17,4 @@ num-traits = "*"
 serde_json = "*"
 
 [dev-dependencies]
-mock_runtime = { git = "https://gitlab.com/m-kus/kernel", branch = "imp/installer-rlib" }
+mock_runtime = { git = "https://gitlab.com/tezos/kernel" }

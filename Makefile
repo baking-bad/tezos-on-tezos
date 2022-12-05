@@ -14,6 +14,7 @@ install-wasm-strip:
 
 install:
 	$(MAKE) install-wasm-opt
+	$(MAKE) install-wasm-strip
 
 build-tez-kernel:
 	cargo build --package tez_kernel --target wasm32-unknown-unknown --release
@@ -39,6 +40,3 @@ test:
 
 repl:
 	./bin/octez-wasm-repl ./bin/genesis_kernel.wasm --inputs ./test/input.json
-
-pages:
-	cargo run --package="genesis_kernel" --bin="page-gen" --features="page-gen std" -- --help
