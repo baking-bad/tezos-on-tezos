@@ -1,0 +1,159 @@
+use std::vec;
+use host::runtime::Runtime;
+use num_traits::ToPrimitive;
+use tezos_operation::operations::Transaction;
+use tezos_rpc::models::operation::{
+    operation_result::operations::transaction::TransactionOperationResult,
+    operation_result::OperationResultStatus,
+    operation_contents_and_result::transaction::{
+        Transaction as TransactionReceipt,
+        TransactionMetadata
+    }
+};
+use tezos_core::types::mutez::Mutez;
+
+use crate::error::Result;
+use crate::context::EphemeralContext;
+use crate::executor::{
+    balance_update::BalanceUpdates,
+    runtime_error::{RuntimeErrors, ALLOCATION_FEE}
+};
+
+const DEFAULT_RESULT: TransactionOperationResult = TransactionOperationResult {
+    status: OperationResultStatus::Skipped,
+    storage: None, 
+    big_map_diff: None, 
+    balance_updates: None, 
+    originated_contracts: None, 
+    consumed_gas: None, 
+    consumed_milligas: None, 
+    storage_size: None, 
+    paid_storage_size_diff: None, 
+    allocated_destination_contract: None, 
+    lazy_storage_diff: None,
+    errors: None
+};
+
+pub fn skip_transaction(transaction: Transaction) -> TransactionReceipt {
+    TransactionReceipt {
+        metadata: Some(TransactionMetadata {
+            operation_result: DEFAULT_RESULT,
+            internal_operation_results: vec![],
+            balance_updates: vec![]
+        }),
+        ..transaction.into()
+    }
+}
+
+pub fn execute_transaction(host: &mut impl Runtime, context: &mut EphemeralContext, transaction: &Transaction) -> Result<TransactionReceipt> {
+    if transaction.parameters.is_some() {
+        todo!("Support smart contract calls");
+    }
+
+    let (mut dst_balance, dst_new) = match context.get_balance(host, &transaction.destination)? {
+        Some(balance) => (balance, false),
+        None => (0u32.into(), true)
+    };
+    let mut src_balance = context
+        .get_balance(host, &transaction.source)?
+        .expect("Checked by validator");
+
+    let mut errors = RuntimeErrors::new();
+    let mut balance_updates = BalanceUpdates::new();
+    let charges =  BalanceUpdates::fee(&transaction.source, &transaction.fee);
+
+    macro_rules! make_receipt {
+        ($a: expr) => {
+            TransactionReceipt {
+                metadata: Some(TransactionMetadata {
+                    operation_result: TransactionOperationResult {
+                        status: $a, 
+                        balance_updates: balance_updates.into(),
+                        consumed_milligas: Some("0".into()), 
+                        allocated_destination_contract: Some(dst_new),
+                        errors: errors.into(),
+                        ..DEFAULT_RESULT
+                    },
+                    internal_operation_results: vec![],
+                    balance_updates: charges.unwrap()
+                }),
+                ..transaction.clone().into()
+            }
+        }
+    }
+
+    if src_balance.to_i64().unwrap() < transaction.amount.to_i64().unwrap() {
+        errors.balance_too_low(&transaction.amount, &src_balance, &transaction.source);
+        return Ok(make_receipt!(OperationResultStatus::Failed));
+    } else {
+        src_balance -= transaction.amount;
+        dst_balance += transaction.amount;
+        balance_updates.spend(&transaction.source, &transaction.amount);
+        balance_updates.topup(&transaction.destination, &transaction.amount);
+    }
+
+    if dst_new {
+        let allocation_fee: Mutez = ALLOCATION_FEE.into();
+        if src_balance.to_i64().unwrap() < allocation_fee.to_i64().unwrap() {
+            errors.cannot_pay_storage_fee(&src_balance, &transaction.source);
+            return Ok(make_receipt!(OperationResultStatus::Failed));
+        } else {
+            src_balance -= allocation_fee;
+            context.set_balance(&transaction.source, &src_balance)?;
+            balance_updates.spend(&transaction.source, &allocation_fee);
+        }
+    }
+
+    context.set_balance(&transaction.source, &src_balance)?;
+    context.set_balance(&transaction.destination, &dst_balance)?;
+    Ok(make_receipt!(OperationResultStatus::Applied))
+}
+
+#[cfg(test)]
+mod test {
+    use crate::context::EphemeralContext;
+    use crate::error::Result;
+    use mock_runtime::host::MockHost;
+    use tezos_operation::{
+        operations::Transaction
+    };
+    use tezos_core::types::{
+        encoded::{ImplicitAddress, Address},
+        mutez::Mutez,
+        number::Nat
+    };
+
+    use super::execute_transaction;
+
+    #[test]
+    fn test_transaction_applied() -> Result<()> {
+        let mut host = MockHost::default();
+        let mut context = EphemeralContext::new();
+
+        let source = ImplicitAddress::try_from("tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU").unwrap();
+        let destination = ImplicitAddress::try_from("tz1NEgotHhj4fkm8AcwquQqQBrQsAMRUg86c").unwrap();
+
+        context.set_balance(&source, &Mutez::from(1000000000u32))?;
+        context.set_counter(&source, &Nat::try_from("100000").unwrap())?;
+
+        let transaction = Transaction {
+            source: source.clone(),
+            counter: 200000u32.into(),
+            fee: 1000u32.into(),
+            gas_limit: 0u32.into(),
+            storage_limit: 0u32.into(),
+            amount: 500000000u32.into(),
+            destination: Address::Implicit(destination.clone()),
+            parameters: None
+        };
+
+        let receipt = execute_transaction(&mut host, &mut context, &transaction);
+        assert!(receipt.is_ok());
+        assert!(receipt.unwrap().metadata.is_some());
+
+        assert_eq!(context.get_balance(&host, &source)?.unwrap(), Mutez::from(1000000000u32 - 1000u32 - 500000000u32));
+        assert_eq!(context.get_balance(&host, &destination)?.unwrap(), Mutez::from(500000000u32));
+        
+        Ok(())
+    }
+}

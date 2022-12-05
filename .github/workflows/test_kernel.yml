@@ -1,0 +1,51 @@
+name: Test
+
+on:
+  pull_request:
+
+jobs:
+  test:
+    name: Run kernel tests and build wasm binary
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: rustfmt, clippy
+          target: wasm32-unknown-unknown
+
+      - name: Run tez_kernel tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --manifest-path ./tez_kernel/Cargo.toml
+
+      - name: Run genesis_kernel tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --manifest-path ./tez_kernel/Cargo.toml --lib test
+
+      - name: Build tez_kernel
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --manifest-path ./tez_kernel/Cargo.toml --target wasm32-unknown-unknown --release
+
+      - name: Build genesis_kernel
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --manifest-path ./genesis_kernel/Cargo.toml --target wasm32-unknown-unknown --release
+
+      - name: Build dac_coder
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --manifest-path ./dac_coder/Cargo.toml --release
