@@ -13,6 +13,13 @@ Aside from the pure research interest there might be long-term advantages of suc
 * Chain-native tokenomics
 * Potentially smaller operation latency
 
+If this project shows good results, we will consider to relocate or partially implement our [DeFi products](https://bakingbad.dev/) in an app-specific rollup.
+
+Also in the scope of our developing tools and indexing stack we want to better understand:
+* Which features should we add to [BCD](https://better-call.dev) for SCORU devs
+* How to run e2e rollup tests using [Pytezos](https://pytezos.org)
+* How to index SCORU (and EVM rollup in particular) for enabling [DipDup](https://dipdup.io) and [TzKT](https://tzkt.io) with the rollup chain data
+
 ## Roadmap
 
 - [x] MVP Tezos-compatible kernel supporting plain transactions and public key reveals
@@ -49,4 +56,4 @@ Non-supported Michelson features (at least in the first iteration):
 
 * [Tezos SCORU](https://gitlab.com/tezos/tezos) & [Kernel SDK](https://gitlab.com/tezos/kernel) — Nomadic Labs and TriliTech teams
 * [Tezos Rust SDK](https://github.com/airgap-it/tezos-rust-sdk) — Papers team
-* Thanks to @emturner and @romarq for accepting my PRs :)
+* Thanks to [@emturner](https://github.com/emturner) and [@romarq](https://github.com/romarq) for accepting my PRs :)
