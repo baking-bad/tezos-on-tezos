@@ -38,5 +38,8 @@ build:
 test:
 	RUST_BACKTRACE=1 cargo test --lib test -- --nocapture
 
-repl:
+run-genesis:
 	./bin/octez-wasm-repl ./bin/genesis_kernel.wasm --inputs ./test/input.json
+
+run-tez-kernel:
+	./bin/octez-wasm-repl ./bin/tez_kernel.wasm --inputs ./test/input.json
