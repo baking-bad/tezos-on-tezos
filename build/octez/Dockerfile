@@ -14,7 +14,7 @@ ARG OCTEZ_VERSION=master
 COPY build-tezos-executables.sh /build-tezos-executables.sh
 RUN /build-tezos-executables.sh ${OCTEZ_VERSION}
 
-FROM alpine:3.12 as artifact
-COPY --from=builder /tezos/octez-wasm-repl-alpha ./octez-wasm-repl
-COPY --from=builder /tezos/octez-sc-rollup-node-alpha ./octez-sc-rollup-node
-COPY --from=builder /tezos/octez-client-alpha ./octez-sc-rollup-node
+FROM alpine:3.12 as target
+COPY --from=builder /tezos/octez-wasm-repl-alpha /usr/bin/octez-wasm-repl
+COPY --from=builder /tezos/octez-sc-rollup-node-alpha /usr/bin/octez-sc-rollup-node
+COPY --from=builder /tezos/octez-client-alpha /usr/bin/octez-client
