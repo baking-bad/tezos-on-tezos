@@ -8,6 +8,7 @@ use tezos_encoding::enc::BinWriter;
 use tezos_rollup_encoding::dac::{Page, V0ContentPage, V0HashPage, MAX_PAGE_SIZE};
 use tezos_core::internal::crypto::Crypto;
 
+const ROOT_HASH_FILE: &'static str = "root_hash.bin";
 const PREIMAGE_HASH_SIZE: usize = 33;
 const MAX_DAC_LEVELS: usize = 4;
 const MAX_FILE_SIZE: u64 = 10_048_576;
@@ -29,6 +30,13 @@ fn write_page(page: &Page, output_path: &PathBuf) -> [u8; PREIMAGE_HASH_SIZE] {
     let mut output_file = File::create(path).expect("Failed to open file for writing");
     output_file.write(data.as_slice()).expect("Failed to write file");
     hash
+}
+
+fn write_root(root_hash: &[u8; PREIMAGE_HASH_SIZE], output_path: &PathBuf) -> String {
+    let path = output_path.join(ROOT_HASH_FILE);
+    let mut output_file = File::create(path).expect("Failed to open file for writing");
+    output_file.write(root_hash).expect("Failed to write file");
+    hex::encode(root_hash)
 }
 
 fn ensure_dir_exists(output_path: &PathBuf) {
@@ -70,7 +78,7 @@ fn hash_loop(level: usize, pages: &Vec<Page>, hashes: &mut Vec<[u8; PREIMAGE_HAS
     }
 
     if hashes.len() == 1 {
-        hex::encode(hashes[0])
+        write_root(&hashes[0], output_path)   
     } else {
         let hashes_pages: Vec<Page> = V0HashPage::new_pages(hashes.as_slice())
             .map(|c| Page::V0HashPage(c))

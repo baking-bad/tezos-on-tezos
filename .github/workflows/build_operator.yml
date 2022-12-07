@@ -1,0 +1,27 @@
+name: Operator
+
+on:
+  pull_request:
+
+jobs:
+  test:
+    name: Run tests and build operator image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          components: rustfmt, clippy
+          target: wasm32-unknown-unknown
+
+      - name: Run tests
+        run: make test
+
+      - name: Build binaries
+        run: make build

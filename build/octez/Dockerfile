@@ -11,8 +11,10 @@ RUN /build-libusb-and-hidapi.sh
 COPY build-rust.sh /build-rust.sh
 RUN /build-rust.sh
 ARG OCTEZ_VERSION=master
-COPY build-tezos-unreleased.sh /build-tezos-unreleased.sh
-RUN /build-tezos-unreleased.sh ${OCTEZ_VERSION}
+COPY build-tezos-executables.sh /build-tezos-executables.sh
+RUN /build-tezos-executables.sh ${OCTEZ_VERSION}
 
 FROM alpine:3.12 as artifact
 COPY --from=builder /tezos/octez-wasm-repl-alpha ./octez-wasm-repl
+COPY --from=builder /tezos/octez-sc-rollup-node-alpha ./octez-sc-rollup-node
+COPY --from=builder /tezos/octez-client-alpha ./octez-sc-rollup-node
