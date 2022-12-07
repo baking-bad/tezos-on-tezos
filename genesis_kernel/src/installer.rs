@@ -19,7 +19,7 @@ const KERNEL_PATH: &[u8] = b"/kernel/boot.wasm";
 const PREPARE_KERNEL_PATH: &[u8] = b"/installer/kernel/boot.wasm";
 
 #[cfg(not(test))]
-mod host {
+pub mod host {
     #[link(wasm_import_module = "smart_rollup_core")]
     extern "C" {
         pub fn store_write(
@@ -49,10 +49,10 @@ mod host {
 fn fetch_page<'a>(hash: &[u8; PREIMAGE_HASH_SIZE], buffer: &'a mut [u8]) -> (u8, &'a mut [u8], &'a mut [u8]) {
     let page_size = unsafe {
         host::reveal_preimage(
-        hash.as_ptr(), 
-        hash.len(),
-        buffer.as_mut_ptr(),
-        buffer.len()
+            hash.as_ptr(), 
+            hash.len(),
+            buffer.as_mut_ptr(),
+            buffer.len()
         )
     };
     if page_size < 5 {  // tag + prefix
@@ -78,11 +78,11 @@ fn write_content(kernel_size: &mut usize, content: &[u8]) {
     use core::ops::AddAssign;
     let size = unsafe {
         host::store_write(
-        PREPARE_KERNEL_PATH.as_ptr(),
-        PREPARE_KERNEL_PATH.len(),
-        *kernel_size,
-        content.as_ptr(),
-        content.len() 
+            PREPARE_KERNEL_PATH.as_ptr(),
+            PREPARE_KERNEL_PATH.len(),
+            *kernel_size,
+            content.as_ptr(),
+            content.len() 
         )
     };
     if size < 0 {
@@ -126,7 +126,7 @@ pub fn install_kernel(root_hash: &[u8; PREIMAGE_HASH_SIZE]) {
 }
 
 #[cfg(test)]
-mod host {
+pub mod host {
     use super::PREIMAGE_HASH_SIZE;
     use once_cell::sync::Lazy;
     use core::slice::{from_raw_parts, from_raw_parts_mut};

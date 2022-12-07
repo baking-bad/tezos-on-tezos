@@ -369,7 +369,7 @@ dependencies = [
 [[package]]
 name = "debug"
 version = "0.1.0"
-source = "git+https://gitlab.com/tezos/kernel#7783269254baac5c26374e3cf3adc2b5a6a5f8d5"
+source = "git+https://gitlab.com/tezos/kernel#36c45298a88cf707f5b87b4ac0a87ffa08793d6c"
 dependencies = [
  "host",
 ]
@@ -518,6 +518,8 @@ dependencies = [
  "host",
  "mock_runtime",
  "once_cell",
+ "tez_kernel",
+ "tezos-core",
  "tezos_encoding",
  "tezos_rollup_encoding",
 ]
@@ -593,7 +595,7 @@ dependencies = [
 [[package]]
 name = "host"
 version = "0.1.0"
-source = "git+https://gitlab.com/tezos/kernel#7783269254baac5c26374e3cf3adc2b5a6a5f8d5"
+source = "git+https://gitlab.com/tezos/kernel#36c45298a88cf707f5b87b4ac0a87ffa08793d6c"
 
 [[package]]
 name = "iana-time-zone"
@@ -769,7 +771,7 @@ checksum = "0ee1c47aaa256ecabcaea351eae4a9b01ef39ed810004e298d2511ed284b1525"
 [[package]]
 name = "mock_runtime"
 version = "0.1.0"
-source = "git+https://gitlab.com/tezos/kernel#7783269254baac5c26374e3cf3adc2b5a6a5f8d5"
+source = "git+https://gitlab.com/tezos/kernel#36c45298a88cf707f5b87b4ac0a87ffa08793d6c"
 dependencies = [
  "crypto",
  "host",
@@ -1034,9 +1036,9 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "0.36.4"
+version = "0.36.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb93e85278e08bb5788653183213d3a60fc242b10cb9be96586f5a73dcb67c23"
+checksum = "a3807b5d10909833d3e9acd1eb5fb988f79376ff10fce42937de71a449c4c588"
 dependencies = [
  "bitflags",
  "errno",
@@ -1305,7 +1307,7 @@ dependencies = [
 [[package]]
 name = "tezos_rollup_encoding"
 version = "0.1.0"
-source = "git+https://gitlab.com/tezos/kernel#7783269254baac5c26374e3cf3adc2b5a6a5f8d5"
+source = "git+https://gitlab.com/tezos/kernel#36c45298a88cf707f5b87b4ac0a87ffa08793d6c"
 dependencies = [
  "host",
  "nom",
