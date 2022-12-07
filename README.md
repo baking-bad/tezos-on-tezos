@@ -23,17 +23,18 @@ Also in the scope of our developing tools and indexing stack we want to better u
 ## Roadmap
 
 - [x] MVP Tezos-compatible kernel supporting plain transactions and public key reveals
-- [ ] Genesis kernel that installs Tez kernel and initializes seed accounts
+- [x] Genesis kernel that installs Tez kernel and initializes seed accounts
 - [x] DAC encoding tool
 - [ ] Docker image with SCORU node, installer, and encoded Tez kernel
 - [ ] Run Tez rollup in Mondaynet
-- [ ] Pytezos bindings
-- [ ] E2E integration tests
-- [ ] Tezos RPC facade node with indexer-sufficient endpoint set + inject
-- [ ] Operation simulation (`run_code` helper)
-- [ ] Support originations
-- [ ] Support a minimal necessary subset of Michelson opcodes
-- [ ] Rollup operation batcher (using reveal channel)
+- [ ] E2E integration tests with Pytezos
+- [ ] Tezos RPC facade node with wallet sufficient endpoint set
+- [ ] Add indexer-sufficient endpoints
+- [ ] Support origination operation kind
+- [ ] Implement a minimal subset of Michelson opcodes
+- [ ] Support big maps
+- [ ] Support internal transactions
+- [ ] Rollup node RPC plugin
 
 ## Limitations
 
