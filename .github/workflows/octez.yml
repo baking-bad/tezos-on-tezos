@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    name: Build WASM REPL and rollup node binaries
+    name: Build Octez static binaries
     runs-on: ubuntu-latest
     env:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: true
@@ -25,16 +25,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Image tags & labels
+      - name: Tags & labels
         id: meta
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_BASE }}/octez
 
-      - name: Image build & push
+      - name: Build & push
         uses: docker/build-push-action@v2
         with:
-          context: build/octez
+          context: .
           file: build/octez/Dockerfile
           push: true
           cache-from: type=gha
