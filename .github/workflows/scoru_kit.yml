@@ -1,11 +1,11 @@
-name: Octez
+name: SCORU Kit
 
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    name: Build Octez static binaries
+    name: Build Octez static binaries & install WASM toolchain
     runs-on: ubuntu-latest
     env:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: true
@@ -29,13 +29,13 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_BASE }}/octez
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_BASE }}/scoru-kit
 
       - name: Build & push
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: build/octez/Dockerfile
+          file: build/scoru-kit/Dockerfile
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max

@@ -1,11 +1,11 @@
-name: Operator
+name: Test
 
 on:
   pull_request:
 
 jobs:
   test:
-    name: Run tests and build operator image
+    name: Run unit tests & try to build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
