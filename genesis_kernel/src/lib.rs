@@ -1,9 +1,8 @@
 #![cfg_attr(all(not(test), not(feature = "std")), no_std)]
-#![allow(unused)]
 
 pub mod installer;
 
-use installer::{host, install_kernel};
+use installer::host;
 
 const SEED_BALANCE_KEYS: [&[u8; 63]; 8] = [
     b"/context/contracts/tz1grSQDByRpnVs7sPtaprNZRp531ZKz6Jmm/balance",  // Pytezos built-in key
@@ -16,7 +15,6 @@ const SEED_BALANCE_KEYS: [&[u8; 63]; 8] = [
     b"/context/contracts/tz1ddb9NMYHZi5UzPdzTZMYQQZoMub195zgv/balance",  // Bootstrap 5 from Tezos sandbox
 ];
 const SEED_BALANCE_VALUE: &[u8] = b"\x80\xd0\xac\xf3\x0e";  // 4,000,000,000 mutez
-const KERNEL_ROOT_HASH: &[u8; 33] = b"$__KERNEL_ROOT_HASH_PLACEHOLDER__";
 
 fn seed_accounts(keys: &[&[u8; 63]], balance: &[u8]) {
     for path in keys.iter() {
@@ -37,7 +35,8 @@ fn seed_accounts(keys: &[&[u8; 63]], balance: &[u8]) {
 #[cfg(target_arch = "wasm32")]
 #[no_mangle]
 pub extern "C" fn kernel_run() {
-    install_kernel(KERNEL_ROOT_HASH);
+    use installer::install_kernel;
+    install_kernel(include_bytes!("../../.dac/root_hash.bin"));
     seed_accounts(SEED_BALANCE_KEYS.as_slice(), SEED_BALANCE_VALUE);
 }
 

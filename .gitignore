@@ -1,4 +1,5 @@
-/bin
-/target
+.bin
+.dac
+target
 tez_kernel/target
 boot_kernel/target

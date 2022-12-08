@@ -1,4 +1,4 @@
-name: Build
+name: Octez
 
 on:
   workflow_dispatch:
@@ -25,17 +25,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: API image tags & labels
+      - name: Image tags & labels
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_BASE }}/octez-wasm-repl
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_BASE }}/octez
 
-      - name: API image build & push
+      - name: Image build & push
         uses: docker/build-push-action@v2
         with:
-          context: build/octez-wasm-repl
-          file: build/octez-wasm-repl/Dockerfile
+          context: build/octez
+          file: build/octez/Dockerfile
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
