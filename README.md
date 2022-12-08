@@ -25,9 +25,9 @@ Also in the scope of our developing tools and indexing stack we want to better u
 - [x] MVP Tezos-compatible kernel supporting plain transactions and public key reveals
 - [x] Genesis kernel that installs Tez kernel and initializes seed accounts
 - [x] DAC encoding tool
-- [ ] Docker image with SCORU node, installer, and encoded Tez kernel
-- [ ] Run Tez rollup in Mondaynet
-- [ ] E2E integration tests with Pytezos
+- [x] Docker image with SCORU node, installer, and encoded Tez kernel
+- [ ] Run TZ rollup in Mondaynet
+- [ ] Setup scripts and integration tests
 - [ ] Tezos RPC facade node with wallet sufficient endpoint set
 - [ ] Add indexer-sufficient endpoints
 - [ ] Support origination operation kind
