@@ -2,7 +2,6 @@ FROM ghcr.io/baking-bad/octez:master AS octez
 
 FROM rust AS builder
 RUN rustup target add wasm32-unknown-unknown
-
 WORKDIR /build
 RUN mkdir .bin \
         && cd .bin \

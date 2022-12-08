@@ -3,7 +3,7 @@
 OCTEZ_VERSION=master
 
 build-octez:
-	DOCKER_BUILDKIT=1 docker build -t ghcr.io/baking-bad/octez:$(OCTEZ_VERSION) --build-arg OCTEZ_VERSION=$(OCTEZ_VERSION) ./build/octez
+	OCTEZ_VERSION=$(OCTEZ_VERSION) bash ./build/octez/build-octez.sh
 
 build-operator:
 	DOCKER_BUILDKIT=1 docker build -t ghcr.io/baking-bad/tzrollup-operator --file ./build/operator/Dockerfile .
@@ -43,4 +43,4 @@ build:
 	$(MAKE) build-genesis-kernel
 
 test:
-	RUST_BACKTRACE=1 cargo test --lib test -- --nocapture
+	RUSTC_BOOTSTRAP=1 RUST_BACKTRACE=1 cargo test -Z sparse-registry --lib test -- --nocapture
