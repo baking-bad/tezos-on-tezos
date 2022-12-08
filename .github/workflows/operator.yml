@@ -1,8 +1,7 @@
-name: TZ Rollup
+name: Operator
 
 on:
-  push:
-    branch: master
+  workflow_dispatch:
 
 jobs:
   build:
@@ -30,13 +29,13 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_BASE }}/tez-rollup
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_BASE }}/tz-rollup-operator
 
       - name: Build & push
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: build/tez-rollup/Dockerfile
+          file: build/Dockerfile
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max

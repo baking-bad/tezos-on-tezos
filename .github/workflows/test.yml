@@ -23,8 +23,8 @@ jobs:
       - name: Run tests
         run: make test
 
-      - name: Install build tools
+      - name: Install WASM tools
         run: make install
 
-      - name: Build binaries
+      - name: Build kernels
         run: make build

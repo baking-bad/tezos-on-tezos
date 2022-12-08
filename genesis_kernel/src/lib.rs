@@ -36,7 +36,7 @@ fn seed_accounts(keys: &[&[u8; 63]], balance: &[u8]) {
 #[no_mangle]
 pub extern "C" fn kernel_run() {
     use installer::install_kernel;
-    install_kernel(include_bytes!("../../.dac/root_hash.bin"));
+    install_kernel(include_bytes!("../../.bin/wasm_2_0_0/root_hash.bin"));
     seed_accounts(SEED_BALANCE_KEYS.as_slice(), SEED_BALANCE_VALUE);
 }
 

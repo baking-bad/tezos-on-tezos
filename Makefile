@@ -1,16 +1,5 @@
 .PHONY: build
 
-build-scoru-kit:
-	DOCKER_BUILDKIT=1 docker build -t ghcr.io/baking-bad/scoru-kit --file ./build/scoru-kit/Dockerfile .
-
-build-tez-rollup:
-	DOCKER_BUILDKIT=1 docker build -t ghcr.io/baking-bad/tez-rollup --file ./build/tez-rollup/Dockerfile .
-
-install-scoru-kit:
-	mkdir .bin || true 
-	docker pull ghcr.io/baking-bad/scoru-kit
-	bash ./build/scoru-kit/get-artifacts.sh
-
 install:
 	cd ~/.cargo/bin \
 		&& wget -c https://github.com/WebAssembly/binaryen/releases/download/version_111/binaryen-version_111-x86_64-linux.tar.gz -O - | tar -xzv binaryen-version_111/bin/wasm-opt --strip-components 2 \
@@ -27,11 +16,11 @@ build-genesis-kernel:
 	wasm-strip ./.bin/genesis_kernel.wasm
 
 build-dac-coder:
-	RUSTC_BOOTSTRAP=1 cargo build --package dac_coder --release -Z sparse-registry
+	RUSTC_BOOTSTRAP=1 cargo build --package dac_coder --release -Z sparse-registry 
 	cp ./target/release/dac-coder ./.bin/dac-coder
 
 pages:
-	./.bin/dac-coder -o ./.dac ./.bin/tez_kernel.wasm
+	./.bin/dac-coder -o ./.bin/wasm_2_0_0 ./.bin/tez_kernel.wasm
 
 build:
 	mkdir .bin || true
@@ -42,3 +31,9 @@ build:
 
 test:
 	RUSTC_BOOTSTRAP=1 RUST_BACKTRACE=1 cargo test -Z sparse-registry --lib test -- --nocapture
+
+image:
+	DOCKER_BUILDKIT=1 docker build -t ghcr.io/baking-bad/tz-rollup-operator --file ./build/Dockerfile.local .
+
+operator:
+	docker run --rm -it --entrypoint=/bin/sh ghcr.io/baking-bad/tz-rollup-operator

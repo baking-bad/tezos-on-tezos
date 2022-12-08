@@ -1,0 +1,24 @@
+FROM tezos/tezos:master_8b50837b_20221204215952 AS monday
+
+FROM alpine:3.15 AS runtime
+RUN apk --no-cache add \
+    binutils \
+    gcc \
+    gmp \
+    libgmpxx \
+    hidapi \
+    libc-dev \
+    libev \
+    libffi \
+    sudo \
+    wget
+RUN wget "https://raw.githubusercontent.com/zcash/zcash/master/zcutil/fetch-params.sh" \
+  && export OSTYPE=linux \
+  && sed '/SAPLING_SPROUT_GROTH16_NAME/d; /progress/d; /retry-connrefused/d' fetch-params.sh | sh \
+  && rm fetch-params.sh
+COPY --from=monday /usr/local/bin/octez-sc-rollup-node-alpha /usr/bin/octez-sc-rollup-node
+COPY --from=monday /usr/local/bin/octez-client /usr/bin/octez-client
+COPY ./build/originate.sh .
+COPY ./.bin/wasm_2_0_0/ /rollup/wasm_2_0_0/
+COPY ./.bin/genesis_kernel.wasm /rollup/kernel.wasm
+ENV KERNEL $(xxd -p /rollup/kernel.wasm | tr -d '\n')
