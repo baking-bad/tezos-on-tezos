@@ -26,8 +26,8 @@ Also in the scope of our developing tools and indexing stack we want to better u
 - [x] Genesis kernel that installs Tez kernel and initializes seed accounts
 - [x] DAC encoding tool
 - [x] Docker image with SCORU node, installer, and encoded Tez kernel
-- [ ] Run TZ rollup in Mondaynet
-- [ ] Setup scripts and integration tests
+- [x] Run TZ rollup in Mondaynet, write setup scripts
+- [ ] Interact with the kernel via inbox, create E2E tests
 - [ ] Tezos RPC facade node with wallet sufficient endpoint set
 - [ ] Add indexer-sufficient endpoints
 - [ ] Support origination operation kind
@@ -52,6 +52,46 @@ Non-supported Michelson features (at least in the first iteration):
 * Sapling
 * Tickets
 * Internal originations
+
+## Usage
+
+Install Rust toolchain:
+```
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+Add Wasm32 target:
+```
+rustup target add wasm32-unknown-unknown
+```
+
+Install build dependencies:
+```
+make install
+```
+
+Build kernel and installer:
+```
+make build
+```
+
+Create operator image:
+```
+make image
+```
+
+Run operator in interactive mode:
+```
+make operator
+./entrypoint generate-keypair
+./entrypoint originate-rollup
+exit
+```
+
+Now you can run the operator node in daemon mode
+```
+make run
+```
 
 ## Credits
 

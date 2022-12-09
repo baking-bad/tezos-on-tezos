@@ -1,4 +1,3 @@
-use hex;
 use clap::Parser;
 use std::path::PathBuf;
 use std::fs::{File, create_dir_all};
@@ -7,6 +6,7 @@ use once_cell::sync::Lazy;
 use tezos_encoding::enc::BinWriter;
 use tezos_rollup_encoding::dac::{Page, V0ContentPage, V0HashPage, MAX_PAGE_SIZE};
 use tezos_core::internal::crypto::Crypto;
+use tezos_core::types::encoded::{ScRollupRevealHash, Encoded};
 
 const ROOT_HASH_FILE: &'static str = "root_hash.bin";
 const PREIMAGE_HASH_SIZE: usize = 33;
@@ -26,7 +26,9 @@ fn write_page(page: &Page, output_path: &PathBuf) -> [u8; PREIMAGE_HASH_SIZE] {
     page.bin_write(&mut data).expect("Failed to serialize content page");
 
     let hash = hash_digest(data.as_slice());
-    let path = output_path.join(hex::encode(hash));
+    let filename = ScRollupRevealHash::from_bytes(&hash[1..]).unwrap();
+    let path = output_path.join(filename.into_string());
+
     let mut output_file = File::create(path).expect("Failed to open file for writing");
     output_file.write(data.as_slice()).expect("Failed to write file");
     hash
@@ -36,7 +38,7 @@ fn write_root(root_hash: &[u8; PREIMAGE_HASH_SIZE], output_path: &PathBuf) -> St
     let path = output_path.join(ROOT_HASH_FILE);
     let mut output_file = File::create(path).expect("Failed to open file for writing");
     output_file.write(root_hash).expect("Failed to write file");
-    hex::encode(root_hash)
+    ScRollupRevealHash::from_bytes(&root_hash[1..]).unwrap().into_string()
 }
 
 fn ensure_dir_exists(output_path: &PathBuf) {

@@ -359,7 +359,6 @@ name = "dac_coder"
 version = "0.1.0"
 dependencies = [
  "clap",
- "hex",
  "once_cell",
  "tezos-core",
  "tezos_encoding",
@@ -1213,7 +1212,7 @@ dependencies = [
 [[package]]
 name = "tezos-core"
 version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=fix/deps-disable-default-features#e1641cd91864dbfd23889afae53d9aa22122f514"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=feat/dal-reveal-hash-encoding#d94d3fb17878e2e37812d614a77bf780053d29ea"
 dependencies = [
  "blake2",
  "bs58",
@@ -1231,7 +1230,7 @@ dependencies = [
 [[package]]
 name = "tezos-michelson"
 version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=fix/deps-disable-default-features#e1641cd91864dbfd23889afae53d9aa22122f514"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=feat/dal-reveal-hash-encoding#d94d3fb17878e2e37812d614a77bf780053d29ea"
 dependencies = [
  "chrono",
  "derive_more",
@@ -1247,7 +1246,7 @@ dependencies = [
 [[package]]
 name = "tezos-operation"
 version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=fix/deps-disable-default-features#e1641cd91864dbfd23889afae53d9aa22122f514"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=feat/dal-reveal-hash-encoding#d94d3fb17878e2e37812d614a77bf780053d29ea"
 dependencies = [
  "chrono",
  "derive_more",
@@ -1261,7 +1260,7 @@ dependencies = [
 [[package]]
 name = "tezos-rpc"
 version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=fix/deps-disable-default-features#e1641cd91864dbfd23889afae53d9aa22122f514"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=feat/dal-reveal-hash-encoding#d94d3fb17878e2e37812d614a77bf780053d29ea"
 dependencies = [
  "async-trait",
  "chrono",

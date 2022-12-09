@@ -20,6 +20,7 @@ build-dac-coder:
 	cp ./target/release/dac-coder ./.bin/dac-coder
 
 pages:
+	rm -rf ./.bin/wasm_2_0_0
 	./.bin/dac-coder -o ./.bin/wasm_2_0_0 ./.bin/tez_kernel.wasm
 
 build:
@@ -36,4 +37,7 @@ image:
 	DOCKER_BUILDKIT=1 docker build -t ghcr.io/baking-bad/tz-rollup-operator --file ./build/Dockerfile.local .
 
 operator:
-	docker run --rm -it --entrypoint=/bin/sh ghcr.io/baking-bad/tz-rollup-operator
+	docker run --rm -it --entrypoint=/bin/sh -v $$PWD/.tezos-client:/root/.tezos-client/ -v rollup-node:/root/.rollup-node ghcr.io/baking-bad/tz-rollup-operator
+
+run:
+	docker run --name tz-rollup-operator -d -v $$PWD/.tezos-client:/root/.tezos-client/ -v rollup-node:/root/.rollup-node ghcr.io/baking-bad/tz-rollup-operator rollup-node

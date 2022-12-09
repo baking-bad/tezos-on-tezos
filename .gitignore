@@ -1,4 +1,5 @@
 .bin
+.tezos-client
 target
 tez_kernel/target
 boot_kernel/target
