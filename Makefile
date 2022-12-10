@@ -34,10 +34,10 @@ test:
 	RUSTC_BOOTSTRAP=1 RUST_BACKTRACE=1 cargo test -Z sparse-registry --lib test -- --nocapture
 
 image:
-	DOCKER_BUILDKIT=1 docker build -t ghcr.io/baking-bad/tz-rollup-operator --file ./build/Dockerfile.local .
+	docker build -t ghcr.io/baking-bad/tz-rollup-operator --file ./build/Dockerfile.local .
 
 operator:
-	docker run --rm -it --entrypoint=/bin/sh -v $$PWD/.tezos-client:/root/.tezos-client/ -v rollup-node:/root/.rollup-node ghcr.io/baking-bad/tz-rollup-operator
+	docker run --rm -it --entrypoint=/bin/sh -v $$PWD/.tezos-client:/root/.tezos-client/ -v rollup-node:/root/.tezos-sc-rollup-node ghcr.io/baking-bad/tz-rollup-operator
 
 run:
-	docker run --rm --name tz-rollup-operator -d -v $$PWD/.tezos-client:/root/.tezos-client/ -v rollup-node:/root/.rollup-node -p 127.0.0.1:8932:8932 ghcr.io/baking-bad/tz-rollup-operator rollup-node
+	docker run --rm --name tz-rollup-operator -d -v $$PWD/.tezos-client:/root/.tezos-client/ -v rollup-node:/root/.tezos-sc-rollup-node -p 127.0.0.1:8932:8932 ghcr.io/baking-bad/tz-rollup-operator rollup-node

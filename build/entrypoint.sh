@@ -3,10 +3,9 @@
 set -e
 
 client_dir="/root/.tezos-client"
-rollup_dir="/root/.rollup-node"
-monday="2022-12-05"
-endpoint="https://rpc.mondaynet-$monday.teztnets.xyz"
-faucet="https://faucet.mondaynet-$monday.teztnets.xyz"
+rollup_dir="/root/.tezos-sc-rollup-node"
+endpoint="https://rpc.mondaynet-$MONDAY.teztnets.xyz"
+faucet="https://faucet.mondaynet-$MONDAY.teztnets.xyz"
 command=$1
 
 launch_rollup_node() {
@@ -34,7 +33,7 @@ originate_rollup() {
         echo "ORIGINATOR_KEY is not set, using 'operator'"
         ORIGINATOR_KEY="operator"
     fi
-    if [ -f "$rollup_dir/kernel.wasm" ]; then
+    if [ ! -f "$rollup_dir/kernel.wasm" ]; then
         echo "Kernel not found"
         exit -1
     fi

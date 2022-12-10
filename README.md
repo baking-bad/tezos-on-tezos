@@ -26,8 +26,8 @@ Also in the scope of our developing tools and indexing stack we want to better u
 - [x] Genesis kernel that installs Tez kernel and initializes seed accounts
 - [x] DAC encoding tool
 - [x] Docker image with SCORU node, installer, and encoded Tez kernel
-- [x] Run TZ rollup in Mondaynet, write setup scripts
-- [ ] Interact with the kernel via inbox, create E2E tests
+- [x] Run TZ rollup in Mondaynet, prepare setup scripts
+- [ ] Interact with the kernel via inbox, E2E tests
 - [ ] Tezos RPC facade node with wallet sufficient endpoint set
 - [ ] Add indexer-sufficient endpoints
 - [ ] Support origination operation kind
