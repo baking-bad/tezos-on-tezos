@@ -12,6 +12,8 @@
 //!
 //! [reveal preimage]: host::rollup_core::reveal_preimage
 //!
+
+use core::panic;
 const PREIMAGE_HASH_SIZE: usize = 33;
 const MAX_PAGE_SIZE: usize = 4096;
 const MAX_DAC_LEVELS: usize = 4;
@@ -43,6 +45,20 @@ pub mod host {
             destination_addr: *mut u8,
             max_bytes: usize,
         ) -> i32;
+
+        pub fn write_debug(
+            src: *const u8, 
+            num_bytes: usize
+        );
+    }
+}
+
+#[macro_export]
+macro_rules! debug_str {
+    ($msg: expr) => {
+        unsafe {
+            host::write_debug(($msg as &str).as_ptr(), ($msg as &str).len());
+        }
     }
 }
 
@@ -56,12 +72,12 @@ fn fetch_page<'a>(hash: &[u8; PREIMAGE_HASH_SIZE], buffer: &'a mut [u8]) -> (u8,
         )
     };
     if page_size < 5 {  // tag + prefix
-        panic!("Failed to reveal preimage (or page too small)");
+        panic!("Fetch page: failed to reveal preimage (or page too small)");
     }
 
     let (page, rest) = buffer.split_at_mut(MAX_PAGE_SIZE);
     if page[0] > 1 {
-        panic!("Invalid page tag");
+        panic!("Fetch page: invalid tag");
     }
 
     let data_size = u32::from_be_bytes([page[1], page[2], page[3], page[4]]) as usize;
@@ -69,7 +85,7 @@ fn fetch_page<'a>(hash: &[u8; PREIMAGE_HASH_SIZE], buffer: &'a mut [u8]) -> (u8,
 
     if page_size < end_offset.try_into().unwrap() 
         || (page[0] == 1 && data_size % PREIMAGE_HASH_SIZE != 0) {
-        panic!("Invalid size prefix");
+        panic!("Fetch page: invalid size prefix");
     }
     (page[0], &mut page[5..end_offset], rest)
 }
@@ -86,7 +102,7 @@ fn write_content(kernel_size: &mut usize, content: &[u8]) {
         )
     };
     if size < 0 {
-        panic!("Failed to write content at {}", kernel_size)
+        panic!("Write content: failed");
     }
     kernel_size.add_assign(content.len());
 }
@@ -98,7 +114,7 @@ fn reveal_loop(
     kernel_size: &mut usize,
 ) {
     if level >= MAX_DAC_LEVELS {
-        panic!("DAC preimage tree contains too many levels: {}", level);
+        panic!("Reveal loop: DAC preimage tree contains too many levels");
     }
     match fetch_page(hash, rest) {
         (0, content, _) => write_content(kernel_size, content),
@@ -107,7 +123,7 @@ fn reveal_loop(
                 reveal_loop(level + 1, hash.try_into().expect("Invalid preimage hash"), rest, kernel_size);
             }
         }
-        _ => panic!("Unexpected data")
+        _ => panic!("Reveal loop: unexpected data")
     }
 }
 
@@ -123,6 +139,7 @@ pub fn install_kernel(root_hash: &[u8; PREIMAGE_HASH_SIZE]) {
             KERNEL_PATH.len()
         );
     }
+    debug_str!("Kernel was successfully installed");
 }
 
 #[cfg(test)]
@@ -178,6 +195,13 @@ pub mod host {
         slice.copy_from_slice(bytes);
 
         bytes.len().try_into().unwrap()
+    }
+
+    pub unsafe fn write_debug(
+        src: *const u8, 
+        num_bytes: usize
+    ) {
+        println!("[Debug] {:?}", from_raw_parts(src, num_bytes));
     }
 }
 

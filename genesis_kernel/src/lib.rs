@@ -30,6 +30,7 @@ fn seed_accounts(keys: &[&[u8; 63]], balance: &[u8]) {
             panic!("Failed to write value at {:?}", path);
         }
     }
+    debug_str!("Seed accounts were successfully initialized");
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -42,7 +43,10 @@ pub extern "C" fn kernel_run() {
 
 #[cfg_attr(all(target_arch = "wasm32", not(feature = "std")), panic_handler)]
 #[no_mangle]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
+fn panic(info: &core::panic::PanicInfo) -> ! {
+    if let Some(msg) = info.payload().downcast_ref::<&str>() {
+        debug_str!(msg);
+    }
     panic!()
 }
 
