@@ -3,3 +3,4 @@
 .gitignore
 .tezos-client
 target
+test

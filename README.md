@@ -80,17 +80,24 @@ Create operator image:
 make image
 ```
 
-Run operator in interactive mode:
+Generate key pair and top up your balance:
 ```
-make operator
-./entrypoint generate-keypair
-./entrypoint originate-rollup
-exit
+make generate-keypair
+```
+
+Originate rollup in Mondaynet:
+```
+make originate-rollup
 ```
 
 Now you can run the operator node in daemon mode
 ```
-make run
+make rollup-node
+```
+
+You can also run container in interactive mode:
+```
+make operator-shell
 ```
 
 ## Credits

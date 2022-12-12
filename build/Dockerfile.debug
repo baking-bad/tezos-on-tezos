@@ -1,0 +1,21 @@
+ARG BASE_IMAGE=registry.gitlab.com/tezos/opam-repository
+ARG BASE_IMAGE_VERSION=runtime-build-dependencies--414b4fd86ece71f0620ba4658823188b16406b02
+FROM ${BASE_IMAGE}:${BASE_IMAGE_VERSION} as octez
+
+ARG TEZOS_BRANCH=fix/sc-rollup-node-acl
+RUN git clone --single-branch --branch "$TEZOS_BRANCH" https://gitlab.com/m-kus/tezos.git --depth 1 \
+    && cd tezos \
+    && eval "$(opam env)" && PROFILE="static" make all \
+    && chmod +w octez-*
+
+FROM alpine:3.15 AS rollup
+COPY --from=octez /home/tezos/tezos/octez-sc-rollup-node-alpha /usr/bin/octez-sc-rollup-node
+COPY --from=octez /home/tezos/tezos/octez-sc-rollup-client-alpha /usr/bin/octez-sc-rollup-client
+COPY --from=octez /home/tezos/tezos/octez-client /usr/bin/octez-client
+COPY --from=octez /home/tezos/tezos/octez-wasm-repl-alpha /usr/bin/octez-wasm-repl
+COPY ./.bin/wasm_2_0_0/ /root/.tezos-sc-rollup-node/wasm_2_0_0/
+COPY ./.bin/genesis_kernel.wasm /root/.tezos-sc-rollup-node/kernel.wasm
+COPY ./build/entrypoint.sh .
+RUN chmod +x entrypoint.sh
+ENV MONDAY="2022-12-05"
+ENTRYPOINT [ "./entrypoint.sh" ]

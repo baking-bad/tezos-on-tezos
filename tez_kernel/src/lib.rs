@@ -15,7 +15,7 @@ use crate::context::EphemeralContext;
 use crate::validator::{parse_operation, validate_operation};
 use crate::executor::execute_operation;
 use crate::crypto::operation_hash;
-use crate::error::Result;
+use crate::error::{Result, Error};
 
 fn process_message<'a>(
     host: &mut impl Runtime, 
@@ -34,6 +34,15 @@ fn process_message<'a>(
 }
 
 pub fn tez_kernel_run<Host: RawRollupCore>(host: &mut Host) {
+    #[cfg(repl)]
+    {
+        host.store_write(
+            &RefPath::assert_from(b"/context/contracts/tz1grSQDByRpnVs7sPtaprNZRp531ZKz6Jmm/balance"), 
+            Mutez::from(4_000_000_000u32).to_bytes().unwrap().as_slice(), 
+            0
+        );
+        debug_str!("Seed account tz1grSQDByRpnVs7sPtaprNZRp531ZKz6Jmm initialized");
+    }
     let mut context = EphemeralContext::new();
     let res = match host.read_input(MAX_INPUT_MESSAGE_SIZE) {
         Ok(Some(Input::Message(message))) => {
@@ -41,7 +50,7 @@ pub fn tez_kernel_run<Host: RawRollupCore>(host: &mut Host) {
         },
         Ok(Some(Input::Slot(_message))) => todo!("handle slot message"),
         Ok(None) => Ok(()),
-        Err(_) => todo!("handle runtime errors")
+        Err(err) => Err(Error::from(err))
     };
     if let Err(error) = res {
         debug_str!(Host, error.to_string().as_str());

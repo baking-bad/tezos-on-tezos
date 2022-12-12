@@ -6,7 +6,9 @@ client_dir="/root/.tezos-client"
 rollup_dir="/root/.tezos-sc-rollup-node"
 endpoint="https://rpc.mondaynet-$MONDAY.teztnets.xyz"
 faucet="https://faucet.mondaynet-$MONDAY.teztnets.xyz"
+
 command=$1
+shift 1
 
 launch_rollup_node() {
     if [ ! -f "$rollup_dir/config.json" ]; then
@@ -39,8 +41,8 @@ originate_rollup() {
     fi
     kernel="$(xxd -p "$rollup_dir/kernel.wasm" | tr -d '\n')"
     
-    octez-client --endpoint "$endpoint" originate sc rollup from "$ORIGINATOR_KEY" of kind wasm_2_0_0 of type bytes booting with "$kernel" -burn-cap 999 > originate.out
-    rollup_address=$(cat originate.out | grep -oE "scr1.*")
+    octez-client --endpoint "$endpoint" originate sc rollup from "$ORIGINATOR_KEY" of kind wasm_2_0_0 of type bytes with kernel "$kernel" --burn-cap 999 | tee originate.out
+    rollup_address=$(cat originate.out | grep -oE "sr1.*")
     if [ -z "$rollup_address" ]; then
         echo "Failed to parse rollup address"
         exit -1
@@ -68,8 +70,11 @@ case $command in
         originate_rollup
         ;;
     generate-keypair)
-        generate_keypair "$@"
-        ;;    
+        generate_keypair
+        ;;
+    wasm-repl)
+        octez-wasm-repl $@
+        ;;
     *)
         cat <<EOF
 Available commands:
@@ -80,7 +85,8 @@ Daemons:
 Commands:
   - originate-rollup
   - generate-keypair
-    
+  - wasm-repl [kernel.wasm] --inputs [inputs.json]
+
 EOF
         ;;
 esac

@@ -1,5 +1,7 @@
 .bin
 .tezos-client
+.ipynb_checkpoints
+.python-version
 target
 tez_kernel/target
 boot_kernel/target

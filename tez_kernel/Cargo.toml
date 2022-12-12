@@ -18,3 +18,7 @@ serde_json = "*"
 
 [dev-dependencies]
 mock_runtime = { git = "https://gitlab.com/tezos/kernel" }
+
+[features]
+default = []
+repl = []
