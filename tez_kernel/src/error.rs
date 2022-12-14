@@ -72,7 +72,7 @@ impl Error {
 pub type Result<T> = result::Result<T, Error>;
 
 #[macro_export]
-macro_rules! kernel_error {
+macro_rules! validation_error {
     ($($arg:tt)*) => {
         Err(crate::error::Error::ValidationError { message: format!($($arg)*) })
     };

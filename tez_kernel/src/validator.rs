@@ -8,14 +8,14 @@ use tezos_core::{
     }
 };
 
-use crate::{context::{EphemeralContext}, kernel_error};
+use crate::{context::{EphemeralContext}, validation_error};
 use crate::error::Result;
 
 const SIGNATURE_SIZE: usize = 64;
 
 pub fn parse_operation<'a>(payload: &'a [u8]) -> Result<SignedOperation> {
     if payload.len() <= SIGNATURE_SIZE {
-        return kernel_error!("Payload too short");
+        return validation_error!("Payload too short");
     }
 
     let opg = UnsignedOperation::from_forged_bytes(&payload[..payload.len() - SIGNATURE_SIZE])?;  
@@ -32,7 +32,7 @@ pub struct ManagerOperation {
 
 pub fn validate_operation(host: &mut impl Runtime, context: &mut EphemeralContext, opg: SignedOperation) -> Result<ManagerOperation> {
     if context.has_pending_changes() {
-        return kernel_error!("Cannot proceed with uncommited state changes");
+        return validation_error!("Cannot proceed with uncommited state changes");
     }
     
     let mut source = None;
@@ -43,20 +43,20 @@ pub fn validate_operation(host: &mut impl Runtime, context: &mut EphemeralContex
             OperationContent::Reveal(reveal) => &reveal.source,
             OperationContent::Transaction(transaction) => &transaction.source,
             OperationContent::Origination(origination) => &origination.source,
-            _ => return kernel_error!("Unsupported operation kind: {:?}", content)
+            _ => return validation_error!("Unsupported operation kind: {:?}", content)
         };
 
         if source.is_none() {
             source = Some(address);
         } else if source.unwrap() != address {
-            return kernel_error!("Multiple sources in a group (expected {:?}, found {:?})", source.unwrap(), address);
+            return validation_error!("Multiple sources in a group (expected {:?}, found {:?})", source.unwrap(), address);
         }
 
         total_fees += content.fee();
     }
 
     if source.is_none() {
-        return kernel_error!("Empty operation group");
+        return validation_error!("Empty operation group");
     }
 
     let source = source.unwrap().clone();
@@ -73,30 +73,30 @@ pub fn validate_operation(host: &mut impl Runtime, context: &mut EphemeralContex
             if revealed_key.is_some() {
                 revealed_key.unwrap()
             } else {
-                return kernel_error!("Account {} has not revealed public key", source.value())
+                return validation_error!("Account {} has not revealed public key", source.value())
             }
         }
     };
 
     match opg.verify(&public_key) {
         Ok(true) => (),
-        Ok(false) => return kernel_error!("Signature is invalid"),
-        Err(error) => return kernel_error!("{}", error.to_string())
+        Ok(false) => return validation_error!("Signature is invalid"),
+        Err(error) => return validation_error!("{}", error.to_string())
     };
 
 
     let balance = match context.get_balance(host, &source.value())? {
         Some(value) => value,
-        None => return kernel_error!("Balance not initialized for {}", source.value())
+        None => return validation_error!("Balance not initialized for {}", source.value())
     };
 
     if balance < total_fees {
-        return kernel_error!("Account {} tries to spent more than it has", source.value());
+        return validation_error!("Account {} tries to spent more than it has", source.value());
     }
 
     let mut counter = match context.get_counter(host, &source)? {
         Some(value) => value.to_integer()?,
-        None => return kernel_error!("Counter not initialized for {}", source.value())
+        None => 0u64
     };
 
     for content in opg.contents.iter() {
@@ -104,10 +104,10 @@ pub fn validate_operation(host: &mut impl Runtime, context: &mut EphemeralContex
             OperationContent::Reveal(reveal) => &reveal.counter,
             OperationContent::Transaction(transaction) => &transaction.counter,
             OperationContent::Origination(origination) => &origination.counter,
-            _ => return kernel_error!("Unsupported operation kind: {:?}", content)
+            _ => return validation_error!("Unsupported operation kind: {:?}", content)
         }.to_integer()?;
         if next_counter <= counter {
-            return kernel_error!("Account {} tries to reuse counter {}", source.value(), next_counter);
+            return validation_error!("Account {} tries to reuse counter {}", source.value(), next_counter);
         }
         counter = next_counter;
     }

@@ -27,6 +27,7 @@ Also in the scope of our developing tools and indexing stack we want to better u
 - [x] DAC encoding tool
 - [x] Docker image with SCORU node, installer, and encoded Tez kernel
 - [x] Run TZ rollup in Mondaynet, prepare setup scripts
+- [x] Troubleshoot kernel using REPL, get rid of `f64`
 - [ ] Interact with the kernel via inbox, E2E tests
 - [ ] Tezos RPC facade node with wallet sufficient endpoint set
 - [ ] Add indexer-sufficient endpoints
@@ -53,7 +54,7 @@ Non-supported Michelson features (at least in the first iteration):
 * Tickets
 * Internal originations
 
-## Usage
+## How to run
 
 Install Rust toolchain:
 ```
@@ -98,6 +99,43 @@ make rollup-node
 You can also run container in interactive mode:
 ```
 make operator-shell
+```
+
+## How to test
+
+### Unit tests
+
+Run all unit tests:
+```
+make test
+```
+
+### Wasm REPL
+
+Prepare inputs using notebooks (make sure you have Python installed):
+```
+jupyter notebook
+# navigate to scripts folder
+```
+
+Build kernel in debug mode, create docker image, and run REPL:
+```
+make debug
+```
+
+Populate rollup inbox:
+```
+> load inputs
+```
+
+Run kernel:
+```
+> step inbox
+```
+
+Make sure operation receipt is saved:
+```
+> show key /context/blocks/0/operations/1
 ```
 
 ## Credits

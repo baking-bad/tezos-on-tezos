@@ -34,27 +34,46 @@ fn process_message<'a>(
 }
 
 pub fn tez_kernel_run<Host: RawRollupCore>(host: &mut Host) {
-    #[cfg(repl)]
+    #[cfg(any(test, feature = "repl"))]
     {
+        use host::path::RefPath;
+        use tezos_core::types::mutez::Mutez;
+
         host.store_write(
             &RefPath::assert_from(b"/context/contracts/tz1grSQDByRpnVs7sPtaprNZRp531ZKz6Jmm/balance"), 
             Mutez::from(4_000_000_000u32).to_bytes().unwrap().as_slice(), 
             0
-        );
-        debug_str!("Seed account tz1grSQDByRpnVs7sPtaprNZRp531ZKz6Jmm initialized");
+        ).expect("Failed to initialize seed account");
+        debug_str!(Host, "Seed account tz1grSQDByRpnVs7sPtaprNZRp531ZKz6Jmm initialized");
     }
     let mut context = EphemeralContext::new();
-    let res = match host.read_input(MAX_INPUT_MESSAGE_SIZE) {
-        Ok(Some(Input::Message(message))) => {
-            process_message(host, &mut context, message.as_ref(), &message.level, &message.id)
-        },
-        Ok(Some(Input::Slot(_message))) => todo!("handle slot message"),
-        Ok(None) => Ok(()),
-        Err(err) => Err(Error::from(err))
+    let res = loop {
+        match host.read_input(MAX_INPUT_MESSAGE_SIZE) {
+            Ok(Some(Input::Message(message))) => {
+                match message.as_ref() {
+                    b"\x00\x01" => (),  // Start of level
+                    b"\x00\x02" => break Ok(()),  // End of level
+                    [b'\x01', payload @ ..] => {
+                        if let Err(error) = process_message(
+                            host, &mut context, 
+                            payload,
+                            &message.level,
+                            &message.id
+                        ) {
+                            debug_str!(Host, error.to_string().as_str());
+                            context.clear();
+                        }
+                    },
+                    _ => break validation_error!("Unexpected input")
+                }
+            },
+            Ok(Some(Input::Slot(_message))) => todo!("handle slot message"),
+            Ok(None) => break Ok(()),
+            Err(err) => break Err(Error::from(err))
+        }
     };
     if let Err(error) = res {
         debug_str!(Host, error.to_string().as_str());
-        context.clear();
     }
 }
 
@@ -71,50 +90,19 @@ mod test {
     use crate::context::EphemeralContext;
     use crate::error::Result;
 
-    use mock_runtime::host::MockHost;
-    use tezos_operation::operations::{SignedOperation, Transaction, Operation};
-    use tezos_core::types::{
-        encoded::{Encoded, PublicKey},
-        mutez::Mutez,
-        number::Nat
-    };
+    use mock_runtime::host::{MockHost, check_debug_log};
     use host::rollup_core::Input;
+    use hex;
 
     #[test]
     fn send_tez() -> Result<()> {
         let mut host = MockHost::default();
         let mut context = EphemeralContext::new();
-
-        let source = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
-        let public_key = PublicKey::try_from("edpktipCJ3SkjvtdcrwELhvupnyYJSmqoXu3kdzK1vL6fT5cY8FTEa").unwrap();
-        let initial_balance: Mutez = 10000000u32.into();
-
-        context.set_balance(&source, &initial_balance)?;
-        context.set_public_key(&source, &public_key)?;
-        context.set_counter(&source, &Nat::try_from("100000").unwrap())?;
-        context.commit(&mut host)?;
-
-        let message = SignedOperation::new(
-            "BMNvSHmWUkdonkG2oFwwQKxHUdrYQhUXqxLaSRX9wjMGfLddURC".try_into().unwrap(),
-            vec![
-                Transaction::new(
-                    source.try_into().unwrap(),
-                    417u32.into(),
-                    2336132u32.into(),
-                    1527u32.into(),
-                    357u32.into(),
-                    498719u32.into(),
-                    "tz1d5Dr3gjsxQo5XNbjAj558mLy3nGGQgMFA".try_into().unwrap(),
-                    None
-                ).into()
-            ],
-            "sigw1WNdYweqz1c7zKcvZFHQ18swSv4HBWje5quRmixxitPk7z8jtY63qXgKLPVfTM6XGxExPatBWJP44Bknyu3hDHDKJZgY".try_into().unwrap()
-        );
-        
-        let forged_bytes = message.to_forged_bytes();
-        let signature_bytes = message.signature.to_bytes();
-        let input: Vec<u8> = [forged_bytes.unwrap(), signature_bytes.unwrap()].concat();
-
+        let input = hex::decode("62fd30ac16979d9b88aca559e8fd8b97abd2519bebe09ad8a269d60df0b17ddc6b\
+            00e8b36c80efb51ec85a14562426049aa182a3ce38f902e18a18e807000017143f62ff9c2f41b30ee00b8c64d233fda43adf05\
+            eb829cfd2e733ee9a8f44b6c00e8b36c80efb51ec85a14562426049aa182a3ce3800e28a18ab0b8102c0843d00006b82198cb1\
+            79e8306c1bedd08f12dc863f32888600b2014573fd63d27895841ea6ca9d45e23e1e3b836298801b5e390b3b0a0b412003af89\
+            c08e63b6d8cf6847300e627c4ce0882ce4e2b842295309de3a0bd6260f").unwrap();
         let level = 10;
         host.as_mut().set_ready_for_input(level);
         host
@@ -123,12 +111,12 @@ mod test {
 
         tez_kernel_run(&mut host);
 
-        // check_debug_log(|debug_log| {
-        //     assert!(!debug_log.is_empty());
-        // });
+        check_debug_log(|debug_log| {
+            assert!(!debug_log.is_empty());
+        });
 
         let receipt = context.get_operation_receipt(&host, &level, &0i32)?;
-        //println!("Receipt: {:#?}", receipt);
+        // println!("Receipt: {:#?}", receipt);
         assert!(receipt.is_some(), "Expected operation receipt");
         assert!(receipt.unwrap().hash.is_some(), "Expected operation hash");
 

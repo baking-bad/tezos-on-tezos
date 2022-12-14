@@ -1175,6 +1175,7 @@ name = "tez_kernel"
 version = "0.1.0"
 dependencies = [
  "debug",
+ "hex",
  "host",
  "mock_runtime",
  "serde-json-wasm",

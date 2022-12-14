@@ -48,7 +48,7 @@ originate-rollup:
 	docker run --rm -v $$PWD/.tezos-client:/root/.tezos-client/ -v rollup-node:/root/.tezos-sc-rollup-node ghcr.io/baking-bad/tz-rollup-operator originate-rollup
 
 rollup-node:
-	docker run --name tz-rollup-operator -d -v $$PWD/.tezos-client:/root/.tezos-client/ -v rollup-node:/root/.tezos-sc-rollup-node -p 127.0.0.1:8932:8932 ghcr.io/baking-bad/tz-rollup-operator rollup-node
+	docker run --rm --name tz-rollup-operator -d -v $$PWD/.tezos-client:/root/.tezos-client/ -v rollup-node:/root/.tezos-sc-rollup-node -p 127.0.0.1:8932:8932 ghcr.io/baking-bad/tz-rollup-operator rollup-node
 	docker logs tz-rollup-operator -f
 
 operator-shell:
