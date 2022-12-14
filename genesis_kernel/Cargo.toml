@@ -14,7 +14,7 @@ tezos_rollup_encoding = { git = "https://gitlab.com/tezos/kernel" }
 hex = { version = "0.4.3" }
 once_cell = "1.16.0"
 tez_kernel = { path = "../tez_kernel" }
-tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/dal-reveal-hash-encoding", package = "tezos-core" }
+tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "develop", package = "tezos-core" }
 
 [features]  
 default = []

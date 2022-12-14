@@ -1,7 +1,7 @@
 use tezos_core;
 use tezos_operation;
-use std::result;
-use serde_json;
+use core::result;
+use serde_json_wasm;
 use host::runtime;
 
 #[derive(Debug)]
@@ -19,7 +19,10 @@ pub enum Error {
         message: String
     },
     SerializationError {
-        source: serde_json::Error
+        source: serde_json_wasm::ser::Error
+    },
+    DeserializationError {
+        source: serde_json_wasm::de::Error
     },
     WasmHostError {
         source: host::runtime::RuntimeError
@@ -41,9 +44,15 @@ impl From<tezos_operation::Error> for Error {
     }
 }
 
-impl From<serde_json::Error> for Error {
-    fn from(error: serde_json::Error) -> Self {
+impl From<serde_json_wasm::ser::Error> for Error {
+    fn from(error: serde_json_wasm::ser::Error) -> Self {
         Self::SerializationError { source: error }
+    }
+}
+
+impl From<serde_json_wasm::de::Error> for Error {
+    fn from(error: serde_json_wasm::de::Error) -> Self {
+        Self::DeserializationError { source: error }
     }
 }
 
@@ -63,7 +72,7 @@ impl Error {
 pub type Result<T> = result::Result<T, Error>;
 
 #[macro_export]
-macro_rules! validation_error {
+macro_rules! kernel_error {
     ($($arg:tt)*) => {
         Err(crate::error::Error::ValidationError { message: format!($($arg)*) })
     };

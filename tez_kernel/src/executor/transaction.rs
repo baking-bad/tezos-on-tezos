@@ -1,6 +1,5 @@
 use std::vec;
 use host::runtime::Runtime;
-use num_traits::ToPrimitive;
 use tezos_operation::operations::Transaction;
 use tezos_rpc::models::operation::{
     operation_result::operations::transaction::TransactionOperationResult,
@@ -82,7 +81,7 @@ pub fn execute_transaction(host: &mut impl Runtime, context: &mut EphemeralConte
         }
     }
 
-    if src_balance.to_i64().unwrap() < transaction.amount.to_i64().unwrap() {
+    if src_balance < transaction.amount{
         errors.balance_too_low(&transaction.amount, &src_balance, &transaction.source);
         return Ok(make_receipt!(OperationResultStatus::Failed));
     } else {
@@ -94,7 +93,7 @@ pub fn execute_transaction(host: &mut impl Runtime, context: &mut EphemeralConte
 
     if dst_new {
         let allocation_fee: Mutez = ALLOCATION_FEE.into();
-        if src_balance.to_i64().unwrap() < allocation_fee.to_i64().unwrap() {
+        if src_balance < allocation_fee {
             errors.cannot_pay_storage_fee(&src_balance, &transaction.source);
             return Ok(make_receipt!(OperationResultStatus::Failed));
         } else {

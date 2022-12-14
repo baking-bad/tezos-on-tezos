@@ -1,5 +1,3 @@
-use std::ops::Neg;
-use num_traits::ToPrimitive;
 use tezos_core::types::mutez::Mutez;
 use tezos_rpc::models::balance_update;
 
@@ -39,7 +37,7 @@ impl BalanceUpdates {
     pub fn spend(&mut self, contract: &impl TezosAddress, amount: &Mutez) {
         self.push_contract_update(
             contract.to_string().into(), 
-            amount.to_i64().unwrap().neg().to_string()
+            format!("-{}", amount)
         )
     }
 

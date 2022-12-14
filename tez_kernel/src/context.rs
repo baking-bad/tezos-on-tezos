@@ -13,7 +13,7 @@ use host::{
     runtime::{Runtime, ValueType},
     path::RefPath
 };
-use serde_json;
+use serde_json_wasm;
 
 use crate::error::{Result, Error};
 use crate::storage_error;
@@ -32,7 +32,7 @@ impl ContextNode {
             Self::Mutez(value) => value.to_bytes().map_err(|e| e.into()),
             Self::Nat(value) => value.to_bytes().map_err(|e| e.into()),
             Self::PublicKey(value) => value.to_bytes().map_err(|e| e.into()),
-            Self::OperationReceipt(value) => serde_json::to_vec(value).map_err(|e| e.into())
+            Self::OperationReceipt(value) => serde_json_wasm::to_vec(value).map_err(|e| e.into())
         }
     }
 }
@@ -105,7 +105,7 @@ impl ContextType for PublicKey {
 
 impl ContextType for OperationReceipt {
     fn parse(bytes: &[u8]) -> Result<ContextNode> {
-        match serde_json::from_slice(bytes) {
+        match serde_json_wasm::from_slice(bytes) {
             Ok(value) => Ok(ContextNode::OperationReceipt(value)),
             Err(error) => Err(error.into())
         }
