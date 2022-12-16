@@ -3,13 +3,14 @@ pub mod validator;
 pub mod error;
 pub mod executor;
 pub mod crypto;
+pub mod producer;
 
 use host::{
     input::Input,
     rollup_core::{RawRollupCore, MAX_INPUT_MESSAGE_SIZE},
     runtime::Runtime,
 };
-use debug::debug_str;
+use debug::{debug_str, debug_msg};
 
 use crate::context::EphemeralContext;
 use crate::validator::{parse_operation, validate_operation};
@@ -23,14 +24,15 @@ fn process_message<'a>(
     payload: &'a [u8],
     level: &i32,
     index: &i32
-) -> Result<()> {
+) -> Result<String> {
     let opg = parse_operation(payload)?;
     let opg = validate_operation(host, context, opg)?;
     let mut receipt = execute_operation(host, context, &opg)?;
-    receipt.hash = Some(operation_hash(payload)?);
+    let opg_hash = operation_hash(payload)?;
+    receipt.hash = Some(opg_hash.clone());
     context.store_operation_receipt(level, index, &receipt)?;
     context.commit(host)?;
-    Ok(())
+    Ok(opg_hash.into())
 }
 
 pub fn tez_kernel_run<Host: RawRollupCore>(host: &mut Host) {
@@ -47,6 +49,7 @@ pub fn tez_kernel_run<Host: RawRollupCore>(host: &mut Host) {
         debug_str!(Host, "Seed account tz1grSQDByRpnVs7sPtaprNZRp531ZKz6Jmm initialized");
     }
     let mut context = EphemeralContext::new();
+    let mut index = 0;
     let res = loop {
         match host.read_input(MAX_INPUT_MESSAGE_SIZE) {
             Ok(Some(Input::Message(message))) => {
@@ -54,17 +57,18 @@ pub fn tez_kernel_run<Host: RawRollupCore>(host: &mut Host) {
                     b"\x00\x01" => (),  // Start of level
                     b"\x00\x02" => break Ok(()),  // End of level
                     [b'\x01', payload @ ..] => {
-                        if let Err(error) = process_message(
-                            host, &mut context, 
-                            payload,
-                            &message.level,
-                            &message.id
-                        ) {
-                            debug_str!(Host, error.to_string().as_str());
-                            context.clear();
+                        match process_message(host, &mut context, payload, &message.level, &index) {
+                            Err(error) => {
+                                debug_msg!(Host, "Failed to process message #{} at level {}: {:?}", message.id, message.level, error);
+                                context.clear();
+                            },
+                            Ok(hash) => {
+                                debug_msg!(Host, "Operation {} included in block {} with index {}", hash, message.level, index);
+                                index += 1;
+                            }
                         }
                     },
-                    _ => break validation_error!("Unexpected input")
+                    _ => () // not ours
                 }
             },
             Ok(Some(Input::Slot(_message))) => todo!("handle slot message"),

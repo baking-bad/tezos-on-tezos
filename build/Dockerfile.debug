@@ -18,5 +18,5 @@ COPY ./.bin/wasm_2_0_0/ /root/.tezos-sc-rollup-node/wasm_2_0_0/
 COPY ./.bin/genesis_kernel.wasm /root/.tezos-sc-rollup-node/kernel.wasm
 COPY ./build/entrypoint.sh .
 RUN chmod +x entrypoint.sh
-ENV MONDAY="2022-12-05"
+ENV NETWORK="mondaynet-2022-12-12"
 ENTRYPOINT [ "./entrypoint.sh" ]

@@ -4,8 +4,8 @@ set -e
 
 client_dir="/root/.tezos-client"
 rollup_dir="/root/.tezos-sc-rollup-node"
-endpoint="https://rpc.mondaynet-$MONDAY.teztnets.xyz"
-faucet="https://faucet.mondaynet-$MONDAY.teztnets.xyz"
+endpoint="https://rpc.$NETWORK.teztnets.xyz"
+faucet="https://faucet.$NETWORK.teztnets.xyz"
 
 command=$1
 shift 1
@@ -62,6 +62,10 @@ generate_keypair() {
     echo "Top up the balance for $operator_address on $faucet"
 }
 
+populate_inbox() {
+    octez-client --endpoint "$endpoint" send sc rollup message "file:$@" from operator
+}
+
 case $command in
     rollup-node)
         launch_rollup_node
@@ -75,6 +79,9 @@ case $command in
     wasm-repl)
         octez-wasm-repl $@
         ;;
+    populate-inbox)
+        populate_inbox $@
+        ;;
     *)
         cat <<EOF
 Available commands:
@@ -86,6 +93,7 @@ Commands:
   - originate-rollup
   - generate-keypair
   - wasm-repl [kernel.wasm] --inputs [inputs.json]
+  - populate-inbox [messages.json]
 
 EOF
         ;;

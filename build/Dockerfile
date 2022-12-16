@@ -1,5 +1,5 @@
 ARG OCTEZ_TAG=master_04481cab_20221209120505
-FROM tezos/tezos:${OCTEZ_TAG} AS monday
+FROM tezos/tezos:${OCTEZ_TAG} AS octez
 
 FROM rust:slim-buster AS builder
 RUN apt update && apt install -y wget make libc-dev
@@ -17,12 +17,13 @@ RUN wget "https://raw.githubusercontent.com/zcash/zcash/master/zcutil/fetch-para
   && export OSTYPE=linux \
   && sed '/SAPLING_SPROUT_GROTH16_NAME/d; /progress/d; /retry-connrefused/d' fetch-params.sh | sh \
   && rm fetch-params.sh
-COPY --from=monday /usr/local/bin/octez-sc-rollup-node-alpha /usr/bin/octez-sc-rollup-node
-COPY --from=monday /usr/local/bin/octez-sc-rollup-client-alpha /usr/bin/octez-sc-rollup-client
-COPY --from=monday /usr/local/bin/octez-client /usr/bin/octez-client
+COPY --from=octez /usr/local/bin/octez-sc-rollup-node-alpha /usr/bin/octez-sc-rollup-node
+COPY --from=octez /usr/local/bin/octez-sc-rollup-client-alpha /usr/bin/octez-sc-rollup-client
+COPY --from=octez /usr/local/bin/octez-client /usr/bin/octez-client
 COPY --from=builder /build/.bin/wasm_2_0_0/ /root/.tezos-sc-rollup-node/wasm_2_0_0/
 COPY --from=builder /build/.bin/genesis_kernel.wasm /root/.tezos-sc-rollup-node/kernel.wasm
 COPY ./build/entrypoint.sh .
 RUN chmod +x entrypoint.sh
-ENV MONDAY="2022-12-12"
+ARG NETWORK="mondaynet-2022-12-12"
+ENV NETWORK=${NETWORK}
 ENTRYPOINT [ "./entrypoint.sh" ]

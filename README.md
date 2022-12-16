@@ -28,7 +28,7 @@ Also in the scope of our developing tools and indexing stack we want to better u
 - [x] Docker image with SCORU node, installer, and encoded Tez kernel
 - [x] Run TZ rollup in Mondaynet, prepare setup scripts
 - [x] Troubleshoot kernel using REPL, get rid of `f64`
-- [ ] Interact with the kernel via inbox, E2E tests
+- [ ] Interact with the kernel via inbox and access rollup state via RPC
 - [ ] Tezos RPC facade node with wallet sufficient endpoint set
 - [ ] Add indexer-sufficient endpoints
 - [ ] Support origination operation kind
@@ -137,6 +137,29 @@ Make sure operation receipt is saved:
 ```
 > show key /context/blocks/0/operations/1
 ```
+
+## Troubleshooting
+
+### `float instructions are forbidden`
+
+SCORU host does not support operations with floating point thus one need to make sure none of the dependencies introduces them.  
+Don't forget to use `wasm-strip` to eliminate dead code.  
+
+Known issues with common crates:
+- `serde_json` => use `serde-json-wasm` instead
+- `num-bigint` (floats used in `to_radix_str` and `from_radix_str`) => use `ibig` instead
+
+In order to trace back float usage, first build kernel with debug info and generate `.wat` file:
+```
+make wat
+```
+
+Search for `f64 ` and `f32 ` substrings and unwind calls up to the crate level.
+
+### `unknown import "__wbindgen_placeholder__"`
+
+Some of your dependencies use `wasm-bindgen` and mistakenly treat `wasm32-unknown-unknown` target as browser env.  
+Make sure you have disabled features that do so, or replace such dependencies.
 
 ## Credits
 
