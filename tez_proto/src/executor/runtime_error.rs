@@ -1,7 +1,7 @@
 use tezos_rpc::models::error::RpcError;
 use tezos_core::types::mutez::Mutez;
 
-use crate::context::TezosAddress;
+use crate::context::node::TezosAddress;
 
 pub const ALLOCATION_FEE: u32 = 1000u32;
 

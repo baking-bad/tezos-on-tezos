@@ -1,4 +1,3 @@
-use host::runtime::Runtime;
 use tezos_operation::{
     operations::{UnsignedOperation, SignedOperation, OperationContent}
 };
@@ -8,7 +7,7 @@ use tezos_core::{
     }
 };
 
-use crate::{context::{EphemeralContext}, validation_error};
+use crate::{context::Context, validation_error};
 use crate::error::Result;
 
 const SIGNATURE_SIZE: usize = 64;
@@ -30,7 +29,7 @@ pub struct ManagerOperation {
     pub last_counter: Nat
 }
 
-pub fn validate_operation(host: &mut impl Runtime, context: &mut EphemeralContext, opg: SignedOperation) -> Result<ManagerOperation> {
+pub fn validate_operation(context: &mut impl Context, opg: SignedOperation) -> Result<ManagerOperation> {
     if context.has_pending_changes() {
         return validation_error!("Cannot proceed with uncommited state changes");
     }
@@ -60,7 +59,7 @@ pub fn validate_operation(host: &mut impl Runtime, context: &mut EphemeralContex
     }
 
     let source = source.unwrap().clone();
-    let public_key = match context.get_public_key(host, &source)? {
+    let public_key = match context.get_public_key(&source)? {
         Some(value) => value,
         None => {
             let revealed_key = opg.contents.iter().filter_map(|content| {
@@ -85,7 +84,7 @@ pub fn validate_operation(host: &mut impl Runtime, context: &mut EphemeralContex
     };
 
 
-    let balance = match context.get_balance(host, &source.value())? {
+    let balance = match context.get_balance(&source.value())? {
         Some(value) => value,
         None => return validation_error!("Balance not initialized for {}", source.value())
     };
@@ -94,7 +93,7 @@ pub fn validate_operation(host: &mut impl Runtime, context: &mut EphemeralContex
         return validation_error!("Account {} tries to spent more than it has", source.value());
     }
 
-    let mut counter = match context.get_counter(host, &source)? {
+    let mut counter = match context.get_counter(&source)? {
         Some(value) => value.to_integer()?,
         None => 0u64
     };
@@ -122,9 +121,8 @@ pub fn validate_operation(host: &mut impl Runtime, context: &mut EphemeralContex
 
 #[cfg(test)]
 mod test {
-    use crate::{context::EphemeralContext};
+    use crate::context::{Context, ephemeral::EphemeralContext};
     use crate::error::Result;
-    use mock_runtime::host::MockHost;
     use tezos_operation::{
         operations::{SignedOperation, Transaction}
     };
@@ -138,14 +136,13 @@ mod test {
 
     #[test]
     fn test_valid_tx() -> Result<()> {
-        let mut host = MockHost::default();
         let mut context = EphemeralContext::new();
 
         let address = ImplicitAddress::try_from("tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU").unwrap();
         context.set_balance(&address.value(), &Mutez::from(1000000000u32))?;
         context.set_counter(&address, &Nat::try_from("100000").unwrap())?;
         context.set_public_key(&address, &PublicKey::try_from("edpktipCJ3SkjvtdcrwELhvupnyYJSmqoXu3kdzK1vL6fT5cY8FTEa").unwrap())?;
-        context.commit(&mut host)?;
+        context.commit()?;
 
         let opg = SignedOperation::new(
             "BMNvSHmWUkdonkG2oFwwQKxHUdrYQhUXqxLaSRX9wjMGfLddURC".try_into().unwrap(),
@@ -164,7 +161,7 @@ mod test {
             "sigw1WNdYweqz1c7zKcvZFHQ18swSv4HBWje5quRmixxitPk7z8jtY63qXgKLPVfTM6XGxExPatBWJP44Bknyu3hDHDKJZgY".try_into().unwrap()
         );
 
-        let op = validate_operation(&mut host, &mut context, opg)?;
+        let op = validate_operation(&mut context, opg)?;
         assert_eq!(op.total_fees, 417u32.into());
         assert_eq!(op.last_counter, 2336132u32.into());
 

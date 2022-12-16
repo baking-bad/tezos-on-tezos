@@ -30,13 +30,14 @@ fn seed_accounts(keys: &[&[u8; 63]], balance: &[u8]) {
             panic!("Failed to write value at {:?}", path);
         }
     }
-    debug_str!("Seed accounts were successfully initialized");
+    debug_str!("Seed accounts successfully initialized");
 }
 
 #[cfg(target_arch = "wasm32")]
 #[no_mangle]
 pub extern "C" fn kernel_run() {
     use installer::install_kernel;
+    debug_str!("Genesis kernel invoked");
     install_kernel(include_bytes!("../../.bin/wasm_2_0_0/root_hash.bin"));
     seed_accounts(SEED_BALANCE_KEYS.as_slice(), SEED_BALANCE_VALUE);
 }
@@ -53,22 +54,18 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tez_kernel::context::EphemeralContext;
-    use mock_runtime::host::MockHost;
     use tezos_core::types::mutez::Mutez;
 
     #[test]
     pub fn installer_seeds_balance() {
         seed_accounts(SEED_BALANCE_KEYS.as_slice(), SEED_BALANCE_VALUE);
 
-        let mut context = EphemeralContext::new();
-
-        let balance = unsafe {
-            context.get_balance(
-                &host::HOST as &MockHost, 
-                &"tz1ddb9NMYHZi5UzPdzTZMYQQZoMub195zgv"
-            )
-        }.expect("Expected no errors").expect("Expected non-empty value");
-        assert_eq!(Mutez::from(4000000000u32), balance);
+        let balance: Vec<u8> = unsafe {
+            installer::host::HOST
+                .as_mut()
+                .store
+                .get_value("/durable/context/contracts/tz1ddb9NMYHZi5UzPdzTZMYQQZoMub195zgv/balance")
+        };
+        assert_eq!(Mutez::from(4000000000u32), Mutez::from_bytes(balance.as_slice()).unwrap());
     }
 }

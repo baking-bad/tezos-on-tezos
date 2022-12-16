@@ -3,7 +3,6 @@ pub mod transaction;
 pub mod runtime_error;
 pub mod balance_update;
 
-use host::runtime::Runtime;
 use tezos_core::types::mutez::Mutez;
 use tezos_operation::operations::OperationContent;
 use tezos_rpc::models::operation::{
@@ -13,7 +12,7 @@ use tezos_rpc::models::operation::{
 
 use crate::execution_error;
 use crate::error::Result;
-use crate::context::EphemeralContext;
+use crate::context::Context;
 use crate::executor::{
     reveal::{execute_reveal, skip_reveal}, 
     transaction::{execute_transaction, skip_transaction}
@@ -56,12 +55,12 @@ fn get_status(receipt: &OperationContentReceipt) -> Result<OperationResultStatus
     execution_error!("Operation metadata is missing")
 }
 
-pub fn execute_operation(host: &mut impl Runtime, context: &mut EphemeralContext, opg: &ManagerOperation) -> Result<OperationReceipt> {
+pub fn execute_operation(context: &mut impl Context, opg: &ManagerOperation) -> Result<OperationReceipt> {
     if context.has_pending_changes() {
         return execution_error!("Cannot proceed with uncommited state changes");
     }
 
-    let initial_balance = context.get_balance(host, &opg.source)?.expect("Validated");
+    let initial_balance = context.get_balance(&opg.source)?.expect("Validated");
     let mut contents = Vec::new();
     let mut failed_idx: Option<usize> = None;
 
@@ -72,7 +71,7 @@ pub fn execute_operation(host: &mut impl Runtime, context: &mut EphemeralContext
         let receipt = match content {
             OperationContent::Reveal(reveal) => {
                 let reveal_receipt = if failed_idx.is_none() {
-                    execute_reveal(host, context, reveal)?
+                    execute_reveal(context, reveal)?
                 } else {
                     skip_reveal(reveal.clone())
                 };
@@ -80,7 +79,7 @@ pub fn execute_operation(host: &mut impl Runtime, context: &mut EphemeralContext
             },
             OperationContent::Transaction(transaction) => {
                 let transaction_receipt = if failed_idx.is_none() {
-                    execute_transaction(host, context, transaction)?
+                    execute_transaction(context, transaction)?
                 } else {
                     skip_transaction(transaction.clone())
                 };
@@ -108,7 +107,7 @@ pub fn execute_operation(host: &mut impl Runtime, context: &mut EphemeralContext
         context.set_counter(&opg.source, &opg.last_counter)?;
     }
 
-    context.commit(host)?;
+    context.commit()?;
 
     Ok(OperationReceipt {
         protocol: None,
@@ -122,10 +121,9 @@ pub fn execute_operation(host: &mut impl Runtime, context: &mut EphemeralContext
 
 #[cfg(test)]
 mod test {
-    use crate::context::EphemeralContext;
+    use crate::context::{Context, ephemeral::EphemeralContext};
     use crate::error::Result;
     use crate::validator::ManagerOperation;
-    use mock_runtime::host::MockHost;
     use tezos_operation::{
         operations::{SignedOperation, Transaction}
     };
@@ -142,7 +140,6 @@ mod test {
 
     #[test]
     fn test_skipped_backtracked() -> Result<()> {
-        let mut host = MockHost::default();
         let mut context = EphemeralContext::new();
 
         let source = ImplicitAddress::try_from("tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU").unwrap();
@@ -150,7 +147,7 @@ mod test {
 
         context.set_balance(&source, &Mutez::from(5000u32))?;
         context.set_counter(&source, &Nat::try_from("1").unwrap())?;
-        context.commit(&mut host)?;
+        context.commit()?;
 
         macro_rules! make_tx {
             ($cnt: expr) => {
@@ -178,7 +175,7 @@ mod test {
             total_fees: 3000u32.into()
         };
 
-        let receipt = execute_operation(&mut host, &mut context, &opg)?;
+        let receipt = execute_operation(&mut context, &opg)?;
         // println!("{:#?}", receipt);
         assert_eq!(get_status(&receipt.contents[0]).expect("Backtracked"), OperationResultStatus::Backtracked);
         assert_eq!(get_status(&receipt.contents[1]).expect("Failed"), OperationResultStatus::Failed);

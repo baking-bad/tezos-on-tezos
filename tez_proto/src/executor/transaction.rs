@@ -1,5 +1,4 @@
 use std::vec;
-use host::runtime::Runtime;
 use tezos_operation::operations::Transaction;
 use tezos_rpc::models::operation::{
     operation_result::operations::transaction::TransactionOperationResult,
@@ -12,7 +11,7 @@ use tezos_rpc::models::operation::{
 use tezos_core::types::mutez::Mutez;
 
 use crate::error::Result;
-use crate::context::EphemeralContext;
+use crate::context::Context;
 use crate::executor::{
     balance_update::BalanceUpdates,
     runtime_error::{RuntimeErrors, ALLOCATION_FEE}
@@ -44,17 +43,17 @@ pub fn skip_transaction(transaction: Transaction) -> TransactionReceipt {
     }
 }
 
-pub fn execute_transaction(host: &mut impl Runtime, context: &mut EphemeralContext, transaction: &Transaction) -> Result<TransactionReceipt> {
+pub fn execute_transaction(context: &mut impl Context, transaction: &Transaction) -> Result<TransactionReceipt> {
     if transaction.parameters.is_some() {
         todo!("Support smart contract calls");
     }
 
-    let (mut dst_balance, dst_new) = match context.get_balance(host, &transaction.destination)? {
+    let (mut dst_balance, dst_new) = match context.get_balance(&transaction.destination)? {
         Some(balance) => (balance, false),
         None => (0u32.into(), true)
     };
     let mut src_balance = context
-        .get_balance(host, &transaction.source)?
+        .get_balance(&transaction.source)?
         .expect("Checked by validator");
 
     let mut errors = RuntimeErrors::new();
@@ -110,9 +109,8 @@ pub fn execute_transaction(host: &mut impl Runtime, context: &mut EphemeralConte
 
 #[cfg(test)]
 mod test {
-    use crate::context::EphemeralContext;
+    use crate::context::{Context, ephemeral::EphemeralContext};
     use crate::error::Result;
-    use mock_runtime::host::MockHost;
     use tezos_operation::{
         operations::Transaction
     };
@@ -126,7 +124,6 @@ mod test {
 
     #[test]
     fn test_transaction_applied() -> Result<()> {
-        let mut host = MockHost::default();
         let mut context = EphemeralContext::new();
 
         let source = ImplicitAddress::try_from("tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU").unwrap();
@@ -146,12 +143,12 @@ mod test {
             parameters: None
         };
 
-        let receipt = execute_transaction(&mut host, &mut context, &transaction);
+        let receipt = execute_transaction(&mut context, &transaction);
         assert!(receipt.is_ok());
         assert!(receipt.unwrap().metadata.is_some());
 
-        assert_eq!(context.get_balance(&host, &source)?.unwrap(), Mutez::from(1000000000u32 - 1000u32 - 500000000u32));
-        assert_eq!(context.get_balance(&host, &destination)?.unwrap(), Mutez::from(500000000u32));
+        assert_eq!(context.get_balance(&source)?.unwrap(), Mutez::from(1000000000u32 - 1000u32 - 500000000u32));
+        assert_eq!(context.get_balance(&destination)?.unwrap(), Mutez::from(500000000u32));
         
         Ok(())
     }

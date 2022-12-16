@@ -1,7 +1,7 @@
 use tezos_core::types::mutez::Mutez;
 use tezos_rpc::models::balance_update;
 
-use crate::context::TezosAddress;
+use crate::context::node::TezosAddress;
 
 pub const ALLOCATION_FEE: i64 = 1000i64;
 

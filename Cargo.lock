@@ -366,14 +366,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "debug"
-version = "0.1.0"
-source = "git+https://gitlab.com/tezos/kernel#7ea8a1d611c0a50eda5396db68844c478fac6fbc"
-dependencies = [
- "host",
-]
-
-[[package]]
 name = "der"
 version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -517,7 +509,6 @@ dependencies = [
  "host",
  "mock_runtime",
  "once_cell",
- "tez_kernel",
  "tezos-core",
  "tezos_encoding",
  "tezos_rollup_encoding",
@@ -1174,10 +1165,16 @@ dependencies = [
 name = "tez_kernel"
 version = "0.1.0"
 dependencies = [
- "debug",
  "hex",
  "host",
  "mock_runtime",
+ "tez_proto",
+]
+
+[[package]]
+name = "tez_proto"
+version = "0.1.0"
+dependencies = [
  "serde-json-wasm",
  "tezos-core",
  "tezos-operation",

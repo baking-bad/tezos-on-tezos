@@ -1,8 +1,7 @@
+use core::result;
 use tezos_core;
 use tezos_operation;
-use core::result;
 use serde_json_wasm;
-use host::runtime;
 
 #[derive(Debug)]
 pub enum Error {
@@ -23,9 +22,6 @@ pub enum Error {
     },
     DeserializationError {
         source: serde_json_wasm::de::Error
-    },
-    WasmHostError {
-        source: host::runtime::RuntimeError
     },
     StorageError {
         message: String
@@ -53,12 +49,6 @@ impl From<serde_json_wasm::ser::Error> for Error {
 impl From<serde_json_wasm::de::Error> for Error {
     fn from(error: serde_json_wasm::de::Error) -> Self {
         Self::DeserializationError { source: error }
-    }
-}
-
-impl From<runtime::RuntimeError> for Error {
-    fn from(error: runtime::RuntimeError) -> Self {
-        Self::WasmHostError { source: error }
     }
 }
 

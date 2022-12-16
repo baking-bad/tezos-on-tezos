@@ -1,4 +1,3 @@
-use host::runtime::Runtime;
 use tezos_operation::operations::Reveal;
 use tezos_rpc::models::operation::{
     operation_result::{
@@ -16,7 +15,7 @@ use crate::executor::{
     balance_update::BalanceUpdates
 };
 use crate::error::Result;
-use crate::context::EphemeralContext;
+use crate::context::Context;
 
 pub fn skip_reveal(reveal: Reveal) -> RevealReceipt {
     RevealReceipt {
@@ -33,7 +32,7 @@ pub fn skip_reveal(reveal: Reveal) -> RevealReceipt {
     }
 }
 
-pub fn execute_reveal(host: &mut impl Runtime, context: &mut EphemeralContext, reveal: &Reveal) -> Result<RevealReceipt> {
+pub fn execute_reveal(context: &mut impl Context, reveal: &Reveal) -> Result<RevealReceipt> {
     let mut errors = RuntimeErrors::new();
     let charges =  BalanceUpdates::fee(&reveal.source, &reveal.fee);
 
@@ -54,7 +53,7 @@ pub fn execute_reveal(host: &mut impl Runtime, context: &mut EphemeralContext, r
         }
     }
 
-    if context.has_public_key(host, &reveal.source)? {
+    if context.has_public_key(&reveal.source)? {
         errors.previously_revealed_key(&reveal.source);
         return Ok(make_receipt!(OperationResultStatus::Failed))
     }
@@ -65,9 +64,8 @@ pub fn execute_reveal(host: &mut impl Runtime, context: &mut EphemeralContext, r
 
 #[cfg(test)]
 mod test {
-    use crate::context::EphemeralContext;
+    use crate::context::{Context, ephemeral::EphemeralContext};
     use crate::error::Result;
-    use mock_runtime::host::MockHost;
     use tezos_operation::{
         operations::Reveal
     };
@@ -81,7 +79,6 @@ mod test {
 
     #[test]
     fn test_reveal_applied() -> Result<()> {
-        let mut host = MockHost::default();
         let mut context = EphemeralContext::new();
 
         let address = ImplicitAddress::try_from("tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU").unwrap();
@@ -99,12 +96,12 @@ mod test {
             public_key: public_key.clone()
         };
 
-        let receipt = execute_reveal(&mut host, &mut context, &reveal);
+        let receipt = execute_reveal(&mut context, &reveal);
         assert!(receipt.is_ok());
         assert!(receipt.unwrap().metadata.is_some());
 
-        assert_eq!(context.get_public_key(&host, &address)?.expect("Public key expected"), public_key);
-        assert_eq!(context.get_balance(&host, &address.value())?.expect("Balance expected"), Mutez::from(1000000000u32));
+        assert_eq!(context.get_public_key(&address)?.expect("Public key expected"), public_key);
+        assert_eq!(context.get_balance(&address.value())?.expect("Balance expected"), Mutez::from(1000000000u32));
         
         Ok(())
     }

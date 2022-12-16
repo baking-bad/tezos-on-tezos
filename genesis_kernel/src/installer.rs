@@ -12,10 +12,9 @@
 //!
 //! [reveal preimage]: host::rollup_core::reveal_preimage
 //!
-
-use core::panic;
 const PREIMAGE_HASH_SIZE: usize = 33;
 const MAX_PAGE_SIZE: usize = 4096;
+const MAX_FILE_CHUNK_SIZE: usize = 2048;
 const MAX_DAC_LEVELS: usize = 4;
 const KERNEL_PATH: &[u8] = b"/kernel/boot.wasm";
 const PREPARE_KERNEL_PATH: &[u8] = b"/installer/kernel/boot.wasm";
@@ -71,13 +70,15 @@ fn fetch_page<'a>(hash: &[u8; PREIMAGE_HASH_SIZE], buffer: &'a mut [u8]) -> (u8,
             buffer.len()
         )
     };
-    if page_size < 5 {  // tag + prefix
-        panic!("Fetch page: failed to reveal preimage (or page too small)");
+    if page_size < 0 {
+        panic!("Fetch page: failed to reveal preimage {}", page_size);
+    } else if page_size < 5 {  // tag + prefix
+        panic!("Fetch page: too small {}", page_size);
     }
 
     let (page, rest) = buffer.split_at_mut(MAX_PAGE_SIZE);
     if page[0] > 1 {
-        panic!("Fetch page: invalid tag");
+        panic!("Fetch page: invalid tag {}", page[0]);
     }
 
     let data_size = u32::from_be_bytes([page[1], page[2], page[3], page[4]]) as usize;
@@ -102,7 +103,7 @@ fn write_content(kernel_size: &mut usize, content: &[u8]) {
         )
     };
     if size < 0 {
-        panic!("Write content: failed");
+        panic!("Write content: failed {}", size);
     }
     kernel_size.add_assign(content.len());
 }
@@ -117,7 +118,11 @@ fn reveal_loop(
         panic!("Reveal loop: DAC preimage tree contains too many levels");
     }
     match fetch_page(hash, rest) {
-        (0, content, _) => write_content(kernel_size, content),
+        (0, content, _) => {
+            for chunk in content.chunks(MAX_FILE_CHUNK_SIZE).into_iter() {
+                write_content(kernel_size, chunk)
+            }
+        },
         (1, hashes, rest) => {
             for hash in hashes.chunks_exact(PREIMAGE_HASH_SIZE).into_iter() {
                 reveal_loop(level + 1, hash.try_into().expect("Invalid preimage hash"), rest, kernel_size);
@@ -131,15 +136,18 @@ pub fn install_kernel(root_hash: &[u8; PREIMAGE_HASH_SIZE]) {
     let mut buffer = [0; MAX_PAGE_SIZE * MAX_DAC_LEVELS];
     let mut kernel_size = 0;
     reveal_loop(0, root_hash, buffer.as_mut_slice(), &mut kernel_size);
-    unsafe {
-        host::store_move(
+    let size = unsafe {
+         host::store_move(
             PREPARE_KERNEL_PATH.as_ptr(), 
             PREPARE_KERNEL_PATH.len(), 
             KERNEL_PATH.as_ptr(), 
             KERNEL_PATH.len()
-        );
+        )
+    };
+    if size < 0 {
+        panic!("Install kernel: failed to swap {}", size);
     }
-    debug_str!("Kernel was successfully installed");
+    debug_str!("Kernel successfully installed");
 }
 
 #[cfg(test)]
@@ -201,7 +209,8 @@ pub mod host {
         src: *const u8, 
         num_bytes: usize
     ) {
-        println!("[Debug] {:?}", from_raw_parts(src, num_bytes));
+        let msg = from_raw_parts(src, num_bytes).to_vec();
+        println!("[DEBUG] {}", String::from_utf8(msg).unwrap());
     }
 }
 
