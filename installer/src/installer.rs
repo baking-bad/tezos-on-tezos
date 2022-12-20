@@ -56,7 +56,7 @@ pub mod host {
 macro_rules! debug_str {
     ($msg: expr) => {
         unsafe {
-            host::write_debug(($msg as &str).as_ptr(), ($msg as &str).len());
+            crate::installer::host::write_debug(($msg as &str).as_ptr(), ($msg as &str).len());
         }
     }
 }

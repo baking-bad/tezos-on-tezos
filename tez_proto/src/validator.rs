@@ -1,35 +1,26 @@
-use tezos_operation::{
+pub use tezos_operation::{
     operations::{UnsignedOperation, SignedOperation, OperationContent}
 };
-use tezos_core::{
+pub use tezos_core::{
     types::{
-        encoded::{Signature, Encoded, ImplicitAddress}, mutez::Mutez, number::Nat
+        encoded::{Signature, Encoded, ImplicitAddress, OperationHash},
+        mutez::Mutez,
+        number::Nat
     }
 };
 
 use crate::{context::Context, validation_error};
 use crate::error::Result;
 
-const SIGNATURE_SIZE: usize = 64;
-
-pub fn parse_operation<'a>(payload: &'a [u8]) -> Result<SignedOperation> {
-    if payload.len() <= SIGNATURE_SIZE {
-        return validation_error!("Payload too short");
-    }
-
-    let opg = UnsignedOperation::from_forged_bytes(&payload[..payload.len() - SIGNATURE_SIZE])?;  
-    let signature = Signature::from_bytes(&payload[payload.len() - SIGNATURE_SIZE..])?;
-    Ok(SignedOperation::from(opg, signature))
-}
-
 pub struct ManagerOperation {
+    pub hash: OperationHash,
     pub origin: SignedOperation,
     pub source: ImplicitAddress,
     pub total_fees: Mutez,
     pub last_counter: Nat
 }
 
-pub fn validate_operation(context: &mut impl Context, opg: SignedOperation) -> Result<ManagerOperation> {
+pub fn validate_operation(context: &mut impl Context, opg: SignedOperation, hash: OperationHash) -> Result<ManagerOperation> {
     if context.has_pending_changes() {
         return validation_error!("Cannot proceed with uncommited state changes");
     }
@@ -112,6 +103,7 @@ pub fn validate_operation(context: &mut impl Context, opg: SignedOperation) -> R
     }
 
     Ok(ManagerOperation {
+        hash,
         origin: opg,
         source: source.clone(),
         total_fees,
@@ -161,10 +153,11 @@ mod test {
             "sigw1WNdYweqz1c7zKcvZFHQ18swSv4HBWje5quRmixxitPk7z8jtY63qXgKLPVfTM6XGxExPatBWJP44Bknyu3hDHDKJZgY".try_into().unwrap()
         );
 
-        let op = validate_operation(&mut context, opg)?;
+        let hash = opg.hash()?;
+        let op = validate_operation(&mut context, opg, hash)?;
         assert_eq!(op.total_fees, 417u32.into());
         assert_eq!(op.last_counter, 2336132u32.into());
 
-        Ok(())    
+        Ok(())
     }
 }

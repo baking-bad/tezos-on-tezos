@@ -7,8 +7,8 @@ DAILY_TAG=master_da3ea79d_20221214224651
 DAILY_NETWORK=dailynet-2022-12-15
 
 # https://teztnets.xyz/mondaynet-about
-MONDAY_TAG=master_04481cab_20221209120505
-MONDAY_NETWORK=mondaynet-2022-12-12
+MONDAY_TAG=master_c08dbd3e_20221216223044
+MONDAY_NETWORK=mondaynet-2022-12-19
 
 install:
 	cd ~/.cargo/bin \
@@ -21,22 +21,22 @@ build-tez-kernel:
 	# wasm-opt -Oz -o ./.bin/tez_kernel.wasm ./target/wasm32-unknown-unknown/release/tez_kernel.wasm
 
 build-genesis-kernel:
-	RUSTC_BOOTSTRAP=1 cargo build --package genesis_kernel --target wasm32-unknown-unknown --release -Z sparse-registry
-	wasm-strip -o ./.bin/genesis_kernel.wasm ./target/wasm32-unknown-unknown/release/genesis_kernel.wasm
-	# wasm-opt -Oz -o ./.bin/genesis_kernel.wasm ./target/wasm32-unknown-unknown/release/genesis_kernel.wasm
+	RUSTC_BOOTSTRAP=1 cargo build --package installer --target wasm32-unknown-unknown --release -Z sparse-registry
+	wasm-strip -o ./.bin/installer.wasm ./target/wasm32-unknown-unknown/release/installer.wasm
+	# wasm-opt -Oz -o ./.bin/installer.wasm ./target/wasm32-unknown-unknown/release/installer.wasm
 
-build-dac-coder:
-	RUSTC_BOOTSTRAP=1 cargo build --package dac_coder --release -Z sparse-registry 
-	cp ./target/release/dac-coder ./.bin/dac-coder
+build-dac-codec:
+	RUSTC_BOOTSTRAP=1 cargo build --package dac_codec --release -Z sparse-registry 
+	cp ./target/release/dac-codec ./.bin/dac-codec
 
 pages:
 	rm -rf ./.bin/wasm_2_0_0
-	./.bin/dac-coder -o ./.bin/wasm_2_0_0 ./.bin/tez_kernel.wasm
+	./.bin/dac-codec -o ./.bin/wasm_2_0_0 ./.bin/tez_kernel.wasm
 
 build:
 	mkdir .bin || true
 	$(MAKE) build-tez-kernel
-	$(MAKE) build-dac-coder
+	$(MAKE) build-dac-codec
 	$(MAKE) pages
 	$(MAKE) build-genesis-kernel
 

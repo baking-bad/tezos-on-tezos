@@ -1,10 +1,10 @@
 [package]
-name = "dac_coder"
+name = "dac_codec"
 version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "dac-coder"
+name = "dac-codec"
 path = "src/main.rs"
 
 [dependencies]

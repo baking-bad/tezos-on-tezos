@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
-use crate::context::Context;
-use crate::context::node::{ContextNode, NodeType};
+use crate::context::{
+    Context,
+    types::{ContextNode, ContextNodeType}
+};
 use crate::error::Result;
 
 pub struct EphemeralContext {
@@ -28,22 +30,28 @@ impl Context for EphemeralContext {
         }
     }
 
-    fn get<V: NodeType>(&mut self, key: String, _max_bytes: usize) -> Result<Option<V>> {
+    fn get<V: ContextNodeType>(&mut self, key: String, _max_bytes: usize) -> Result<Option<V>> {
         match self.pending_state.get(&key) {
-            Some(cached_value) => Ok(Some(V::unwrap(cached_value))),
+            Some(cached_value) => Ok(Some(V::unwrap(cached_value.to_owned()))),
             None => match self.state.get(&key) {
                 Some(value) => {
-                    self.pending_state.insert(key, value.clone());
-                    Ok(Some(V::unwrap(value)))
+                    self.pending_state.insert(key, value.to_owned());
+                    Ok(Some(V::unwrap(value.to_owned())))
                 },
                 None => Ok(None)
             }
         }
     }
 
-    fn set<V: NodeType>(&mut self, key: String, val: &V) -> Result<()> {
-        self.pending_state.insert(key.clone(), V::wrap(val));
+    fn set<V: ContextNodeType>(&mut self, key: String, val: V) -> Result<()> {
+        self.pending_state.insert(key.clone(), val.wrap());
         self.modified_keys.push(key);
+        Ok(())
+    }
+
+    fn persist<V: ContextNodeType>(&mut self, key: String, val: V) -> Result<()> {
+        self.pending_state.insert(key.clone(), val.clone().wrap());
+        self.state.insert(key, val.wrap());
         Ok(())
     }
 
@@ -52,16 +60,20 @@ impl Context for EphemeralContext {
     }
 
     fn commit(&mut self) -> Result<()> {
+        let mut checksum = self.get_checksum()?;
         for key in self.modified_keys.iter() {
             let val = self.pending_state.get(key).expect("Expected value");
             self.state.insert(key.clone(), val.clone());
+            checksum.update(&val.to_vec()?)?;
         }
+        self.persist("/kernel/checksum".into(), checksum)?;
         self.modified_keys.clear();
         Ok(())
     }
 
     fn clear(&mut self) {
         self.pending_state.clear();
+        self.modified_keys.clear();
     }
 
     fn rollback(&mut self) {
@@ -71,7 +83,6 @@ impl Context for EphemeralContext {
         self.modified_keys.clear();
     }
 }
-
 
 #[cfg(test)]
 mod test {

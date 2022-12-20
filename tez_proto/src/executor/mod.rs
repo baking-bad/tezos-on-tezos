@@ -2,8 +2,12 @@ pub mod reveal;
 pub mod transaction;
 pub mod runtime_error;
 pub mod balance_update;
+pub mod block;
 
-use tezos_core::types::mutez::Mutez;
+use tezos_core::types::{
+    mutez::Mutez,
+    encoded::{ProtocolHash, ChainId, Encoded}
+};
 use tezos_operation::operations::OperationContent;
 use tezos_rpc::models::operation::{
     Operation as OperationReceipt,
@@ -18,6 +22,7 @@ use crate::executor::{
     transaction::{execute_transaction, skip_transaction}
 };
 use crate::validator::ManagerOperation;
+use crate::constants::{CHAIN_ID, PROTOCOL};
 
 fn update_status(receipt: &mut OperationContentReceipt, status: OperationResultStatus) -> Result<()> {
     match receipt {
@@ -110,9 +115,9 @@ pub fn execute_operation(context: &mut impl Context, opg: &ManagerOperation) -> 
     context.commit()?;
 
     Ok(OperationReceipt {
-        protocol: None,
-        chain_id: None,
-        hash: None,  // blake2b of forged bytes + dummy sig
+        protocol: Some(ProtocolHash::new(PROTOCOL.into())?),
+        chain_id: Some(ChainId::new(CHAIN_ID.into())?),
+        hash: Some(opg.hash.to_owned()),
         branch: opg.origin.branch.clone(),
         signature: Some(opg.origin.signature.clone()),
         contents
@@ -165,6 +170,7 @@ mod test {
         }
 
         let opg = ManagerOperation {
+            hash: "ooKsoMe48CCt1ERrk5DgnSovFazhm53yfAYbwxNQmjWVtbNzLME".try_into().unwrap(),
             origin: SignedOperation::new(
                 "BMNvSHmWUkdonkG2oFwwQKxHUdrYQhUXqxLaSRX9wjMGfLddURC".try_into().unwrap(),
                 vec![make_tx!(2u32).into(), make_tx!(3u32).into(), make_tx!(4u32).into()], 

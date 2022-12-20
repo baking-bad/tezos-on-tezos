@@ -1,0 +1,8 @@
+[package]
+name = "tez_facade"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = "4"
+tez_proto = { path = "../tez_proto" }
