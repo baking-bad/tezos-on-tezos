@@ -3,8 +3,8 @@
 TAG:=monday
 
 # https://teztnets.xyz/dailynet-about
-DAILY_TAG=master_da3ea79d_20221214224651
-DAILY_NETWORK=dailynet-2022-12-15
+DAILY_TAG=master_7e51d27c_20221220201529
+DAILY_NETWORK=dailynet-2022-12-21
 
 # https://teztnets.xyz/mondaynet-about
 MONDAY_TAG=master_c08dbd3e_20221216223044
@@ -15,12 +15,12 @@ install:
 		&& wget -c https://github.com/WebAssembly/binaryen/releases/download/version_111/binaryen-version_111-x86_64-linux.tar.gz -O - | tar -xzv binaryen-version_111/bin/wasm-opt --strip-components 2 \
 		&& wget -c https://github.com/WebAssembly/wabt/releases/download/1.0.31/wabt-1.0.31-ubuntu.tar.gz -O - | tar -xzv wabt-1.0.31/bin/wasm-strip wabt-1.0.31/bin/wasm2wat --strip-components 2
 
-build-tez-kernel:
+build-kernel:
 	RUSTC_BOOTSTRAP=1 cargo build --package tez_kernel --target wasm32-unknown-unknown --release -Z sparse-registry
 	wasm-strip -o ./.bin/tez_kernel.wasm ./target/wasm32-unknown-unknown/release/tez_kernel.wasm
 	# wasm-opt -Oz -o ./.bin/tez_kernel.wasm ./target/wasm32-unknown-unknown/release/tez_kernel.wasm
 
-build-genesis-kernel:
+build-installer:
 	RUSTC_BOOTSTRAP=1 cargo build --package installer --target wasm32-unknown-unknown --release -Z sparse-registry
 	wasm-strip -o ./.bin/installer.wasm ./target/wasm32-unknown-unknown/release/installer.wasm
 	# wasm-opt -Oz -o ./.bin/installer.wasm ./target/wasm32-unknown-unknown/release/installer.wasm
@@ -35,10 +35,10 @@ pages:
 
 build:
 	mkdir .bin || true
-	$(MAKE) build-tez-kernel
+	$(MAKE) build-kernel
 	$(MAKE) build-dac-codec
 	$(MAKE) pages
-	$(MAKE) build-genesis-kernel
+	$(MAKE) build-installer
 
 test:
 	RUSTC_BOOTSTRAP=1 RUST_BACKTRACE=1 cargo test -Z sparse-registry --lib test -- --nocapture

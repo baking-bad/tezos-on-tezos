@@ -68,7 +68,7 @@ pub struct BatchReceipt {
 
 impl BatchHeader {
     pub fn hash(&self) -> Result<BlockHash> {
-        let header = block_header::BlockHeader::from(self.to_owned());
+        let _header = block_header::BlockHeader::from(self.to_owned());
         // TODO: use BlockHeader::hash() once it in the SDK
         Ok(ZERO_BLOCK_HASH.try_into().unwrap())
     }
