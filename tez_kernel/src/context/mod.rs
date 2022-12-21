@@ -1,9 +1,8 @@
 pub mod inbox;
 pub mod raw;
-pub mod migrations;
 
 pub use crate::context::inbox::{read_inbox, InboxMessage};
-pub use crate::context::raw::storage_backup_n_write;
+pub use crate::context::raw::{storage_backup_n_write, storage_clear_backup};
 
 use std::collections::{HashMap, HashSet};
 use host::{
@@ -111,7 +110,7 @@ impl<Host> Context for PVMContext<Host> where Host: Runtime {
             checksum.update(&raw_value)?;
         }
 
-        self.persist("/kernel/checksum".into(), checksum)?;
+        self.persist("/context/checksum".into(), checksum)?;
         self.modified_keys.clear();
         Ok(())
     }
@@ -126,6 +125,7 @@ impl<Host> Context for PVMContext<Host> where Host: Runtime {
     fn clear(&mut self) {
         self.state.clear();
         self.modified_keys.clear();
+        storage_clear_backup(&mut self.host);  // PathNotFound is OK
     }
 }
 

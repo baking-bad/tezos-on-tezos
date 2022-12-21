@@ -1,6 +1,5 @@
 pub mod context;
 pub mod error;
-pub mod baker;
 pub mod kernel;
 
 #[cfg(target_arch = "wasm32")]

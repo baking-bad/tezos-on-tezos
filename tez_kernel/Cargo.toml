@@ -11,7 +11,6 @@ host = { git = "https://gitlab.com/tezos/kernel" }
 derive_more = "0.99"
 tez_proto = { path = "../tez_proto" }
 hex = "*"
-chrono = { version = "0.4", default-features = false }
 
 [dev-dependencies]
 mock_runtime = { git = "https://gitlab.com/tezos/kernel" }

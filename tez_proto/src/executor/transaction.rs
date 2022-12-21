@@ -10,11 +10,14 @@ use tezos_rpc::models::operation::{
 };
 use tezos_core::types::mutez::Mutez;
 
-use crate::error::Result;
-use crate::context::Context;
-use crate::executor::{
-    balance_update::BalanceUpdates,
-    runtime_error::{RuntimeErrors, ALLOCATION_FEE}
+use crate::{
+    error::Result, 
+    context::Context, 
+    executor::{
+        balance_update::BalanceUpdates,
+        runtime_error::RuntimeErrors
+    },
+    constants::ALLOCATION_FEE
 };
 
 const DEFAULT_RESULT: TransactionOperationResult = TransactionOperationResult {
@@ -92,13 +95,13 @@ pub fn execute_transaction(context: &mut impl Context, transaction: &Transaction
 
     if dst_new {
         let allocation_fee: Mutez = ALLOCATION_FEE.into();
-        if src_balance < allocation_fee {
-            errors.cannot_pay_storage_fee(&src_balance, &transaction.source);
+        if dst_balance < allocation_fee {
+            errors.cannot_pay_storage_fee(&dst_balance, &transaction.destination);
             return Ok(make_receipt!(OperationResultStatus::Failed));
         } else {
-            src_balance -= allocation_fee;
-            context.set_balance(&transaction.source, &src_balance)?;
-            balance_updates.spend(&transaction.source, &allocation_fee);
+            // NOTE: charge destination, not source
+            dst_balance -= allocation_fee;
+            balance_updates.spend(&transaction.destination, &allocation_fee);
         }
     }
 

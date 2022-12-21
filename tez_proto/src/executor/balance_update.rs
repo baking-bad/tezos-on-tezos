@@ -3,8 +3,6 @@ use tezos_rpc::models::balance_update;
 
 use crate::context::types::TezosAddress;
 
-pub const ALLOCATION_FEE: i64 = 1000i64;
-
 #[derive(Clone, Debug)]
 pub struct BalanceUpdates {
     balance_updates: Vec<balance_update::BalanceUpdate>

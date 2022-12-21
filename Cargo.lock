@@ -1826,7 +1826,6 @@ dependencies = [
 name = "tez_kernel"
 version = "0.1.0"
 dependencies = [
- "chrono",
  "derive_more",
  "hex",
  "host",
@@ -1839,7 +1838,9 @@ name = "tez_proto"
 version = "0.1.0"
 dependencies = [
  "blake2",
+ "chrono",
  "derive_more",
+ "serde",
  "serde-json-wasm",
  "tezos-core",
  "tezos-operation",

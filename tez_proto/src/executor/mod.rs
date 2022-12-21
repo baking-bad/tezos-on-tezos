@@ -2,7 +2,6 @@ pub mod reveal;
 pub mod transaction;
 pub mod runtime_error;
 pub mod balance_update;
-pub mod block;
 
 use tezos_core::types::{
     mutez::Mutez,

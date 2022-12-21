@@ -4,7 +4,6 @@ use tez_proto::error::{TezosCoreError, TezosRpcError, TezosOperationError, Error
 #[derive(Debug, Display)]
 pub enum ErrorKind {
     Parsing,
-    Migration,
 }
 
 #[derive(Debug, From, Display)]
@@ -35,16 +34,6 @@ macro_rules! parsing_error {
     ($($arg:tt)*) => {
         Err(crate::error::Error::InternalError {
             kind: crate::error::ErrorKind::Parsing,
-            message: format!($($arg)*)
-        })
-    };
-}
-
-#[macro_export]
-macro_rules! migration_error {
-    ($($arg:tt)*) => {
-        Err(crate::error::Error::InternalError {
-            kind: crate::error::ErrorKind::Migration,
             message: format!($($arg)*)
         })
     };

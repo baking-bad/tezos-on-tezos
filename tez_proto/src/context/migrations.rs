@@ -1,10 +1,14 @@
-use tez_proto::{
-    context::Context,
-    context::types::Mutez,
-    executor::block::balance_update::{Contract, Kind, Origin, BalanceUpdate}
+use tezos_rpc::models::{
+    balance_update::{Contract, Kind, Origin, BalanceUpdate}
 };
+use tezos_core::types::mutez::Mutez;
 
-use crate::{error::Result, migration_error};
+use crate::{
+    context::Context,
+    context::head::Head,
+    error::Result, 
+    migration_error
+};
 
 const SEED_ACCOUNTS: [&str; 8] = [
     "tz1grSQDByRpnVs7sPtaprNZRp531ZKz6Jmm",  // Pytezos built-in key
@@ -19,10 +23,6 @@ const SEED_ACCOUNTS: [&str; 8] = [
 const SEED_BALANCE: u64 = 40_000_000_000_000u64;
 
 pub fn genesis_migration(context: &mut impl Context) -> Result<Vec<BalanceUpdate>> {
-    if context.has_pending_changes() {
-        return migration_error!("Cannot proceed with uncommitted changes")
-    }
-
     let mut updates: Vec<BalanceUpdate> = Vec::with_capacity(SEED_ACCOUNTS.len());
     let balance = Mutez::try_from(SEED_BALANCE).unwrap();
 
@@ -40,9 +40,11 @@ pub fn genesis_migration(context: &mut impl Context) -> Result<Vec<BalanceUpdate
     Ok(updates)
 }
 
-pub fn run_migrations(context: &mut impl Context, _inbox_level: i32) -> Result<Option<Vec<BalanceUpdate>>> {
-    let head = context.get_head()?;
-    // TODO: check that `level + 1 == inbox_level - origination_level`
+pub fn run_migrations(context: &mut impl Context, head: &Head) -> Result<Option<Vec<BalanceUpdate>>> {
+    if context.has_pending_changes() {
+        return migration_error!("Cannot proceed with uncommitted changes")
+    }
+    
     match head.level {
         -1 => Ok(Some(genesis_migration(context)?)),
         _ => Ok(None)

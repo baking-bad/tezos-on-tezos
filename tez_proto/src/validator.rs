@@ -20,11 +20,7 @@ pub struct ManagerOperation {
     pub last_counter: Nat
 }
 
-pub fn validate_operation(context: &mut impl Context, opg: SignedOperation, hash: OperationHash) -> Result<ManagerOperation> {
-    if context.has_pending_changes() {
-        return validation_error!("Cannot proceed with uncommited state changes");
-    }
-    
+pub fn validate_operation(context: &mut impl Context, opg: SignedOperation, hash: OperationHash) -> Result<ManagerOperation> {  
     let mut source = None;
     let mut total_fees: Mutez = 0u32.into();
 

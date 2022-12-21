@@ -2,8 +2,7 @@ use tezos_rpc::models::error::RpcError;
 use tezos_core::types::mutez::Mutez;
 
 use crate::context::types::TezosAddress;
-
-pub const ALLOCATION_FEE: u32 = 1000u32;
+use crate::constants::ALLOCATION_FEE;
 
 #[derive(Clone, Debug)]
 pub struct RuntimeErrors {

@@ -4,7 +4,7 @@ use derive_more::{From, TryInto};
 
 pub use tezos_core::{
     types::{
-        encoded::{Encoded, PublicKey, Address, ImplicitAddress, ContextHash, BlockHash},
+        encoded::{Encoded, PublicKey, Address, ImplicitAddress, ContextHash, BlockHash, OperationHash},
         mutez::Mutez,
         number::Nat
     }
@@ -15,22 +15,23 @@ pub use tezos_rpc::models::{
     block::Metadata as BlockMetadata
 };
 
-use crate::context::{
-    head::Head,
-    checksum::Checksum
+use crate::{
+    context::{head::Head, checksum::Checksum},
+    producer::types::BatchReceipt,
+    error::Result
 };
-use crate::error::Result;
 
 #[derive(Debug, Clone, From, TryInto)]
 pub enum ContextNode {
     Mutez(Mutez),
     Nat(Nat),
     PublicKey(PublicKey),
+    BlockHash(BlockHash),
+    OperationHash(OperationHash),
     Checksum(Checksum),
+    Head(Head),
     OperationReceipt(OperationReceipt),
-    BlockHeader(BlockHeader),
-    BlockMetadata(BlockMetadata),
-    Head(Head)
+    BatchReceipt(BatchReceipt),
 }
 
 impl ContextNode {
@@ -41,9 +42,10 @@ impl ContextNode {
             Self::Mutez(value) => value.encode(),
             Self::Nat(value) => value.encode(),
             Self::PublicKey(value) => value.encode(),
+            Self::BlockHash(value) => value.encode(),
+            Self::OperationHash(value) => value.encode(),
             Self::OperationReceipt(value) => value.encode(),
-            Self::BlockHeader(value) => value.encode(),
-            Self::BlockMetadata(value) => value.encode(),
+            Self::BatchReceipt(value) => value.encode(),
         }
     }
 }
@@ -83,6 +85,8 @@ macro_rules! context_node_type_core {
 context_node_type_core!(Mutez);
 context_node_type_core!(Nat);
 context_node_type_core!(PublicKey);
+context_node_type_core!(BlockHash);
+context_node_type_core!(OperationHash);
 context_node_type_core!(Head);
 context_node_type_core!(Checksum);
 
@@ -112,8 +116,7 @@ macro_rules! context_node_type_rpc {
 }
 
 context_node_type_rpc!(OperationReceipt);
-context_node_type_rpc!(BlockHeader);
-context_node_type_rpc!(BlockMetadata);
+context_node_type_rpc!(BatchReceipt);
 
 pub trait TezosAddress {
     fn to_string(&self) -> &str;

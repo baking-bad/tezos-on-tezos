@@ -16,7 +16,7 @@ impl Checksum {
 
     pub fn from_bytes(data: &[u8]) -> Result<Self> {
         Ok(Self {
-            0: data.try_into().map_err(|e| tezos_core::Error::InvalidBytes)?
+            0: data.try_into().map_err(|_| tezos_core::Error::InvalidBytes)?
         })
     }
 

@@ -13,6 +13,7 @@ pub use serde_json_wasm::de::Error as DeserializationError;
 #[derive(Debug, Display)]
 pub enum ErrorKind {
     Validation,
+    Migration,
     Execution,
     Context
 }
@@ -48,6 +49,16 @@ macro_rules! execution_error {
     ($($arg:tt)*) => {
         Err(crate::error::Error::InternalError {
             kind: crate::error::ErrorKind::Execution,
+            message: format!($($arg)*)
+        })
+    };
+}
+
+#[macro_export]
+macro_rules! migration_error {
+    ($($arg:tt)*) => {
+        Err(crate::error::Error::InternalError {
+            kind: crate::error::ErrorKind::Migration,
             message: format!($($arg)*)
         })
     };

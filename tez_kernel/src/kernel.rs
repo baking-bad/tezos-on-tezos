@@ -1,67 +1,55 @@
 use host::runtime::Runtime;
 use tez_proto::{
-    validator::{ManagerOperation, validate_operation},
-    executor::block::{execute_block, BalanceUpdate},
+    validator::{OperationHash, SignedOperation},
+    producer::execute_raw_batch,
+    context::Context,
 };
 use hex;
 
 use crate::{
     context::{PVMContext, InboxMessage, read_inbox},
-    context::migrations::run_migrations,
-    baker::wrap_rollup_block,
     debug_msg
 };
 
 pub fn kernel_run<Host: Runtime>(context: &mut PVMContext<Host>) {
-    let mut pred_timestamp = 0;
-    let mut implicit_updates: Option<Vec<BalanceUpdate>> = None;
-    let mut operations: Vec<ManagerOperation> = Vec::new();
+    let mut head = context.get_head().expect("Failed to get head");
+    let mut batch_payload: Vec<(OperationHash, SignedOperation)> = Vec::new();
 
-    let header = loop {
+    let res = loop {
         match read_inbox(context.as_mut()) {
-            Ok(InboxMessage::BeginBlock(level)) => {
-                match run_migrations(context, level) {
-                    Ok(updates) => implicit_updates = updates,
-                    Err(err) => break Err(err)
-                }
+            Ok(InboxMessage::BeginBlock(_level)) => {
+                // TODO: validate head against inbox_level - origination_level (revealed metadata)
             },
             Ok(InboxMessage::L2Operation { hash, opg }) => {
-                match validate_operation(context, opg, hash.to_owned()) {
-                    Ok(res) => {
-                        debug_msg!("[{:?}] operation validated", hash);
-                        operations.push(res)
-                    },
-                    Err(err) => debug_msg!("[{:?}] {}", hash, err)
-                }
+                debug_msg!("[{:?}] operation pending", &hash);
+                batch_payload.push((hash, opg));
             },
             Ok(InboxMessage::LevelInfo(info)) => {
                 debug_msg!("Info message {}", hex::encode(info));
-                pred_timestamp = 0;  // TODO: init `pred_timestamp`
+                head.timestamp = 0;  // TODO: validate and adjust timestamp if necessary
             },
-            Ok(InboxMessage::EndBlock(_)) => {
-                let operation_hashes = operations.iter().map(|o| o.hash.clone()).collect();   
-                match wrap_rollup_block(context, operation_hashes, pred_timestamp) {
-                    Ok(header) => break Ok(Some(header)),
+            Ok(InboxMessage::EndBlock(_level)) => {
+                // TODO: check level against head one more time
+                match execute_raw_batch(context, head, batch_payload) {
+                    Ok(hash) => {
+                        debug_msg!("[{:?}] batch finalized", hash);
+                        break Ok(())
+                    },
                     Err(err) => break Err(err.into())
                 }
             },
             Ok(InboxMessage::Unknown(id)) => debug_msg!("Unknown message #{}", id),
-            Ok(InboxMessage::NoMoreData) => break Ok(None),
+            Ok(InboxMessage::NoMoreData) => break Ok(()),
             Err(err) => break Err(err)
         }
     };
 
-    match header {
-        Ok(Some(header)) => {
-            match execute_block(context, header, operations, implicit_updates) {
-                Ok(hash) => debug_msg!("Block {:?} is finalized", hash),
-                Err(err) => debug_msg!("Failed to execute block {:?}", err)
-            }            
-        },
-        Ok(None) => debug_msg!("Block is not finalized"),
-        Err(err) => debug_msg!("{:?}", err)
-    }
-    
+    if let Err(err) = res {
+        debug_msg!("Unrecoverable error: {:?}", err);
+        // TODO: unroll context
+    } else {
+        context.clear();
+    }    
 }
 
 #[cfg(test)]
@@ -91,7 +79,7 @@ mod test {
         context
             .as_mut()
             .as_mut()
-            .add_next_inputs(10, vec![(Input::MessageData, input)].iter());
+            .add_next_inputs(level, vec![(Input::MessageData, input)].iter());
 
         kernel_run(&mut context);
 
