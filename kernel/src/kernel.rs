@@ -1,7 +1,7 @@
 use host::runtime::Runtime;
-use tez_proto::{
+use proto::{
     validator::{OperationHash, SignedOperation},
-    producer::execute_raw_batch,
+    producer::execute_batch,
     context::Context,
 };
 use hex;
@@ -13,6 +13,8 @@ use crate::{
 
 pub fn kernel_run<Host: Runtime>(context: &mut PVMContext<Host>) {
     let mut head = context.get_head().expect("Failed to get head");
+    debug_msg!("Latest head: {:?}", head);
+
     let mut batch_payload: Vec<(OperationHash, SignedOperation)> = Vec::new();
 
     let res = loop {
@@ -21,7 +23,7 @@ pub fn kernel_run<Host: Runtime>(context: &mut PVMContext<Host>) {
                 // TODO: validate head against inbox_level - origination_level (revealed metadata)
             },
             Ok(InboxMessage::L2Operation { hash, opg }) => {
-                debug_msg!("[{:?}] operation pending", &hash);
+                debug_msg!("[{:?}] pending operation", &hash);
                 batch_payload.push((hash, opg));
             },
             Ok(InboxMessage::LevelInfo(info)) => {
@@ -30,9 +32,10 @@ pub fn kernel_run<Host: Runtime>(context: &mut PVMContext<Host>) {
             },
             Ok(InboxMessage::EndBlock(_level)) => {
                 // TODO: check level against head one more time
-                match execute_raw_batch(context, head, batch_payload) {
-                    Ok(hash) => {
-                        debug_msg!("[{:?}] batch finalized", hash);
+                match execute_batch(context, head.clone(), batch_payload) {
+                    Ok(new_head) => {
+                        head = new_head;
+                        debug_msg!("Head updated: {:?}", head);
                         break Ok(())
                     },
                     Err(err) => break Err(err.into())
@@ -48,6 +51,7 @@ pub fn kernel_run<Host: Runtime>(context: &mut PVMContext<Host>) {
         debug_msg!("Unrecoverable error: {:?}", err);
         // TODO: unroll context
     } else {
+        debug_msg!("New head: {:?}", head);
         context.clear();
     }    
 }
@@ -57,8 +61,8 @@ mod test {
     use super::*;
     use crate::context::PVMContext;
 
-    use tez_proto::context::Context;
-    use tez_proto::error::Result;
+    use proto::context::Context;
+    use proto::error::Result;
     use mock_runtime::host::MockHost;
     use host::rollup_core::Input;
     use hex;

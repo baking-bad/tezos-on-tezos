@@ -1,5 +1,5 @@
 use derive_more::{From, Display};
-use tez_proto::error::{TezosCoreError, TezosRpcError, TezosOperationError, Error as TezosProtoError};
+use proto::error::{TezosCoreError, TezosRpcError, TezosOperationError, Error as TezosProtoError};
 
 #[derive(Debug, Display)]
 pub enum ErrorKind {

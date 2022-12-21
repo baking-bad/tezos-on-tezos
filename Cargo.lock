@@ -1462,6 +1462,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "proto"
+version = "0.1.0"
+dependencies = [
+ "blake2",
+ "chrono",
+ "derive_more",
+ "serde",
+ "serde-json-wasm",
+ "tezos-core",
+ "tezos-operation",
+ "tezos-rpc",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1819,7 +1833,7 @@ name = "tez_facade"
 version = "0.1.0"
 dependencies = [
  "actix-web",
- "tez_proto",
+ "proto",
 ]
 
 [[package]]
@@ -1830,21 +1844,7 @@ dependencies = [
  "hex",
  "host",
  "mock_runtime",
- "tez_proto",
-]
-
-[[package]]
-name = "tez_proto"
-version = "0.1.0"
-dependencies = [
- "blake2",
- "chrono",
- "derive_more",
- "serde",
- "serde-json-wasm",
- "tezos-core",
- "tezos-operation",
- "tezos-rpc",
+ "proto",
 ]
 
 [[package]]

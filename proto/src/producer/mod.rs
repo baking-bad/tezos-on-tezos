@@ -26,7 +26,7 @@ pub fn execute_batch_unchecked(
     header: BatchHeader,
     operations: Vec<ManagerOperation>,
     balance_updates: Option<Vec<BalanceUpdate>>
-) -> Result<BlockHash> {
+) -> Result<Head> {
     if context.has_pending_changes() {
         return execution_error!("Cannot proceed with uncommited state changes");
     }
@@ -49,15 +49,16 @@ pub fn execute_batch_unchecked(
     context.store_batch_receipt(receipt.header.level, receipt)?;
     context.commit()?;
 
-    context.persist("/kernel/head".into(), head)?;
-    Ok(hash)
+    context.persist("/kernel/head".into(), head.clone())?;
+    
+    Ok(head)
 }
 
-pub fn execute_raw_batch(
+pub fn execute_batch(
     context: &mut impl Context,
     head: Head,
     batch_payload: Vec<(OperationHash, SignedOperation)>
-) -> Result<BlockHash> {
+) -> Result<Head> {
     if context.has_pending_changes() {
         return validation_error!("Cannot proceed with uncommitted state changes");
     }

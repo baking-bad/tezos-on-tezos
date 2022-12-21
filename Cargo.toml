@@ -1,8 +1,8 @@
 [workspace]
 members = [
-  "tez_kernel",
-  "tez_proto",
-  "tez_facade",
+  "kernel",
+  "proto",
+  "facade",
   "installer",
   "dac_codec"
 ]

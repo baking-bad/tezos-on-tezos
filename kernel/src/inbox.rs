@@ -3,7 +3,7 @@ use host::{
     rollup_core::MAX_INPUT_MESSAGE_SIZE,
     runtime::Runtime
 };
-use tez_proto::validator::{SignedOperation, OperationHash, UnsignedOperation, Signature, Encoded};
+use proto::validator::{SignedOperation, OperationHash, UnsignedOperation, Signature, Encoded};
 
 use crate::{error::Result, parsing_error};
 

@@ -1,22 +1,19 @@
-pub mod inbox;
-pub mod raw;
-
-pub use crate::context::inbox::{read_inbox, InboxMessage};
-pub use crate::context::raw::{storage_backup_n_write, storage_clear_backup};
+pub use crate::inbox::{read_inbox, InboxMessage};
+pub use crate::store::{store_move_write, store_delete_backup};
 
 use std::collections::{HashMap, HashSet};
 use host::{
     path::RefPath,
     runtime::{Runtime, ValueType}
 };
-use tez_proto::{
+use proto::{
     context::{Context, types::{ContextNode, ContextNodeType}},
     error::Result
 };
 
-fn err_into(e: impl std::fmt::Debug) -> tez_proto::error::Error {
-    tez_proto::error::Error::InternalError {
-        kind: tez_proto::error::ErrorKind::Context,
+fn err_into(e: impl std::fmt::Debug) -> proto::error::Error {
+    proto::error::Error::InternalError {
+        kind: proto::error::ErrorKind::Context,
         message: format!("{:?}", e)
     }
 }
@@ -90,7 +87,7 @@ impl<Host> Context for PVMContext<Host> where Host: Runtime {
     fn persist<V: ContextNodeType>(&mut self, key: String, val: V) -> Result<()> {
         let raw_value = val.encode()?;
         let path = RefPath::assert_from(key.as_bytes());
-        storage_backup_n_write(&mut self.host, &path, raw_value.as_slice()).map_err(err_into)?;
+        store_move_write(&mut self.host, &path, raw_value.as_slice()).map_err(err_into)?;
         self.state.insert(key, val.wrap());
         Ok(())
     }
@@ -106,7 +103,7 @@ impl<Host> Context for PVMContext<Host> where Host: Runtime {
             let cached_value = self.state.get(key).expect("Modified value expected to be in state");
             let raw_value = cached_value.to_vec()?;
             let path = RefPath::assert_from(key.as_bytes());
-            storage_backup_n_write(&mut self.host, &path, raw_value.as_slice()).map_err(err_into)?;
+            store_move_write(&mut self.host, &path, raw_value.as_slice()).map_err(err_into)?;
             checksum.update(&raw_value)?;
         }
 
@@ -125,15 +122,15 @@ impl<Host> Context for PVMContext<Host> where Host: Runtime {
     fn clear(&mut self) {
         self.state.clear();
         self.modified_keys.clear();
-        storage_clear_backup(&mut self.host);  // PathNotFound is OK
+        store_delete_backup(&mut self.host);  // PathNotFound is OK
     }
 }
 
 #[cfg(test)]
 mod test {
     use mock_runtime::host::MockHost;
-    use tez_proto::context::Context;
-    use tez_proto::error::Result;
+    use proto::context::Context;
+    use proto::error::Result;
     use crate::context::PVMContext;
 
     #[test]
