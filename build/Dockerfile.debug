@@ -15,7 +15,7 @@ COPY --from=octez /home/tezos/tezos/octez-sc-rollup-client-alpha /usr/bin/octez-
 COPY --from=octez /home/tezos/tezos/octez-client /usr/bin/octez-client
 COPY --from=octez /home/tezos/tezos/octez-wasm-repl-alpha /usr/bin/octez-wasm-repl
 COPY ./.bin/wasm_2_0_0/ /root/.tezos-sc-rollup-node/wasm_2_0_0/
-COPY ./.bin/genesis_kernel.wasm /root/.tezos-sc-rollup-node/kernel.wasm
+COPY ./.bin/installer.wasm /root/.tezos-sc-rollup-node/kernel.wasm
 COPY ./build/entrypoint.sh .
 RUN chmod +x entrypoint.sh
 ENV NETWORK="mondaynet-2022-12-12"

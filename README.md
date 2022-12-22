@@ -161,6 +161,9 @@ Search for `f64 ` and `f32 ` substrings and unwind calls up to the crate level.
 Some of your dependencies use `wasm-bindgen` and mistakenly treat `wasm32-unknown-unknown` target as browser env.  
 Make sure you have disabled features that do so, or replace such dependencies.
 
+Known issues with common crates:
+- `chrono` => disable `clock` feature
+
 ## Credits
 
 * [Tezos SCORU](https://gitlab.com/tezos/tezos) & [Kernel SDK](https://gitlab.com/tezos/kernel) — Nomadic Labs and TriliTech teams

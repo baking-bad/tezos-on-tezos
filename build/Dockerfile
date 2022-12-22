@@ -21,7 +21,7 @@ COPY --from=octez /usr/local/bin/octez-sc-rollup-node-alpha /usr/bin/octez-sc-ro
 COPY --from=octez /usr/local/bin/octez-sc-rollup-client-alpha /usr/bin/octez-sc-rollup-client
 COPY --from=octez /usr/local/bin/octez-client /usr/bin/octez-client
 COPY --from=builder /build/.bin/wasm_2_0_0/ /root/.tezos-sc-rollup-node/wasm_2_0_0/
-COPY --from=builder /build/.bin/genesis_kernel.wasm /root/.tezos-sc-rollup-node/kernel.wasm
+COPY --from=builder /build/.bin/installer.wasm /root/.tezos-sc-rollup-node/kernel.wasm
 COPY ./build/entrypoint.sh .
 RUN chmod +x entrypoint.sh
 ARG NETWORK="mondaynet-2022-12-12"

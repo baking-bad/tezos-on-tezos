@@ -1,9 +1,10 @@
 [workspace]
 members = [
-  "tez_kernel",
-  "tez_proto",
-  "genesis_kernel",
-  "dac_coder"
+  "kernel",
+  "proto",
+  "facade",
+  "installer",
+  "dac_codec"
 ]
 
 [profile.release]
