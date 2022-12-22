@@ -1,88 +1,28 @@
 pub mod types;
 
-use tezos_core::types::encoded::{
+use crate::{
+    error::Result,
+    context::{Context, head::Head, migrations::run_migrations},
+    validator::{ManagerOperation, validate_batch},
+    executor::execute_operation,
+    producer::types::{
+        SignedOperation,
+        BatchHeader,
+        BatchReceipt,
+        OperationReceipt,
         OperationHash,
         OperationListListHash,
         BlockPayloadHash,
         BlockHash,
         Encoded
-    };
-use tezos_operation::operations::SignedOperation;
-use tezos_rpc::models::balance_update::BalanceUpdate;
-
-use crate::{
-    error::Result,
-    context::{Context, head::Head, migrations::run_migrations},
-    validator::{ManagerOperation, validate_operation},
-    executor::execute_operation,
-    producer::types::{BatchHeader, BatchReceipt},
+    },
     constants::*,
-    execution_error,
     validation_error
 };
 
-pub fn execute_batch_unchecked(
-    context: &mut impl Context,
-    header: BatchHeader,
-    operations: Vec<ManagerOperation>,
-    balance_updates: Option<Vec<BalanceUpdate>>
-) -> Result<Head> {
-    if context.has_pending_changes() {
-        return execution_error!("Cannot proceed with uncommited state changes");
-    }
-
-    for (i, opg) in operations.iter().enumerate() {
-        let receipt = execute_operation(context, opg)?;
-        context.store_operation_receipt(&header.level, &(i as i32), receipt)?;
-    }
-
-    let hash = BlockHash::new("".into()).unwrap();  // TODO: forge header and blake2b
-    let head = Head::new(header.level, hash.clone(), header.timestamp);
-    let receipt = BatchReceipt {
-        chain_id: CHAIN_ID.try_into().unwrap(),
-        protocol: PROTOCOL.try_into().unwrap(),
-        hash: hash.clone(),
-        header,
-        balance_updates
-    };
-
-    context.store_batch_receipt(receipt.header.level, receipt)?;
-    context.commit()?;
-
-    context.persist("/kernel/head".into(), head.clone())?;
-    
-    Ok(head)
-}
-
-pub fn execute_batch(
-    context: &mut impl Context,
-    head: Head,
-    batch_payload: Vec<(OperationHash, SignedOperation)>
-) -> Result<Head> {
-    if context.has_pending_changes() {
-        return validation_error!("Cannot proceed with uncommitted state changes");
-    }
-
-    let balance_updates = run_migrations(context, &head)?;
-
-    let mut operations: Vec<ManagerOperation> = Vec::with_capacity(batch_payload.len());
-    let mut operation_hashes: Vec<OperationHash> = Vec::with_capacity(batch_payload.len());
-    
-    for (hash, opg) in batch_payload.into_iter() {
-        match validate_operation(context, opg, hash.clone()) {
-            Ok(op) => {
-                let balance = context.get_balance(&op.source)?.expect("Missing balance");
-                context.set_balance(&op.source, &(balance - op.total_fees))?;
-                context.set_counter(&op.source, &op.last_counter)?;
-                operation_hashes.push(hash);
-                operations.push(op);
-            },
-            Err(_) => ()  // TODO: context.error_log(err)
-        }
-    }
-    context.rollback();  // clear validator changes
-
-    let header = BatchHeader {
+fn naive_header(context: &mut impl Context, head: Head, operations: &Vec<ManagerOperation>) -> Result<BatchHeader> {
+    let operation_hashes: Vec<OperationHash> = operations.iter().map(|o| o.hash.clone()).collect();
+    Ok(BatchHeader {
         level: head.level + 1,
         predecessor: head.hash.to_owned(),
         payload_hash: BlockPayloadHash::from_parts(
@@ -93,9 +33,45 @@ pub fn execute_batch(
         operations_hash: OperationListListHash::try_from(
             vec![vec![], vec![], vec![], operation_hashes]
         )?,
-        context: context.get_checksum()?.hash()?,
+        context: context.get_checksum()?.hash()?,  // IMPORTANT: after all operations are executed and state is committed
         timestamp: head.timestamp + BLOCK_TIME,
+    })
+}
+
+pub fn apply_batch(
+    context: &mut impl Context,
+    head: Head,
+    batch_payload: Vec<(OperationHash, SignedOperation)>
+) -> Result<Head> {
+    if context.has_pending_changes() {
+        return validation_error!("Cannot proceed with uncommitted state changes");
+    }
+
+    let balance_updates = run_migrations(context, &head)?;
+    let operations = validate_batch(context, batch_payload, false)?;
+
+    let mut operation_receipts: Vec<OperationReceipt> = Vec::with_capacity(operations.len());
+    for opg in operations.iter() {
+        operation_receipts.push(execute_operation(context, opg)?);
+    }
+
+    let header = naive_header(context, head, &operations)?;
+    let hash = BlockHash::new("".into()).unwrap();  // TODO: forge header and blake2b
+    let head = Head::new(header.level, hash.clone(), header.timestamp);
+    let receipt = BatchReceipt {
+        chain_id: CHAIN_ID.try_into().unwrap(),
+        protocol: PROTOCOL.try_into().unwrap(),
+        hash,
+        header,
+        balance_updates
     };
 
-    execute_batch_unchecked(context, header, operations, balance_updates)
+    for (index, opg_receipt) in operation_receipts.into_iter().enumerate() {
+        context.commit_operation_receipt(&head.level, &(index as i32), opg_receipt)?;
+    }
+
+    context.commit_batch_receipt(receipt.header.level, receipt)?;
+    context.commit_head(head.clone())?;
+
+    Ok(head)
 }

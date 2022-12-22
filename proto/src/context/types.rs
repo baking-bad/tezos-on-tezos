@@ -2,18 +2,14 @@ use std::ops::Deref;
 use serde_json_wasm;
 use derive_more::{From, TryInto};
 
-pub use tezos_core::{
+use tezos_core::{
     types::{
-        encoded::{Encoded, PublicKey, Address, ImplicitAddress, ContextHash, BlockHash, OperationHash},
+        encoded::{Encoded, PublicKey, Address, ImplicitAddress, BlockHash, OperationHash},
         mutez::Mutez,
         number::Nat
     }
 };
-pub use tezos_rpc::models::{
-    operation::Operation as OperationReceipt,
-    block::FullHeader as BlockHeader,
-    block::Metadata as BlockMetadata
-};
+use tezos_rpc::models::operation::Operation as OperationReceipt;
 
 use crate::{
     context::{head::Head, checksum::Checksum},
@@ -55,10 +51,11 @@ pub trait ContextNodeType : Clone {
     fn decode(bytes: &[u8]) -> Result<ContextNode>;
     fn unwrap(node: ContextNode) -> Self;
     fn wrap(self) -> ContextNode;
+    fn max_bytes() -> usize;
 }
 
 macro_rules! context_node_type_core {
-    ($ty: ty) => {
+    ($ty: ty, $max_bytes: expr) => {
         impl ContextNodeType for $ty {
             fn decode(bytes: &[u8]) -> Result<ContextNode> {
                 match Self::from_bytes(bytes) {
@@ -78,17 +75,21 @@ macro_rules! context_node_type_core {
             fn wrap(self) -> ContextNode { 
                 self.into()
             }
+
+            fn max_bytes() -> usize {
+                $max_bytes
+            }
         }
     };
 }
 
-context_node_type_core!(Mutez);
-context_node_type_core!(Nat);
-context_node_type_core!(PublicKey);
-context_node_type_core!(BlockHash);
-context_node_type_core!(OperationHash);
-context_node_type_core!(Head);
-context_node_type_core!(Checksum);
+context_node_type_core!(Mutez, 8);
+context_node_type_core!(Nat, 32);
+context_node_type_core!(PublicKey, 33);
+context_node_type_core!(BlockHash, 32);
+context_node_type_core!(OperationHash, 32);
+context_node_type_core!(Head, 44);
+context_node_type_core!(Checksum, 32);
 
 macro_rules! context_node_type_rpc {
     ($ty: ty) => {
@@ -110,6 +111,10 @@ macro_rules! context_node_type_rpc {
         
             fn wrap(self) -> ContextNode { 
                 self.into()
+            }
+
+            fn max_bytes() -> usize {
+                2048
             }
         }
     };

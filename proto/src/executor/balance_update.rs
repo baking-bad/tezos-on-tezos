@@ -1,11 +1,18 @@
 use tezos_core::types::mutez::Mutez;
-use tezos_rpc::models::balance_update;
+use tezos_rpc::models::balance_update::{
+    Kind,
+    Category,
+    Contract,
+    CategorizedBalanceUpdate,
+    BalanceUpdate,
+    Origin
+};
 
 use crate::context::types::TezosAddress;
 
 #[derive(Clone, Debug)]
 pub struct BalanceUpdates {
-    balance_updates: Vec<balance_update::BalanceUpdate>
+    balance_updates: Vec<BalanceUpdate>
 }
 
 impl BalanceUpdates {
@@ -19,17 +26,43 @@ impl BalanceUpdates {
         res
     }
 
-    pub fn unwrap(self) -> Vec<balance_update::BalanceUpdate> {
+    pub fn unwrap(self) -> Vec<BalanceUpdate> {
         self.balance_updates
     }
 
     fn push_contract_update(&mut self, contract: String, change: String) {
-        self.balance_updates.push(balance_update::BalanceUpdate::Contract(balance_update::Contract {
-            kind: balance_update::Kind::Contract,
+        self.balance_updates.push(BalanceUpdate::Contract(Contract {
+            kind: Kind::Contract,
             change,
             contract,
-            origin: Some(balance_update::Origin::Block)
+            origin: Some(Origin::Block)
         }));
+    }
+
+    fn push_categorized_update(&mut self, kind: Kind, category: Category, change: String) {
+        self.balance_updates.push(BalanceUpdate::Categorized(CategorizedBalanceUpdate {
+            kind,
+            category,
+            change,
+            origin: Some(Origin::Block),
+            cycle: None,
+            delegate: None,
+            level: None,
+            participation: None,
+            revelation: None
+        }));
+    }
+
+    pub fn burn(&mut self, contract: &impl TezosAddress, amount: &Mutez) {
+        self.push_contract_update(
+            contract.to_string().into(), 
+            format!("-{}", amount)
+        );
+        self.push_categorized_update(
+            Kind::Burned,
+            Category::StorageFees,
+            amount.to_string()
+        );
     }
 
     pub fn spend(&mut self, contract: &impl TezosAddress, amount: &Mutez) {
@@ -47,8 +80,8 @@ impl BalanceUpdates {
     }
 }
 
-impl Into<Option<Vec<balance_update::BalanceUpdate>>> for BalanceUpdates {
-    fn into(self) -> Option<Vec<balance_update::BalanceUpdate>> {
+impl Into<Option<Vec<BalanceUpdate>>> for BalanceUpdates {
+    fn into(self) -> Option<Vec<BalanceUpdate>> {
         if !self.balance_updates.is_empty() {
             return Some(self.balance_updates);
         }

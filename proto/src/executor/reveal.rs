@@ -10,12 +10,15 @@ use tezos_rpc::models::operation::{
     }
 };
 
-use crate::executor::{
-    runtime_error::RuntimeErrors,
-    balance_update::BalanceUpdates
+use crate::{
+    executor::{
+        runtime_error::RuntimeErrors,
+        balance_update::BalanceUpdates,
+    },
+    error::Result,
+    context::Context,
+    constants::ALLOCATION_FEE
 };
-use crate::error::Result;
-use crate::context::Context;
 
 pub fn skip_reveal(reveal: Reveal) -> RevealReceipt {
     RevealReceipt {
@@ -34,7 +37,7 @@ pub fn skip_reveal(reveal: Reveal) -> RevealReceipt {
 
 pub fn execute_reveal(context: &mut impl Context, reveal: &Reveal) -> Result<RevealReceipt> {
     let mut errors = RuntimeErrors::new();
-    let charges =  BalanceUpdates::fee(&reveal.source, &reveal.fee);
+    let mut charges =  BalanceUpdates::fee(&reveal.source, &reveal.fee);
 
     macro_rules! make_receipt {
         ($a: expr) => {
@@ -57,6 +60,18 @@ pub fn execute_reveal(context: &mut impl Context, reveal: &Reveal) -> Result<Rev
         errors.previously_revealed_key(&reveal.source);
         return Ok(make_receipt!(OperationResultStatus::Failed))
     }
+
+    let mut balance = context.get_balance(&reveal.source)?.expect("Balance");
+    if balance < ALLOCATION_FEE.into() {
+        errors.cannot_pay_storage_fee(&balance, &reveal.source);
+        return Ok(make_receipt!(OperationResultStatus::Failed))
+    }
+    
+    // NOTE: this is a slightly different concept compared to Tezos,
+    // where transaction sender pays for destination account allocation
+    balance -= ALLOCATION_FEE.into();
+    context.set_balance(&reveal.source, &balance)?;
+    charges.burn(&reveal.source, &ALLOCATION_FEE.into());
 
     context.set_public_key(&reveal.source, &reveal.public_key)?;
     Ok(make_receipt!(OperationResultStatus::Applied))
@@ -84,7 +99,7 @@ mod test {
         let address = ImplicitAddress::try_from("tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU").unwrap();
         let public_key = PublicKey::try_from("edpktipCJ3SkjvtdcrwELhvupnyYJSmqoXu3kdzK1vL6fT5cY8FTEa").unwrap();
 
-        context.set_balance(&address.value(), &Mutez::from(1000000000u32))?;
+        context.set_balance(&address.value(), &Mutez::from(1000001000u32))?;
         context.set_counter(&address, &Nat::try_from("100000").unwrap())?;
 
         let reveal = Reveal {

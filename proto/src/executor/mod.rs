@@ -61,7 +61,7 @@ fn get_status(receipt: &OperationContentReceipt) -> Result<OperationResultStatus
 
 pub fn execute_operation(context: &mut impl Context, opg: &ManagerOperation) -> Result<OperationReceipt> {
     if context.has_pending_changes() {
-        return execution_error!("Cannot proceed with uncommited state changes");
+        return execution_error!("Cannot proceed with uncommitted state changes");
     }
 
     let initial_balance = context.get_balance(&opg.source)?.expect("Validated");
@@ -177,7 +177,8 @@ mod test {
             ),
             last_counter: 4u32.into(),
             source: source.clone(),
-            total_fees: 3000u32.into()
+            total_fees: 3000u32.into(),
+            total_spent: 6000u32.into()
         };
 
         let receipt = execute_operation(&mut context, &opg)?;

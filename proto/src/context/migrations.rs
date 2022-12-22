@@ -50,3 +50,32 @@ pub fn run_migrations(context: &mut impl Context, head: &Head) -> Result<Option<
         _ => Ok(None)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        error::Result,
+        context::Context,
+        context::ephemeral::EphemeralContext
+    };
+    use super::*;
+
+    #[test]
+    fn test_seed_acconuts() -> Result<()> {
+        let mut context = EphemeralContext::new();
+
+        let head = context.get_head()?;
+        assert_eq!(-1, head.level);
+
+        let updates = run_migrations(&mut context, &head)?
+            .expect("Seed balance updates");
+        assert_eq!(8, updates.len());
+
+        let balance = context
+            .get_balance(&"tz1grSQDByRpnVs7sPtaprNZRp531ZKz6Jmm")?
+            .expect("Seed balance");
+        assert_eq!(Mutez::try_from(SEED_BALANCE).unwrap(), balance);
+
+        Ok(())
+    }
+}

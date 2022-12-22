@@ -1,13 +1,13 @@
 use host::runtime::Runtime;
 use proto::{
-    validator::{OperationHash, SignedOperation},
-    producer::execute_batch,
+    producer::{apply_batch, types::{OperationHash, SignedOperation}},
     context::Context,
 };
 use hex;
 
 use crate::{
-    context::{PVMContext, InboxMessage, read_inbox},
+    context::PVMContext,
+    inbox::{InboxMessage, read_inbox},
     debug_msg
 };
 
@@ -28,11 +28,10 @@ pub fn kernel_run<Host: Runtime>(context: &mut PVMContext<Host>) {
             },
             Ok(InboxMessage::LevelInfo(info)) => {
                 debug_msg!("Info message {}", hex::encode(info));
-                head.timestamp = 0;  // TODO: validate and adjust timestamp if necessary
+                head.timestamp += 1;  // TODO: validate and adjust timestamp if necessary
             },
             Ok(InboxMessage::EndBlock(_level)) => {
-                // TODO: check level against head one more time
-                match execute_batch(context, head.clone(), batch_payload) {
+                match apply_batch(context, head.clone(), batch_payload) {
                     Ok(new_head) => {
                         head = new_head;
                         debug_msg!("Head updated: {:?}", head);
@@ -46,13 +45,16 @@ pub fn kernel_run<Host: Runtime>(context: &mut PVMContext<Host>) {
             Err(err) => break Err(err)
         }
     };
-
-    if let Err(err) = res {
-        debug_msg!("Unrecoverable error: {:?}", err);
-        // TODO: unroll context
-    } else {
-        debug_msg!("New head: {:?}", head);
-        context.clear();
+    
+    match res {
+        Ok(_) => {
+            debug_msg!("New head: {:?}", head);
+            context.clear();
+        },
+        Err(err) => {
+            debug_msg!("Unrecoverable error: {:?}", err);
+            // TODO: rewind state
+        }
     }    
 }
 
@@ -83,7 +85,11 @@ mod test {
         context
             .as_mut()
             .as_mut()
-            .add_next_inputs(level, vec![(Input::MessageData, input)].iter());
+            .add_next_inputs(level, vec![
+                (Input::MessageData, b"\x00\x01".to_vec()),
+                (Input::MessageData, input),
+                (Input::MessageData, b"\x00\x02".to_vec())
+            ].iter());
 
         kernel_run(&mut context);
 

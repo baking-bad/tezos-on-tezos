@@ -15,6 +15,7 @@ pub use tezos_core::types::{
 };
 pub use tezos_operation::{
     block_header,
+    operations::{SignedOperation, UnsignedOperation}
 };
 pub use tezos_rpc::models::{
     block::{
@@ -28,6 +29,7 @@ pub use tezos_rpc::models::{
         OperationListLength,
         LiquidityBakingToggleVote
     },
+    operation::Operation as OperationReceipt,
     balance_update::BalanceUpdate,
     balance_update
 };

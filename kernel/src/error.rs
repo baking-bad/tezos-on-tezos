@@ -4,6 +4,7 @@ use proto::error::{TezosCoreError, TezosRpcError, TezosOperationError, Error as 
 #[derive(Debug, Display)]
 pub enum ErrorKind {
     Parsing,
+    Store
 }
 
 #[derive(Debug, From, Display)]

@@ -30,7 +30,7 @@ impl Context for EphemeralContext {
         }
     }
 
-    fn get<V: ContextNodeType>(&mut self, key: String, _max_bytes: usize) -> Result<Option<V>> {
+    fn get<V: ContextNodeType>(&mut self, key: String) -> Result<Option<V>> {
         match self.pending_state.get(&key) {
             Some(cached_value) => Ok(Some(V::unwrap(cached_value.to_owned()))),
             None => match self.state.get(&key) {
@@ -49,7 +49,7 @@ impl Context for EphemeralContext {
         Ok(())
     }
 
-    fn persist<V: ContextNodeType>(&mut self, key: String, val: V) -> Result<()> {
+    fn persist<V: ContextNodeType>(&mut self, key: String, val: V, _level: Option<i32>) -> Result<()> {
         self.pending_state.insert(key.clone(), val.clone().wrap());
         self.state.insert(key, val.wrap());
         Ok(())
@@ -61,12 +61,14 @@ impl Context for EphemeralContext {
 
     fn commit(&mut self) -> Result<()> {
         let mut checksum = self.get_checksum()?;
+        let head = self.get_head()?;
+
         for key in self.modified_keys.iter() {
             let val = self.pending_state.get(key).expect("Expected value");
             self.state.insert(key.clone(), val.clone());
             checksum.update(&val.to_vec()?)?;
         }
-        self.persist("/kernel/checksum".into(), checksum)?;
+        self.commit_checksum(checksum, head.level)?;
         self.modified_keys.clear();
         Ok(())
     }

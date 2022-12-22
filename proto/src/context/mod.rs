@@ -22,32 +22,45 @@ use crate::error::Result;
 
 pub trait Context {
     fn has(&self, key: String) -> Result<bool>;
-    fn get<V: ContextNodeType>(&mut self, key: String, max_bytes: usize) -> Result<Option<V>> ;
+    fn get<V: ContextNodeType>(&mut self, key: String) -> Result<Option<V>> ;
     fn set<V: ContextNodeType>(&mut self, key: String, val: V) -> Result<()>;
-    fn persist<V: ContextNodeType>(&mut self, key: String, val: V) -> Result<()>;
+    fn persist<V: ContextNodeType>(&mut self, key: String, val: V, rew_lvl: Option<i32>) -> Result<()>;
     fn has_pending_changes(&self) -> bool;
     fn commit(&mut self) -> Result<()>;
     fn rollback(&mut self);
     fn clear(&mut self);
 
     fn get_checksum(&mut self) -> Result<Checksum> {
-        match self.get("/context/checksum".into(), 32) {
+        match self.get("/context/checksum".into()) {
             Ok(Some(value)) => Ok(value),
             Ok(None) => Ok(Checksum::default()),
             Err(err) => Err(err)
         }
     }
 
+    fn commit_checksum(&mut self, checksum: Checksum, level: i32) -> Result<()> {
+        self.persist("/context/checksum".into(), checksum, Some(level))
+    }
+
     fn get_head(&mut self) -> Result<Head> {
-        match self.get(format!("/kernel/head"), 36) {
+        match self.get(format!("/head")) {
             Ok(Some(value)) => Ok(value),
             Ok(None) => Ok(Head::default()),
             Err(err) => Err(err)
         }
     }
 
+    fn commit_head(&mut self, head: Head) -> Result<()> {
+        let rew_lvl = head.level - 1;
+        self.persist("/head".into(), head, Some(rew_lvl))
+    }
+
+    fn rewind(&mut self, ) -> Result<()> {
+        todo!("Iterate over /rewind/current and apply reverse updates, change head")
+    }
+
     fn get_balance(&mut self, address: &impl TezosAddress) -> Result<Option<Mutez>> {
-        return self.get(format!("/context/contracts/{}/balance", address.to_string()), 64);
+        return self.get(format!("/context/contracts/{}/balance", address.to_string()));
     }
 
     fn set_balance(&mut self, address: &impl TezosAddress, balance: &Mutez) -> Result<()> {
@@ -55,7 +68,7 @@ pub trait Context {
     }
 
     fn get_counter(&mut self, address: &impl TezosAddress) -> Result<Option<Nat>> {
-        return self.get(format!("/context/contracts/{}/counter", address.to_string()), 64);
+        return self.get(format!("/context/contracts/{}/counter", address.to_string()));
     }
 
     fn set_counter(&mut self, address: &impl TezosAddress, counter: &Nat) -> Result<()> {
@@ -63,11 +76,11 @@ pub trait Context {
     }
 
     fn get_public_key(&mut self, address: &impl TezosAddress) -> Result<Option<PublicKey>> {
-        return self.get(format!("/context/contracts/{}/pubkey", address.to_string()), 33);
+        return self.get(format!("/context/contracts/{}/pubkey", address.to_string()));
     }
 
     fn set_public_key(&mut self, address: &impl TezosAddress, public_key: &PublicKey) -> Result<()> {
-        // FIXME: Underscores are not supported
+        // NOTE: Underscores are not supported by host
         return self.set(format!("/context/contracts/{}/pubkey", address.to_string()), public_key.to_owned());
     }
 
@@ -75,25 +88,24 @@ pub trait Context {
         return self.has(format!("/context/contracts/{}/pubkey", address.to_string()));
     }
 
-    fn store_operation_receipt(&mut self, level: &i32, index: &i32, receipt: OperationReceipt) -> Result<()> {
+    fn commit_operation_receipt(&mut self, level: &i32, index: &i32, receipt: OperationReceipt) -> Result<()> {
         if let Some(hash) = &receipt.hash {
-            self.set(format!("/context/blocks/{}/operation_hashes/{}", level, index), hash.clone())?;
+            self.persist(format!("/blocks/{}/operation_hashes/{}", level, index), hash.clone(), None)?;
         }
-        self.set(format!("/context/blocks/{}/operations/{}", level, index), receipt)
+        self.persist(format!("/blocks/{}/operations/{}", level, index), receipt, None)
     }
 
     fn get_operation_receipt(&mut self, level: &i32, index: &i32) -> Result<Option<OperationReceipt>> {
         // TODO: support larger files (read loop)
-        return self.get(format!("/context/blocks/{}/operations/{}", level, index), 2048);
+        return self.get(format!("/blocks/{}/operations/{}", level, index));
     }
 
-    fn store_batch_receipt(&mut self, level: i32, receipt: BatchReceipt) -> Result<()> {
-        // TODO: store hash alias
-        self.set(format!("/context/blocks/{}/hash", level), receipt.hash.clone())?;
-        self.set(format!("/context/blocks/{}/header", level), receipt)
+    fn commit_batch_receipt(&mut self, level: i32, receipt: BatchReceipt) -> Result<()> {
+        self.persist(format!("/blocks/{}/hash", level), receipt.hash.clone(), None)?;
+        self.persist(format!("/blocks/{}/header", level), receipt, None)
     }
 
     fn get_batch_receipt(&mut self, level: i32) -> Result<Option<BatchReceipt>> {
-        return self.get(format!("/context/blocks/{}/header", level), 1024);
+        return self.get(format!("/blocks/{}/header", level));
     }
 }

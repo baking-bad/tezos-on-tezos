@@ -1,4 +1,3 @@
-use std::vec;
 use tezos_operation::operations::Transaction;
 use tezos_rpc::models::operation::{
     operation_result::operations::transaction::TransactionOperationResult,
@@ -8,7 +7,6 @@ use tezos_rpc::models::operation::{
         TransactionMetadata
     }
 };
-use tezos_core::types::mutez::Mutez;
 
 use crate::{
     error::Result, 
@@ -16,8 +14,7 @@ use crate::{
     executor::{
         balance_update::BalanceUpdates,
         runtime_error::RuntimeErrors
-    },
-    constants::ALLOCATION_FEE
+    }
 };
 
 const DEFAULT_RESULT: TransactionOperationResult = TransactionOperationResult {
@@ -51,10 +48,10 @@ pub fn execute_transaction(context: &mut impl Context, transaction: &Transaction
         todo!("Support smart contract calls");
     }
 
-    let (mut dst_balance, dst_new) = match context.get_balance(&transaction.destination)? {
-        Some(balance) => (balance, false),
-        None => (0u32.into(), true)
-    };
+    let mut dst_balance = context
+        .get_balance(&transaction.destination)?
+        .unwrap_or(0u32.into());
+
     let mut src_balance = context
         .get_balance(&transaction.source)?
         .expect("Checked by validator");
@@ -71,7 +68,7 @@ pub fn execute_transaction(context: &mut impl Context, transaction: &Transaction
                         status: $a, 
                         balance_updates: balance_updates.into(),
                         consumed_milligas: Some("0".into()), 
-                        allocated_destination_contract: Some(dst_new),
+                        allocated_destination_contract: Some(false),
                         errors: errors.into(),
                         ..DEFAULT_RESULT
                     },
@@ -91,18 +88,6 @@ pub fn execute_transaction(context: &mut impl Context, transaction: &Transaction
         dst_balance += transaction.amount;
         balance_updates.spend(&transaction.source, &transaction.amount);
         balance_updates.topup(&transaction.destination, &transaction.amount);
-    }
-
-    if dst_new {
-        let allocation_fee: Mutez = ALLOCATION_FEE.into();
-        if dst_balance < allocation_fee {
-            errors.cannot_pay_storage_fee(&dst_balance, &transaction.destination);
-            return Ok(make_receipt!(OperationResultStatus::Failed));
-        } else {
-            // NOTE: charge destination, not source
-            dst_balance -= allocation_fee;
-            balance_updates.spend(&transaction.destination, &allocation_fee);
-        }
     }
 
     context.set_balance(&transaction.source, &src_balance)?;

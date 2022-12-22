@@ -1,6 +1,3 @@
-pub use crate::inbox::{read_inbox, InboxMessage};
-pub use crate::store::{store_move_write, store_delete_backup};
-
 use std::collections::{HashMap, HashSet};
 use host::{
     path::RefPath,
@@ -8,8 +5,10 @@ use host::{
 };
 use proto::{
     context::{Context, types::{ContextNode, ContextNodeType}},
-    error::Result
+    error::Result,
 };
+
+use crate::store::store_move_write;
 
 fn err_into(e: impl std::fmt::Debug) -> proto::error::Error {
     proto::error::Error::InternalError {
@@ -55,15 +54,16 @@ impl<Host> Context for PVMContext<Host> where Host: Runtime {
         }
     }
 
-    fn get<V: ContextNodeType>(&mut self, key: String, max_bytes: usize) -> Result<Option<V>> {
+    fn get<V: ContextNodeType>(&mut self, key: String) -> Result<Option<V>> {
         match self.state.get(&key) {
             Some(cached_value) => Ok(Some(V::unwrap(cached_value.to_owned()))),
             None => {
                 let path = RefPath::assert_from(key.as_bytes());
                 match self.host.store_has(&path) {
                     Ok(Some(ValueType::Value)) => {
+                        // TODO: read loop for values > 2048
                         let stored_value = self.host
-                            .store_read(&path, 0, max_bytes)
+                            .store_read(&path, 0, V::max_bytes())
                             .map_err(err_into)?;
                         let value = V::decode(&stored_value)?;
                         let inner_value = V::unwrap(value.to_owned());
@@ -84,11 +84,15 @@ impl<Host> Context for PVMContext<Host> where Host: Runtime {
         Ok(())
     }
 
-    fn persist<V: ContextNodeType>(&mut self, key: String, val: V) -> Result<()> {
-        let raw_value = val.encode()?;
+    fn persist<V: ContextNodeType>(&mut self, key: String, val: V, rew_lvl: Option<i32>) -> Result<()> {
+        let raw_val = val.encode()?;
         let path = RefPath::assert_from(key.as_bytes());
-        store_move_write(&mut self.host, &path, raw_value.as_slice()).map_err(err_into)?;
-        self.state.insert(key, val.wrap());
+        if let Some(level) = rew_lvl {
+            store_move_write(&mut self.host, &path, &raw_val, level).map_err(err_into)?;
+        } else {
+            self.host.store_write(&path, raw_val.as_slice(), 0).map_err(err_into)?;
+        }
+        self.state.remove(&key);  // ensure not cached
         Ok(())
     }
 
@@ -98,16 +102,19 @@ impl<Host> Context for PVMContext<Host> where Host: Runtime {
 
     fn commit(&mut self) -> Result<()> {
         let mut checksum = self.get_checksum()?;
+        let head = self.get_head()?;
 
         for key in self.modified_keys.iter() {
-            let cached_value = self.state.get(key).expect("Modified value expected to be in state");
-            let raw_value = cached_value.to_vec()?;
+            let raw_value = match self.state.get(key) {
+                Some(val) => val.to_vec()?,
+                None => return Err(err_into("Failed to find modified value"))
+            };
             let path = RefPath::assert_from(key.as_bytes());
-            store_move_write(&mut self.host, &path, raw_value.as_slice()).map_err(err_into)?;
+            store_move_write(&mut self.host, &path, raw_value.as_slice(), head.level).map_err(err_into)?;
             checksum.update(&raw_value)?;
         }
 
-        self.persist("/context/checksum".into(), checksum)?;
+        self.commit_checksum(checksum, head.level)?;
         self.modified_keys.clear();
         Ok(())
     }
@@ -122,7 +129,6 @@ impl<Host> Context for PVMContext<Host> where Host: Runtime {
     fn clear(&mut self) {
         self.state.clear();
         self.modified_keys.clear();
-        store_delete_backup(&mut self.host);  // PathNotFound is OK
     }
 }
 
