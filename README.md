@@ -23,7 +23,7 @@ Also in the scope of our developing tools and indexing stack we want to better u
 ## Roadmap
 
 - [x] MVP Tezos-compatible kernel supporting plain transactions and public key reveals
-- [x] Genesis kernel that installs Tez kernel and initializes seed accounts
+- [x] Installer kernel
 - [x] DAC encoding tool
 - [x] Docker image with SCORU node, installer, and encoded Tez kernel
 - [x] Run TZ rollup in Mondaynet, prepare setup scripts
@@ -43,7 +43,9 @@ Current design is intentionally simplified to speed up development while having 
 
 * Fix-priced operations, just general gas/storage limits
 * Non-sequential account counters
-* Only 3 manager operations supported: transaction, reveal, origination
+* Only 3 manager operations supported: transaction, reveal, origination (wip)
+* Branch is not validated (infinite TTL)
+* Allocation fee is paid during reveal
 * (To be continued)
 
 Non-supported Michelson features (at least in the first iteration):
