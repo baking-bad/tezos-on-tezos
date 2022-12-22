@@ -43,7 +43,7 @@ pub trait Context {
     }
 
     fn get_head(&mut self) -> Result<Head> {
-        match self.get(format!("/head")) {
+        match self.get("/head".into()) {
             Ok(Some(value)) => Ok(value),
             Ok(None) => Ok(Head::default()),
             Err(err) => Err(err)
@@ -88,14 +88,14 @@ pub trait Context {
         return self.has(format!("/context/contracts/{}/pubkey", address.to_string()));
     }
 
-    fn commit_operation_receipt(&mut self, level: &i32, index: &i32, receipt: OperationReceipt) -> Result<()> {
+    fn commit_operation_receipt(&mut self, level: i32, index: i32, receipt: OperationReceipt) -> Result<()> {
         if let Some(hash) = &receipt.hash {
-            self.persist(format!("/blocks/{}/operation_hashes/{}", level, index), hash.clone(), None)?;
+            self.persist(format!("/blocks/{}/ophashes/{}", level, index), hash.clone(), None)?;
         }
         self.persist(format!("/blocks/{}/operations/{}", level, index), receipt, None)
     }
 
-    fn get_operation_receipt(&mut self, level: &i32, index: &i32) -> Result<Option<OperationReceipt>> {
+    fn get_operation_receipt(&mut self, level: i32, index: i32) -> Result<Option<OperationReceipt>> {
         // TODO: support larger files (read loop)
         return self.get(format!("/blocks/{}/operations/{}", level, index));
     }

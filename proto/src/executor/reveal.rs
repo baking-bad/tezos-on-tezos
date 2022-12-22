@@ -99,7 +99,7 @@ mod test {
         let address = ImplicitAddress::try_from("tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU").unwrap();
         let public_key = PublicKey::try_from("edpktipCJ3SkjvtdcrwELhvupnyYJSmqoXu3kdzK1vL6fT5cY8FTEa").unwrap();
 
-        context.set_balance(&address.value(), &Mutez::from(1000001000u32))?;
+        context.set_balance(&address.value(), &Mutez::from(1000000000u32))?;
         context.set_counter(&address, &Nat::try_from("100000").unwrap())?;
 
         let reveal = Reveal {
@@ -116,7 +116,7 @@ mod test {
         assert!(receipt.unwrap().metadata.is_some());
 
         assert_eq!(context.get_public_key(&address)?.expect("Public key expected"), public_key);
-        assert_eq!(context.get_balance(&address.value())?.expect("Balance expected"), Mutez::from(1000000000u32));
+        assert_eq!(context.get_balance(&address.value())?.expect("Balance expected"), Mutez::from(1000000000u32 - 1000u32));
         
         Ok(())
     }

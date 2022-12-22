@@ -149,7 +149,7 @@ mod test {
         let source = ImplicitAddress::try_from("tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU").unwrap();
         let destination = Address::try_from("tz1NEgotHhj4fkm8AcwquQqQBrQsAMRUg86c").unwrap();
 
-        context.set_balance(&source, &Mutez::from(5000u32))?;
+        context.set_balance(&source, &Mutez::from(4000u32))?;
         context.set_counter(&source, &Nat::try_from("1").unwrap())?;
         context.commit()?;
 
@@ -178,11 +178,11 @@ mod test {
             last_counter: 4u32.into(),
             source: source.clone(),
             total_fees: 3000u32.into(),
-            total_spent: 6000u32.into()
+            total_spent: 0u32.into()  // <-- not true, fot the sake of the test
         };
 
         let receipt = execute_operation(&mut context, &opg)?;
-        // println!("{:#?}", receipt);
+        println!("{:#?}", receipt);
         assert_eq!(get_status(&receipt.contents[0]).expect("Backtracked"), OperationResultStatus::Backtracked);
         assert_eq!(get_status(&receipt.contents[1]).expect("Failed"), OperationResultStatus::Failed);
         assert_eq!(get_status(&receipt.contents[2]).expect("Skipped"), OperationResultStatus::Skipped);

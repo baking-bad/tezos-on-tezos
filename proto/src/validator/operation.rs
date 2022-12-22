@@ -119,7 +119,7 @@ mod test {
     use crate::context::{Context, ephemeral::EphemeralContext};
     use crate::error::Result;
     use tezos_operation::{
-        operations::{SignedOperation, Transaction}
+        operations::{SignedOperation, Transaction, Reveal}
     };
     use tezos_core::types::{
         encoded::{ImplicitAddress, PublicKey, Encoded},
@@ -165,36 +165,42 @@ mod test {
     }
 
     #[test]
-    fn test_invalid_reveal() -> Result<()> {
+    fn test_reveal_and_tx_batch() -> Result<()> {
         let mut context = EphemeralContext::new();
 
-        let address = ImplicitAddress::try_from("tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU").unwrap();
+        let address = ImplicitAddress::try_from("tz1Ng3bkhPwf6byrSWzBeBRTuaiKCQXzyRUK").unwrap();
         context.set_balance(&address.value(), &Mutez::from(1000000000u32))?;
-        context.set_counter(&address, &Nat::try_from("100000").unwrap())?;
-        context.set_public_key(&address, &PublicKey::try_from("edpktipCJ3SkjvtdcrwELhvupnyYJSmqoXu3kdzK1vL6fT5cY8FTEa").unwrap())?;
         context.commit()?;
 
         let opg = SignedOperation::new(
-            "BMNvSHmWUkdonkG2oFwwQKxHUdrYQhUXqxLaSRX9wjMGfLddURC".try_into().unwrap(),
+            "BMY9L2Nq2wTiHbS3UD8zncaKrbjpD3JdUvyf28ViJYadwpDKLBz".try_into().unwrap(),
             vec![
+                Reveal::new(
+                    address.clone(),
+                    374u32.into(),
+                    85938846u32.into(),
+                    1100u32.into(),
+                    0u32.into(),
+                    "edpktvzfDT9BVRGxGmd4XR5qNELdvQD25iviUbKaj1U8ZdNj1GwJRV".try_into().unwrap()
+                ).into(),
                 Transaction::new(
                     address.clone(),
-                    417u32.into(),
-                    2336132u32.into(),
-                    1527u32.into(),
-                    357u32.into(),
-                    498719u32.into(),
-                    "tz1d5Dr3gjsxQo5XNbjAj558mLy3nGGQgMFA".try_into().unwrap(),
+                    665u32.into(),
+                    85938847u32.into(),
+                    1601u32.into(),
+                    257u32.into(),
+                    264282311u32.into(),
+                    "tz1i8Z9QpQyejB66futrjwdyaEZMND7kMtTy".try_into().unwrap(),
                     None
                 ).into()
             ],
-            "sigw1WNdYweqz1c7zKcvZFHQ18swSv4HBWje5quRmixxitPk7z8jtY63qXgKLPVfTM6XGxExPatBWJP44Bknyu3hDHDKJZgY".try_into().unwrap()
+            "sigchjxVdGxuHRb4aqhvYBufFz3t1kpfVQJdKEVvM685D5SuXAfu4h7dpCtkF8yNN1emcWF4vyNMxbEK4DFKFxvYtmxC24uo".try_into().unwrap()
         );
 
         let hash = opg.hash()?;
         let op = validate_operation(&mut context, opg, hash)?;
-        assert_eq!(op.total_fees, 417u32.into());
-        assert_eq!(op.last_counter, 2336132u32.into());
+        assert_eq!(op.total_fees, 1039u32.into());
+        assert_eq!(op.last_counter, 85938847u32.into());
 
         Ok(())
     }

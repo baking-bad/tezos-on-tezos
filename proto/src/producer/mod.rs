@@ -13,8 +13,7 @@ use crate::{
         OperationHash,
         OperationListListHash,
         BlockPayloadHash,
-        BlockHash,
-        Encoded
+        BlockHash
     },
     constants::*,
     validation_error
@@ -56,7 +55,7 @@ pub fn apply_batch(
     }
 
     let header = naive_header(context, head, &operations)?;
-    let hash = BlockHash::new("".into()).unwrap();  // TODO: forge header and blake2b
+    let hash: BlockHash = ZERO_BLOCK_HASH.try_into().unwrap();  // TODO: forge header and blake2b
     let head = Head::new(header.level, hash.clone(), header.timestamp);
     let receipt = BatchReceipt {
         chain_id: CHAIN_ID.try_into().unwrap(),
@@ -67,7 +66,7 @@ pub fn apply_batch(
     };
 
     for (index, opg_receipt) in operation_receipts.into_iter().enumerate() {
-        context.commit_operation_receipt(&head.level, &(index as i32), opg_receipt)?;
+        context.commit_operation_receipt(head.level, index as i32, opg_receipt)?;
     }
 
     context.commit_batch_receipt(receipt.header.level, receipt)?;
