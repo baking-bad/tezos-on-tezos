@@ -8,11 +8,10 @@ use tezos_core::types::{
 };
 
 use crate::{
-    error::Result,
-    context::{Context, head::Head},
+    errors::{Result, Error},
+    context::Context,
     validator::operation::validate_operation,
-    producer::types::BatchHeader,
-    validation_error
+    assert_no_pending_changes
 };
 
 pub struct ManagerOperation {
@@ -24,41 +23,21 @@ pub struct ManagerOperation {
     pub last_counter: Nat
 }
 
-pub fn validate_header(head: &Head, header: &BatchHeader) -> Result<()> {
-    if header.predecessor != head.hash {
-        return validation_error!("Invalid predecessor {:?} (expected {:?})", header.predecessor, head.hash);
-    }
-    
-    if header.level != head.level + 1 {
-        return validation_error!("Invalid level {} (expected {})", header.level, head.level + 1);
-    }
-
-    if header.timestamp <= head.timestamp {
-        return validation_error!("Invalid timestamp {} (expected at least {})", header.timestamp, head.timestamp + 1);
-    }
-
-    // TODO: validate operation/payload
-
-    Ok(())
-}
-
 pub fn validate_batch(context: &mut impl Context, batch_payload: Vec<(OperationHash, SignedOperation)>, atomic: bool) -> Result<Vec<ManagerOperation>> {
-    if context.has_pending_changes() {
-        return validation_error!("Cannot proceed with uncommitted state changes");
-    }
+    assert_no_pending_changes!(context);
     
     let mut operations: Vec<ManagerOperation> = Vec::with_capacity(batch_payload.len());
     
     for (hash, opg) in batch_payload.into_iter() {
         match validate_operation(context, opg, hash) {
             Ok(op) => {
-                let balance = context.get_balance(&op.source)?.expect("Missing balance");
+                let balance = context.get_balance(&op.source)?.unwrap();
                 context.set_balance(&op.source, &(balance - op.total_spent))?;
                 context.set_counter(&op.source, &op.last_counter)?;
                 operations.push(op);
             },
             Err(err) => {
-                // TODO: context.error_log(err)
+                context.error_log(&err);
                 if atomic {
                     context.rollback();
                     return Err(err); 
@@ -68,6 +47,7 @@ pub fn validate_batch(context: &mut impl Context, batch_payload: Vec<(OperationH
     }
 
     context.rollback();
+
     Ok(operations)
 }
 

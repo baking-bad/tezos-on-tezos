@@ -14,7 +14,7 @@ use tezos_rpc::models::operation::Operation as OperationReceipt;
 use crate::{
     context::{head::Head, checksum::Checksum},
     producer::types::BatchReceipt,
-    error::Result
+    errors::Result
 };
 
 #[derive(Debug, Clone, From, TryInto)]

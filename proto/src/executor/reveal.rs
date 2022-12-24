@@ -11,11 +11,8 @@ use tezos_rpc::models::operation::{
 };
 
 use crate::{
-    executor::{
-        runtime_error::RuntimeErrors,
-        balance_update::BalanceUpdates,
-    },
-    error::Result,
+    executor::balance_update::BalanceUpdates,
+    errors::{Result, RpcErrors},
     context::Context,
     constants::ALLOCATION_FEE
 };
@@ -36,7 +33,7 @@ pub fn skip_reveal(reveal: Reveal) -> RevealReceipt {
 }
 
 pub fn execute_reveal(context: &mut impl Context, reveal: &Reveal) -> Result<RevealReceipt> {
-    let mut errors = RuntimeErrors::new();
+    let mut errors = RpcErrors::new();
     let mut charges =  BalanceUpdates::fee(&reveal.source, &reveal.fee);
 
     macro_rules! make_receipt {
@@ -66,6 +63,11 @@ pub fn execute_reveal(context: &mut impl Context, reveal: &Reveal) -> Result<Rev
         errors.cannot_pay_storage_fee(&balance, &reveal.source);
         return Ok(make_receipt!(OperationResultStatus::Failed))
     }
+
+    // TODO: check that public key actually matches address {
+    //     errors.inconsistent_hash(&reveal.source);
+    //     return Ok(make_receipt!(OperationResultStatus::Failed))
+    // }
     
     // NOTE: this is a slightly different concept compared to Tezos,
     // where transaction sender pays for destination account allocation
@@ -80,7 +82,7 @@ pub fn execute_reveal(context: &mut impl Context, reveal: &Reveal) -> Result<Rev
 #[cfg(test)]
 mod test {
     use crate::context::{Context, ephemeral::EphemeralContext};
-    use crate::error::Result;
+    use crate::errors::Result;
     use tezos_operation::{
         operations::Reveal
     };

@@ -80,7 +80,7 @@ wat:
 
 debug:
 	docker build -t ghcr.io/baking-bad/tz-rollup-operator:debug --file ./build/Dockerfile.debug .
-	cargo build --package tez_kernel --target wasm32-unknown-unknown --features repl --profile release --target-dir ./target/repl
+	cargo build --package tez_kernel --target wasm32-unknown-unknown --profile release --target-dir ./target/repl
 	wasm-strip -o ./.bin/debug_kernel.wasm ./target/repl/wasm32-unknown-unknown/release/tez_kernel.wasm
 	docker run --rm -it --name wasm-repl -v $$PWD/.bin:/root/.bin ghcr.io/baking-bad/tz-rollup-operator:debug wasm-repl /root/.bin/debug_kernel.wasm --inputs /root/.bin/inputs.json
 

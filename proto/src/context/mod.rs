@@ -13,14 +13,34 @@ use tezos_rpc::models::{
     operation::Operation as OperationReceipt,
 };
 
-use crate::{context::{
-    types::{ContextNodeType, TezosAddress},
-    head::Head,
-    checksum::Checksum
-}, producer::types::BatchReceipt};
-use crate::error::Result;
+use crate::{
+    context::{
+        types::{ContextNodeType, TezosAddress},
+        head::Head,
+        checksum::Checksum
+    },
+    producer::types::BatchReceipt
+};
+use crate::errors::{Error, Result};
+
+#[macro_export]
+macro_rules! assert_no_pending_changes {
+    ($ctx: expr) => {
+        if $ctx.has_pending_changes() {
+            return Err(Error::ContextUnstagedError);
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! debug_msg {
+    ($ctx: expr, $($arg:tt)*) => {
+        $ctx.log(format!($($arg)*))
+    };
+}
 
 pub trait Context {
+    fn log(&self, msg: String);
     fn has(&self, key: String) -> Result<bool>;
     fn get<V: ContextNodeType>(&mut self, key: String) -> Result<Option<V>> ;
     fn set<V: ContextNodeType>(&mut self, key: String, val: V) -> Result<()>;
@@ -29,6 +49,10 @@ pub trait Context {
     fn commit(&mut self) -> Result<()>;
     fn rollback(&mut self);
     fn clear(&mut self);
+
+    fn error_log(&self, err: &Error) {
+        self.log(err.to_string());
+    }
 
     fn get_checksum(&mut self) -> Result<Checksum> {
         match self.get("/context/checksum".into()) {

@@ -1,7 +1,7 @@
 pub mod types;
 
 use crate::{
-    error::Result,
+    errors::{Error, Result},
     context::{Context, head::Head, migrations::run_migrations},
     validator::{ManagerOperation, validate_batch},
     executor::execute_operation,
@@ -15,8 +15,7 @@ use crate::{
         BlockPayloadHash,
         BlockHash
     },
-    constants::*,
-    validation_error
+    constants::*
 };
 
 fn naive_header(context: &mut impl Context, head: Head, operations: &Vec<ManagerOperation>) -> Result<BatchHeader> {
@@ -43,7 +42,7 @@ pub fn apply_batch(
     batch_payload: Vec<(OperationHash, SignedOperation)>
 ) -> Result<Head> {
     if context.has_pending_changes() {
-        return validation_error!("Cannot proceed with uncommitted state changes");
+        return Err(Error::ContextUnstagedError);
     }
 
     let balance_updates = run_migrations(context, &head)?;

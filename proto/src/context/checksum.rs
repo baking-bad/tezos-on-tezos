@@ -1,6 +1,6 @@
 use tezos_core::types::encoded::{ContextHash, Encoded};
 use tezos_core::internal::crypto::blake2b;
-use crate::error::Result;
+use crate::errors::Result;
 
 const ZERO_32: &[u8; 32] = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
 

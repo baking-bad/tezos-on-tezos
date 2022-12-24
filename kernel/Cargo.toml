@@ -15,7 +15,3 @@ hex = "*"
 [dev-dependencies]
 mock_runtime = { git = "https://gitlab.com/tezos/kernel" }
 hex = "*"
-
-[features]
-default = []
-repl = []

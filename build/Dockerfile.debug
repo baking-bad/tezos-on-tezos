@@ -1,5 +1,6 @@
+# See https://gitlab.com/tezos/tezos/-/blob/master/scripts/version.sh#L28
 ARG BASE_IMAGE=registry.gitlab.com/tezos/opam-repository
-ARG BASE_IMAGE_VERSION=runtime-build-dependencies--414b4fd86ece71f0620ba4658823188b16406b02
+ARG BASE_IMAGE_VERSION=runtime-build-dependencies--bcc817c52a7492ba2224c7a6bb4817e96e718f2f
 FROM ${BASE_IMAGE}:${BASE_IMAGE_VERSION} as octez
 
 ARG TEZOS_BRANCH=master

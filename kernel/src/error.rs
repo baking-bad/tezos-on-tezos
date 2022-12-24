@@ -1,13 +1,7 @@
-use derive_more::{From, Display};
-use proto::error::{TezosCoreError, TezosRpcError, TezosOperationError, Error as TezosProtoError};
+use derive_more::{From, Display, Error};
+use proto::errors::{TezosCoreError, TezosRpcError, TezosOperationError, Error as TezosProtoError};
 
-#[derive(Debug, Display)]
-pub enum ErrorKind {
-    Parsing,
-    Store
-}
-
-#[derive(Debug, From, Display)]
+#[derive(Debug, From, Display, Error)]
 pub enum Error {
     TezosProtoError(TezosProtoError),
     TezosOperationError(TezosOperationError),
@@ -21,21 +15,7 @@ pub enum Error {
     HostPathError{
         internal: host::path::PathError
     },
-    #[display(fmt = "{} ({})", message, kind)]
-    InternalError {
-        kind: ErrorKind,
-        message: String
-    },
+    OperationParsingError
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
-
-#[macro_export]
-macro_rules! parsing_error {
-    ($($arg:tt)*) => {
-        Err(crate::error::Error::InternalError {
-            kind: crate::error::ErrorKind::Parsing,
-            message: format!($($arg)*)
-        })
-    };
-}

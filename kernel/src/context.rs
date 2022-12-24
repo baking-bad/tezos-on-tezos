@@ -5,15 +5,14 @@ use host::{
 };
 use proto::{
     context::{Context, types::{ContextNode, ContextNodeType}},
-    error::Result,
+    errors::Result,
 };
 
 use crate::store::store_move_write;
 
-fn err_into(e: impl std::fmt::Debug) -> proto::error::Error {
-    proto::error::Error::InternalError {
-        kind: proto::error::ErrorKind::Context,
-        message: format!("{:?}", e)
+fn err_into(e: impl std::fmt::Debug) -> proto::errors::Error {
+    proto::errors::Error::ExternalError {
+        message: format!("PVM context error: {:?}", e)
     }
 }
 
@@ -40,6 +39,17 @@ impl<Host> PVMContext<Host> where Host: Runtime {
 }
 
 impl<Host> Context for PVMContext<Host> where Host: Runtime {
+    fn log(&self, msg: String) {
+        #[cfg(target_arch = "wasm32")]
+        unsafe {
+            host::rollup_core::write_debug(msg.as_ptr(), msg.len())
+        };
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            eprintln!("[DEBUG] {}", msg);
+        };
+    }
+
     fn has(&self, key: String) -> Result<bool> {
         match self.state.contains_key(&key) {
             true => Ok(true),
@@ -136,7 +146,7 @@ impl<Host> Context for PVMContext<Host> where Host: Runtime {
 mod test {
     use mock_runtime::host::MockHost;
     use proto::context::Context;
-    use proto::error::Result;
+    use proto::errors::Result;
     use crate::context::PVMContext;
 
     #[test]

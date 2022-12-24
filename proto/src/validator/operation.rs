@@ -1,20 +1,24 @@
-use tezos_operation::{
-    operations::{SignedOperation, OperationContent}
-};
-use tezos_core::{
-    types::{
-        encoded::{Encoded, OperationHash},
-        mutez::Mutez,
-    }
+use tezos_operation::operations::{SignedOperation, OperationContent};
+use tezos_core::types::{
+    encoded::{Encoded, OperationHash},
+    mutez::Mutez,
 };
 
 use crate::{
     context::Context,
     validator::ManagerOperation,
-    validation_error,
-    constants::ALLOCATION_FEE
+    constants::ALLOCATION_FEE,
+    errors::{Error, Result, RpcErrors}
 };
-use crate::error::Result;
+
+macro_rules! err {
+    ($hash: expr, $err: expr) => {
+        Err(Error::ValidationError {
+            hash: ($hash as OperationHash).into_string(),
+            inner: $err
+        })
+    };
+}
 
 pub fn validate_operation(context: &mut impl Context, opg: SignedOperation, hash: OperationHash) -> Result<ManagerOperation> {  
     let mut source = None;
@@ -31,13 +35,13 @@ pub fn validate_operation(context: &mut impl Context, opg: SignedOperation, hash
             OperationContent::Reveal(reveal) => (&reveal.source, None),
             OperationContent::Transaction(transaction) => (&transaction.source, Some(transaction.amount)),
             OperationContent::Origination(origination) => (&origination.source, None),
-            _ => return validation_error!("Unsupported operation kind: {:?}", content)
+            _ => return Err(Error::OperationKindUnsupported)
         };
 
         if source.is_none() {
             source = Some(address);
         } else if source.unwrap() != address {
-            return validation_error!("Multiple sources in a group (expected {:?}, found {:?})", source.unwrap(), address);
+            return err!(hash, RpcErrors::inconsistent_sources());
         }
 
         total_fees += content.fee();
@@ -45,7 +49,7 @@ pub fn validate_operation(context: &mut impl Context, opg: SignedOperation, hash
     }
 
     if source.is_none() {
-        return validation_error!("Empty operation group");
+        return err!(hash, RpcErrors::contents_list_error());
     }
 
     let source = source.unwrap().clone();
@@ -65,25 +69,25 @@ pub fn validate_operation(context: &mut impl Context, opg: SignedOperation, hash
             if revealed_key.is_some() {
                 revealed_key.unwrap()
             } else {
-                return validation_error!("Account {} has not revealed public key", source.value())
+                return err!(hash, RpcErrors::unrevealed_key(&source));
             }
         }
     };
 
     match opg.verify(&public_key) {
         Ok(true) => (),
-        Ok(false) => return validation_error!("Signature is invalid"),
-        Err(error) => return validation_error!("{}", error.to_string())
+        Ok(false) => return err!(hash, RpcErrors::invalid_signature()),
+        Err(err) => return Err(err.into())
     };
 
 
     let balance = match context.get_balance(&source.value())? {
         Some(value) => value,
-        None => return validation_error!("Balance not initialized for {}", source.value())
+        None => return err!(hash, RpcErrors::empty_implicit_contract(&source))
     };
 
     if balance < total_spent {
-        return validation_error!("Account {} tries to spent more than it has", source.value());
+        return err!(hash, RpcErrors::contract_balance_too_low(&total_spent, &balance, &source));
     }
 
     let mut counter = match context.get_counter(&source)? {
@@ -96,10 +100,10 @@ pub fn validate_operation(context: &mut impl Context, opg: SignedOperation, hash
             OperationContent::Reveal(reveal) => &reveal.counter,
             OperationContent::Transaction(transaction) => &transaction.counter,
             OperationContent::Origination(origination) => &origination.counter,
-            _ => return validation_error!("Unsupported operation kind: {:?}", content)
+            _ => return Err(Error::OperationKindUnsupported)
         }.to_integer()?;
         if next_counter <= counter {
-            return validation_error!("Account {} tries to reuse counter {}", source.value(), next_counter);
+            return err!(hash, RpcErrors::counter_in_the_past(&source, counter + 1, next_counter));
         }
         counter = next_counter;
     }
@@ -117,7 +121,7 @@ pub fn validate_operation(context: &mut impl Context, opg: SignedOperation, hash
 #[cfg(test)]
 mod test {
     use crate::context::{Context, ephemeral::EphemeralContext};
-    use crate::error::Result;
+    use crate::errors::Result;
     use tezos_operation::{
         operations::{SignedOperation, Transaction, Reveal}
     };

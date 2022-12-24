@@ -6,8 +6,8 @@ use tezos_core::types::mutez::Mutez;
 use crate::{
     context::Context,
     context::head::Head,
-    error::Result, 
-    migration_error
+    errors::{Error, Result},
+    assert_no_pending_changes
 };
 
 const SEED_ACCOUNTS: [&str; 8] = [
@@ -41,10 +41,7 @@ pub fn genesis_migration(context: &mut impl Context) -> Result<Vec<BalanceUpdate
 }
 
 pub fn run_migrations(context: &mut impl Context, head: &Head) -> Result<Option<Vec<BalanceUpdate>>> {
-    if context.has_pending_changes() {
-        return migration_error!("Cannot proceed with uncommitted changes")
-    }
-    
+    assert_no_pending_changes!(context);
     match head.level {
         -1 => Ok(Some(genesis_migration(context)?)),
         _ => Ok(None)
@@ -54,7 +51,7 @@ pub fn run_migrations(context: &mut impl Context, head: &Head) -> Result<Option<
 #[cfg(test)]
 mod test {
     use crate::{
-        error::Result,
+        errors::Result,
         context::Context,
         context::ephemeral::EphemeralContext
     };

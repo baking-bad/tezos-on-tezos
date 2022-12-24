@@ -4,7 +4,7 @@ use crate::context::{
     Context,
     types::{ContextNode, ContextNodeType}
 };
-use crate::error::Result;
+use crate::errors::Result;
 
 pub struct EphemeralContext {
     state: HashMap<String, ContextNode>,
@@ -23,6 +23,10 @@ impl EphemeralContext {
 }
 
 impl Context for EphemeralContext {
+    fn log(&self, msg: String) {
+        eprintln!("[DEBUG] {}", msg);
+    }
+
     fn has(&self, key: String) -> Result<bool> {
         match self.pending_state.contains_key(&key) {
             true => Ok(true),
@@ -89,7 +93,7 @@ impl Context for EphemeralContext {
 #[cfg(test)]
 mod test {
     use crate::{
-        error::Result,
+        errors::Result,
         context::Context,
         context::ephemeral::EphemeralContext
     };

@@ -1,6 +1,5 @@
 pub mod reveal;
 pub mod transaction;
-pub mod runtime_error;
 pub mod balance_update;
 
 use tezos_core::types::{
@@ -13,32 +12,36 @@ use tezos_rpc::models::operation::{
     OperationContent as OperationContentReceipt, operation_result::OperationResultStatus
 };
 
-use crate::execution_error;
-use crate::error::Result;
-use crate::context::Context;
-use crate::executor::{
-    reveal::{execute_reveal, skip_reveal}, 
-    transaction::{execute_transaction, skip_transaction}
+use crate::{
+    assert_no_pending_changes,
+    errors::{Error, Result},
+    context::Context,
+    executor::{
+        reveal::{execute_reveal, skip_reveal}, 
+        transaction::{execute_transaction, skip_transaction}
+    },
+    validator::ManagerOperation,
+    constants::{CHAIN_ID, PROTOCOL}
 };
-use crate::validator::ManagerOperation;
-use crate::constants::{CHAIN_ID, PROTOCOL};
 
 fn update_status(receipt: &mut OperationContentReceipt, status: OperationResultStatus) -> Result<()> {
     match receipt {
         OperationContentReceipt::Reveal(reveal) => {
             if let Some(metadata) = reveal.metadata.as_mut() {
                 metadata.operation_result.status = status;
+                return Ok(())
             }
         },
         OperationContentReceipt::Transaction(transaction) => {
             if let Some(metadata) = transaction.metadata.as_mut() {
                 metadata.operation_result.status = status;
+                return Ok(())
             }
         },
         OperationContentReceipt::Origination(_origination) => todo!("Implement for origination"),
-        _ => return execution_error!("Operation kind not supported: {:?}", receipt)
+        _ => return Err(Error::OperationKindUnsupported)
     };
-    Ok(())
+    panic!("Operation metadata is missing: {:?}", receipt)
 }
 
 fn get_status(receipt: &OperationContentReceipt) -> Result<OperationResultStatus> {
@@ -54,17 +57,15 @@ fn get_status(receipt: &OperationContentReceipt) -> Result<OperationResultStatus
             }
         },
         OperationContentReceipt::Origination(_origination) => todo!("Implement for origination"),
-        _ => panic!("Operation kind not supported: {:?}", receipt)
+        _ => return Err(Error::OperationKindUnsupported)
     }
-    execution_error!("Operation metadata is missing")
+    panic!("Operation metadata is missing: {:?}", receipt)
 }
 
 pub fn execute_operation(context: &mut impl Context, opg: &ManagerOperation) -> Result<OperationReceipt> {
-    if context.has_pending_changes() {
-        return execution_error!("Cannot proceed with uncommitted state changes");
-    }
+    assert_no_pending_changes!(context);
 
-    let initial_balance = context.get_balance(&opg.source)?.expect("Validated");
+    let initial_balance = context.get_balance(&opg.source)?.expect("Balance not initialized");
     let mut contents = Vec::new();
     let mut failed_idx: Option<usize> = None;
 
@@ -90,7 +91,7 @@ pub fn execute_operation(context: &mut impl Context, opg: &ManagerOperation) -> 
                 OperationContentReceipt::Transaction(transaction_receipt)
             },
             OperationContent::Origination(_origination) => todo!("Implement origination"),
-            content => return execution_error!("Operation kind not supported: {:?}", content)
+            _ => return Err(Error::OperationKindUnsupported)
         };
 
         if get_status(&receipt)? == OperationResultStatus::Failed {
@@ -111,6 +112,7 @@ pub fn execute_operation(context: &mut impl Context, opg: &ManagerOperation) -> 
         context.set_counter(&opg.source, &opg.last_counter)?;
     }
 
+    context.log(format!("Operation applied: {:?}", opg.hash));
     context.commit()?;
 
     Ok(OperationReceipt {
@@ -126,7 +128,7 @@ pub fn execute_operation(context: &mut impl Context, opg: &ManagerOperation) -> 
 #[cfg(test)]
 mod test {
     use crate::context::{Context, ephemeral::EphemeralContext};
-    use crate::error::Result;
+    use crate::errors::Result;
     use crate::validator::ManagerOperation;
     use tezos_operation::{
         operations::{SignedOperation, Transaction}

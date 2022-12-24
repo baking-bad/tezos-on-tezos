@@ -5,7 +5,7 @@ use host::{
 };
 use proto::producer::types::{SignedOperation, OperationHash, UnsignedOperation, Signature, Encoded};
 
-use crate::{error::Result, parsing_error};
+use crate::error::{Result, Error};
 
 const SIGNATURE_SIZE: usize = 64;
 
@@ -23,7 +23,7 @@ pub enum InboxMessage {
 
 pub fn parse_l2_operation<'a>(payload: &'a [u8]) -> Result<InboxMessage> {
     if payload.len() <= SIGNATURE_SIZE {
-        return parsing_error!("L2 operation payload is too short");
+        return Err(Error::OperationParsingError)
     }
     let unsigned_op = UnsignedOperation::from_forged_bytes(&payload[..payload.len() - SIGNATURE_SIZE])?;  
     let signature = Signature::from_bytes(&payload[payload.len() - SIGNATURE_SIZE..])?;

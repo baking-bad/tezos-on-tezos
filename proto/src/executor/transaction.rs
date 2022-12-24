@@ -9,12 +9,9 @@ use tezos_rpc::models::operation::{
 };
 
 use crate::{
-    error::Result, 
+    errors::{Result, RpcErrors}, 
     context::Context, 
-    executor::{
-        balance_update::BalanceUpdates,
-        runtime_error::RuntimeErrors
-    }
+    executor::balance_update::BalanceUpdates
 };
 
 const DEFAULT_RESULT: TransactionOperationResult = TransactionOperationResult {
@@ -54,9 +51,9 @@ pub fn execute_transaction(context: &mut impl Context, transaction: &Transaction
 
     let mut src_balance = context
         .get_balance(&transaction.source)?
-        .expect("Checked by validator");
+        .expect("Source balance has to be checked by validator");
 
-    let mut errors = RuntimeErrors::new();
+    let mut errors = RpcErrors::new();
     let mut balance_updates = BalanceUpdates::new();
     let charges =  BalanceUpdates::fee(&transaction.source, &transaction.fee);
 
@@ -98,7 +95,7 @@ pub fn execute_transaction(context: &mut impl Context, transaction: &Transaction
 #[cfg(test)]
 mod test {
     use crate::context::{Context, ephemeral::EphemeralContext};
-    use crate::error::Result;
+    use crate::errors::Result;
     use tezos_operation::{
         operations::Transaction
     };

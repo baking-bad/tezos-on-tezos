@@ -1,7 +1,7 @@
 use tezos_core::{
     types::encoded::{Encoded, BlockHash},
 };
-use crate::error::Result;
+use crate::errors::Result;
 use crate::constants::ZERO_BLOCK_HASH;
 
 #[derive(Debug, Clone, PartialEq)]
