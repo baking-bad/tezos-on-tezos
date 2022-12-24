@@ -14,7 +14,7 @@ use tezos_rpc::models::operation::{
 
 use crate::{
     assert_no_pending_changes,
-    errors::{Error, Result},
+    error::{Error, Result},
     context::Context,
     executor::{
         reveal::{execute_reveal, skip_reveal}, 
@@ -128,7 +128,7 @@ pub fn execute_operation(context: &mut impl Context, opg: &ManagerOperation) -> 
 #[cfg(test)]
 mod test {
     use crate::context::{Context, ephemeral::EphemeralContext};
-    use crate::errors::Result;
+    use crate::Result;
     use crate::validator::ManagerOperation;
     use tezos_operation::{
         operations::{SignedOperation, Transaction}
@@ -184,7 +184,7 @@ mod test {
         };
 
         let receipt = execute_operation(&mut context, &opg)?;
-        println!("{:#?}", receipt);
+        // println!("{:#?}", receipt);
         assert_eq!(get_status(&receipt.contents[0]).expect("Backtracked"), OperationResultStatus::Backtracked);
         assert_eq!(get_status(&receipt.contents[1]).expect("Failed"), OperationResultStatus::Failed);
         assert_eq!(get_status(&receipt.contents[2]).expect("Skipped"), OperationResultStatus::Skipped);

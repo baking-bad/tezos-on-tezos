@@ -37,7 +37,7 @@ pub use tezos_rpc::models::{
 use chrono::NaiveDateTime;
 use serde::{Serialize, Deserialize};
 
-use crate::{constants::*, errors::Result};
+use crate::{constants::*, Result};
 
 
 #[macro_export]

@@ -8,7 +8,7 @@ use crate::{
     context::Context,
     validator::ManagerOperation,
     constants::ALLOCATION_FEE,
-    errors::{Error, Result, RpcErrors}
+    error::{Error, Result, RpcErrors}
 };
 
 macro_rules! err {
@@ -121,7 +121,7 @@ pub fn validate_operation(context: &mut impl Context, opg: SignedOperation, hash
 #[cfg(test)]
 mod test {
     use crate::context::{Context, ephemeral::EphemeralContext};
-    use crate::errors::Result;
+    use crate::Result;
     use tezos_operation::{
         operations::{SignedOperation, Transaction, Reveal}
     };

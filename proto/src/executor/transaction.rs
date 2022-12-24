@@ -9,7 +9,7 @@ use tezos_rpc::models::operation::{
 };
 
 use crate::{
-    errors::{Result, RpcErrors}, 
+    error::{Result, RpcErrors}, 
     context::Context, 
     executor::balance_update::BalanceUpdates
 };
@@ -95,7 +95,7 @@ pub fn execute_transaction(context: &mut impl Context, transaction: &Transaction
 #[cfg(test)]
 mod test {
     use crate::context::{Context, ephemeral::EphemeralContext};
-    use crate::errors::Result;
+    use crate::Result;
     use tezos_operation::{
         operations::Transaction
     };

@@ -4,7 +4,7 @@ use crate::context::{
     Context,
     types::{ContextNode, ContextNodeType}
 };
-use crate::errors::Result;
+use crate::Result;
 
 pub struct EphemeralContext {
     state: HashMap<String, ContextNode>,
@@ -93,7 +93,7 @@ impl Context for EphemeralContext {
 #[cfg(test)]
 mod test {
     use crate::{
-        errors::Result,
+        Result,
         context::Context,
         context::ephemeral::EphemeralContext
     };

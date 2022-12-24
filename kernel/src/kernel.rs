@@ -1,8 +1,7 @@
 use host::runtime::Runtime;
 use proto::{
     producer::{apply_batch, types::{OperationHash, SignedOperation}},
-    context::Context,
-    debug_msg
+    context::Context
 };
 use hex;
 
@@ -13,7 +12,7 @@ use crate::{
 
 pub fn kernel_run<Host: Runtime>(context: &mut PVMContext<Host>) {
     let mut head = context.get_head().expect("Failed to get head");
-    debug_msg!(context, "Kernel invoked: {:?}", head);
+    context.log(format!("Kernel invoked: {:?}", head));
 
     let mut batch_payload: Vec<(OperationHash, SignedOperation)> = Vec::new();
     let res = loop {
@@ -22,24 +21,24 @@ pub fn kernel_run<Host: Runtime>(context: &mut PVMContext<Host>) {
                 // TODO: validate head against inbox_level - origination_level (revealed metadata)
             },
             Ok(InboxMessage::L2Operation { hash, opg }) => {
-                debug_msg!(context, "Operation pending: {:?}", &hash);
+                context.log(format!("Operation pending: {:?}", &hash));
                 batch_payload.push((hash, opg));
             },
             Ok(InboxMessage::LevelInfo(info)) => {
-                debug_msg!(context, "Info message: {}", hex::encode(info));
+                context.log(format!("Info message: {}", hex::encode(info)));
                 head.timestamp += 1;  // TODO: validate and adjust timestamp if necessary
             },
             Ok(InboxMessage::EndBlock(_level)) => {
                 match apply_batch(context, head.clone(), batch_payload) {
                     Ok(new_head) => {
                         head = new_head;
-                        debug_msg!(context, "Batch applied: {:?}", head);
+                        context.log(format!("Batch applied: {:?}", head));
                         break Ok(())
                     },
                     Err(err) => break Err(err.into())
                 }
             },
-            Ok(InboxMessage::Unknown(id)) => debug_msg!(context, "Unknown message #{}", id),
+            Ok(InboxMessage::Unknown(id)) => context.log(format!("Unknown message #{}", id)),
             Ok(InboxMessage::NoMoreData) => break Ok(()),
             Err(err) => break Err(err)
         }
@@ -48,10 +47,10 @@ pub fn kernel_run<Host: Runtime>(context: &mut PVMContext<Host>) {
     match res {
         Ok(_) => {
             context.clear();
-            debug_msg!(context, "Kernel yields");
+            context.log(format!("Kernel yields"));
         },
         Err(err) => {
-            debug_msg!(context, "Unrecoverable error: {:?}", err);
+            context.log(format!("Unrecoverable error: {:?}", err));
             // TODO: rewind state
         }
     }    
@@ -63,7 +62,7 @@ mod test {
     use crate::context::PVMContext;
 
     use proto::context::Context;
-    use proto::errors::Result;
+    use proto::Result;
     use mock_runtime::host::MockHost;
     use host::rollup_core::Input;
     use hex;

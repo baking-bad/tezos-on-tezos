@@ -8,9 +8,9 @@ use tezos_core::types::{
 };
 
 use crate::{
-    errors::{Result, Error},
     context::Context,
     validator::operation::validate_operation,
+    Result,
     assert_no_pending_changes
 };
 
@@ -37,7 +37,7 @@ pub fn validate_batch(context: &mut impl Context, batch_payload: Vec<(OperationH
                 operations.push(op);
             },
             Err(err) => {
-                context.error_log(&err);
+                context.log(err.to_string());
                 if atomic {
                     context.rollback();
                     return Err(err); 

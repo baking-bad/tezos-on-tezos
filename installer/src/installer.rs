@@ -222,7 +222,7 @@ pub mod host {
         num_bytes: usize
     ) {
         let msg = from_raw_parts(src, num_bytes).to_vec();
-        println!("[DEBUG] {}", String::from_utf8(msg).unwrap());
+        eprintln!("[DEBUG] {}", String::from_utf8(msg).unwrap());
     }
 }
 

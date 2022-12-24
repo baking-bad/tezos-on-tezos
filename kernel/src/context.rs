@@ -5,13 +5,13 @@ use host::{
 };
 use proto::{
     context::{Context, types::{ContextNode, ContextNodeType}},
-    errors::Result,
+    Result,
 };
 
 use crate::store::store_move_write;
 
-fn err_into(e: impl std::fmt::Debug) -> proto::errors::Error {
-    proto::errors::Error::ExternalError {
+fn err_into(e: impl std::fmt::Debug) -> proto::error::Error {
+    proto::error::Error::ExternalError {
         message: format!("PVM context error: {:?}", e)
     }
 }
@@ -146,7 +146,7 @@ impl<Host> Context for PVMContext<Host> where Host: Runtime {
 mod test {
     use mock_runtime::host::MockHost;
     use proto::context::Context;
-    use proto::errors::Result;
+    use proto::Result;
     use crate::context::PVMContext;
 
     #[test]

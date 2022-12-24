@@ -12,7 +12,7 @@ use tezos_rpc::models::operation::{
 
 use crate::{
     executor::balance_update::BalanceUpdates,
-    errors::{Result, RpcErrors},
+    error::{Result, RpcErrors},
     context::Context,
     constants::ALLOCATION_FEE
 };
@@ -82,7 +82,7 @@ pub fn execute_reveal(context: &mut impl Context, reveal: &Reveal) -> Result<Rev
 #[cfg(test)]
 mod test {
     use crate::context::{Context, ephemeral::EphemeralContext};
-    use crate::errors::Result;
+    use crate::Result;
     use tezos_operation::{
         operations::Reveal
     };

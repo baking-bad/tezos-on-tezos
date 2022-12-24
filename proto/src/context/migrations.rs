@@ -6,7 +6,7 @@ use tezos_core::types::mutez::Mutez;
 use crate::{
     context::Context,
     context::head::Head,
-    errors::{Error, Result},
+    Result,
     assert_no_pending_changes
 };
 
@@ -51,7 +51,7 @@ pub fn run_migrations(context: &mut impl Context, head: &Head) -> Result<Option<
 #[cfg(test)]
 mod test {
     use crate::{
-        errors::Result,
+        Result,
         context::Context,
         context::ephemeral::EphemeralContext
     };

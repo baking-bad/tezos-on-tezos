@@ -1,7 +1,7 @@
 pub mod types;
 
 use crate::{
-    errors::{Error, Result},
+    error::{Error, Result},
     context::{Context, head::Head, migrations::run_migrations},
     validator::{ManagerOperation, validate_batch},
     executor::execute_operation,

@@ -19,23 +19,16 @@ use crate::{
         head::Head,
         checksum::Checksum
     },
-    producer::types::BatchReceipt
+    producer::types::BatchReceipt,
+    Result
 };
-use crate::errors::{Error, Result};
 
 #[macro_export]
 macro_rules! assert_no_pending_changes {
     ($ctx: expr) => {
         if $ctx.has_pending_changes() {
-            return Err(Error::ContextUnstagedError);
+            return Err(crate::error::Error::ContextUnstagedError);
         }
-    };
-}
-
-#[macro_export]
-macro_rules! debug_msg {
-    ($ctx: expr, $($arg:tt)*) => {
-        $ctx.log(format!($($arg)*))
     };
 }
 
@@ -49,10 +42,6 @@ pub trait Context {
     fn commit(&mut self) -> Result<()>;
     fn rollback(&mut self);
     fn clear(&mut self);
-
-    fn error_log(&self, err: &Error) {
-        self.log(err.to_string());
-    }
 
     fn get_checksum(&mut self) -> Result<Checksum> {
         match self.get("/context/checksum".into()) {

@@ -4,6 +4,8 @@ pub mod kernel;
 pub mod inbox;
 pub mod store;
 
+pub use error::Result;
+
 #[cfg(target_arch = "wasm32")]
 #[no_mangle]
 pub extern "C" fn kernel_run() {

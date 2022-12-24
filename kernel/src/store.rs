@@ -3,7 +3,7 @@ use host::{
     path::{RefPath, concat},
     runtime::{Runtime, RuntimeError}
 };
-use crate::error::Result;
+use crate::Result;
 
 macro_rules! rew_prefix {
     ($lvl: expr) => {
@@ -45,7 +45,7 @@ pub fn store_rewind(_host: &mut impl Runtime, _level: i32) {
 mod test {
     use host::runtime::Runtime;
     use mock_runtime::host::MockHost;
-    use crate::error::Result;
+    use crate::Result;
     use super::*;
 
     #[test]
