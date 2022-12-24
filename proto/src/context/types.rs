@@ -2,13 +2,12 @@ use std::ops::Deref;
 use serde_json_wasm;
 use derive_more::{From, TryInto};
 
-use tezos_core::{
-    types::{
-        encoded::{Encoded, PublicKey, Address, ImplicitAddress, BlockHash, OperationHash},
-        mutez::Mutez,
-        number::Nat
-    }
+use tezos_core::types::{
+    encoded::{Encoded, PublicKey, Address, ImplicitAddress, BlockHash, OperationHash, ContractAddress},
+    mutez::Mutez,
+    number::Nat
 };
+use tezos_michelson::micheline::Micheline;
 use tezos_rpc::models::operation::Operation as OperationReceipt;
 
 use crate::{
@@ -28,6 +27,7 @@ pub enum ContextNode {
     Head(Head),
     OperationReceipt(OperationReceipt),
     BatchReceipt(BatchReceipt),
+    Micheline(Micheline)
 }
 
 impl ContextNode {
@@ -42,6 +42,7 @@ impl ContextNode {
             Self::OperationHash(value) => value.encode(),
             Self::OperationReceipt(value) => value.encode(),
             Self::BatchReceipt(value) => value.encode(),
+            Self::Micheline(value) => value.encode(),
         }
     }
 }
@@ -90,6 +91,7 @@ context_node_type_core!(BlockHash, 32);
 context_node_type_core!(OperationHash, 32);
 context_node_type_core!(Head, 44);
 context_node_type_core!(Checksum, 32);
+context_node_type_core!(Micheline, 2048);
 
 macro_rules! context_node_type_rpc {
     ($ty: ty) => {
@@ -128,6 +130,12 @@ pub trait TezosAddress {
 }
 
 impl TezosAddress for ImplicitAddress {
+    fn to_string(&self) -> &str {
+        self.value()
+    }
+}
+
+impl TezosAddress for ContractAddress {
     fn to_string(&self) -> &str {
         self.value()
     }

@@ -2,7 +2,6 @@ pub use tezos_rpc::models::error::RpcError;
 use tezos_core::types::mutez::Mutez;
 
 use crate::context::types::TezosAddress;
-use crate::constants::ALLOCATION_FEE;
 
 #[derive(Clone, Debug)]
 pub struct RpcErrors {
@@ -102,17 +101,6 @@ impl RpcErrors {
 
     pub fn balance_too_low(&mut self, amount: &Mutez, balance: &Mutez, contract: &impl TezosAddress) {
         self.errors.push(Self::contract_balance_too_low(amount, balance, contract));
-    }
-
-    pub fn cannot_pay_storage_fee(&mut self, balance: &Mutez, contract: &impl TezosAddress) {
-        self.errors.push(RpcError {
-            kind: "temporary".into(),
-            id: "contract.cannot_pay_storage_fee".into(),
-            amount: Some(ALLOCATION_FEE.to_string()),
-            balance: Some(balance.to_string()),
-            contract: Some(contract.to_string().into()),
-            ..DEFAULT_ERROR
-        })
     }
 
     pub fn previously_revealed_key(&mut self, contract: &impl TezosAddress) {

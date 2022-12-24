@@ -19,5 +19,4 @@ pub mod constants {
     pub const ZERO_BLOCK_HASH: &str = "BKiHLREqU3JkXfzEDYAkmmfX48gBDtYhMrpA98s7Aq4SzbUAB6M";
     pub const POW_NONCE: &str = "0xdeadbeef";
     pub const BLOCK_TIME: i64 = 15;
-    pub const ALLOCATION_FEE: u32 = 1000u32;
 }

@@ -77,7 +77,7 @@ pub fn execute_transaction(context: &mut impl Context, transaction: &Transaction
         }
     }
 
-    if src_balance < transaction.amount{
+    if src_balance < transaction.amount {
         errors.balance_too_low(&transaction.amount, &src_balance, &transaction.source);
         return Ok(make_receipt!(OperationResultStatus::Failed));
     } else {
@@ -101,8 +101,7 @@ mod test {
     };
     use tezos_core::types::{
         encoded::{ImplicitAddress, Address},
-        mutez::Mutez,
-        number::Nat
+        mutez::Mutez
     };
 
     use super::execute_transaction;
@@ -115,7 +114,6 @@ mod test {
         let destination = ImplicitAddress::try_from("tz1NEgotHhj4fkm8AcwquQqQBrQsAMRUg86c").unwrap();
 
         context.set_balance(&source, &Mutez::from(1000000000u32))?;
-        context.set_counter(&source, &Nat::try_from("100000").unwrap())?;
 
         let transaction = Transaction {
             source: source.clone(),

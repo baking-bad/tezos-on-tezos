@@ -9,6 +9,7 @@ use derive_more::{From, Display, Error};
 pub use tezos_rpc::Error as TezosRpcError;
 pub use tezos_core::Error as TezosCoreError;
 pub use tezos_operation::Error as TezosOperationError;
+pub use tezos_michelson::Error as TezosMichelsonError;
 pub use serde_json_wasm::ser::Error as SerializationError;
 pub use serde_json_wasm::de::Error as DeserializationError;
 
@@ -19,6 +20,7 @@ pub enum Error {
     TezosRpcError(TezosRpcError),
     TezosCoreError(TezosCoreError),
     TezosOperationError(TezosOperationError),
+    TezosMichelsonError(TezosMichelsonError),
     SerializationError(SerializationError),
     DeserializationError(DeserializationError),
     OperationKindUnsupported,

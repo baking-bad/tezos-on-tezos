@@ -45,7 +45,6 @@ Current design is intentionally simplified to speed up development while having 
 * Non-sequential account counters
 * Only 3 manager operations supported: transaction, reveal, origination (wip)
 * Branch is not validated (infinite TTL)
-* Allocation fee is paid during reveal
 * (To be continued)
 
 Non-supported Michelson features (at least in the first iteration):
