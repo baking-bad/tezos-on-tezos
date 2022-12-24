@@ -28,10 +28,11 @@ Also in the scope of our developing tools and indexing stack we want to better u
 - [x] Docker image with SCORU node, installer, and encoded Tez kernel
 - [x] Run TZ rollup in Mondaynet, prepare setup scripts
 - [x] Troubleshoot kernel using REPL, get rid of `f64`
+- [x] Implement internal batch workflow
+- [x] Support origination operation kind
 - [ ] Interact with the kernel via inbox and access rollup state via RPC
 - [ ] Tezos RPC facade node with wallet sufficient endpoint set
 - [ ] Add indexer-sufficient endpoints
-- [ ] Support origination operation kind
 - [ ] Implement a minimal subset of Michelson opcodes
 - [ ] Support big maps
 - [ ] Support internal transactions
@@ -42,6 +43,7 @@ Also in the scope of our developing tools and indexing stack we want to better u
 Current design is intentionally simplified to speed up development while having a minimal necessary functional to operate.
 
 * Fix-priced operations, just general gas/storage limits
+* No money burning
 * Non-sequential account counters
 * Only 3 manager operations supported: transaction, reveal, origination (wip)
 * Branch is not validated (infinite TTL)
