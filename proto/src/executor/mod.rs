@@ -112,8 +112,8 @@ pub fn execute_operation(context: &mut impl Context, opg: &ManagerOperation) -> 
         context.set_counter(&opg.source, &opg.last_counter)?;
     }
 
-    context.log(format!("Operation applied: {:?}", opg.hash));
     context.commit()?;
+    context.log(format!("Operation applied: {:?}", opg.hash));
 
     Ok(OperationReceipt {
         protocol: Some(ProtocolHash::new(PROTOCOL.into())?),

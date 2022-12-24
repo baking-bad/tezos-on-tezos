@@ -18,6 +18,7 @@ const MAX_FILE_CHUNK_SIZE: usize = 2048;
 const MAX_DAC_LEVELS: usize = 4;
 const KERNEL_PATH: &[u8] = b"/kernel/boot.wasm";
 const PREPARE_KERNEL_PATH: &[u8] = b"/installer/kernel/boot.wasm";
+const REBOOT_PATH: &[u8] = b"/kernel/env/reboot";
 
 #[cfg(not(test))]
 pub mod host {
@@ -136,6 +137,7 @@ pub fn install_kernel(root_hash: &[u8; PREIMAGE_HASH_SIZE]) {
     let mut buffer = [0; MAX_PAGE_SIZE * MAX_DAC_LEVELS];
     let mut kernel_size = 0;
     reveal_loop(0, root_hash, buffer.as_mut_slice(), &mut kernel_size);
+    
     let size = unsafe {
          host::store_move(
             PREPARE_KERNEL_PATH.as_ptr(), 
@@ -147,7 +149,17 @@ pub fn install_kernel(root_hash: &[u8; PREIMAGE_HASH_SIZE]) {
     if size < 0 {
         panic!("Install kernel: failed to swap {}", size);
     }
-    debug_str!("Kernel successfully installed");
+
+    debug_str!("Kernel successfully installed, rebooting");
+    unsafe {
+        host::store_write(
+            REBOOT_PATH.as_ptr(), 
+            REBOOT_PATH.len(), 
+            0, 
+            [0_u8].as_ptr(), 
+            1
+        );
+    }
 }
 
 #[cfg(test)]
