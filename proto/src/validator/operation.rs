@@ -7,7 +7,6 @@ use tezos_core::types::{
 use crate::{
     context::Context,
     validator::ManagerOperation,
-    constants::ALLOCATION_FEE,
     error::{Error, Result, RpcErrors}
 };
 
@@ -44,6 +43,8 @@ pub fn validate_operation(context: &mut impl Context, opg: SignedOperation, hash
             return err!(hash, RpcErrors::inconsistent_sources());
         }
 
+        // TODO: check against constant fee values (per operation kind)
+
         total_fees += content.fee();
         total_spent += content.fee() + amount.unwrap_or(0u32.into());
     }
@@ -56,9 +57,6 @@ pub fn validate_operation(context: &mut impl Context, opg: SignedOperation, hash
     let public_key = match context.get_public_key(&source)? {
         Some(value) => value,
         None => {
-            // Charge for allocation here
-            total_spent += ALLOCATION_FEE.into();
-
             let revealed_key = opg.contents.iter().filter_map(|content| {
                 match content {
                     OperationContent::Reveal(reveal) => Some(reveal.public_key.clone()),

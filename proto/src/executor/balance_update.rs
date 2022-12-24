@@ -39,7 +39,7 @@ impl BalanceUpdates {
         }));
     }
 
-    fn push_categorized_update(&mut self, kind: Kind, category: Category, change: String) {
+    fn _push_categorized_update(&mut self, kind: Kind, category: Category, change: String) {
         self.balance_updates.push(BalanceUpdate::Categorized(CategorizedBalanceUpdate {
             kind,
             category,
@@ -51,18 +51,6 @@ impl BalanceUpdates {
             participation: None,
             revelation: None
         }));
-    }
-
-    pub fn burn(&mut self, contract: &impl TezosAddress, amount: &Mutez) {
-        self.push_contract_update(
-            contract.to_string().into(), 
-            format!("-{}", amount)
-        );
-        self.push_categorized_update(
-            Kind::Burned,
-            Category::StorageFees,
-            amount.to_string()
-        );
     }
 
     pub fn spend(&mut self, contract: &impl TezosAddress, amount: &Mutez) {

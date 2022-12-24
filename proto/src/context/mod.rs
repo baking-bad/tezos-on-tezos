@@ -9,6 +9,7 @@ use tezos_core::types::{
     mutez::Mutez,
     number::Nat
 };
+use tezos_michelson::micheline::Micheline;
 use tezos_rpc::models::{
     operation::Operation as OperationReceipt,
 };
@@ -120,5 +121,21 @@ pub trait Context {
 
     fn get_batch_receipt(&mut self, level: i32) -> Result<Option<BatchReceipt>> {
         return self.get(format!("/blocks/{}/header", level));
+    }
+
+    fn get_contract_code(&mut self, address: &impl TezosAddress) -> Result<Option<Micheline>> {
+        self.get(format!("/context/contracts/{}/code", address.to_string()))
+    }
+
+    fn set_contract_code(&mut self, address: &impl TezosAddress, code: Micheline) -> Result<()> {
+        self.set(format!("/context/contracts/{}/code", address.to_string()), code)
+    }
+
+    fn get_contract_storage(&mut self, address: &impl TezosAddress) -> Result<Option<Micheline>> {
+        self.get(format!("/context/contracts/{}/storage", address.to_string()))
+    }
+
+    fn set_contract_storage(&mut self, address: &impl TezosAddress, storage: Micheline) -> Result<()> {
+        self.set(format!("/context/contracts/{}/storage", address.to_string()), storage)
     }
 }

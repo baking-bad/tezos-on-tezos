@@ -12,8 +12,7 @@ use crate::{
         OperationReceipt,
         OperationHash,
         OperationListListHash,
-        BlockPayloadHash,
-        BlockHash
+        BlockPayloadHash
     },
     constants::*
 };
@@ -53,8 +52,10 @@ pub fn apply_batch(
         operation_receipts.push(execute_operation(context, opg)?);
     }
 
+    // TODO: fees to batch producer (balance updates + update balance)
+
     let header = naive_header(context, head, &operations)?;
-    let hash: BlockHash = ZERO_BLOCK_HASH.try_into().unwrap();  // TODO: forge header and blake2b
+    let hash = header.hash()?;
     let head = Head::new(header.level, hash.clone(), header.timestamp);
     let receipt = BatchReceipt {
         chain_id: CHAIN_ID.try_into().unwrap(),

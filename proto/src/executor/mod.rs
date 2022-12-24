@@ -1,5 +1,6 @@
 pub mod reveal;
 pub mod transaction;
+pub mod origination;
 pub mod balance_update;
 
 use tezos_core::types::{
@@ -9,7 +10,8 @@ use tezos_core::types::{
 use tezos_operation::operations::OperationContent;
 use tezos_rpc::models::operation::{
     Operation as OperationReceipt,
-    OperationContent as OperationContentReceipt, operation_result::OperationResultStatus
+    OperationContent as OperationContentReceipt,
+    operation_result::OperationResultStatus
 };
 
 use crate::{
@@ -18,27 +20,35 @@ use crate::{
     context::Context,
     executor::{
         reveal::{execute_reveal, skip_reveal}, 
-        transaction::{execute_transaction, skip_transaction}
+        transaction::{execute_transaction, skip_transaction},
+        origination::{execute_origination, skip_origination}
     },
     validator::ManagerOperation,
     constants::{CHAIN_ID, PROTOCOL}
 };
 
+macro_rules! set_status {
+    ($receipt: expr, $status: expr) => {
+        if let Some(metadata) = $receipt.metadata.as_mut() {
+            metadata.operation_result.status = $status;
+            return Ok(())
+        }
+    };
+}
+
+macro_rules! get_status {
+    ($receipt: expr) => {
+        if let Some(metadata) = $receipt.metadata.as_ref() {
+            return Ok(metadata.operation_result.status.clone());
+        }
+    };
+}
+
 fn update_status(receipt: &mut OperationContentReceipt, status: OperationResultStatus) -> Result<()> {
     match receipt {
-        OperationContentReceipt::Reveal(reveal) => {
-            if let Some(metadata) = reveal.metadata.as_mut() {
-                metadata.operation_result.status = status;
-                return Ok(())
-            }
-        },
-        OperationContentReceipt::Transaction(transaction) => {
-            if let Some(metadata) = transaction.metadata.as_mut() {
-                metadata.operation_result.status = status;
-                return Ok(())
-            }
-        },
-        OperationContentReceipt::Origination(_origination) => todo!("Implement for origination"),
+        OperationContentReceipt::Reveal(reveal) => set_status!(reveal, status),
+        OperationContentReceipt::Transaction(transaction) => set_status!(transaction, status),
+        OperationContentReceipt::Origination(origination) => set_status!(origination, status),
         _ => return Err(Error::OperationKindUnsupported)
     };
     panic!("Operation metadata is missing: {:?}", receipt)
@@ -46,17 +56,9 @@ fn update_status(receipt: &mut OperationContentReceipt, status: OperationResultS
 
 fn get_status(receipt: &OperationContentReceipt) -> Result<OperationResultStatus> {
     match receipt {
-        OperationContentReceipt::Reveal(reveal) => {
-            if let Some(metadata) = reveal.metadata.as_ref() {
-                return Ok(metadata.operation_result.status.clone());
-            }
-        },
-        OperationContentReceipt::Transaction(transaction) => {
-            if let Some(metadata) = transaction.metadata.as_ref() {
-                return Ok(metadata.operation_result.status.clone());
-            }
-        },
-        OperationContentReceipt::Origination(_origination) => todo!("Implement for origination"),
+        OperationContentReceipt::Reveal(reveal) => get_status!(reveal),
+        OperationContentReceipt::Transaction(transaction) => get_status!(transaction),
+        OperationContentReceipt::Origination(origination) => get_status!(origination),
         _ => return Err(Error::OperationKindUnsupported)
     }
     panic!("Operation metadata is missing: {:?}", receipt)
@@ -68,6 +70,7 @@ pub fn execute_operation(context: &mut impl Context, opg: &ManagerOperation) -> 
     let initial_balance = context.get_balance(&opg.source)?.expect("Balance not initialized");
     let mut contents = Vec::new();
     let mut failed_idx: Option<usize> = None;
+    let mut origination_index: i32 = 0;
 
     // reserve funds for execution expenses
     context.set_balance(&opg.source, &(initial_balance - opg.total_fees))?;
@@ -90,7 +93,14 @@ pub fn execute_operation(context: &mut impl Context, opg: &ManagerOperation) -> 
                 };
                 OperationContentReceipt::Transaction(transaction_receipt)
             },
-            OperationContent::Origination(_origination) => todo!("Implement origination"),
+            OperationContent::Origination(origination) => {
+                let origination_receipt = if failed_idx.is_none() {
+                    execute_origination(context, origination, &opg.hash, &mut origination_index)?
+                } else {
+                    skip_origination(origination.clone())
+                };
+                OperationContentReceipt::Origination(origination_receipt)
+            }
             _ => return Err(Error::OperationKindUnsupported)
         };
 
