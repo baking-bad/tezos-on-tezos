@@ -1,9 +1,6 @@
 pub mod rpc_errors;
 
 use core::result;
-use tezos_core;
-use tezos_operation;
-use serde_json_wasm;
 use derive_more::{From, Display, Error};
 
 pub use tezos_rpc::Error as TezosRpcError;
@@ -12,6 +9,13 @@ pub use tezos_operation::Error as TezosOperationError;
 pub use tezos_michelson::Error as TezosMichelsonError;
 pub use serde_json_wasm::ser::Error as SerializationError;
 pub use serde_json_wasm::de::Error as DeserializationError;
+pub use ibig::error::ParseError as BigIntParsingError;
+pub use chrono::ParseError as TimestampParsingError;
+
+use tezos_core::types::encoded::{OperationHash, ContractHash};
+use tezos_michelson::michelson::{
+    types::Type
+};
 
 pub use rpc_errors::{RpcErrors, RpcError};
 
@@ -23,16 +27,32 @@ pub enum Error {
     TezosMichelsonError(TezosMichelsonError),
     SerializationError(SerializationError),
     DeserializationError(DeserializationError),
-    OperationKindUnsupported,
-    #[display(fmt = "operation {}, caused by {}", hash, inner)]
-    ValidationError {
-        hash: String,
-        inner: RpcError
-    },
+    BigIntParsingError(BigIntParsingError),
+    TimestampParsingError(TimestampParsingError),
     ContextUnstagedError,
     ExternalError {
         message: String
     },
+    #[display(fmt = "operation {:#?}, caused by {:#?}", hash, inner)]
+    ValidationError {
+        hash: OperationHash,
+        inner: RpcError
+    },
+    #[display(fmt = "expected {:#?}, found {:?}", ty, data)]
+    MichelsonTypeError {
+        ty: Type,
+        data: String
+    },
+    OperationKindUnsupported,
+    #[display(fmt = "{:#?}", ty)]
+    MichelsonTypeUnsupported {
+        ty: Type
+    },
+    #[display(fmt = "{} (position {})", message, position)]
+    BadStack {
+        position: usize,
+        message: String
+    }
 }
 
 pub type Result<T> = result::Result<T, Error>;

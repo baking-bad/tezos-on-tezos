@@ -82,6 +82,7 @@ pub trait Context {
     }
 
     fn get_counter(&mut self, address: &impl TezosAddress) -> Result<Option<Nat>> {
+        // TODO: use u64 or UBig instead of Nat, because it is String under the hood, not good for math
         return self.get(format!("/context/contracts/{}/counter", address.to_string()));
     }
 
@@ -94,7 +95,7 @@ pub trait Context {
     }
 
     fn set_public_key(&mut self, address: &impl TezosAddress, public_key: &PublicKey) -> Result<()> {
-        // NOTE: Underscores are not supported by host
+        // NOTE: Underscores are not allowed in path (host restriction)
         return self.set(format!("/context/contracts/{}/pubkey", address.to_string()), public_key.to_owned());
     }
 
@@ -110,7 +111,6 @@ pub trait Context {
     }
 
     fn get_operation_receipt(&mut self, level: i32, index: i32) -> Result<Option<OperationReceipt>> {
-        // TODO: support larger files (read loop)
         return self.get(format!("/blocks/{}/operations/{}", level, index));
     }
 
@@ -128,6 +128,7 @@ pub trait Context {
     }
 
     fn set_contract_code(&mut self, address: &impl TezosAddress, code: Micheline) -> Result<()> {
+        // TODO: support splitting into chunks (generic read/write loop)
         self.set(format!("/context/contracts/{}/code", address.to_string()), code)
     }
 

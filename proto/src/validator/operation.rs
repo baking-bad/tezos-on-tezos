@@ -13,7 +13,7 @@ use crate::{
 macro_rules! err {
     ($hash: expr, $err: expr) => {
         Err(Error::ValidationError {
-            hash: ($hash as OperationHash).into_string(),
+            hash: $hash,
             inner: $err
         })
     };
