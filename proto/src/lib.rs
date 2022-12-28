@@ -5,7 +5,7 @@ pub mod executor;
 pub mod producer;
 pub mod vm;
 
-pub use error::Result;
+pub use error::{Result, Error};
 
 pub mod constants {
     pub const CHAIN_ID: &str = "NetXP2FfcNxFANL";

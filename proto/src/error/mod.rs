@@ -1,4 +1,4 @@
-pub mod rpc_errors;
+mod rpc_errors;
 
 use core::result;
 use derive_more::{From, Display, Error};
@@ -14,7 +14,8 @@ pub use chrono::ParseError as TimestampParsingError;
 
 use tezos_core::types::encoded::{OperationHash, ContractHash};
 use tezos_michelson::michelson::{
-    types::Type
+    types::Type,
+    data::Instruction
 };
 
 pub use rpc_errors::{RpcErrors, RpcError};
@@ -38,21 +39,24 @@ pub enum Error {
         hash: OperationHash,
         inner: RpcError
     },
-    #[display(fmt = "expected {:#?}, found {:?}", ty, data)]
+    #[display(fmt = "expected {}, found {}", expected, found)]
     MichelsonTypeError {
-        ty: Type,
-        data: String
+        expected: String,
+        found: String
     },
     OperationKindUnsupported,
     #[display(fmt = "{:#?}", ty)]
     MichelsonTypeUnsupported {
         ty: Type
     },
-    #[display(fmt = "{} (position {})", message, position)]
-    BadStack {
-        position: usize,
-        message: String
-    }
+    #[display(fmt = "{:#?}", instruction)]
+    MichelsonInstructionUnsupported {
+        instruction: Instruction
+    },
+    ScriptSectionMissing,
+    UnexpectedPairArity,
+    StackOutOfBounds,
+    UnexpectedStackSize
 }
 
 pub type Result<T> = result::Result<T, Error>;
