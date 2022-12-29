@@ -1,25 +1,72 @@
-use tezos_michelson::michelson::data::{Sequence, Instruction};
+use tezos_michelson::michelson::data::Instruction;
+use tezos_michelson::micheline::Micheline;
+use tezos_operation::operations::OperationContent;
+use tezos_rpc::models::operation::operation_result::lazy_storage_diff::LazyStorageDiff;
+use tezos_core::types::{
+    encoded::{ImplicitAddress, Address, ContractAddress},
+    mutez::Mutez
+};
 
 use crate::{
     Result,
     Error,
-    vm::context::ExecutionContext,
     vm::stack::Stack,
     vm::types::StackItem,
     context::Context
 };
 
+pub struct TransactionScope {
+    pub source: ImplicitAddress,
+    pub sender: Address,
+    pub amount: Mutez,
+    pub entrypoint: String,
+    pub parameter: Micheline,
+    pub storage: Micheline,
+    pub now: i64,
+    pub self_address: ContractAddress,
+    pub level: i32,
+}
+
+pub struct TransactionResult {
+    pub storage: Micheline,
+    pub internal_operations: Vec<OperationContent>,
+    pub lazy_storage_diff: Vec<LazyStorageDiff>
+}
+
 pub trait Interpreter {
-    fn execute(self, global_ctx: &mut impl Context, stack: &mut Stack, exec_ctx: &ExecutionContext) -> Result<()>;
+    fn execute(&self, stack: &mut Stack, tx_scope: &TransactionScope, global_ctx: &mut impl Context) -> Result<()>;
+}
+
+pub trait PureInterpreter {
+    fn execute(&self, stack: &mut Stack) -> Result<()>;
+}
+
+pub trait ScopedInterpreter {
+    fn execute(&self, stack: &mut Stack, tx_scope: &TransactionScope) -> Result<()>;
 }
 
 impl Interpreter for Instruction {
-    fn execute(self, global_ctx: &mut impl Context, stack: &mut Stack, exec_ctx: &ExecutionContext) -> Result<()> {
+    fn execute(&self, stack: &mut Stack, tx_scope: &TransactionScope, global_ctx: &mut impl Context) -> Result<()> {
         match self {
-            Instruction::Push(i) => {
-                stack.push(StackItem::from_data(*i.value, &i.r#type)?);
-                Ok(())
-            },
+            Instruction::Push(instr) => instr.execute(stack),
+            Instruction::Drop(instr) => instr.execute(stack),
+            Instruction::Dup(instr) => instr.execute(stack),
+            Instruction::Swap(instr) => instr.execute(stack),
+            Instruction::Dig(instr) => instr.execute(stack),
+            Instruction::Dug(instr) => instr.execute(stack),
+            Instruction::Rename(_) => Ok(()),
+            Instruction::Cast(_) => Ok(()),
+            Instruction::FailWith(instr) => instr.execute(stack),
+            Instruction::Sequence(seq) => seq.execute(stack, tx_scope, global_ctx),
+            Instruction::Dip(instr) => instr.execute(stack, tx_scope, global_ctx),
+            Instruction::If(instr) => instr.execute(stack, tx_scope, global_ctx),
+            Instruction::IfCons(instr) => instr.execute(stack, tx_scope, global_ctx),
+            Instruction::IfLeft(instr) => instr.execute(stack, tx_scope, global_ctx),
+            Instruction::IfNone(instr) => instr.execute(stack, tx_scope, global_ctx),
+            Instruction::Loop(instr) => instr.execute(stack, tx_scope, global_ctx),
+            Instruction::LoopLeft(instr) => instr.execute(stack, tx_scope, global_ctx),
+            Instruction::Map(instr) => instr.execute(stack, tx_scope, global_ctx),
+            Instruction::Iter(instr) => instr.execute(stack, tx_scope, global_ctx),
             _ => Err(Error::MichelsonInstructionUnsupported { instruction: self.clone() })
         }
     }

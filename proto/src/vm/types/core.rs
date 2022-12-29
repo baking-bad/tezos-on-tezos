@@ -5,29 +5,13 @@ use tezos_michelson::michelson::{
 
 use crate::{
     Result, Error,
-    vm::types::{UnitItem, BoolItem, StringItem, BytesItem, StackItem},
+    vm::types::{BoolItem, StringItem, BytesItem, StackItem},
     err_type,
-    type_check_comparable
+    type_check_fn_comparable
 };
 
-impl UnitItem {
-    type_check_comparable!(Unit);
-
-    pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
-        match data {
-            Data::Unit(_) => Ok(StackItem::Unit(Self(()))),
-            _ => err_type!(ty, data)
-        }
-    }
-
-    pub fn into_data(self, ty: &Type) -> Result<Data> {
-        self.type_check(ty)?;
-        Ok(Data::Unit(data::unit()))
-    }
-}
-
 impl BoolItem {
-    type_check_comparable!(Bool);
+    type_check_fn_comparable!(Bool);
 
     pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
         match data {
@@ -44,10 +28,14 @@ impl BoolItem {
             false => Ok(Data::False(data::False))
         }
     }
+
+    pub fn is_true(&self) -> bool {
+        self.0
+    }
 }
 
 impl StringItem {
-    type_check_comparable!(String);
+    type_check_fn_comparable!(String);
 
     pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
         match data {
@@ -63,7 +51,7 @@ impl StringItem {
 }
 
 impl BytesItem {
-    type_check_comparable!(Bytes);
+    type_check_fn_comparable!(Bytes);
 
     pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
         match data {

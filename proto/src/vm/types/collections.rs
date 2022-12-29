@@ -7,10 +7,10 @@ use tezos_michelson::michelson::{
 
 use crate::{
     Result, Error,
-    vm::types::{ListItem, SetItem, MapItem, BigMapItem, StackItem},
+    vm::types::{ListItem, SetItem, MapItem, BigMapItem, StackItem, PairItem},
     err_type,
     assert_types_equal,
-    comparable_ref
+    cmp_ref
 };
 
 fn seq_into_item_vec(sequence: data::Sequence, val_type: &Type) -> Result<Vec<StackItem>> {
@@ -36,11 +36,15 @@ fn item_vec_into_seq(items: Vec<StackItem>, inner_type: &Type, val_type: &Type) 
 }
 
 impl ListItem {
+    pub fn new(items: Vec<StackItem>, val_type: Type) -> Self {
+        Self { outer_value: items, inner_type: val_type }
+    }
+
     pub fn from_data(data: Data, ty: &Type, val_type: &Type) -> Result<StackItem> {
         match data {
             Data::Sequence(seq) => {
                 let items = seq_into_item_vec(seq, &val_type)?;
-                Ok(StackItem::List(Self { outer_value: items, inner_type: val_type.clone() }))
+                Ok(StackItem::List(Self::new(items, val_type.to_owned())))
             },
             _ => err_type!(ty, data)
         }
@@ -53,9 +57,22 @@ impl ListItem {
         }
     }
 
-    pub fn into_values(self, val_type: &Type) -> Vec<StackItem> {
-        assert_types_equal!(val_type, self.inner_type);
-        self.outer_value
+    pub fn unwrap(self) -> (Vec<StackItem>, Type) {
+        (self.outer_value, self.inner_type)
+    }
+
+    pub fn get_type(&self) -> Type {
+        types::list(self.inner_type.clone())
+    }
+
+    pub fn split_head(self) -> Result<(StackItem, ListItem)> {
+        if self.outer_value.len() > 0 {
+            let (mut items, val_type) = self.unwrap();
+            let head = items.remove(0);
+            Ok((head, Self::new(items, val_type)))
+        } else {
+            Err(Error::ListOutOfBounds)
+        }
     }
 
     pub fn len(&self) -> usize {
@@ -78,10 +95,22 @@ impl SetItem {
     pub fn into_data(self, ty: &Type) -> Result<Data> {
         match ty {
             Type::Set(set_ty) => {
-                item_vec_into_seq(self.outer_value, &self.inner_type, comparable_ref!(set_ty.r#type))
+                item_vec_into_seq(self.outer_value, &self.inner_type, cmp_ref!(set_ty.r#type))
             },
             _ => err_type!(ty, self)
         }
+    }
+
+    pub fn unwrap(self) -> (Vec<StackItem>, Type) {
+        (self.outer_value, self.inner_type)
+    }
+
+    pub fn get_type(&self) -> Result<Type> {
+        match &self.inner_type {
+            Type::Comparable(ty) => Ok(types::set(ty.clone())),
+            ty => err_type!("ComparableType", ty)
+        }
+        
     }
 }
 
@@ -118,6 +147,10 @@ fn map_item_into_seq(map_item: MapItem, map_ty: &types::Map) -> Result<Data> {
 }
 
 impl MapItem {
+    pub fn new(items: Vec<(StackItem, StackItem)>, key_type: Type, val_type: Type) -> Self {
+        Self { outer_value: items, inner_type: (key_type, val_type) }
+    }
+
     pub fn from_data(data: Data, ty: &Type, key_type: &Type, val_type: &Type) -> Result<StackItem> {
         match data {
             Data::Sequence(sequence) => Ok(StackItem::Map(seq_into_map_item(sequence, key_type, val_type)?)),
@@ -130,6 +163,23 @@ impl MapItem {
             Type::Map(map_ty) => map_item_into_seq(self, map_ty),
             _ => err_type!(ty, self)
         }
+    }
+
+    pub fn unwrap(self) -> (Vec<StackItem>, (Type, Type)) {
+        let mut elements: Vec<StackItem> = Vec::with_capacity(self.outer_value.len());
+        for (key_item, val_item) in self.outer_value {
+            elements.push(PairItem::new(key_item, val_item).into());
+        }
+        (elements, self.inner_type)
+    }
+
+    pub fn get_type(&self) -> Type {
+        let (kty, vty) = self.inner_type.clone();
+        types::map(kty, vty)
+    }
+
+    pub fn get_keys(&self) -> Vec<StackItem> {
+        self.outer_value.iter().map(|(k, _)| k.clone()).collect()
     }
 }
 
@@ -159,5 +209,12 @@ impl BigMapItem {
             }
         }
         err_type!(ty, self)
+    }
+
+    pub fn get_type(&self) -> Type {
+        match self {
+            Self::Ptr { value: _, outer_type } => outer_type.clone(),
+            Self::Map(map) => map.get_type()
+        }
     }
 }

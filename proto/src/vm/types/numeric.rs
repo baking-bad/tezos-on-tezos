@@ -9,7 +9,7 @@ use crate::{
     Result, Error,
     vm::types::{IntItem, NatItem, MutezItem, TimestampItem, StackItem},
     err_type,
-    type_check_comparable,
+    type_check_fn_comparable,
 };
 
 pub fn assert_non_negative(value: data::Int, ty: &Type) -> Result<i64> {
@@ -18,7 +18,7 @@ pub fn assert_non_negative(value: data::Int, ty: &Type) -> Result<i64> {
 }
 
 impl IntItem {
-    type_check_comparable!(Int);
+    type_check_fn_comparable!(Int);
 
     pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
         match data {
@@ -34,7 +34,7 @@ impl IntItem {
 }
 
 impl NatItem {
-    type_check_comparable!(Nat);
+    type_check_fn_comparable!(Nat);
 
     pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
         match data {
@@ -51,7 +51,7 @@ impl NatItem {
 }
 
 impl TimestampItem {
-    type_check_comparable!(Timestamp);
+    type_check_fn_comparable!(Timestamp);
 
     pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
         let timestamp = match data {
@@ -73,7 +73,7 @@ impl TimestampItem {
 }
 
 impl MutezItem {
-    type_check_comparable!(Mutez);
+    type_check_fn_comparable!(Mutez);
 
     pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
         match data {

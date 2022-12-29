@@ -1,14 +1,33 @@
 use tezos_michelson::michelson::{
     data::Data,
     data,
-    types::Type
+    types::{Type, ComparableType},
+    types
 };
 
 use crate::{
     Result, Error,
-    vm::types::{OptionItem, OrItem, PairItem, StackItem},
-    err_type, assert_types_equal
+    vm::types::{OptionItem, OrItem, PairItem, UnitItem, StackItem},
+    err_type,
+    assert_types_equal,
+    type_check_fn_comparable
 };
+
+impl UnitItem {
+    type_check_fn_comparable!(Unit);
+
+    pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
+        match data {
+            Data::Unit(_) => Ok(StackItem::Unit(Self(()))),
+            _ => err_type!(ty, data)
+        }
+    }
+
+    pub fn into_data(self, ty: &Type) -> Result<Data> {
+        self.type_check(ty)?;
+        Ok(Data::Unit(data::unit()))
+    }
+}
 
 impl OptionItem {
     pub fn from_data(data: Data, ty: &Type, val_type: &Type) -> Result<StackItem> {
@@ -42,6 +61,21 @@ impl OptionItem {
             }
         }
         err_type!(ty, self)
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.outer_value.is_none()
+    }
+
+    pub fn unwrap(self) -> Option<StackItem> {
+        match self.outer_value {
+            Some(value) => Some(*value),
+            None => None
+        }
+    }
+
+    pub fn get_type(&self) -> Type {
+        types::option(self.inner_type.clone())
     }
 }
 
@@ -83,16 +117,34 @@ impl OrItem {
         }
         err_type!(ty, self)
     }
+
+    pub fn is_left(&self) -> bool {
+        match self {
+            Self::Left { value, right_type } => true,
+            Self::Right { value, left_type } => false
+        }
+    }
+
+    pub fn unwrap(self) -> StackItem {
+        match self {
+            Self::Left { value, right_type } => *value,
+            Self::Right { value, left_type } => *value
+        }
+    }
+
+    pub fn get_type(&self) -> Result<Type> {
+        let (lhs, rhs) = match self {
+            Self::Left { value, right_type } => (value.get_type()?, right_type.clone()),
+            Self::Right { value, left_type } => (left_type.clone(), value.get_type()?)
+        };
+        Ok(types::or(lhs, rhs))
+    }
 }
 
 impl PairItem {
     pub fn new(first: StackItem, second: StackItem) -> Self {
         Self(Box::new((first, second)))
     }
-
-    pub fn unpair(self) -> (StackItem, StackItem) {
-        (self.0.0, self.0.1)
-    } 
 
     pub fn from_data(data: Data, ty: &Type, first_type: &Type, second_type: &Type) -> Result<StackItem> {
         match data {
@@ -113,5 +165,13 @@ impl PairItem {
             return Ok(Data::Pair(data::pair(vec![first, second])))
         }
         err_type!(ty, self)
+    }
+
+    pub fn unpair(self) -> (StackItem, StackItem) {
+        (self.0.0, self.0.1)
+    }
+
+    pub fn get_type(&self) -> Result<Type> {
+        Ok(types::pair(vec![self.0.0.get_type()?, self.0.1.get_type()?]))
     }
 }

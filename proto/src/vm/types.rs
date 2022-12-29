@@ -9,7 +9,7 @@ use tezos_core::types::encoded::{
     Address, PublicKey, ImplicitAddress, Signature
 };
 use tezos_michelson::michelson::{
-    data::Instruction,
+    data::{Instruction},
     types::Type,
 };
 use tezos_operation::operations::OperationContent;
@@ -32,7 +32,7 @@ macro_rules! define_item_rec {
     };
 }
 
-define_item!(UnitItem, ()); // core
+define_item!(UnitItem, ()); // algebraic
 define_item!(BoolItem, bool);  // core
 define_item!(BytesItem, Vec<u8>);  // core
 define_item!(StringItem, String);  // core
@@ -46,12 +46,12 @@ define_item!(KeyHashItem, ImplicitAddress);  // domain
 define_item!(SignatureItem, Signature);  // domain
 define_item!(OperationItem, OperationContent);  // operation
 
-// Items where type information might be missing
+// Items where type information might be lost
 define_item_rec!(OptionItem, Option<Box<StackItem>>, Type);  // algebraic
 define_item_rec!(ListItem, Vec<StackItem>, Type);  // collections
 define_item_rec!(SetItem, Vec<StackItem>, Type);  // collections
 define_item_rec!(MapItem, Vec<(StackItem, StackItem)>, (Type, Type));  // collections
-define_item_rec!(LambdaItem, Vec<Instruction>, (Type, Type));  // domain
+define_item_rec!(LambdaItem, Instruction, (Type, Type));  // domain
 
 #[derive(Debug, Clone)]
 pub struct PairItem(Box<(StackItem, StackItem)>);  // algebraic

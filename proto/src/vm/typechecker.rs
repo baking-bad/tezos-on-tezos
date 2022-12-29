@@ -1,6 +1,7 @@
 use tezos_michelson::michelson::{
     data::Data,
-    types::{Type, ComparableType}
+    types::{Type, ComparableType},
+    types
 };
 use tezos_michelson::micheline::Micheline;
 
@@ -30,7 +31,7 @@ macro_rules! assert_types_equal {
 }
 
 #[macro_export]
-macro_rules! type_check_comparable {
+macro_rules! type_check_fn_comparable {
     ($cmp_ty: ident) => {
         pub fn type_check(&self, ty: &Type) -> Result<()> {
             match ty {
@@ -42,7 +43,7 @@ macro_rules! type_check_comparable {
 }
 
 #[macro_export]
-macro_rules! comparable_ref {
+macro_rules! cmp_ref {
     ($arg: expr) => {
         &Type::Comparable($arg.clone())
     };
@@ -65,16 +66,16 @@ impl StackItem {
                 ComparableType::KeyHash(_) => KeyHashItem::from_data(data, ty),
                 ComparableType::Signature(_) => SignatureItem::from_data(data, ty),
                 ComparableType::Option(option_ty) => {
-                    OptionItem::from_data(data, ty, comparable_ref!(*option_ty.r#type))
+                    OptionItem::from_data(data, ty, cmp_ref!(*option_ty.r#type))
                 },
                 ComparableType::Or(or_ty) => {
-                    OrItem::from_data(data, ty, comparable_ref!(*or_ty.lhs), comparable_ref!(*or_ty.rhs))
+                    OrItem::from_data(data, ty, cmp_ref!(*or_ty.lhs), cmp_ref!(*or_ty.rhs))
                 },
                 ComparableType::Pair(pair_ty) => {
                     if pair_ty.types.len() != 2 {
                         Err(Error::UnexpectedPairArity)
                     } else {
-                        PairItem::from_data(data, ty, comparable_ref!(pair_ty.types[0]), comparable_ref!(pair_ty.types[1]))
+                        PairItem::from_data(data, ty, cmp_ref!(pair_ty.types[0]), cmp_ref!(pair_ty.types[1]))
                     }
                 },
                 _ => Err(Error::MichelsonTypeUnsupported { ty: ty.clone() })
@@ -89,7 +90,7 @@ impl StackItem {
                 }
             },
             Type::List(list_ty) => ListItem::from_data(data, ty, &list_ty.r#type),
-            Type::Set(set_ty) => SetItem::from_data(data, ty, comparable_ref!(set_ty.r#type)),
+            Type::Set(set_ty) => SetItem::from_data(data, ty, cmp_ref!(set_ty.r#type)),
             Type::Map(map_ty) => MapItem::from_data(data, ty, &map_ty.key_type, &map_ty.value_type),
             Type::BigMap(map_ty) => BigMapItem::from_data(data, ty, &map_ty.key_type, &map_ty.value_type),
             Type::Parameter(param_ty) => StackItem::from_data(data, &param_ty.r#type),
@@ -120,6 +121,56 @@ impl StackItem {
             StackItem::Map(item) => item.into_data(ty),
             StackItem::BigMap(item) => item.into_data(ty),
             _ => Err(Error::MichelsonTypeUnsupported { ty: ty.clone() })
+        }
+    }
+
+    pub fn get_type(&self) -> Result<Type> {
+        match self {
+            StackItem::Unit(_) => Ok(types::unit()),
+            StackItem::Bytes(_) => Ok(types::bytes()),
+            StackItem::String(_) => Ok(types::string()),
+            StackItem::Int(_) => Ok(types::int()),
+            StackItem::Nat(_) => Ok(types::nat()),
+            StackItem::Bool(_) => Ok(types::bool()),
+            StackItem::Timestamp(_) => Ok(types::timestamp()),
+            StackItem::Mutez(_) => Ok(types::mutez()),
+            StackItem::Address(_) => Ok(types::address()),
+            StackItem::Key(_) => Ok(types::key()),
+            StackItem::KeyHash(_) => Ok(types::key_hash()),
+            StackItem::Signature(_) => Ok(types::signature()),
+            StackItem::Option(item) => Ok(item.get_type()),
+            StackItem::Or(item) => item.get_type(),
+            StackItem::Pair(item) => item.get_type(),
+            StackItem::List(item) => Ok(item.get_type()),
+            StackItem::Set(item) => item.get_type(),
+            StackItem::Map(item) => Ok(item.get_type()),
+            StackItem::BigMap(item) => Ok(item.get_type()),
+            _ => todo!()
+        }
+    }
+
+    pub fn type_check(&self, ty: &Type) -> Result<()> {
+        match self {
+            StackItem::Unit(item) => item.type_check(ty),
+            StackItem::Bytes(item) => item.type_check(ty),
+            StackItem::String(item) => item.type_check(ty),
+            StackItem::Int(item) => item.type_check(ty),
+            StackItem::Nat(item) => item.type_check(ty),
+            StackItem::Bool(item) => item.type_check(ty),
+            StackItem::Timestamp(item) => item.type_check(ty),
+            StackItem::Mutez(item) => item.type_check(ty),
+            StackItem::Address(item) => item.type_check(ty),
+            StackItem::Key(item) =>item.type_check(ty),
+            StackItem::KeyHash(item) => item.type_check(ty),
+            StackItem::Signature(item) => item.type_check(ty),
+            StackItem::Option(item) => Ok(item.get_type()),
+            StackItem::Or(item) => item.get_type(),
+            StackItem::Pair(item) => item.get_type(),
+            StackItem::List(item) => Ok(item.get_type()),
+            StackItem::Set(item) => item.get_type(),
+            StackItem::Map(item) => Ok(item.get_type()),
+            StackItem::BigMap(item) => Ok(item.get_type()),
+            _ => todo!()
         }
     }
 

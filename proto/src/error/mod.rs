@@ -19,6 +19,7 @@ use tezos_michelson::michelson::{
 };
 
 pub use rpc_errors::{RpcErrors, RpcError};
+pub use crate::vm::StackItem;
 
 #[derive(Debug, From, Display, Error)]
 pub enum Error {
@@ -53,10 +54,15 @@ pub enum Error {
     MichelsonInstructionUnsupported {
         instruction: Instruction
     },
+    #[display(fmt = "{:#?}", with)]
+    MichelsonScriptError {
+        with: StackItem
+    },
     ScriptSectionMissing,
     UnexpectedPairArity,
     StackOutOfBounds,
-    UnexpectedStackSize
+    UnexpectedStackSize,
+    ListOutOfBounds,
 }
 
 pub type Result<T> = result::Result<T, Error>;

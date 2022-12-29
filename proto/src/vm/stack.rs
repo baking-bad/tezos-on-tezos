@@ -1,9 +1,19 @@
 use std::collections::VecDeque;
 
 use crate::{
-    error::{Result, Error}
+    error::{Result, Error},
+    vm::types::StackItem
 };
-pub use crate::vm::types::StackItem;
+
+#[macro_export]
+macro_rules! pop_cast {
+    ($stack: expr, $var: ident) => {
+        match $stack.pop()? {
+            StackItem::$var(item) => item,
+            item => return err_type!(stringify!($var), item)
+        }
+    };
+}
 
 pub struct Stack {
     items: VecDeque<StackItem>,
@@ -36,6 +46,7 @@ impl Stack {
     }
 
     pub fn push_at(&mut self, depth: usize, item: StackItem) -> Result<()> {
+        let depth = depth + self.protected;
         if self.items.len() < depth {
             return Err(Error::StackOutOfBounds)
         }
@@ -45,7 +56,7 @@ impl Stack {
 
     pub fn push(&mut self, item: StackItem) -> Result<()> {
         if self.protected > 0 {
-            self.push_at(self.protected, item)
+            self.push_at(0, item)
         } else {
             self.items.push_front(item);
             Ok(())
@@ -53,7 +64,7 @@ impl Stack {
     }
 
     pub fn pop_at(&mut self, depth: usize) -> Result<StackItem> {
-        match self.items.remove(depth) {
+        match self.items.remove(depth + self.protected) {
             Some(item) => Ok(item),
             None => Err(Error::StackOutOfBounds)
         }
@@ -61,7 +72,7 @@ impl Stack {
 
     pub fn pop(&mut self) -> Result<StackItem> {
         if self.protected > 0 {
-            self.pop_at(self.protected)
+            self.pop_at(0)
         } else {
             match self.items.pop_front() {
                 Some(item) => Ok(item),
@@ -71,7 +82,7 @@ impl Stack {
     }
 
     pub fn dup_at(&self, depth: usize) -> Result<StackItem> {
-        match self.items.get(depth) {
+        match self.items.get(depth + self.protected) {
             Some(item) => Ok(item.clone()),
             None => Err(Error::StackOutOfBounds)
         }
