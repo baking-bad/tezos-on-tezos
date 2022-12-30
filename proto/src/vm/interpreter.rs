@@ -88,6 +88,16 @@ impl Interpreter for Instruction {
             Instruction::Lambda(instr) => instr.execute(stack),
             Instruction::Apply(instr) => instr.execute(stack),
             Instruction::Exec(instr) => instr.execute(stack, tx_scope, global_ctx),
+            Instruction::Abs(instr) => instr.execute(stack),
+            Instruction::Add(instr) => instr.execute(stack),
+            Instruction::Ediv(instr) => instr.execute(stack),
+            Instruction::Lsl(instr) => instr.execute(stack),
+            Instruction::Lsr(instr) => instr.execute(stack),
+            Instruction::Mul(instr) => instr.execute(stack),
+            Instruction::Neg(instr) => instr.execute(stack),
+            Instruction::Sub(instr) => instr.execute(stack),
+            Instruction::Int(instr) => instr.execute(stack),
+            Instruction::IsNat(instr) => instr.execute(stack),
             _ => Err(Error::MichelsonInstructionUnsupported { instruction: self.clone() })
         }
     }

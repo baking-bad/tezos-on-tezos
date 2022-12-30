@@ -10,6 +10,7 @@ pub use tezos_michelson::Error as TezosMichelsonError;
 pub use serde_json_wasm::ser::Error as SerializationError;
 pub use serde_json_wasm::de::Error as DeserializationError;
 pub use ibig::error::ParseError as BigIntParsingError;
+pub use ibig::error::OutOfBoundsError as BigIntOutOfBoundsError;
 pub use chrono::ParseError as TimestampParsingError;
 
 use tezos_core::types::encoded::{OperationHash};
@@ -30,6 +31,7 @@ pub enum Error {
     SerializationError(SerializationError),
     DeserializationError(DeserializationError),
     BigIntParsingError(BigIntParsingError),
+    BigIntOutOfBoundsError(BigIntOutOfBoundsError),
     TimestampParsingError(TimestampParsingError),
     ContextUnstagedError,
     ExternalError {
@@ -63,6 +65,7 @@ pub enum Error {
     StackOutOfBounds,
     UnexpectedStackSize,
     ListOutOfBounds,
+    ShiftOverflow
 }
 
 pub type Result<T> = result::Result<T, Error>;
