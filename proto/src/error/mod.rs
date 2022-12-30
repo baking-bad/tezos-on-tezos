@@ -12,7 +12,7 @@ pub use serde_json_wasm::de::Error as DeserializationError;
 pub use ibig::error::ParseError as BigIntParsingError;
 pub use chrono::ParseError as TimestampParsingError;
 
-use tezos_core::types::encoded::{OperationHash, ContractHash};
+use tezos_core::types::encoded::{OperationHash};
 use tezos_michelson::michelson::{
     types::Type,
     data::Instruction

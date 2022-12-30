@@ -1,5 +1,7 @@
 use tezos_michelson::michelson::data::Instruction;
-use tezos_michelson::micheline::Micheline;
+use tezos_michelson::micheline::{
+    Micheline, primitive_application
+};
 use tezos_operation::operations::OperationContent;
 use tezos_rpc::models::operation::operation_result::lazy_storage_diff::LazyStorageDiff;
 use tezos_core::types::{
@@ -11,7 +13,7 @@ use crate::{
     Result,
     Error,
     vm::stack::Stack,
-    vm::types::StackItem,
+    constants::*,
     context::Context
 };
 
@@ -31,6 +33,22 @@ pub struct TransactionResult {
     pub storage: Micheline,
     pub internal_operations: Vec<OperationContent>,
     pub lazy_storage_diff: Vec<LazyStorageDiff>
+}
+
+impl TransactionScope {
+    pub fn default() -> Self {
+        Self {
+            amount: 0u32.into(),
+            level: 0.into(),
+            now: 0,
+            entrypoint: "default".into(),
+            parameter: Micheline::PrimitiveApplication(primitive_application("Unit")),
+            storage: Micheline::PrimitiveApplication(primitive_application("Unit")),
+            self_address: DEFAULT_ORIGINATED_ADDRESS.try_into().unwrap(),
+            sender: DEFAULT_IMPLICIT_ADDRESS.try_into().unwrap(),
+            source: DEFAULT_IMPLICIT_ADDRESS.try_into().unwrap(),
+        }
+    }
 }
 
 pub trait Interpreter {
@@ -67,6 +85,9 @@ impl Interpreter for Instruction {
             Instruction::LoopLeft(instr) => instr.execute(stack, tx_scope, global_ctx),
             Instruction::Map(instr) => instr.execute(stack, tx_scope, global_ctx),
             Instruction::Iter(instr) => instr.execute(stack, tx_scope, global_ctx),
+            Instruction::Lambda(instr) => instr.execute(stack),
+            Instruction::Apply(instr) => instr.execute(stack),
+            Instruction::Exec(instr) => instr.execute(stack, tx_scope, global_ctx),
             _ => Err(Error::MichelsonInstructionUnsupported { instruction: self.clone() })
         }
     }

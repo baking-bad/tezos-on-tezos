@@ -936,7 +936,7 @@ dependencies = [
 [[package]]
 name = "host"
 version = "0.1.0"
-source = "git+https://gitlab.com/tezos/kernel#355d5c2e70c323d3ed8ec2450e766f7041b2c431"
+source = "git+https://gitlab.com/tezos/kernel#53e9c763eb78d29a05560189bfabc1b2c235dac5"
 
 [[package]]
 name = "http"
@@ -1240,7 +1240,7 @@ dependencies = [
 [[package]]
 name = "mock_runtime"
 version = "0.1.0"
-source = "git+https://gitlab.com/tezos/kernel#355d5c2e70c323d3ed8ec2450e766f7041b2c431"
+source = "git+https://gitlab.com/tezos/kernel#53e9c763eb78d29a05560189bfabc1b2c235dac5"
 dependencies = [
  "crypto",
  "host",
@@ -1314,9 +1314,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.16.0"
+version = "1.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86f0b0d4bf799edbc74508c1e8bf170ff5f41238e5f8225603ca7caaae2b7860"
+checksum = "6f61fba1741ea2b3d6a1e3178721804bb716a68a6aeba1149b5d52e3d464ea66"
 
 [[package]]
 name = "opaque-debug"
@@ -1592,9 +1592,9 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "0.36.5"
+version = "0.36.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3807b5d10909833d3e9acd1eb5fb988f79376ff10fce42937de71a449c4c588"
+checksum = "4feacf7db682c6c329c4ede12649cd36ecab0f3be5b7d74e6a20304725db4549"
 dependencies = [
  "bitflags",
  "errno",
@@ -1630,9 +1630,9 @@ checksum = "58bc9567378fc7690d6b2addae4e60ac2eeea07becb2c64b9f218b53865cba2a"
 
 [[package]]
 name = "serde"
-version = "1.0.151"
+version = "1.0.152"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97fed41fc1a24994d044e6db6935e69511a1153b52c15eb42493b26fa87feba0"
+checksum = "bb7d1f0d3021d347a83e556fc4683dea2ea09d87bccdf88ff5c12545d89d5efb"
 dependencies = [
  "serde_derive",
 ]
@@ -1648,9 +1648,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.151"
+version = "1.0.152"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "255abe9a125a985c05190d687b320c12f9b1f0b99445e608c21ba0782c719ad8"
+checksum = "af487d118eecd09402d70a5d72551860e788df87b464af30e5ea6a38c75c541e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1938,7 +1938,7 @@ dependencies = [
 [[package]]
 name = "tezos_rollup_encoding"
 version = "0.1.0"
-source = "git+https://gitlab.com/tezos/kernel#355d5c2e70c323d3ed8ec2450e766f7041b2c431"
+source = "git+https://gitlab.com/tezos/kernel#53e9c763eb78d29a05560189bfabc1b2c235dac5"
 dependencies = [
  "crypto",
  "host",

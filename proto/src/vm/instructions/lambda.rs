@@ -42,21 +42,22 @@ impl Interpreter for Exec {
     }
 }
 
-impl Interpreter for Apply {
-    fn execute(&self, stack: &mut Stack, tx_scope: &TransactionScope, global_ctx: &mut impl Context) -> Result<()> {
-        let fix = stack.pop()?;
+impl PureInterpreter for Apply {
+    fn execute(&self, stack: &mut Stack) -> Result<()> {
+        let const_arg = stack.pop()?;
         let (body, (param_type, return_type)) = pop_cast!(stack, Lambda).unwrap();
 
-        let (fix_ty, arg_ty) = match param_type {
+        let (const_ty, arg_ty) = match param_type {
             Type::Pair(pair_ty) => {
                 assert_eq!(2, pair_ty.types.len());
-                (pair_ty.types[0], pair_ty.types[1])
+                (pair_ty.types[0].clone(), pair_ty.types[1].clone())
             },
             ty => return err_type!("Pair", ty)
         };
 
+        let const_arg = const_arg.into_data(&const_ty)?;
         let body = Sequence::form(vec![
-            Instruction::Push(push(fix_ty, fix.into_data(&fix_ty)?)),
+            Instruction::Push(push(const_ty, const_arg)),
             Instruction::Pair(pair(None)),
             body
         ]);

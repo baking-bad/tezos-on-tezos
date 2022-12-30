@@ -24,7 +24,7 @@ macro_rules! define_item {
 
 macro_rules! define_item_rec {
     ($name: ident, $val: ty, $typ: ty) => {
-        #[derive(Debug, Clone)]
+        #[derive(Debug, Clone, PartialEq)]
         pub struct $name {
             outer_value: $val,
             inner_type: $typ
@@ -53,22 +53,22 @@ define_item_rec!(SetItem, Vec<StackItem>, Type);  // collections
 define_item_rec!(MapItem, Vec<(StackItem, StackItem)>, (Type, Type));  // collections
 define_item_rec!(LambdaItem, Instruction, (Type, Type));  // domain
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PairItem(Box<(StackItem, StackItem)>);  // algebraic
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum OrItem {  // algebraic
     Left { value: Box<StackItem>, right_type: Type },
     Right { value: Box<StackItem>, left_type: Type }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum BigMapItem {  // collections
     Ptr { value: i64, outer_type: Type },
     Map(MapItem)
 }
 
-#[derive(Debug, Clone, From, TryInto)]
+#[derive(Debug, Clone, From, TryInto, PartialEq)]
 pub enum StackItem {
     Unit(UnitItem),
     Bytes(BytesItem),
@@ -82,6 +82,7 @@ pub enum StackItem {
     Key(KeyItem),
     KeyHash(KeyHashItem),
     Signature(SignatureItem),
+    Operation(OperationItem),
     Option(OptionItem),
     Or(OrItem),
     Pair(PairItem),
@@ -90,5 +91,4 @@ pub enum StackItem {
     Map(MapItem),
     BigMap(BigMapItem),
     Lambda(LambdaItem),
-    Operation(OperationItem),
 }

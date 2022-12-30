@@ -150,28 +150,8 @@ impl StackItem {
     }
 
     pub fn type_check(&self, ty: &Type) -> Result<()> {
-        match self {
-            StackItem::Unit(item) => item.type_check(ty),
-            StackItem::Bytes(item) => item.type_check(ty),
-            StackItem::String(item) => item.type_check(ty),
-            StackItem::Int(item) => item.type_check(ty),
-            StackItem::Nat(item) => item.type_check(ty),
-            StackItem::Bool(item) => item.type_check(ty),
-            StackItem::Timestamp(item) => item.type_check(ty),
-            StackItem::Mutez(item) => item.type_check(ty),
-            StackItem::Address(item) => item.type_check(ty),
-            StackItem::Key(item) =>item.type_check(ty),
-            StackItem::KeyHash(item) => item.type_check(ty),
-            StackItem::Signature(item) => item.type_check(ty),
-            StackItem::Option(item) => Ok(item.get_type()),
-            StackItem::Or(item) => item.get_type(),
-            StackItem::Pair(item) => item.get_type(),
-            StackItem::List(item) => Ok(item.get_type()),
-            StackItem::Set(item) => item.get_type(),
-            StackItem::Map(item) => Ok(item.get_type()),
-            StackItem::BigMap(item) => Ok(item.get_type()),
-            _ => todo!()
-        }
+        assert_types_equal!(*ty, self.get_type()?);
+        Ok(())
     }
 
     pub fn from_micheline(expr: Micheline, ty: &Type) -> Result<Self> {

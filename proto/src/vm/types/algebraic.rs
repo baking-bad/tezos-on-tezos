@@ -120,15 +120,15 @@ impl OrItem {
 
     pub fn is_left(&self) -> bool {
         match self {
-            Self::Left { value, right_type } => true,
-            Self::Right { value, left_type } => false
+            Self::Left { value: _, right_type: _ } => true,
+            Self::Right { value: _, left_type: _ } => false
         }
     }
 
     pub fn unwrap(self) -> StackItem {
         match self {
-            Self::Left { value, right_type } => *value,
-            Self::Right { value, left_type } => *value
+            Self::Left { value, right_type: _ } => *value,
+            Self::Right { value, left_type: _ } => *value
         }
     }
 
