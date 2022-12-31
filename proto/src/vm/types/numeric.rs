@@ -1,4 +1,4 @@
-use std::ops::{Add, Div, Shl, Shr, Mul, Neg, Sub};
+use std::ops::{Add, Div, Shl, Shr, Mul, Neg, Sub, BitOr, BitXor, BitAnd, Not};
 use ibig::{IBig, UBig};
 use ibig::ops::{Abs, UnsignedAbs};
 use chrono::{DateTime, NaiveDateTime, Utc};
@@ -357,5 +357,54 @@ impl Sub<MutezItem> for MutezItem {
 
     fn sub(self, rhs: MutezItem) -> Self::Output {
         MutezItem::new(self.0 - rhs.0)
+    }
+}
+
+impl BitOr<NatItem> for NatItem {
+    type Output = NatItem;
+
+    fn bitor(self, rhs: NatItem) -> Self::Output {
+        NatItem(self.0 | rhs.0)
+    }
+}
+
+impl BitXor<NatItem> for NatItem {
+    type Output = NatItem;
+
+    fn bitxor(self, rhs: NatItem) -> Self::Output {
+        NatItem(self.0 ^ rhs.0)
+    }
+}
+
+impl BitAnd<NatItem> for NatItem {
+    type Output = NatItem;
+
+    fn bitand(self, rhs: NatItem) -> Self::Output {
+        NatItem(self.0 & rhs.0)
+    }
+}
+
+impl BitAnd<NatItem> for IntItem {
+    type Output = Result<NatItem>;
+
+    fn bitand(self, rhs: NatItem) -> Self::Output {
+        let a: i128 = self.0.try_into()?;  // FIXME: find generic solution
+        Ok(NatItem(a & rhs.0))
+    }
+}
+
+impl Not for IntItem {
+    type Output = IntItem;
+
+    fn not(self) -> Self::Output {
+        IntItem(!self.0)
+    }
+}
+
+impl Not for NatItem {
+    type Output = IntItem;
+
+    fn not(self) -> Self::Output {
+        IntItem(!IBig::from(self.0))
     }
 }

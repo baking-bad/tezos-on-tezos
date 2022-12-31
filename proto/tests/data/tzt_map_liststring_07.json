@@ -1,0 +1,86 @@
+[
+  {
+    "args": [
+      [
+        {
+          "args": [
+            [
+              {
+                "args": [
+                  {
+                    "prim": "string"
+                  },
+                  {
+                    "string": "Hello "
+                  }
+                ],
+                "prim": "PUSH"
+              },
+              {
+                "prim": "CONCAT"
+              }
+            ]
+          ],
+          "prim": "MAP"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "string"
+                }
+              ],
+              "prim": "list"
+            },
+            [
+              {
+                "string": "test1"
+              },
+              {
+                "string": "test2"
+              }
+            ]
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "string"
+                }
+              ],
+              "prim": "list"
+            },
+            [
+              {
+                "string": "Hello test1"
+              },
+              {
+                "string": "Hello test2"
+              }
+            ]
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

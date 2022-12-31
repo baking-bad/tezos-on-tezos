@@ -1,0 +1,66 @@
+[
+  {
+    "args": [
+      [
+        {
+          "prim": "PACK"
+        },
+        {
+          "args": [
+            {
+              "prim": "bytes"
+            }
+          ],
+          "prim": "UNPACK"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "bytes"
+            },
+            {
+              "bytes": "00AABBCC"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "bytes"
+                }
+              ],
+              "prim": "option"
+            },
+            {
+              "args": [
+                {
+                  "bytes": "00AABBCC"
+                }
+              ],
+              "prim": "Some"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

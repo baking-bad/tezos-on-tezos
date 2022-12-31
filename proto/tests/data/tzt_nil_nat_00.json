@@ -1,0 +1,44 @@
+[
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "nat"
+            }
+          ],
+          "prim": "NIL"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "nat"
+                }
+              ],
+              "prim": "list"
+            },
+            []
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

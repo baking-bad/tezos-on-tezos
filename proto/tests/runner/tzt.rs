@@ -1,4 +1,7 @@
 use serde_json_wasm;
+use std::fs::File;
+use std::io::Read;
+use std::path::PathBuf;
 use tezos_michelson::micheline::{
     Micheline,
     sequence::Sequence,
@@ -39,6 +42,19 @@ impl TZT {
         }
 
         Ok(())
+    }
+
+    pub fn load(filename: &str) -> Result<Self> {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("tests/data");
+        path.push(filename);
+
+        let mut file = File::open(path).expect("Failed to open tzt file");
+        let mut buffer: Vec<u8> = Vec::new();
+        file.read_to_end(&mut buffer).expect("Failed to read tzt file");
+        
+        let src: Micheline = serde_json_wasm::from_slice(buffer.as_slice())?;
+        Self::try_from(src)
     }
 }
 
@@ -82,14 +98,5 @@ impl TryFrom<Micheline> for TZT {
         }
 
         Ok(Self { code: code.expect("code"), inputs, outputs})
-    }
-}
-
-impl TryFrom<&str> for TZT {
-    type Error = Error;
-
-    fn try_from(value: &str) -> Result<Self> {
-        let src: Micheline = serde_json_wasm::from_str(value)?;
-        Self::try_from(src)
     }
 }

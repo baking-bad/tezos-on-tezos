@@ -1,0 +1,90 @@
+[
+  {
+    "args": [
+      [
+        {
+          "prim": "SOME"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "int"
+                },
+                {
+                  "prim": "int"
+                }
+              ],
+              "prim": "pair"
+            },
+            {
+              "args": [
+                {
+                  "int": "5"
+                },
+                {
+                  "int": "4"
+                }
+              ],
+              "prim": "Pair"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "args": [
+                    {
+                      "prim": "int"
+                    },
+                    {
+                      "prim": "int"
+                    }
+                  ],
+                  "prim": "pair"
+                }
+              ],
+              "prim": "option"
+            },
+            {
+              "args": [
+                {
+                  "args": [
+                    {
+                      "int": "5"
+                    },
+                    {
+                      "int": "4"
+                    }
+                  ],
+                  "prim": "Pair"
+                }
+              ],
+              "prim": "Some"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

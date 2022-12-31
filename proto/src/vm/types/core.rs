@@ -1,3 +1,4 @@
+use std::ops::{BitOr, BitXor, BitAnd, Not};
 use tezos_michelson::michelson::{
     data::Data, data,
     types::{Type, ComparableType}
@@ -63,5 +64,37 @@ impl BytesItem {
     pub fn into_data(self, ty: &Type) -> Result<Data> {
         self.type_check(ty)?;
         Ok(Data::Bytes(data::bytes(self.0)))
+    }
+}
+
+impl BitOr<BoolItem> for BoolItem {
+    type Output = BoolItem;
+
+    fn bitor(self, rhs: BoolItem) -> Self::Output {
+        BoolItem(self.0 | rhs.0)
+    }
+}
+
+impl BitXor<BoolItem> for BoolItem {
+    type Output = BoolItem;
+
+    fn bitxor(self, rhs: BoolItem) -> Self::Output {
+        BoolItem(self.0 ^ rhs.0)
+    }
+}
+
+impl BitAnd<BoolItem> for BoolItem {
+    type Output = BoolItem;
+
+    fn bitand(self, rhs: BoolItem) -> Self::Output {
+        BoolItem(self.0 & rhs.0)
+    }
+}
+
+impl Not for BoolItem {
+    type Output = BoolItem;
+
+    fn not(self) -> Self::Output {
+        BoolItem(!self.0)
     }
 }

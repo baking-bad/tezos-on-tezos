@@ -1,0 +1,117 @@
+[
+  {
+    "args": [
+      [
+        {
+          "args": [
+            [
+              {
+                "args": [
+                  {
+                    "prim": "nat"
+                  },
+                  {
+                    "int": "1"
+                  }
+                ],
+                "prim": "PUSH"
+              },
+              {
+                "args": [
+                  {
+                    "prim": "nat"
+                  },
+                  {
+                    "int": "0"
+                  }
+                ],
+                "prim": "PUSH"
+              },
+              {
+                "prim": "SLICE"
+              },
+              {
+                "args": [
+                  [
+                    {
+                      "prim": "UNIT"
+                    },
+                    {
+                      "prim": "FAILWITH"
+                    }
+                  ],
+                  []
+                ],
+                "prim": "IF_NONE"
+              }
+            ]
+          ],
+          "prim": "MAP"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "string"
+                }
+              ],
+              "prim": "list"
+            },
+            [
+              {
+                "string": "The"
+              },
+              {
+                "string": "Password"
+              },
+              {
+                "string": "Is"
+              }
+            ]
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "string"
+                }
+              ],
+              "prim": "list"
+            },
+            [
+              {
+                "string": "T"
+              },
+              {
+                "string": "P"
+              },
+              {
+                "string": "I"
+              }
+            ]
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

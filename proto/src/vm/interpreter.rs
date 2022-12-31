@@ -98,6 +98,10 @@ impl Interpreter for Instruction {
             Instruction::Sub(instr) => instr.execute(stack),
             Instruction::Int(instr) => instr.execute(stack),
             Instruction::IsNat(instr) => instr.execute(stack),
+            Instruction::Or(instr) => instr.execute(stack),
+            Instruction::Xor(instr) => instr.execute(stack),
+            Instruction::And(instr) => instr.execute(stack),
+            Instruction::Not(instr) => instr.execute(stack),
             _ => Err(Error::MichelsonInstructionUnsupported { instruction: self.clone() })
         }
     }

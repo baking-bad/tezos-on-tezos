@@ -6,7 +6,7 @@ use crate::{
     Result,
     Error,
     vm::interpreter::{PureInterpreter},
-    vm::types::{NatItem, IntItem, TimestampItem, MutezItem, BoolItem, StackItem},
+    vm::types::StackItem,
     vm::stack::Stack,
     pop_cast,
     err_type
@@ -15,8 +15,7 @@ use crate::{
 impl PureInterpreter for Abs {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let int = pop_cast!(stack, Int);
-        let nat = int.abs()?;
-        stack.push(nat.into())
+        stack.push(int.abs()?.into())
     }
 }
 
@@ -130,5 +129,57 @@ impl PureInterpreter for IsNat {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let int = pop_cast!(stack, Int);
         stack.push(int.nat()?.into())
+    }
+}
+
+impl PureInterpreter for Or {
+    fn execute(&self, stack: &mut Stack) -> Result<()> {
+        let a = stack.pop()?;
+        let b = stack.pop()?;
+        let res: StackItem = match (a, b) {
+            (StackItem::Bool(a), StackItem::Bool(b)) => (a | b).into(),
+            (StackItem::Nat(a), StackItem::Nat(b)) => (a | b).into(),
+            items => return err_type!("numeric types", items)
+        };
+        stack.push(res)
+    }
+}
+
+impl PureInterpreter for Xor {
+    fn execute(&self, stack: &mut Stack) -> Result<()> {
+        let a = stack.pop()?;
+        let b = stack.pop()?;
+        let res: StackItem = match (a, b) {
+            (StackItem::Bool(a), StackItem::Bool(b)) => (a ^ b).into(),
+            (StackItem::Nat(a), StackItem::Nat(b)) => (a ^ b).into(),
+            items => return err_type!("numeric types", items)
+        };
+        stack.push(res)
+    }
+}
+
+impl PureInterpreter for And {
+    fn execute(&self, stack: &mut Stack) -> Result<()> {
+        let a = stack.pop()?;
+        let b = stack.pop()?;
+        let res: StackItem = match (a, b) {
+            (StackItem::Bool(a), StackItem::Bool(b)) => (a & b).into(),
+            (StackItem::Nat(a), StackItem::Nat(b)) => (a & b).into(),
+            (StackItem::Int(a), StackItem::Nat(b)) => (a & b)?.into(),
+            items => return err_type!("numeric types", items)
+        };
+        stack.push(res)
+    }
+}
+
+impl PureInterpreter for Not {
+    fn execute(&self, stack: &mut Stack) -> Result<()> {
+        let res: StackItem = match stack.pop()? {
+            StackItem::Bool(a) => (!a).into(),
+            StackItem::Nat(a) => (!a).into(),
+            StackItem::Int(a) => (!a).into(),
+            items => return err_type!("numeric types", items)
+        };
+        stack.push(res)
     }
 }

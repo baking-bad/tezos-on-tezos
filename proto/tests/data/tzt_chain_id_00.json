@@ -1,0 +1,44 @@
+[
+  {
+    "args": [
+      [
+        {
+          "prim": "CHAIN_ID"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "chain_id"
+            },
+            {
+              "bytes": "00000000"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  },
+  {
+    "args": [
+      {
+        "bytes": "00000000"
+      }
+    ],
+    "prim": "chain_id"
+  }
+]

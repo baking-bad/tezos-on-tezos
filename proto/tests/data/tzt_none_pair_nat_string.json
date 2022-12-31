@@ -1,0 +1,62 @@
+[
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "nat"
+                },
+                {
+                  "prim": "string"
+                }
+              ],
+              "prim": "pair"
+            }
+          ],
+          "prim": "NONE"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "args": [
+                    {
+                      "prim": "nat"
+                    },
+                    {
+                      "prim": "string"
+                    }
+                  ],
+                  "prim": "pair"
+                }
+              ],
+              "prim": "option"
+            },
+            {
+              "prim": "None"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]
