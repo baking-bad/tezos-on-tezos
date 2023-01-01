@@ -114,6 +114,15 @@ impl Interpreter for Instruction {
             Instruction::Concat(instr) => instr.execute(stack),
             Instruction::Pack(instr) => instr.execute(stack),
             Instruction::Unpack(instr) => instr.execute(stack),
+            Instruction::Unit(instr) => instr.execute(stack),
+            Instruction::Car(instr) => instr.execute(stack),
+            Instruction::Cdr(instr) => instr.execute(stack),
+            Instruction::Pair(instr) => instr.execute(stack),
+            Instruction::Unpair(instr) => instr.execute(stack),
+            Instruction::None(instr) => instr.execute(stack),
+            Instruction::Some(instr) => instr.execute(stack),
+            Instruction::Left(instr) => instr.execute(stack),
+            Instruction::Right(instr) => instr.execute(stack),
             _ => Err(Error::MichelsonInstructionUnsupported { instruction: self.clone() })
         }
     }

@@ -30,18 +30,21 @@ impl UnitItem {
 }
 
 impl OptionItem {
+    pub fn none(val_type: &Type) -> Self {
+        Self { outer_value: None, inner_type: val_type.clone() }
+    }
+
+    pub fn some(val: StackItem) -> Result<Self> {
+        Ok(Self { inner_type: val.get_type()?, outer_value: Some(Box::new(val)) })
+    }
+
     pub fn from_data(data: Data, ty: &Type, val_type: &Type) -> Result<StackItem> {
         match data {
-            Data::None(_) => Ok(StackItem::Option(Self {
-                outer_value: None,
-                inner_type: val_type.clone()
-            })),
+            Data::None(_) => Ok(Self::none(val_type).into()),
             Data::Some(val) => {
                 let inner = StackItem::from_data(*val.value, val_type)?;
-                Ok(StackItem::Option(Self {
-                    outer_value: Some(Box::new(inner)),
-                    inner_type: val_type.clone()
-                }))
+                let outer = Self { outer_value: Some(Box::new(inner)), inner_type: val_type.clone() };
+                Ok(outer.into())
             },
             _ => err_type!(ty, data)
         }
@@ -80,17 +83,25 @@ impl OptionItem {
 }
 
 impl OrItem {
+    pub fn left(left_val: StackItem, right_type: &Type) -> Self {
+        let var = OrVariant { value: Box::new(left_val), other_type: right_type.clone() };
+        Self::Left(var)
+    }
+
+    pub fn right(right_val: StackItem, left_type: &Type) -> Self {
+        let var = OrVariant { value: Box::new(right_val), other_type: left_type.clone() };
+        Self::Right(var)
+    }
+
     pub fn from_data(data: Data, ty: &Type, left_type: &Type, right_type: &Type) -> Result<StackItem> {
         match data {
             Data::Left(left) => {
                 let inner = StackItem::from_data(*left.value, left_type)?;
-                let var = OrVariant { value: Box::new(inner), other_type: right_type.clone() };
-                Ok(StackItem::Or(Self::Left(var)))
+                Ok(StackItem::Or(Self::left(inner, right_type)))
             },
             Data::Right(right) => {
                 let inner = StackItem::from_data(*right.value, right_type)?;
-                let var = OrVariant { value: Box::new(inner), other_type: left_type.clone() };
-                Ok(StackItem::Or(Self::Right(var)))
+                Ok(StackItem::Or(Self::right(inner, left_type)))
             },
             _ => err_type!(ty, data)
         }
@@ -142,6 +153,14 @@ impl PairItem {
         Self(Box::new((first, second)))
     }
 
+    pub fn from_items(mut items: Vec<StackItem>) -> Self {
+        match items.len() {
+            2 => Self::new(items.remove(0), items.remove(0)),
+            n if n > 2 => Self::new(items.remove(0), Self::from_items(items).into()),
+            _ => unreachable!("invalid number of args")
+        }
+    }
+
     pub fn from_data(data: Data, ty: &Type, first_type: &Type, second_type: &Type) -> Result<StackItem> {
         match data {
             Data::Pair(mut pair) => {
@@ -162,6 +181,21 @@ impl PairItem {
             return Ok(Data::Pair(data::pair(vec![first, second])))
         }
         err_type!(ty, self)
+    }
+
+    pub fn into_items(self, arity: usize) -> Result<Vec<StackItem>> {
+        match arity {
+            2 => Ok(vec![self.0.0, self.0.1]),
+            n if n > 2 => {
+                let mut items = match self.0.1 {
+                    StackItem::Pair(inner_pair) => inner_pair.into_items(arity - 1)?,
+                    item => return err_type!("Inner pair", item)
+                };
+                items.insert(0, self.0.0);
+                Ok(items)
+            },
+            _ => Err(Error::UnexpectedPairArity)
+        }
     }
 
     pub fn unpair(self) -> (StackItem, StackItem) {

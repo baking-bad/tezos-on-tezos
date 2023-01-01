@@ -3,3 +3,4 @@ mod control;
 mod lambda;
 mod math;
 mod generic;
+mod algebraic;
