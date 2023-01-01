@@ -408,3 +408,12 @@ impl Not for NatItem {
         IntItem(!IBig::from(self.0))
     }
 }
+
+impl TryInto<usize> for NatItem {
+    type Error = Error;
+
+    fn try_into(self) -> Result<usize> {
+        let res: usize = self.0.try_into()?;
+        Ok(res)
+    }
+}

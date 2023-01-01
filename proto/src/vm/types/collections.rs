@@ -7,10 +7,9 @@ use tezos_michelson::michelson::{
 
 use crate::{
     Result, Error,
-    vm::types::{ListItem, SetItem, MapItem, BigMapItem, StackItem, PairItem},
+    vm::types::{ListItem, SetItem, MapItem, BigMapItem, StackItem, PairItem, BigMapPtr},
+    vm::typechecker::check_types_equal,
     err_type,
-    assert_types_equal,
-    cmp_ref
 };
 
 fn seq_into_item_vec(sequence: data::Sequence, val_type: &Type) -> Result<Vec<StackItem>> {
@@ -24,7 +23,7 @@ fn seq_into_item_vec(sequence: data::Sequence, val_type: &Type) -> Result<Vec<St
 
 fn item_vec_into_seq(items: Vec<StackItem>, inner_type: &Type, val_type: &Type) -> Result<Data> {
     if items.is_empty() {
-        assert_types_equal!(val_type, inner_type);
+        check_types_equal(val_type, inner_type)?;
         Ok(Data::Sequence(data::sequence(vec![])))
     } else {
         let mut values: Vec<Data> = Vec::with_capacity(items.len());
@@ -95,7 +94,7 @@ impl SetItem {
     pub fn into_data(self, ty: &Type) -> Result<Data> {
         match ty {
             Type::Set(set_ty) => {
-                item_vec_into_seq(self.outer_value, &self.inner_type, cmp_ref!(set_ty.r#type))
+                item_vec_into_seq(self.outer_value, &self.inner_type, &set_ty.r#type.clone().into())
             },
             _ => err_type!(ty, self)
         }
@@ -110,7 +109,10 @@ impl SetItem {
             Type::Comparable(ty) => Ok(types::set(ty.clone())),
             ty => err_type!("ComparableType", ty)
         }
-        
+    }
+
+    pub fn len(&self) -> usize {
+        self.outer_value.len()
     }
 }
 
@@ -132,8 +134,8 @@ fn seq_into_map_item(sequence: data::Sequence, key_type: &Type, val_type: &Type)
 
 fn map_item_into_seq(map_item: MapItem, map_ty: &types::Map) -> Result<Data> {
     if map_item.outer_value.is_empty() {
-        assert_types_equal!(*map_ty.key_type, map_item.inner_type.0);
-        assert_types_equal!(*map_ty.value_type, map_item.inner_type.1);
+        check_types_equal(&map_ty.key_type, &map_item.inner_type.0)?;
+        check_types_equal(&map_ty.value_type, &map_item.inner_type.1)?;
         Ok(Data::Sequence(data::sequence(vec![])))
     } else {
         let mut elements: Vec<Data> = Vec::with_capacity(map_item.outer_value.len());
@@ -181,15 +183,19 @@ impl MapItem {
     pub fn get_keys(&self) -> Vec<StackItem> {
         self.outer_value.iter().map(|(k, _)| k.clone()).collect()
     }
+
+    pub fn len(&self) -> usize {
+        self.outer_value.len()
+    }
 }
 
 impl BigMapItem {
     pub fn from_data(data: Data, ty: &Type, key_type: &Type, val_type: &Type) -> Result<StackItem> {
         match data {
-            Data::Int(ptr) => Ok(StackItem::BigMap(Self::Ptr {
-                value: ptr.to_integer()?,
-                outer_type: ty.clone()
-            })),
+            Data::Int(ptr) => {
+                let ptr = BigMapPtr { value: ptr.to_integer()?, outer_type: ty.clone() };
+                Ok(StackItem::BigMap(Self::Ptr(ptr)))
+            },
             Data::Sequence(sequence) => {
                 let map_item = seq_into_map_item(sequence, key_type, val_type)?;
                 Ok(StackItem::BigMap(Self::Map(map_item)))
@@ -201,9 +207,9 @@ impl BigMapItem {
     pub fn into_data(self, ty: &Type) -> Result<Data> {
         if let Type::BigMap(_) = ty {
             return match self {
-                Self::Ptr { value, outer_type } => {
-                    assert_types_equal!(*ty, outer_type);
-                    Ok(Data::Int(data::int(value)))
+                Self::Ptr(ptr) => {
+                    check_types_equal(ty, &ptr.outer_type)?;
+                    Ok(Data::Int(data::int(ptr.value)))
                 },
                 Self::Map(_) => err_type!(ty, self)  // NOTE: not supported
             }
@@ -213,7 +219,7 @@ impl BigMapItem {
 
     pub fn get_type(&self) -> Type {
         match self {
-            Self::Ptr { value: _, outer_type } => outer_type.clone(),
+            Self::Ptr(ptr) => ptr.outer_type.clone(),
             Self::Map(map) => map.get_type()
         }
     }

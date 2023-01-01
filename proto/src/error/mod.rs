@@ -60,6 +60,7 @@ pub enum Error {
     MichelsonScriptError {
         with: StackItem
     },
+    ComparisonError,
     ScriptSectionMissing,
     UnexpectedPairArity,
     StackOutOfBounds,
@@ -69,3 +70,13 @@ pub enum Error {
 }
 
 pub type Result<T> = result::Result<T, Error>;
+
+#[macro_export]
+macro_rules! err_type {
+    ($expected: expr, $found: expr) => {
+        Err(Error::MichelsonTypeError {
+            expected: format!("{:#?}", $expected),
+            found: format!("{:#?}", $found)
+        })
+    };
+}

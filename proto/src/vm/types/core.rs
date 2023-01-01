@@ -1,12 +1,14 @@
-use std::ops::{BitOr, BitXor, BitAnd, Not};
+use std::ops::{BitOr, BitXor, BitAnd, Not, Add};
 use tezos_michelson::michelson::{
-    data::Data, data,
-    types::{Type, ComparableType}
+    data::Data,
+    data,
+    types::{Type, ComparableType},
+    types
 };
 
 use crate::{
     Result, Error,
-    vm::types::{BoolItem, StringItem, BytesItem, StackItem},
+    vm::types::{BoolItem, StringItem, BytesItem, StackItem, OptionItem},
     err_type,
     type_check_fn_comparable
 };
@@ -49,6 +51,24 @@ impl StringItem {
         self.type_check(ty)?;
         Ok(Data::String(data::String::from_string(self.0)?))
     }
+
+    pub fn unwrap(self) -> String {
+        self.0
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn slice(self, start: usize, end: usize) -> OptionItem {
+        let outer_value = if start <= end && end <= self.len() {
+            let item = Self(self.0[start..end].to_string());
+            Some(Box::new(item.into()))
+        } else {
+            None
+        };
+        OptionItem { outer_value, inner_type: types::string() }
+    }
 }
 
 impl BytesItem {
@@ -64,6 +84,24 @@ impl BytesItem {
     pub fn into_data(self, ty: &Type) -> Result<Data> {
         self.type_check(ty)?;
         Ok(Data::Bytes(data::bytes(self.0)))
+    }
+
+    pub fn unwrap(self) -> Vec<u8> {
+        self.0
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn slice(self, start: usize, end: usize) -> OptionItem {
+        let outer_value = if start <= end && end <= self.len() {
+            let item = Self(self.0[start..end].to_vec());
+            Some(Box::new(item.into()))
+        } else {
+            None
+        };
+        OptionItem { outer_value, inner_type: types::bytes() }
     }
 }
 
@@ -96,5 +134,21 @@ impl Not for BoolItem {
 
     fn not(self) -> Self::Output {
         BoolItem(!self.0)
+    }
+}
+
+impl Add<StringItem> for StringItem {
+    type Output = StringItem;
+
+    fn add(self, rhs: StringItem) -> Self::Output {
+        StringItem([self.0, rhs.0].concat())
+    }
+}
+
+impl Add<BytesItem> for BytesItem {
+    type Output = BytesItem;
+
+    fn add(self, rhs: BytesItem) -> Self::Output {
+        BytesItem([self.0, rhs.0].concat())
     }
 }

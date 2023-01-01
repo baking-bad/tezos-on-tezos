@@ -102,6 +102,18 @@ impl Interpreter for Instruction {
             Instruction::Xor(instr) => instr.execute(stack),
             Instruction::And(instr) => instr.execute(stack),
             Instruction::Not(instr) => instr.execute(stack),
+            Instruction::Compare(instr) => instr.execute(stack),
+            Instruction::Eq(instr) => instr.execute(stack),
+            Instruction::Neq(instr) => instr.execute(stack),
+            Instruction::Gt(instr) => instr.execute(stack),
+            Instruction::Ge(instr) => instr.execute(stack),
+            Instruction::Lt(instr) => instr.execute(stack),
+            Instruction::Le(instr) => instr.execute(stack),
+            Instruction::Size(instr) => instr.execute(stack),
+            Instruction::Slice(instr) => instr.execute(stack),
+            Instruction::Concat(instr) => instr.execute(stack),
+            Instruction::Pack(instr) => instr.execute(stack),
+            Instruction::Unpack(instr) => instr.execute(stack),
             _ => Err(Error::MichelsonInstructionUnsupported { instruction: self.clone() })
         }
     }

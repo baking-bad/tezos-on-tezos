@@ -1,52 +1,98 @@
 use tezos_michelson::michelson::{
     data::Data,
     types::{Type, ComparableType},
-    types
+    types,
 };
 use tezos_michelson::micheline::Micheline;
 
 use crate::{
     vm::types::*,
     Result,
-    Error
+    Error,
+    err_type
 };
 
-#[macro_export]
-macro_rules! err_type {
-    ($expected: expr, $found: expr) => {
-        Err(Error::MichelsonTypeError {
-            expected: format!("{:#?}", $expected),
-            found: format!("{:#?}", $found)
-        })
-    };
+pub fn type_comparable(ty: &Type) -> bool {
+    match ty {
+        Type::Comparable(_) => true,
+        Type::Option(option_ty) => type_comparable(&option_ty.r#type),
+        Type::Or(or_ty) => type_comparable(&or_ty.lhs) && type_comparable(&or_ty.rhs),
+        Type::Pair(pair_ty) => pair_ty.types.iter().all(type_comparable),
+        _ => false
+    }
 }
 
-#[macro_export]
-macro_rules! assert_types_equal {
-    ($ty_exp: expr, $ty_act: expr) => {
-        if $ty_exp != $ty_act {
-            return err_type!($ty_exp, $ty_act);
-        }
-    };
+pub fn check_type_comparable(ty: &Type) -> Result<()> {
+    match type_comparable(ty) {
+        true => Ok(()),
+        false => err_type!("comparable", ty),
+    }
 }
 
-#[macro_export]
-macro_rules! type_check_fn_comparable {
-    ($cmp_ty: ident) => {
-        pub fn type_check(&self, ty: &Type) -> Result<()> {
+pub fn types_equal(lhs: &Type, rhs: &Type) -> Result<bool> {
+    use ::core::mem::discriminant;
+    let ltag = discriminant(lhs);
+    let rtag = discriminant(rhs);
+    if ltag != rtag {
+        return Ok(false)
+    }
+    match (lhs, rhs) {
+        (Type::Comparable(ty), _) => {
             match ty {
-                Type::Comparable(ComparableType::$cmp_ty(_)) => Ok(()),
-                _ => err_type!(ty, self)
+                ComparableType::Unit(_) => Ok(true),
+                ComparableType::Bool(_) => Ok(true),
+                ComparableType::String(_) => Ok(true),
+                ComparableType::Bytes(_) => Ok(true),
+                ComparableType::Int(_) => Ok(true),
+                ComparableType::Nat(_) => Ok(true),
+                ComparableType::Mutez(_) => Ok(true),
+                ComparableType::Timestamp(_) => Ok(true),
+                ComparableType::Address(_) => Ok(true),
+                ComparableType::Key(_) => Ok(true),
+                ComparableType::KeyHash(_) => Ok(true),
+                ComparableType::Signature(_) => Ok(true),
+                _ => Err(Error::MichelsonTypeUnsupported { ty: lhs.clone() })
             }
-        }
-    };
+        },
+        (Type::Option(lty), Type::Option(rty)) => types_equal(&lty.r#type, &rty.r#type),
+        (Type::Or(lty), Type::Or(rty)) => {
+            types_equal(&lty.lhs, &rty.lhs)?;
+            types_equal(&lty.rhs, &rty.rhs)
+        },
+        (Type::Pair(lty), Type::Pair(rty)) => {
+            assert_eq!(2, lty.types.len());
+            assert_eq!(2, rty.types.len());
+            types_equal(&lty.types[0], &rty.types[0])?;
+            types_equal(&lty.types[1], &rty.types[1])
+        },
+        (Type::List(lty), Type::List(rty)) => types_equal(&lty.r#type, &rty.r#type),
+        (Type::Set(lty), Type::Set(rty)) => {
+            types_equal(&lty.r#type.clone().into(), &rty.r#type.clone().into())
+        },
+        (Type::Map(lty), Type::Map(rty)) => {
+            types_equal(&lty.key_type, &rty.key_type)?;
+            types_equal(&lty.value_type, &rty.value_type)
+        },
+        (Type::BigMap(lty), Type::BigMap(rty)) => {
+            types_equal(&lty.key_type, &rty.key_type)?;
+            types_equal(&lty.value_type, &rty.value_type)
+        },
+        (Type::Lambda(lty), Type::Lambda(rty)) => {
+            types_equal(&lty.parameter_type, &rty.parameter_type)?;
+            types_equal(&lty.return_type, &rty.return_type)
+        },
+        (Type::Parameter(lty), Type::Parameter(rty)) => types_equal(&lty.r#type, &rty.r#type),
+        (Type::Storage(lty), Type::Storage(rty)) => types_equal(&lty.r#type, &rty.r#type),
+        _ => Err(Error::MichelsonTypeUnsupported { ty: lhs.clone() })
+    }
 }
 
-#[macro_export]
-macro_rules! cmp_ref {
-    ($arg: expr) => {
-        &Type::Comparable($arg.clone())
-    };
+pub fn check_types_equal(lhs: &Type, rhs: &Type) -> Result<()> {
+    match types_equal(lhs, rhs) {
+        Ok(true) => Ok(()),
+        Ok(false) => err_type!(lhs, rhs),
+        Err(err) => Err(err)
+    }
 }
 
 impl StackItem {
@@ -65,34 +111,19 @@ impl StackItem {
                 ComparableType::Key(_) => KeyItem::from_data(data, ty),
                 ComparableType::KeyHash(_) => KeyHashItem::from_data(data, ty),
                 ComparableType::Signature(_) => SignatureItem::from_data(data, ty),
-                ComparableType::Option(option_ty) => {
-                    OptionItem::from_data(data, ty, cmp_ref!(*option_ty.r#type))
-                },
-                ComparableType::Or(or_ty) => {
-                    OrItem::from_data(data, ty, cmp_ref!(*or_ty.lhs), cmp_ref!(*or_ty.rhs))
-                },
-                ComparableType::Pair(pair_ty) => {
-                    if pair_ty.types.len() != 2 {
-                        Err(Error::UnexpectedPairArity)
-                    } else {
-                        PairItem::from_data(data, ty, cmp_ref!(pair_ty.types[0]), cmp_ref!(pair_ty.types[1]))
-                    }
-                },
                 _ => Err(Error::MichelsonTypeUnsupported { ty: ty.clone() })
             },
             Type::Option(option_ty) => OptionItem::from_data(data, ty, &option_ty.r#type),
             Type::Or(or_ty) => OrItem::from_data(data, ty, &or_ty.lhs, &or_ty.rhs),
             Type::Pair(pair_ty) => {
-                if pair_ty.types.len() != 2 {
-                    Err(Error::UnexpectedPairArity)
-                } else {
-                    PairItem::from_data(data, ty, &pair_ty.types[0], &pair_ty.types[1])
-                }
+                assert_eq!(2, pair_ty.types.len());
+                PairItem::from_data(data, ty, &pair_ty.types[0], &pair_ty.types[1])
             },
             Type::List(list_ty) => ListItem::from_data(data, ty, &list_ty.r#type),
-            Type::Set(set_ty) => SetItem::from_data(data, ty, cmp_ref!(set_ty.r#type)),
+            Type::Set(set_ty) => SetItem::from_data(data, ty, &set_ty.r#type.clone().into()),
             Type::Map(map_ty) => MapItem::from_data(data, ty, &map_ty.key_type, &map_ty.value_type),
             Type::BigMap(map_ty) => BigMapItem::from_data(data, ty, &map_ty.key_type, &map_ty.value_type),
+            Type::Lambda(lambda_ty) => LambdaItem::from_data(data, ty, &lambda_ty.parameter_type, &lambda_ty.return_type),
             Type::Parameter(param_ty) => StackItem::from_data(data, &param_ty.r#type),
             Type::Storage(storage_ty) => StackItem::from_data(data, &storage_ty.r#type),
             _ => Err(Error::MichelsonTypeUnsupported { ty: ty.clone() })
@@ -120,6 +151,7 @@ impl StackItem {
             StackItem::Set(item) => item.into_data(ty),
             StackItem::Map(item) => item.into_data(ty),
             StackItem::BigMap(item) => item.into_data(ty),
+            StackItem::Lambda(item) => item.into_data(ty),
             _ => Err(Error::MichelsonTypeUnsupported { ty: ty.clone() })
         }
     }
@@ -145,13 +177,16 @@ impl StackItem {
             StackItem::Set(item) => item.get_type(),
             StackItem::Map(item) => Ok(item.get_type()),
             StackItem::BigMap(item) => Ok(item.get_type()),
-            _ => todo!()
+            StackItem::Operation(_) => Ok(types::operation()),
+            StackItem::Lambda(item) => item.get_type()
         }
     }
 
     pub fn type_check(&self, ty: &Type) -> Result<()> {
-        assert_types_equal!(*ty, self.get_type()?);
-        Ok(())
+        match types_equal(ty, &self.get_type()?)? {
+            true => Ok(()),
+            false => err_type!(ty, self) 
+        }
     }
 
     pub fn from_micheline(expr: Micheline, ty: &Type) -> Result<Self> {
