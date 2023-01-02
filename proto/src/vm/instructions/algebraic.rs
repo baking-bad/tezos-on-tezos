@@ -1,5 +1,5 @@
 use tezos_michelson::michelson::{
-    data::instructions::{Unit, Car, Cdr, Pair, Unpair, None, Some, Left, Right },
+    data::instructions::{Unit, Car, Cdr, Pair, Unpair, None, Some, Left, Right},
     data::Nat
 };
 

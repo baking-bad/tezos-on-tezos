@@ -2,7 +2,7 @@ use ibig::{IBig, UBig};
 use tezos_michelson::michelson::Michelson;
 use tezos_michelson::micheline::Micheline;
 use tezos_michelson::michelson::data::instructions::{
-    Compare, Eq, Ge, Gt, Le, Lt, Neq, Concat, Slice, Size, Pack, Unpack, Get, Update
+    Compare, Eq, Ge, Gt, Le, Lt, Neq, Concat, Slice, Size, Pack, Unpack
 };
 use tezos_michelson::michelson::types::{Type, ComparableType};
 

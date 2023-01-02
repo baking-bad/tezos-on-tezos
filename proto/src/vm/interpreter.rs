@@ -63,6 +63,10 @@ pub trait ScopedInterpreter {
     fn execute(&self, stack: &mut Stack, tx_scope: &TransactionScope) -> Result<()>;
 }
 
+pub trait ContextIntepreter {
+    fn execute(&self, stack: &mut Stack, global_ctx: &mut impl Context) -> Result<()>;
+}
+
 impl Interpreter for Instruction {
     fn execute(&self, stack: &mut Stack, tx_scope: &TransactionScope, global_ctx: &mut impl Context) -> Result<()> {
         match self {
@@ -123,6 +127,14 @@ impl Interpreter for Instruction {
             Instruction::Some(instr) => instr.execute(stack),
             Instruction::Left(instr) => instr.execute(stack),
             Instruction::Right(instr) => instr.execute(stack),
+            Instruction::Nil(instr) => instr.execute(stack),
+            Instruction::Cons(instr) => instr.execute(stack),
+            Instruction::EmptySet(instr) => instr.execute(stack),
+            Instruction::EmptyMap(instr) => instr.execute(stack),
+            Instruction::Mem(instr) => instr.execute(stack, global_ctx),
+            Instruction::Get(instr) => instr.execute(stack, global_ctx),
+            Instruction::Update(instr) => instr.execute(stack, global_ctx),
+            Instruction::GetAndUpdate(instr) => instr.execute(stack, global_ctx),
             _ => Err(Error::MichelsonInstructionUnsupported { instruction: self.clone() })
         }
     }

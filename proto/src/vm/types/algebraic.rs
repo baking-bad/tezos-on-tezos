@@ -30,6 +30,10 @@ impl UnitItem {
 }
 
 impl OptionItem {
+    pub fn new(value: Option<Box<StackItem>>, val_type: &Type) -> Self {
+        Self { outer_value: value, inner_type: val_type.clone() }
+    }
+
     pub fn none(val_type: &Type) -> Self {
         Self { outer_value: None, inner_type: val_type.clone() }
     }
@@ -43,7 +47,7 @@ impl OptionItem {
             Data::None(_) => Ok(Self::none(val_type).into()),
             Data::Some(val) => {
                 let inner = StackItem::from_data(*val.value, val_type)?;
-                let outer = Self { outer_value: Some(Box::new(inner)), inner_type: val_type.clone() };
+                let outer = Self::new(Some(Box::new(inner)), val_type);
                 Ok(outer.into())
             },
             _ => err_type!(ty, data)
@@ -202,6 +206,28 @@ impl PairItem {
         (self.0.0, self.0.1)
     }
 
+    pub fn get(&self, idx: usize) -> Result<StackItem> {
+        match idx {
+            0 => Ok(self.0.0.clone()),
+            1 => Ok(self.0.1.clone()),
+            _ => match &self.0.1 {
+                StackItem::Pair(inner_pair) => inner_pair.get(idx - 1),
+                item => err_type!("Inner pair", item)
+            }
+        }
+    }
+
+    pub fn update(self, idx: usize, item: StackItem) -> Result<Self> {
+        match idx {
+            0 => Ok(Self::new(item, self.0.1)),
+            1 => Ok(Self::new(self.0.0, item)),
+            _ => match self.0.1 {
+                StackItem::Pair(inner_pair) => inner_pair.update(idx - 1, item),
+                item => err_type!("Inner pair", item)
+            }
+        }
+    }
+
     pub fn get_type(&self) -> Result<Type> {
         Ok(types::pair(vec![self.0.0.get_type()?, self.0.1.get_type()?]))
     }
@@ -209,11 +235,32 @@ impl PairItem {
 
 // NOTE: assuming that type checks have been made prior to comparison (comparable, equality)
 
+impl Eq for OptionItem {}
+
 impl PartialEq for OptionItem {
     fn eq(&self, rhs: &Self) -> bool {
         self.outer_value == rhs.outer_value
     }
 }
+
+impl Ord for OptionItem {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        match (&self.outer_value, &other.outer_value) {
+            (None, Some(_)) => std::cmp::Ordering::Less,
+            (Some(_), None) => std::cmp::Ordering::Greater,
+            (None, None) => std::cmp::Ordering::Equal,
+            (Some(lval), Some(rval)) => lval.cmp(&rval)
+        }
+    }
+}
+
+impl PartialOrd for OptionItem {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(&other))
+    }
+}
+
+impl Eq for OrVariant {}
 
 impl PartialEq for OrVariant {
     fn eq(&self, rhs: &Self) -> bool {
@@ -221,14 +268,9 @@ impl PartialEq for OrVariant {
     }
 }
 
-impl PartialOrd for OptionItem {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        match (&self.outer_value, &other.outer_value) {
-            (None, Some(_)) => Some(std::cmp::Ordering::Less),
-            (Some(_), None) => Some(std::cmp::Ordering::Greater),
-            (None, None) => Some(std::cmp::Ordering::Equal),
-            (Some(lval), Some(rval)) => lval.partial_cmp(&rval)
-        }
+impl Ord for OrVariant {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.value.cmp(&other.value)
     }
 }
 

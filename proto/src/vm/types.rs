@@ -41,19 +41,27 @@ macro_rules! partial_traits_unreachable {
                 unreachable!("Not a comparable type")
             }
         }
+
+        impl Ord for $item {
+            fn cmp(&self, _: &Self) -> std::cmp::Ordering {
+                unreachable!("Not a comparable type")
+            }
+        }
+
+        impl Eq for $item {}
     };
 }
 
 macro_rules! define_item {
     ($name: ident, $impl: ty) => {
-        #[derive(Debug, Clone, PartialEq, From)]
+        #[derive(Debug, Clone, PartialEq, Eq, From)]
         pub struct $name($impl);
     };
 }
 
 macro_rules! define_item_ord {
     ($name: ident, $impl: ty) => {
-        #[derive(Debug, Clone, PartialEq, PartialOrd, From)]
+        #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord, From)]
         pub struct $name($impl);
     };
 }
@@ -98,7 +106,7 @@ partial_traits_unreachable!(OperationItem);
 #[derive(Debug, Clone)]
 pub struct OperationItem(OperationContent); // domain
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
 pub struct PairItem(Box<(StackItem, StackItem)>);  // algebraic
 
 #[derive(Debug, Clone)]
@@ -107,7 +115,7 @@ pub struct OrVariant {
     other_type: Type
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
 pub enum OrItem {  // algebraic
     Left(OrVariant),
     Right(OrVariant)
@@ -125,7 +133,7 @@ pub enum BigMapItem {  // collections
     Map(MapItem)
 }
 
-#[derive(Debug, Clone, From, TryInto, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, From, TryInto, PartialEq, PartialOrd, Eq, Ord)]
 pub enum StackItem {
     Unit(UnitItem),
     Bytes(BytesItem),

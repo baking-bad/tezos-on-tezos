@@ -78,13 +78,19 @@ impl LambdaItem {
     }
 }
 
+impl Ord for AddressItem {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        match (&self.0, &other.0) {
+            (Address::Implicit(_), Address::Originated(_)) => std::cmp::Ordering::Less,
+            (Address::Originated(_), Address::Implicit(_)) => std::cmp::Ordering::Greater,
+            (l, r) => l.value().cmp(r.value()),
+        }
+    }
+}
+
 impl PartialOrd for AddressItem {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        match (&self.0, &other.0) {
-            (Address::Implicit(_), Address::Originated(_)) => Some(std::cmp::Ordering::Less),
-            (Address::Originated(_), Address::Implicit(_)) => Some(std::cmp::Ordering::Greater),
-            (l, r) => l.value().partial_cmp(r.value()),
-        }
+        Some(self.cmp(other))
     }
 }
 
@@ -96,24 +102,41 @@ fn public_key_meta(key: &PublicKey) -> (i8, usize) {
     }
 }
 
+impl Ord for KeyItem {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        let (l, r) = (public_key_meta(&self.0), public_key_meta(&other.0));
+        let res = l.0.cmp(&r.0);
+        if res == std::cmp::Ordering::Equal {
+            match (self.0.to_bytes().ok(), other.0.to_bytes().ok()) {
+                (Some(self_data), Some(other_data)) => return self_data[l.1..].cmp(&other_data[l.1..]),
+                _ => unreachable!("Invalid keys")
+            }
+        }
+        res
+    }
+}
+
 impl PartialOrd for KeyItem {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        let (l, r) = (public_key_meta(&self.0), public_key_meta(&other.0));
-        match l.0.partial_cmp(&r.0) {
-            Some(std::cmp::Ordering::Equal) => {
-                match (self.0.to_bytes().ok(), other.0.to_bytes().ok()) {
-                    (Some(self_data), Some(other_data)) => self_data[l.1..].partial_cmp(&other_data[l.1..]),
-                    _ => None
-                }
-            },
-            x => x
-        }
+        Some(self.cmp(&other))
+    }
+}
+
+impl Ord for SignatureItem {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.0.value().cmp(other.0.value())
     }
 }
 
 impl PartialOrd for SignatureItem {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         self.0.value().partial_cmp(other.0.value())
+    }
+}
+
+impl Ord for KeyHashItem {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.0.value().cmp(other.0.value())
     }
 }
 

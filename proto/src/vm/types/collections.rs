@@ -7,7 +7,7 @@ use tezos_michelson::michelson::{
 
 use crate::{
     Result, Error,
-    vm::types::{ListItem, SetItem, MapItem, BigMapItem, StackItem, PairItem, BigMapPtr},
+    vm::types::{ListItem, SetItem, MapItem, BigMapItem, StackItem, PairItem, BigMapPtr, OptionItem},
     vm::typechecker::check_types_equal,
     err_type,
 };
@@ -74,18 +74,29 @@ impl ListItem {
         }
     }
 
+    pub fn prepend(self, item: StackItem) -> Result<ListItem> {
+        item.type_check(&self.inner_type)?;
+        let (mut items, val_type) = self.unwrap();
+        items.insert(0, item);
+        Ok(Self::new(items, val_type))
+    }
+
     pub fn len(&self) -> usize {
         self.outer_value.len()
     }
 }
 
 impl SetItem {
+    pub fn new(items: Vec<StackItem>, val_type: Type) -> Self {
+        Self { outer_value: items, inner_type: val_type }
+    }
+
     pub fn from_data(data: Data, ty: &Type, val_type: &Type) -> Result<StackItem> {        
         match data {
             Data::Sequence(seq) => {
                 let items = seq_into_item_vec(seq, val_type)?;
                 // TODO: ensure no duplicates
-                Ok(StackItem::Set(Self{ outer_value: items, inner_type: val_type.clone() }))
+                Ok(StackItem::Set(Self::new(items, val_type.clone())))
             },
             _ => err_type!(ty, data)
         }
@@ -111,6 +122,25 @@ impl SetItem {
         }
     }
 
+    pub fn contains(&self, key: &StackItem) -> Result<bool> {
+        key.type_check(&self.inner_type)?;
+        Ok(self.outer_value.contains(key))
+    }
+
+    pub fn update(self, key: StackItem, val: bool) -> Result<Self> {
+        key.type_check(&self.inner_type)?;
+        let (mut items, val_type) = self.unwrap();
+        match items.binary_search(&key) {
+            Ok(pos) => if !val {
+                items.remove(pos);
+            },
+            Err(pos) => if val {
+                items.insert(pos, key);
+            }
+        }
+        Ok(Self::new(items, val_type))
+    }
+
     pub fn len(&self) -> usize {
         self.outer_value.len()
     }
@@ -129,7 +159,7 @@ fn seq_into_map_item(sequence: data::Sequence, key_type: &Type, val_type: &Type)
             return err_type!(ty, element)
         }
     }
-    return Ok(MapItem { outer_value: items, inner_type: (key_type.clone(), val_type.clone()) })
+    return Ok(MapItem::new(items, key_type.clone(), val_type.clone()))
 }
 
 fn map_item_into_seq(map_item: MapItem, map_ty: &types::Map) -> Result<Data> {
@@ -182,6 +212,38 @@ impl MapItem {
 
     pub fn get_keys(&self) -> Vec<StackItem> {
         self.outer_value.iter().map(|(k, _)| k.clone()).collect()
+    }
+
+    pub fn get(&self, key: &StackItem) -> Result<OptionItem> {
+        key.type_check(&self.inner_type.0)?;
+        match self.outer_value.iter().find(|(k, _)| k == key) {
+            Some((_, val)) => OptionItem::some(val.clone()),
+            None => Ok(OptionItem::none(&self.inner_type.0))
+        }
+    }
+
+    pub fn update(self, key: StackItem, val: Option<StackItem>) -> Result<(Self, OptionItem)> {
+        let (key_type, val_type) = self.inner_type;
+        let mut items = self.outer_value;
+        let mut old_val: Option<Box<StackItem>> = None;
+        key.type_check(&key_type)?;
+        match items.binary_search_by(|(k, _)| k.cmp(&key)) {
+            Ok(pos) => if val.is_none() {
+                let (_, v) = items.remove(pos);
+                old_val = Some(Box::new(v));
+            },
+            Err(pos) => if let Some(val) = val {
+                items.insert(pos, (key, val));
+            }
+        }
+        let old = OptionItem::new(old_val, &val_type);
+        let map = Self::new(items, key_type, val_type);
+        Ok((map, old))
+    }
+
+    pub fn contains(&self, key: &StackItem) -> Result<bool> {
+        key.type_check(&self.inner_type.0)?;
+        Ok(self.outer_value.iter().find(|(k, _)| k == key).is_some())
     }
 
     pub fn len(&self) -> usize {

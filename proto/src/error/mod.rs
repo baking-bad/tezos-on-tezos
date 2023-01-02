@@ -75,8 +75,8 @@ pub type Result<T> = result::Result<T, Error>;
 macro_rules! err_type {
     ($expected: expr, $found: expr) => {
         Err(Error::MichelsonTypeError {
-            expected: format!("{:#?}", $expected),
-            found: format!("{:#?}", $found)
+            expected: format!("{:?}", $expected),
+            found: format!("{:?}", $found)
         })
     };
 }
