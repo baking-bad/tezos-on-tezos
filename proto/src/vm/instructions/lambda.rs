@@ -5,7 +5,6 @@ use tezos_michelson::michelson::types::Type;
 
 use crate::{
     Result,
-    Error,
     vm::interpreter::{Interpreter, TransactionScope, PureInterpreter},
     vm::types::{LambdaItem, StackItem},
     vm::stack::Stack,

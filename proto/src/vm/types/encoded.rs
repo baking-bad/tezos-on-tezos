@@ -1,17 +1,16 @@
+use std::fmt::Display;
 use tezos_core::types::{
     encoded::{Address, PublicKey, ImplicitAddress, Signature, Encoded}
 };
 use tezos_michelson::michelson::{
     types::{Type, ComparableType},
-    types,
-    data::{Data, Instruction},
+    data::Data,
     data,
 };
-use tezos_operation::operations::OperationContent;
 
 use crate::{
-    Result, Error,
-    vm::types::{AddressItem, KeyItem, KeyHashItem, SignatureItem, OperationItem, LambdaItem, StackItem},
+    Result,
+    vm::types::{AddressItem, KeyItem, KeyHashItem, SignatureItem, StackItem},
     err_type,
     type_check_fn_comparable,
 };
@@ -33,6 +32,18 @@ macro_rules! impl_for_encoded {
                 Ok(Data::String(data::String::from_string(self.0.into_string())?))
             }
         }
+
+        impl PartialOrd for $item_ty {
+            fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+                Some(self.cmp(other))
+            }
+        }
+
+        impl Display for $item_ty {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.write_str(self.0.value())
+            }
+        }
     };
 }
 
@@ -41,43 +52,6 @@ impl_for_encoded!(KeyItem, PublicKey, Key);
 impl_for_encoded!(KeyHashItem, ImplicitAddress, KeyHash);
 impl_for_encoded!(SignatureItem, Signature, Signature);
 
-impl OperationItem {
-    pub fn into_content(self) -> OperationContent {
-        self.0
-    }
-}
-
-impl LambdaItem {
-    pub fn new(param_type: Type, return_type: Type, body: Instruction) -> Self {
-        Self { outer_value: body, inner_type: (param_type, return_type) }
-    }
-
-    pub fn from_data(data: Data, ty: &Type, parameter_type: &Type, return_type: &Type) -> Result<StackItem> {
-        match data {
-            Data::Instruction(body) => {
-                let lambda = Self::new(parameter_type.clone(), return_type.clone(), body);
-                Ok(lambda.into())
-            },
-            _ => err_type!(ty, data)
-        }
-    }
-        
-    pub fn into_data(self, ty: &Type) -> Result<Data> {
-        if let Type::Lambda(_) = ty {
-            return Ok(Data::Instruction(self.outer_value))
-        }
-        err_type!(ty, self)
-    } 
-
-    pub fn get_type(&self) -> Result<Type> {
-        Ok(types::lambda(self.inner_type.0.clone(), self.inner_type.1.clone()))
-    }
-
-    pub fn unwrap(self) -> (Instruction, (Type, Type)) {
-        (self.outer_value, self.inner_type)
-    }
-}
-
 impl Ord for AddressItem {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         match (&self.0, &other.0) {
@@ -85,12 +59,6 @@ impl Ord for AddressItem {
             (Address::Originated(_), Address::Implicit(_)) => std::cmp::Ordering::Greater,
             (l, r) => l.value().cmp(r.value()),
         }
-    }
-}
-
-impl PartialOrd for AddressItem {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
     }
 }
 
@@ -116,32 +84,14 @@ impl Ord for KeyItem {
     }
 }
 
-impl PartialOrd for KeyItem {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(&other))
-    }
-}
-
 impl Ord for SignatureItem {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.0.value().cmp(other.0.value())
     }
 }
 
-impl PartialOrd for SignatureItem {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.0.value().partial_cmp(other.0.value())
-    }
-}
-
 impl Ord for KeyHashItem {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.0.value().cmp(other.0.value())
-    }
-}
-
-impl PartialOrd for KeyHashItem {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.0.value().partial_cmp(other.0.value())
     }
 }

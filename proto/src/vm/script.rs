@@ -13,6 +13,7 @@ use tezos_michelson::micheline::{
 use crate::{
     Result,
     Error,
+    error::InterpreterError,
     vm::stack::Stack,
     vm::types::{StackItem, PairItem},
     vm::interpreter::{Interpreter, TransactionResult, TransactionScope},
@@ -47,9 +48,9 @@ impl TryFrom<Micheline> for Script {
         }
 
         Ok(Self {
-            parameter_type: param_ty.ok_or(Error::ScriptSectionMissing)?,
-            storage_type: storage_ty.ok_or(Error::ScriptSectionMissing)?,
-            code: code_ty.ok_or(Error::ScriptSectionMissing)?
+            parameter_type: param_ty.ok_or(InterpreterError::MissingScriptField { prim: "parameter".into() })?,
+            storage_type: storage_ty.ok_or(InterpreterError::MissingScriptField { prim: "storage".into() })?,
+            code: code_ty.ok_or(InterpreterError::MissingScriptField { prim: "code".into() })?
         })
     }
 }
@@ -65,7 +66,7 @@ impl Script {
 
     fn begin(&self, stack: &mut Stack, parameter: Micheline, storage: Micheline) -> Result<()> {
         if stack.len() != 0 {
-            return Err(Error::UnexpectedStackSize);
+            return Err(InterpreterError::BadReturn.into());
         }
         let param_item = StackItem::from_micheline(parameter, &self.parameter_type)?;
         let storage_item = StackItem::from_micheline(storage, &self.storage_type)?;
@@ -75,7 +76,7 @@ impl Script {
 
     fn end(&self, stack: &mut Stack) -> Result<(Micheline, Vec<OperationContent>)> {
         if stack.len() != 1 {
-            return Err(Error::UnexpectedStackSize);
+            return Err(InterpreterError::BadReturn.into());
         }
         match stack.pop()? {
             StackItem::Pair(pair) => match pair.unpair() {

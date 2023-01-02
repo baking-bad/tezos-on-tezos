@@ -4,7 +4,6 @@ use tezos_michelson::michelson::{
 
 use crate::{
     Result,
-    Error,
     vm::interpreter::{PureInterpreter, ContextIntepreter},
     vm::types::{StackItem, ListItem, SetItem, MapItem},
     vm::stack::Stack,

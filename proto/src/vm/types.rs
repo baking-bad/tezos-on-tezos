@@ -1,8 +1,18 @@
 pub mod core;
-pub mod numeric;
-pub mod domain;
-pub mod algebraic;
-pub mod collections;
+pub mod mutez;
+pub mod timestamp;
+pub mod nat;
+pub mod int;
+pub mod encoded;
+pub mod pair;
+pub mod list;
+pub mod set;
+pub mod map;
+pub mod big_map;
+pub mod option;
+pub mod or;
+pub mod lambda;
+pub mod operation;
 
 use ibig::{IBig, UBig};
 use tezos_core::types::encoded::{
@@ -13,7 +23,7 @@ use tezos_michelson::michelson::{
     types::Type,
 };
 use tezos_operation::operations::OperationContent;
-use derive_more::{From, TryInto};
+use derive_more::{From, TryInto, Display};
 
 #[macro_export]
 macro_rules! type_check_fn_comparable {
@@ -133,7 +143,7 @@ pub enum BigMapItem {  // collections
     Map(MapItem)
 }
 
-#[derive(Debug, Clone, From, TryInto, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, Display, Clone, From, TryInto, PartialEq, PartialOrd, Eq, Ord)]
 pub enum StackItem {
     Unit(UnitItem),
     Bytes(BytesItem),

@@ -8,7 +8,6 @@ use tezos_michelson::michelson::types::{Type, ComparableType};
 
 use crate::{
     Result,
-    Error,
     vm::interpreter::{PureInterpreter},
     vm::types::{StackItem},
     vm::typechecker::{check_type_comparable, check_types_equal},
@@ -27,10 +26,7 @@ impl PureInterpreter for Compare {
         let rty = b.get_type()?;
         check_types_equal(&lty, &rty)?;
 
-        let res = match a.partial_cmp(&b) {
-            Some(ord) => IBig::from(ord as i8),
-            None => return Err(Error::ComparisonError)
-        };
+        let res = IBig::from(a.cmp(&b) as i8);
         stack.push(StackItem::Int(res.into()))
     }
 }

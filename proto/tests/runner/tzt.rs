@@ -14,14 +14,25 @@ use tezos_michelson::michelson::{
 use proto::{
     Result,
     Error,
+    error::InterpreterError,
     vm::{StackItem, Stack, Interpreter, TransactionScope},
     context::ephemeral::EphemeralContext
 };
 
 pub struct TZT {
-    inputs: Vec<StackItem>,
-    outputs: Vec<StackItem>,
-    code: Instruction
+    input: Input,
+    output: Output,
+    code: Instruction,
+}
+
+pub struct Input {
+    pub items: Vec<StackItem>,
+    pub scope: TransactionScope
+}
+
+pub struct Output {
+    pub items: Vec<StackItem>,
+    pub error: Option<InterpreterError>
 }
 
 impl TZT {
@@ -30,15 +41,24 @@ impl TZT {
         let mut context = EphemeralContext::new();
         let scope = TransactionScope::default();
 
-        for input in self.inputs.iter().rev() {
+        for input in self.input.items.iter().rev() {
             stack.push(input.clone())?;
         }
 
-        self.code.execute(&mut stack, &scope, &mut context)?;
+        let res = self.code.execute(&mut stack, &scope, &mut context);
 
-        for output in self.outputs.iter() {
-            let item = stack.pop()?;
-            assert_eq!(*output, item);
+        match res {
+            Ok(()) => {
+                for output in self.output.items.iter() {
+                    let item = stack.pop()?;
+                    assert_eq!(*output, item);
+                }
+            },
+            Err(Error::InterpreterError(err)) => {
+                let expected = self.output.error.as_ref().expect("Error undefined");
+                assert_eq!(*expected, err);
+            },
+            _ => unreachable!("Unexpected result")
         }
 
         Ok(())
@@ -58,12 +78,9 @@ impl TZT {
     }
 }
 
-fn parse_stack_elts(section: PrimitiveApplication) -> Result<Vec<StackItem>> {
+fn parse_elements(sequence: Sequence) -> Result<Vec<StackItem>> {
     let mut items: Vec<StackItem> = Vec::new();
-    let outer_seq = Sequence::from(section.into_args().expect("outer sequence"));
-    let inner_seq = outer_seq.into_values().remove(0).into_sequence().expect("inner sequence");
-
-    for item in inner_seq.into_values() {
+    for item in sequence.into_values() {
         let prim = PrimitiveApplication::try_from(item)?;
         match prim.prim() {
             "Stack_elt" => {
@@ -72,31 +89,69 @@ fn parse_stack_elts(section: PrimitiveApplication) -> Result<Vec<StackItem>> {
                 let data = prim.nth_arg(1).expect("data").clone();
                 items.push(StackItem::from_micheline(data, &ty)?);
             },
-            _ => unreachable!()
+            _ => unreachable!("Expected `Stack_elt`")
         }
     }
     Ok(items)
+}
+
+fn parse_output(section: PrimitiveApplication) -> Result<Output> {
+    let mut items: Vec<StackItem> = Vec::new();
+    let mut error: Option<InterpreterError> = None;
+    for arg in section.into_args().expect("Expected single arg") {
+        match arg {
+            Micheline::PrimitiveApplication(arg) => match arg.prim() {
+                "MutezOverflow" => error = Some(InterpreterError::MutezOverflow),
+                "MutezUnderflow" => error = Some(InterpreterError::MutezUnderflow),
+                "GeneralOverflow" => error = Some(InterpreterError::GeneralOverflow),
+                "Failed" => {
+                    error = Some(InterpreterError::ScriptFailed {
+                        with: arg.first_arg().expect("Expected `with` arg").clone()
+                    })
+                },
+                _ => unreachable!("Unknown primitive in output args")
+            },
+            Micheline::Sequence(seq) => items = parse_elements(seq)?,
+            _ => unreachable!("Unexpected output arg")
+        }
+    }
+    Ok(Output { items, error })
+}
+
+fn parse_input(section: PrimitiveApplication) -> Result<Vec<StackItem>> {
+    for arg in section.into_args().expect("Expected single arg") { 
+        match arg {
+            Micheline::Sequence(seq) => return parse_elements(seq),
+            _ => unreachable!("Input section has to have inner sequence as arg")
+        }
+    }
+    unreachable!("Input section has no args")
 }
 
 impl TryFrom<Micheline> for TZT {
     type Error = Error;
 
     fn try_from(src: Micheline) -> Result<Self> {
+        let mut scope = TransactionScope::default();
         let mut inputs: Vec<StackItem> = Vec::new();
-        let mut outputs: Vec<StackItem> = Vec::new();
+        let mut output: Option<Output> = None;
         let mut code: Option<Instruction> = None;
 
         let sections = Sequence::try_from(src.normalized())?;
         for section in sections.into_values() {
             let prim = PrimitiveApplication::try_from(section)?;
             match prim.prim() {
-                "input" => inputs = parse_stack_elts(prim)?,
-                "output" => outputs = parse_stack_elts(prim)?,
+                "input" => inputs = parse_input(prim)?,
+                "output" => output = Some(parse_output(prim)?),
                 "code" => code = Some(*Code::try_from(prim)?.code),
                 _ => unreachable!()
             }
         }
 
-        Ok(Self { code: code.expect("code"), inputs, outputs})
+        Ok(Self {
+            code: code.expect("Failed to parse code"),
+            output: output.expect("Failed to parse output"),
+            input: Input {items: inputs, scope}
+        })
     }
 }

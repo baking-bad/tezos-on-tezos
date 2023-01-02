@@ -5,7 +5,7 @@ use tezos_michelson::michelson::{
 
 use crate::{
     Result,
-    Error,
+    error::InterpreterError,
     vm::interpreter::{PureInterpreter},
     vm::types::{StackItem, PairItem, OptionItem, OrItem},
     vm::stack::Stack,
@@ -41,7 +41,7 @@ fn parse_arity(n: &Option<Nat>) -> Result<usize> {
         None => 2
     };
     if n < 2 {
-        return Err(Error::UnexpectedPairArity)
+        return Err(InterpreterError::InvalidArity { expected: 2, found: n }.into())
     }
     Ok(n)
 }

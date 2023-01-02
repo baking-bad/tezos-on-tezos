@@ -1,9 +1,35 @@
 use std::collections::VecDeque;
 
 use crate::{
-    error::{Result, Error},
+    error::{Result, InterpreterError},
     vm::types::StackItem
 };
+
+mod trace {
+    use crate::vm::types::StackItem;
+    use tezos_michelson::michelson::data::Instruction;
+
+    static mut CALL_DEPTH: usize = 0;
+    const DELIM: &str = "└";
+
+    pub fn begin(instr: &Instruction) {        
+        unsafe {
+            eprintln!("{:-^width$} {:?}", DELIM, instr, width = CALL_DEPTH);
+            CALL_DEPTH += 1;
+        }
+    }
+
+    pub fn act(action: &str, item: &StackItem) {
+        unsafe {
+            eprintln!("{:-^width$} {} {:?}", DELIM, action, item, width = CALL_DEPTH);
+            CALL_DEPTH += 1;
+        }
+    }
+
+    pub fn end() {
+        unsafe { CALL_DEPTH -= 1 }
+    }
+}
 
 #[macro_export]
 macro_rules! pop_cast {
@@ -31,7 +57,7 @@ impl Stack {
 
     pub fn protect(&mut self, count: usize) -> Result<()> {
         if self.items.len() < count + self.protected {
-            return Err(Error::StackOutOfBounds)
+            return Err(InterpreterError::BadStack { location: count }.into())
         }
         self.protected += count;
         Ok(())
@@ -39,7 +65,7 @@ impl Stack {
 
     pub fn restore(&mut self, count: usize) -> Result<()> {
         if self.protected < count {
-            return Err(Error::StackOutOfBounds)
+            return Err(InterpreterError::BadStack { location: count }.into())
         }
         self.protected -= count;
         Ok(())
@@ -48,7 +74,7 @@ impl Stack {
     pub fn push_at(&mut self, depth: usize, item: StackItem) -> Result<()> {
         let depth = depth + self.protected;
         if self.items.len() < depth {
-            return Err(Error::StackOutOfBounds)
+            return Err(InterpreterError::BadStack { location: depth }.into())
         }
         self.items.insert(depth, item);
         Ok(())
@@ -66,7 +92,7 @@ impl Stack {
     pub fn pop_at(&mut self, depth: usize) -> Result<StackItem> {
         match self.items.remove(depth + self.protected) {
             Some(item) => Ok(item),
-            None => Err(Error::StackOutOfBounds)
+            None => Err(InterpreterError::BadStack { location: depth }.into())
         }
     }
 
@@ -76,7 +102,7 @@ impl Stack {
         } else {
             match self.items.pop_front() {
                 Some(item) => Ok(item),
-                None => Err(Error::StackOutOfBounds)
+                None => Err(InterpreterError::BadStack { location: 0 }.into())
             }
         }
     }
@@ -84,7 +110,7 @@ impl Stack {
     pub fn dup_at(&self, depth: usize) -> Result<StackItem> {
         match self.items.get(depth + self.protected) {
             Some(item) => Ok(item.clone()),
-            None => Err(Error::StackOutOfBounds)
+            None => Err(InterpreterError::BadStack { location: depth }.into())
         }
     }
 }

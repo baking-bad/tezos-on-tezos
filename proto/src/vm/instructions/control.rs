@@ -5,6 +5,7 @@ use tezos_michelson::michelson::data::instructions::{
 use crate::{
     Result,
     Error,
+    error::InterpreterError,
     vm::interpreter::{Interpreter, TransactionScope, PureInterpreter},
     vm::types::{StackItem, ListItem, MapItem},
     vm::stack::Stack,
@@ -37,7 +38,8 @@ impl Interpreter for Dip {
 impl PureInterpreter for FailWith {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let with = stack.pop()?;
-        Err(Error::MichelsonScriptError { with })
+        let ty = with.get_type()?;
+        Err(Error::InterpreterError(InterpreterError::ScriptFailed { with: with.into_micheline(&ty)? }))
     }
 }
 

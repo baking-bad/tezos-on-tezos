@@ -8,7 +8,7 @@ use tezos_michelson::micheline::Micheline;
 use crate::{
     vm::types::*,
     Result,
-    Error,
+    error::InterpreterError,
     err_type
 };
 
@@ -51,7 +51,7 @@ pub fn types_equal(lhs: &Type, rhs: &Type) -> Result<bool> {
                 ComparableType::Key(_) => Ok(true),
                 ComparableType::KeyHash(_) => Ok(true),
                 ComparableType::Signature(_) => Ok(true),
-                _ => Err(Error::MichelsonTypeUnsupported { ty: lhs.clone() })
+                _ => Err(InterpreterError::MichelsonTypeUnsupported { ty: lhs.clone() }.into())
             }
         },
         (Type::Option(lty), Type::Option(rty)) => types_equal(&lty.r#type, &rty.r#type),
@@ -83,7 +83,7 @@ pub fn types_equal(lhs: &Type, rhs: &Type) -> Result<bool> {
         },
         (Type::Parameter(lty), Type::Parameter(rty)) => types_equal(&lty.r#type, &rty.r#type),
         (Type::Storage(lty), Type::Storage(rty)) => types_equal(&lty.r#type, &rty.r#type),
-        _ => Err(Error::MichelsonTypeUnsupported { ty: lhs.clone() })
+        _ => Err(InterpreterError::MichelsonTypeUnsupported { ty: lhs.clone() }.into())
     }
 }
 
@@ -111,7 +111,7 @@ impl StackItem {
                 ComparableType::Key(_) => KeyItem::from_data(data, ty),
                 ComparableType::KeyHash(_) => KeyHashItem::from_data(data, ty),
                 ComparableType::Signature(_) => SignatureItem::from_data(data, ty),
-                _ => Err(Error::MichelsonTypeUnsupported { ty: ty.clone() })
+                _ => Err(InterpreterError::MichelsonTypeUnsupported { ty: ty.clone() }.into())
             },
             Type::Option(option_ty) => OptionItem::from_data(data, ty, &option_ty.r#type),
             Type::Or(or_ty) => OrItem::from_data(data, ty, &or_ty.lhs, &or_ty.rhs),
@@ -126,7 +126,7 @@ impl StackItem {
             Type::Lambda(lambda_ty) => LambdaItem::from_data(data, ty, &lambda_ty.parameter_type, &lambda_ty.return_type),
             Type::Parameter(param_ty) => StackItem::from_data(data, &param_ty.r#type),
             Type::Storage(storage_ty) => StackItem::from_data(data, &storage_ty.r#type),
-            _ => Err(Error::MichelsonTypeUnsupported { ty: ty.clone() })
+            _ => Err(InterpreterError::MichelsonTypeUnsupported { ty: ty.clone() }.into())
         }
     }
 
@@ -152,7 +152,7 @@ impl StackItem {
             StackItem::Map(item) => item.into_data(ty),
             StackItem::BigMap(item) => item.into_data(ty),
             StackItem::Lambda(item) => item.into_data(ty),
-            _ => Err(Error::MichelsonTypeUnsupported { ty: ty.clone() })
+            _ => Err(InterpreterError::MichelsonTypeUnsupported { ty: ty.clone() }.into())
         }
     }
 

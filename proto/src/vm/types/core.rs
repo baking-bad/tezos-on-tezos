@@ -1,17 +1,35 @@
 use std::ops::{BitOr, BitXor, BitAnd, Not, Add};
+use std::fmt::Display;
 use tezos_michelson::michelson::{
     data::Data,
     data,
     types::{Type, ComparableType},
     types
 };
+use hex;
 
 use crate::{
-    Result, Error,
-    vm::types::{BoolItem, StringItem, BytesItem, StackItem, OptionItem},
+    Result,
+    vm::types::{UnitItem, BoolItem, StringItem, BytesItem, StackItem, OptionItem},
     err_type,
     type_check_fn_comparable
 };
+
+impl UnitItem {
+    type_check_fn_comparable!(Unit);
+
+    pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
+        match data {
+            Data::Unit(_) => Ok(StackItem::Unit(Self(()))),
+            _ => err_type!(ty, data)
+        }
+    }
+
+    pub fn into_data(self, ty: &Type) -> Result<Data> {
+        self.type_check(ty)?;
+        Ok(Data::Unit(data::unit()))
+    }
+}
 
 impl BoolItem {
     type_check_fn_comparable!(Bool);
@@ -102,6 +120,30 @@ impl BytesItem {
             None
         };
         OptionItem { outer_value, inner_type: types::bytes() }
+    }
+}
+
+impl Display for UnitItem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("Unit")
+    }
+}
+
+impl Display for BoolItem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(if self.0 { "True" } else { "False" })
+    }
+}
+
+impl Display for StringItem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("\"{}\"", self.0))
+    }
+}
+
+impl Display for BytesItem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(hex::encode(self.0.clone()).as_str())
     }
 }
 

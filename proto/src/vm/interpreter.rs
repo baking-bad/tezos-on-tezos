@@ -11,7 +11,7 @@ use tezos_core::types::{
 
 use crate::{
     Result,
-    Error,
+    error::InterpreterError,
     vm::stack::Stack,
     constants::*,
     context::Context
@@ -135,7 +135,7 @@ impl Interpreter for Instruction {
             Instruction::Get(instr) => instr.execute(stack, global_ctx),
             Instruction::Update(instr) => instr.execute(stack, global_ctx),
             Instruction::GetAndUpdate(instr) => instr.execute(stack, global_ctx),
-            _ => Err(Error::MichelsonInstructionUnsupported { instruction: self.clone() })
+            _ => Err(InterpreterError::MichelsonInstructionUnsupported { instruction: self.clone() }.into())
         }
     }
 }
