@@ -1,6 +1,7 @@
 use tezos_michelson::michelson::data::Instruction;
 use tezos_michelson::micheline::{
-    Micheline, primitive_application
+    Micheline,
+    primitive_application
 };
 use tezos_operation::operations::OperationContent;
 use tezos_rpc::models::operation::operation_result::lazy_storage_diff::LazyStorageDiff;
@@ -14,7 +15,8 @@ use crate::{
     error::InterpreterError,
     vm::stack::Stack,
     constants::*,
-    context::Context
+    context::Context,
+    vm::{trace_into, trace_ret}
 };
 
 pub struct TransactionScope {
@@ -69,7 +71,9 @@ pub trait ContextIntepreter {
 
 impl Interpreter for Instruction {
     fn execute(&self, stack: &mut Stack, tx_scope: &TransactionScope, global_ctx: &mut impl Context) -> Result<()> {
-        match self {
+        trace_into(self);
+        let res = match self {
+            Instruction::Sequence(seq) => return seq.execute(stack, tx_scope, global_ctx),
             Instruction::Push(instr) => instr.execute(stack),
             Instruction::Drop(instr) => instr.execute(stack),
             Instruction::Dup(instr) => instr.execute(stack),
@@ -79,7 +83,6 @@ impl Interpreter for Instruction {
             Instruction::Rename(_) => Ok(()),
             Instruction::Cast(_) => Ok(()),
             Instruction::FailWith(instr) => instr.execute(stack),
-            Instruction::Sequence(seq) => seq.execute(stack, tx_scope, global_ctx),
             Instruction::Dip(instr) => instr.execute(stack, tx_scope, global_ctx),
             Instruction::If(instr) => instr.execute(stack, tx_scope, global_ctx),
             Instruction::IfCons(instr) => instr.execute(stack, tx_scope, global_ctx),
@@ -136,6 +139,8 @@ impl Interpreter for Instruction {
             Instruction::Update(instr) => instr.execute(stack, global_ctx),
             Instruction::GetAndUpdate(instr) => instr.execute(stack, global_ctx),
             _ => Err(InterpreterError::MichelsonInstructionUnsupported { instruction: self.clone() }.into())
-        }
+        };
+        trace_ret(res.as_ref().err());
+        res
     }
 }

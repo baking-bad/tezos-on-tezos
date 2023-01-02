@@ -15,8 +15,8 @@ use proto::{
     Result,
     Error,
     error::InterpreterError,
-    vm::{StackItem, Stack, Interpreter, TransactionScope},
-    context::ephemeral::EphemeralContext
+    vm::{StackItem, Stack, Interpreter, TransactionScope, trace_init, trace_ret},
+    context::ephemeral::EphemeralContext,
 };
 
 pub struct TZT {
@@ -40,6 +40,7 @@ impl TZT {
         let mut stack = Stack::new();
         let mut context = EphemeralContext::new();
         let scope = TransactionScope::default();
+        trace_init("tzt");
 
         for input in self.input.items.iter().rev() {
             stack.push(input.clone())?;
@@ -53,10 +54,12 @@ impl TZT {
                     let item = stack.pop()?;
                     assert_eq!(*output, item);
                 }
+                trace_ret(None);
             },
             Err(Error::InterpreterError(err)) => {
                 let expected = self.output.error.as_ref().expect("Error undefined");
                 assert_eq!(*expected, err);
+                trace_ret(Some(&err.into()));
             },
             _ => unreachable!("Unexpected result")
         }

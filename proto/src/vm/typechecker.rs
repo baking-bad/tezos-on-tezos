@@ -12,6 +12,13 @@ use crate::{
     err_type
 };
 
+#[macro_export]
+macro_rules! cmp_ty {
+    ($ty: expr) => {
+        &Type::Comparable($ty.clone())
+    };
+}
+
 pub fn type_comparable(ty: &Type) -> bool {
     match ty {
         Type::Comparable(_) => true,
@@ -29,6 +36,30 @@ pub fn check_type_comparable(ty: &Type) -> Result<()> {
     }
 }
 
+pub fn comparable_types_equal(lhs: &ComparableType, rhs: &ComparableType) -> Result<bool> {
+    use ::core::mem::discriminant;
+    let ltag = discriminant(lhs);
+    let rtag = discriminant(rhs);
+    if ltag != rtag {
+        return Ok(false)
+    }
+    match lhs {
+        ComparableType::Unit(_) => Ok(true),
+        ComparableType::Bool(_) => Ok(true),
+        ComparableType::String(_) => Ok(true),
+        ComparableType::Bytes(_) => Ok(true),
+        ComparableType::Int(_) => Ok(true),
+        ComparableType::Nat(_) => Ok(true),
+        ComparableType::Mutez(_) => Ok(true),
+        ComparableType::Timestamp(_) => Ok(true),
+        ComparableType::Address(_) => Ok(true),
+        ComparableType::Key(_) => Ok(true),
+        ComparableType::KeyHash(_) => Ok(true),
+        ComparableType::Signature(_) => Ok(true),
+        _ => Err(InterpreterError::MichelsonTypeUnsupported { ty: lhs.clone().into() }.into())
+    }
+}
+
 pub fn types_equal(lhs: &Type, rhs: &Type) -> Result<bool> {
     use ::core::mem::discriminant;
     let ltag = discriminant(lhs);
@@ -37,23 +68,7 @@ pub fn types_equal(lhs: &Type, rhs: &Type) -> Result<bool> {
         return Ok(false)
     }
     match (lhs, rhs) {
-        (Type::Comparable(ty), _) => {
-            match ty {
-                ComparableType::Unit(_) => Ok(true),
-                ComparableType::Bool(_) => Ok(true),
-                ComparableType::String(_) => Ok(true),
-                ComparableType::Bytes(_) => Ok(true),
-                ComparableType::Int(_) => Ok(true),
-                ComparableType::Nat(_) => Ok(true),
-                ComparableType::Mutez(_) => Ok(true),
-                ComparableType::Timestamp(_) => Ok(true),
-                ComparableType::Address(_) => Ok(true),
-                ComparableType::Key(_) => Ok(true),
-                ComparableType::KeyHash(_) => Ok(true),
-                ComparableType::Signature(_) => Ok(true),
-                _ => Err(InterpreterError::MichelsonTypeUnsupported { ty: lhs.clone() }.into())
-            }
-        },
+        (Type::Comparable(lty), Type::Comparable(rty)) => comparable_types_equal(lty, rty),
         (Type::Option(lty), Type::Option(rty)) => types_equal(&lty.r#type, &rty.r#type),
         (Type::Or(lty), Type::Or(rty)) => {
             types_equal(&lty.lhs, &rty.lhs)?;
@@ -66,15 +81,13 @@ pub fn types_equal(lhs: &Type, rhs: &Type) -> Result<bool> {
             types_equal(&lty.types[1], &rty.types[1])
         },
         (Type::List(lty), Type::List(rty)) => types_equal(&lty.r#type, &rty.r#type),
-        (Type::Set(lty), Type::Set(rty)) => {
-            types_equal(&lty.r#type.clone().into(), &rty.r#type.clone().into())
-        },
+        (Type::Set(lty), Type::Set(rty)) => comparable_types_equal(&lty.r#type, &rty.r#type),
         (Type::Map(lty), Type::Map(rty)) => {
-            types_equal(&lty.key_type, &rty.key_type)?;
+            comparable_types_equal(&lty.key_type, &rty.key_type)?;
             types_equal(&lty.value_type, &rty.value_type)
         },
         (Type::BigMap(lty), Type::BigMap(rty)) => {
-            types_equal(&lty.key_type, &rty.key_type)?;
+            comparable_types_equal(&lty.key_type, &rty.key_type)?;
             types_equal(&lty.value_type, &rty.value_type)
         },
         (Type::Lambda(lty), Type::Lambda(rty)) => {
@@ -120,9 +133,9 @@ impl StackItem {
                 PairItem::from_data(data, ty, &pair_ty.types[0], &pair_ty.types[1])
             },
             Type::List(list_ty) => ListItem::from_data(data, ty, &list_ty.r#type),
-            Type::Set(set_ty) => SetItem::from_data(data, ty, &set_ty.r#type.clone().into()),
-            Type::Map(map_ty) => MapItem::from_data(data, ty, &map_ty.key_type, &map_ty.value_type),
-            Type::BigMap(map_ty) => BigMapItem::from_data(data, ty, &map_ty.key_type, &map_ty.value_type),
+            Type::Set(set_ty) => SetItem::from_data(data, ty, cmp_ty!(set_ty.r#type)),
+            Type::Map(map_ty) => MapItem::from_data(data, ty, cmp_ty!(*map_ty.key_type), &map_ty.value_type),
+            Type::BigMap(map_ty) => BigMapItem::from_data(data, ty, cmp_ty!(*map_ty.key_type), &map_ty.value_type),
             Type::Lambda(lambda_ty) => LambdaItem::from_data(data, ty, &lambda_ty.parameter_type, &lambda_ty.return_type),
             Type::Parameter(param_ty) => StackItem::from_data(data, &param_ty.r#type),
             Type::Storage(storage_ty) => StackItem::from_data(data, &storage_ty.r#type),
@@ -175,8 +188,8 @@ impl StackItem {
             StackItem::Pair(item) => item.get_type(),
             StackItem::List(item) => Ok(item.get_type()),
             StackItem::Set(item) => item.get_type(),
-            StackItem::Map(item) => Ok(item.get_type()),
-            StackItem::BigMap(item) => Ok(item.get_type()),
+            StackItem::Map(item) => item.get_type(),
+            StackItem::BigMap(item) => item.get_type(),
             StackItem::Operation(_) => Ok(types::operation()),
             StackItem::Lambda(item) => item.get_type()
         }

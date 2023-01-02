@@ -11,6 +11,7 @@ use crate::{
     vm::types::{MapItem, StackItem, PairItem, OptionItem},
     vm::typechecker::check_types_equal,
     err_type,
+    cmp_ty
 };
 
 impl MapItem {
@@ -27,8 +28,7 @@ impl MapItem {
                 let val = StackItem::from_data(*elt.value, &val_type)?;
                 items.push((key, val));
             } else {
-                let ty: types::Map = types::map(key_type.clone(), val_type.clone());
-                return err_type!(ty, element)
+                return err_type!((key_type, val_type), element)
             }
         }
         return Ok(Self::new(items, key_type, val_type))
@@ -37,19 +37,8 @@ impl MapItem {
     pub fn from_data(data: Data, ty: &Type, key_type: &Type, val_type: &Type) -> Result<StackItem> {
         match data {
             Data::Sequence(sequence) => {
-                let elements = sequence.into_values();
-                let mut items: Vec<(StackItem, StackItem)> = Vec::with_capacity(elements.len());
-                for element in elements {
-                    if let Data::Elt(elt) = element {
-                        let key = StackItem::from_data(*elt.key, key_type)?;
-                        let val = StackItem::from_data(*elt.value, val_type)?;
-                        items.push((key, val));
-                    } else {
-                        let ty: types::Map = types::map(key_type.clone(), val_type.clone());
-                        return err_type!(ty, element)
-                    }
-                }
-                Ok(StackItem::Map(Self::new(items, key_type.clone(), val_type.clone())))
+                let map = Self::from_sequence(sequence, key_type.clone(), val_type.clone())?;
+                Ok(StackItem::Map(map))
             },
             _ => err_type!(ty, data)
         }
@@ -59,7 +48,7 @@ impl MapItem {
         match ty {
             Type::Map(map_ty) => {
                 if self.outer_value.is_empty() {
-                    check_types_equal(&map_ty.key_type, &self.inner_type.0)?;
+                    check_types_equal(cmp_ty!(*map_ty.key_type), &self.inner_type.0)?;
                     check_types_equal(&map_ty.value_type, &self.inner_type.1)?;
                     Ok(Data::Sequence(data::sequence(vec![])))
                 } else {
@@ -84,9 +73,9 @@ impl MapItem {
         (elements, self.inner_type)
     }
 
-    pub fn get_type(&self) -> Type {
+    pub fn get_type(&self) -> Result<Type> {
         let (kty, vty) = self.inner_type.clone();
-        types::map(kty, vty)
+        Ok(types::map(kty.try_into()?, vty))
     }
 
     pub fn get_keys(&self) -> Vec<StackItem> {

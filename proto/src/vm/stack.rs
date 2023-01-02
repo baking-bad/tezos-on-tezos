@@ -2,34 +2,9 @@ use std::collections::VecDeque;
 
 use crate::{
     error::{Result, InterpreterError},
-    vm::types::StackItem
+    vm::types::StackItem,
+    vm::trace_stack
 };
-
-mod trace {
-    use crate::vm::types::StackItem;
-    use tezos_michelson::michelson::data::Instruction;
-
-    static mut CALL_DEPTH: usize = 0;
-    const DELIM: &str = "└";
-
-    pub fn begin(instr: &Instruction) {        
-        unsafe {
-            eprintln!("{:-^width$} {:?}", DELIM, instr, width = CALL_DEPTH);
-            CALL_DEPTH += 1;
-        }
-    }
-
-    pub fn act(action: &str, item: &StackItem) {
-        unsafe {
-            eprintln!("{:-^width$} {} {:?}", DELIM, action, item, width = CALL_DEPTH);
-            CALL_DEPTH += 1;
-        }
-    }
-
-    pub fn end() {
-        unsafe { CALL_DEPTH -= 1 }
-    }
-}
 
 #[macro_export]
 macro_rules! pop_cast {
@@ -73,6 +48,7 @@ impl Stack {
 
     pub fn push_at(&mut self, depth: usize, item: StackItem) -> Result<()> {
         let depth = depth + self.protected;
+        trace_stack("Insert", &item, Some(&depth));
         if self.items.len() < depth {
             return Err(InterpreterError::BadStack { location: depth }.into())
         }
@@ -84,14 +60,19 @@ impl Stack {
         if self.protected > 0 {
             self.push_at(0, item)
         } else {
+            trace_stack("Push", &item, None);
             self.items.push_front(item);
             Ok(())
         }
     }
 
     pub fn pop_at(&mut self, depth: usize) -> Result<StackItem> {
-        match self.items.remove(depth + self.protected) {
-            Some(item) => Ok(item),
+        let depth = depth + self.protected;
+        match self.items.remove(depth) {
+            Some(item) => {
+                trace_stack("Remove", &item, Some(&depth));
+                Ok(item)
+            },
             None => Err(InterpreterError::BadStack { location: depth }.into())
         }
     }
@@ -101,15 +82,22 @@ impl Stack {
             self.pop_at(0)
         } else {
             match self.items.pop_front() {
-                Some(item) => Ok(item),
+                Some(item) => {
+                    trace_stack("Pop", &item, None);
+                    Ok(item)
+                },
                 None => Err(InterpreterError::BadStack { location: 0 }.into())
             }
         }
     }
 
     pub fn dup_at(&self, depth: usize) -> Result<StackItem> {
-        match self.items.get(depth + self.protected) {
-            Some(item) => Ok(item.clone()),
+        let depth = depth + self.protected;
+        match self.items.get(depth) {
+            Some(item) => {
+                trace_stack("Dup", &item, Some(&depth));
+                Ok(item.clone())
+            },
             None => Err(InterpreterError::BadStack { location: depth }.into())
         }
     }

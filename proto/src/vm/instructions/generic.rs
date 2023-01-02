@@ -9,9 +9,10 @@ use tezos_michelson::michelson::types::{Type, ComparableType};
 use crate::{
     Result,
     vm::interpreter::{PureInterpreter},
-    vm::types::{StackItem},
+    vm::types::{StackItem, OptionItem},
     vm::typechecker::{check_type_comparable, check_types_equal},
     vm::stack::Stack,
+    vm::trace_err,
     pop_cast,
     err_type
 };
@@ -145,6 +146,14 @@ impl PureInterpreter for Pack {
 impl PureInterpreter for Unpack {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let item = pop_cast!(stack, Bytes);
-        todo!("Add Unpack type to the tezos_michelson crate")
+        let data = Michelson::unpack(item.unwrap().as_slice(), Some(&self.r#type))?;
+        let value = match StackItem::from_data(data.try_into()?, &self.r#type) {
+            Ok(item) => Some(Box::new(item)),
+            Err(err) => {
+                trace_err(&err);
+                None
+            }
+        };
+        stack.push(OptionItem::new(value, &self.r#type).into())
     }
 }

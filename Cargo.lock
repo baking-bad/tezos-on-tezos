@@ -1461,6 +1461,7 @@ dependencies = [
  "derive_more",
  "hex",
  "ibig",
+ "once_cell",
  "serde",
  "serde-json-wasm",
  "tezos-core",
@@ -1844,7 +1845,7 @@ dependencies = [
 [[package]]
 name = "tezos-core"
 version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#f1fdfd750aad000c09df09a68bf9fa671e32aea1"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#f335a5bf7ae55f412b9fed6c853d21f964c6a35c"
 dependencies = [
  "blake2",
  "bs58",
@@ -1863,7 +1864,7 @@ dependencies = [
 [[package]]
 name = "tezos-michelson"
 version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#f1fdfd750aad000c09df09a68bf9fa671e32aea1"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#f335a5bf7ae55f412b9fed6c853d21f964c6a35c"
 dependencies = [
  "chrono",
  "derive_more",
@@ -1879,7 +1880,7 @@ dependencies = [
 [[package]]
 name = "tezos-operation"
 version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#f1fdfd750aad000c09df09a68bf9fa671e32aea1"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#f335a5bf7ae55f412b9fed6c853d21f964c6a35c"
 dependencies = [
  "chrono",
  "derive_more",
@@ -1893,7 +1894,7 @@ dependencies = [
 [[package]]
 name = "tezos-rpc"
 version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#f1fdfd750aad000c09df09a68bf9fa671e32aea1"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#f335a5bf7ae55f412b9fed6c853d21f964c6a35c"
 dependencies = [
  "async-trait",
  "chrono",

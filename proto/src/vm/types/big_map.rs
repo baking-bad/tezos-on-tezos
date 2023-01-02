@@ -40,9 +40,9 @@ impl BigMapItem {
         err_type!(ty, self)
     }
 
-    pub fn get_type(&self) -> Type {
+    pub fn get_type(&self) -> Result<Type> {
         match self {
-            Self::Ptr(ptr) => ptr.outer_type.clone(),
+            Self::Ptr(ptr) => Ok(ptr.outer_type.clone()),
             Self::Map(map) => map.get_type()
         }
     }
