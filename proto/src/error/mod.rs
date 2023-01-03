@@ -1,5 +1,4 @@
 mod rpc;
-mod vm;
 
 use core::result;
 use derive_more::{From, Display, Error};
@@ -14,9 +13,9 @@ pub use serde_json_wasm::de::Error as DeserializationError;
 pub use ibig::error::ParseError as BigIntParsingError;
 pub use ibig::error::OutOfBoundsError as BigIntOutOfBoundsError;
 pub use chrono::ParseError as TimestampParsingError;
+pub use vm::Error as InterpreterError;
 
 pub use rpc::{RpcErrors, RpcError};
-pub use vm::InterpreterError;
 
 #[derive(Debug, From, Display, Error)]
 pub enum Error {

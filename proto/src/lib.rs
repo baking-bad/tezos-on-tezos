@@ -3,7 +3,6 @@ pub mod context;
 pub mod validator;
 pub mod executor;
 pub mod producer;
-pub mod vm;
 
 pub use error::{Result, Error};
 

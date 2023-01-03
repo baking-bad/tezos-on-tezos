@@ -1459,15 +1459,14 @@ dependencies = [
  "blake2",
  "chrono",
  "derive_more",
- "hex",
  "ibig",
- "once_cell",
  "serde",
  "serde-json-wasm",
  "tezos-core",
  "tezos-michelson",
  "tezos-operation",
  "tezos-rpc",
+ "vm",
 ]
 
 [[package]]
@@ -2126,6 +2125,24 @@ name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
+
+[[package]]
+name = "vm"
+version = "0.1.0"
+dependencies = [
+ "blake2",
+ "chrono",
+ "derive_more",
+ "hex",
+ "ibig",
+ "once_cell",
+ "serde",
+ "serde-json-wasm",
+ "tezos-core",
+ "tezos-michelson",
+ "tezos-operation",
+ "tezos-rpc",
+]
 
 [[package]]
 name = "wasi"
