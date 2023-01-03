@@ -146,6 +146,13 @@ impl Interpreter for Instruction {
             Instruction::Get(instr) => instr.execute(stack, context),
             Instruction::Update(instr) => instr.execute(stack, context),
             Instruction::GetAndUpdate(instr) => instr.execute(stack, context),
+            Instruction::Amount(instr) => instr.execute(stack, scope),
+            Instruction::Balance(instr) => instr.execute(stack, scope),
+            Instruction::Sender(instr) => instr.execute(stack, scope),
+            Instruction::Source(instr) => instr.execute(stack, scope),
+            Instruction::Now(instr) => instr.execute(stack, scope),
+            Instruction::Level(instr) => instr.execute(stack, scope),
+            Instruction::SelfAddress(instr) => instr.execute(stack, scope),
             _ => Err(Error::MichelsonInstructionUnsupported { instruction: self.clone() }.into())
         };
         trace_exit!(res.as_ref().err(), format!("Len {}", &stack.len()).as_str());

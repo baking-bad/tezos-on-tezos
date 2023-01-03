@@ -18,7 +18,7 @@ impl TimestampItem {
     type_check_fn_comparable!(Timestamp);
 
     pub fn new(value: i64) -> Result<Self> {
-        Ok(Self(value))  // TODO: check non-negative
+        Ok(Self(value))
     }
 
     pub fn from_data(data: Data) -> Result<StackItem> {

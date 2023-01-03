@@ -172,3 +172,11 @@ impl TryInto<usize> for NatItem {
         Ok(res)
     }
 }
+
+impl TryFrom<i32> for NatItem {
+    type Error = Error;
+
+    fn try_from(value: i32) -> Result<Self> {
+        Ok(Self(UBig::try_from(value)?))
+    }
+}

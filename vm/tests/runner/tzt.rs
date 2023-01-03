@@ -6,7 +6,8 @@ use std::path::PathBuf;
 use tezos_michelson::micheline::{
     Micheline,
     sequence::Sequence,
-    primitive_application::PrimitiveApplication
+    primitive_application::PrimitiveApplication,
+    literals::Literal
 };
 use tezos_michelson::michelson::{
     types::{Code, Type},
@@ -48,16 +49,13 @@ impl TZT {
     pub fn run(&self) -> Result<()> {
         let mut stack = Stack::new();
         let mut context = Context {};
-        let scope = TransactionScope::default();
         trace_enter!();
 
         for input in self.input.items.iter().rev() {
             stack.push(input.clone())?;
         }
 
-        let res = self.code.execute(&mut stack, &scope, &mut context);
-
-        match res {
+        match self.code.execute(&mut stack, &self.input.scope, &mut context) {
             Ok(()) => {
                 for output in self.output.items.iter() {
                     let item = stack.pop()?;
@@ -69,8 +67,7 @@ impl TZT {
                 let expected = self.output.error.as_ref().expect("Error undefined");
                 assert_eq!(*expected, err);
                 trace_exit!(Some(&err.into()));
-            },
-            _ => unreachable!("Unexpected result")
+            }
         }
 
         Ok(())
@@ -101,7 +98,7 @@ fn parse_elements(sequence: Sequence) -> Result<Vec<StackItem>> {
                 let data = prim.nth_arg(1).expect("data").clone();
                 items.push(StackItem::from_micheline(data, &ty)?);
             },
-            _ => unreachable!("Expected `Stack_elt`")
+            _ => panic!("Expected `Stack_elt`")
         }
     }
     Ok(items)
@@ -121,31 +118,40 @@ fn parse_output(section: PrimitiveApplication) -> Result<Output> {
                         with: arg.first_arg().expect("Expected `with` arg").clone()
                     })
                 },
-                _ => unreachable!("Unknown primitive in output args")
+                _ => panic!("Unknown primitive in output args")
             },
             Micheline::Sequence(seq) => items = parse_elements(seq)?,
-            _ => unreachable!("Unexpected output arg")
+            _ => panic!("Unexpected output arg")
         }
     }
     Ok(Output { items, error })
+}
+
+fn parse_literal(outer: PrimitiveApplication) -> String {
+    let mut args = outer.into_args().expect("Expected single arg");
+    match args.remove(0) {
+        Micheline::Literal(Literal::Int(int)) => int.to_string(),
+        Micheline::Literal(Literal::String(string)) => string.into_string(),
+        _ => panic!("Unexpected literal")
+    }
 }
 
 fn parse_input(section: PrimitiveApplication) -> Result<Vec<StackItem>> {
     for arg in section.into_args().expect("Expected single arg") { 
         match arg {
             Micheline::Sequence(seq) => return parse_elements(seq),
-            _ => unreachable!("Input section has to have inner sequence as arg")
+            _ => panic!("Expected input sequence")
         }
     }
-    unreachable!("Input section has no args")
+    panic!("Input section is empty")
 }
 
 impl TryFrom<Micheline> for TZT {
     type Error = Error;
 
     fn try_from(src: Micheline) -> Result<Self> {
+        let mut items: Vec<StackItem> = Vec::new();
         let mut scope = TransactionScope::default();
-        let mut inputs: Vec<StackItem> = Vec::new();
         let mut output: Option<Output> = None;
         let mut code: Option<Instruction> = None;
 
@@ -153,17 +159,22 @@ impl TryFrom<Micheline> for TZT {
         for section in sections.into_values() {
             let prim = PrimitiveApplication::try_from(section)?;
             match prim.prim() {
-                "input" => inputs = parse_input(prim)?,
+                "input" => items = parse_input(prim)?,
                 "output" => output = Some(parse_output(prim)?),
                 "code" => code = Some(*Code::try_from(prim)?.code),
-                _ => unreachable!()
+                "amount" => scope.amount = parse_literal(prim).try_into()?,
+                "balance" => scope.balance = parse_literal(prim).try_into()?,
+                "sender" => scope.sender = parse_literal(prim).try_into()?,
+                "source" => scope.source = parse_literal(prim).try_into()?,
+                "now" => scope.now = i64::from_str_radix(parse_literal(prim).as_str(), 10).expect("ts"),
+                prim => panic!("Unexpected section {}", prim)
             }
         }
 
         Ok(Self {
             code: code.expect("Failed to parse code"),
             output: output.expect("Failed to parse output"),
-            input: Input {items: inputs, scope}
+            input: Input { items, scope },
         })
     }
 }

@@ -31,6 +31,7 @@ jobs:
 
       - name: Publish results
         uses: EnricoMi/publish-unit-test-result-action/composite@v2
+        if: always()
         with:
           junit_files: "target/nextest/default/*.xml"
 

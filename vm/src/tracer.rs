@@ -81,6 +81,12 @@ fn display_instr(instr: &Instruction) -> String {
         Instruction::Get(instr) => format_instr("Get", instr.n.as_ref()),
         Instruction::Update(instr) => format_instr("Update", instr.n.as_ref()),
         Instruction::GetAndUpdate(_) => format_instr("GetAndUpdate", None),
+        Instruction::Amount(_) => format_instr("Amount", None),
+        Instruction::Balance(_) => format_instr("Balance", None),
+        Instruction::Sender(_) => format_instr("Sender", None),
+        Instruction::Source(_) => format_instr("Source", None),
+        Instruction::Now(_) => format_instr("Now", None),
+        Instruction::Level(_) => format_instr("Level", None),
         _ => format!("{:?}", instr)
     }
 }
