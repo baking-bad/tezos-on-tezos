@@ -24,7 +24,7 @@ impl OrItem {
         Self::Right(var)
     }
 
-    pub fn from_data(data: Data, ty: &Type, left_type: &Type, right_type: &Type) -> Result<StackItem> {
+    pub fn from_data(data: Data, left_type: &Type, right_type: &Type) -> Result<StackItem> {
         match data {
             Data::Left(left) => {
                 let inner = StackItem::from_data(*left.value, left_type)?;
@@ -34,7 +34,7 @@ impl OrItem {
                 let inner = StackItem::from_data(*right.value, right_type)?;
                 Ok(StackItem::Or(Self::right(inner, left_type)))
             },
-            _ => err_type!(ty, data)
+            _ => err_type!("Data::Left or Data::Right", data)
         }
     }
     

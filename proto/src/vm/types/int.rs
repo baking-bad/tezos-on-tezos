@@ -17,10 +17,10 @@ use crate::{
 impl IntItem {
     type_check_fn_comparable!(Int);
 
-    pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
+    pub fn from_data(data: Data) -> Result<StackItem> {
         match data {
             Data::Int(val) => Ok(StackItem::Int(IBig::from_str_radix(val.to_str(), 10)?.into())),
-            _ => err_type!(ty, data)
+            _ => err_type!("Data::Int", data)
         }
     }
 

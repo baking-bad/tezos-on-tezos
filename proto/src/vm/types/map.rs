@@ -34,13 +34,13 @@ impl MapItem {
         return Ok(Self::new(items, key_type, val_type))
     }
 
-    pub fn from_data(data: Data, ty: &Type, key_type: &Type, val_type: &Type) -> Result<StackItem> {
+    pub fn from_data(data: Data, key_type: &Type, val_type: &Type) -> Result<StackItem> {
         match data {
             Data::Sequence(sequence) => {
                 let map = Self::from_sequence(sequence, key_type.clone(), val_type.clone())?;
                 Ok(StackItem::Map(map))
             },
-            _ => err_type!(ty, data)
+            _ => err_type!("Data::Sequence", data)
         }
     }
 

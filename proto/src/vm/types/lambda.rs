@@ -11,21 +11,32 @@ use crate::{
     err_type,
 };
 
+fn parse_instruction(data: Data) -> Result<Instruction> {
+    match data {
+        Data::Instruction(instr) => Ok(instr),
+        Data::Sequence(seq) => {
+            let values = seq.into_values();
+            let mut instructions: Vec<Instruction> = Vec::with_capacity(values.len());
+            for value in values {
+                instructions.push(parse_instruction(value)?);
+            }
+            Ok(Instruction::Sequence(instructions.into()))
+        },
+        _ => err_type!("Data::Instruction or Data::Sequence", data)
+    }
+}
+
 impl LambdaItem {
     pub fn new(param_type: Type, return_type: Type, body: Instruction) -> Self {
         Self { outer_value: body, inner_type: (param_type, return_type) }
     }
 
-    pub fn from_data(data: Data, ty: &Type, parameter_type: &Type, return_type: &Type) -> Result<StackItem> {
-        match data {
-            Data::Instruction(body) => {
-                let lambda = Self::new(parameter_type.clone(), return_type.clone(), body);
-                Ok(lambda.into())
-            },
-            _ => err_type!(ty, data)
-        }
+    pub fn from_data(data: Data, parameter_type: &Type, return_type: &Type) -> Result<StackItem> {
+        let body = parse_instruction(data)?;
+        let lambda = Self::new(parameter_type.clone(), return_type.clone(), body);
+        Ok(lambda.into())
     }
-        
+
     pub fn into_data(self, ty: &Type) -> Result<Data> {
         if let Type::Lambda(_) = ty {
             return Ok(Data::Instruction(self.outer_value))

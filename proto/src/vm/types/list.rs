@@ -41,13 +41,13 @@ impl ListItem {
         Self { outer_value: items, inner_type: val_type }
     }
 
-    pub fn from_data(data: Data, ty: &Type, val_type: &Type) -> Result<StackItem> {
+    pub fn from_data(data: Data, val_type: &Type) -> Result<StackItem> {
         match data {
             Data::Sequence(seq) => {
                 let items = seq_into_item_vec(seq, &val_type)?;
                 Ok(StackItem::List(Self::new(items, val_type.to_owned())))
             },
-            _ => err_type!(ty, data)
+            _ => err_type!("Data::Sequence", data)
         }
     }
 

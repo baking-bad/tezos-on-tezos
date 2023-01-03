@@ -23,7 +23,7 @@ impl BigMapItem {
                 let map = MapItem::from_sequence(sequence, key_type.clone(), val_type.clone())?;
                 Ok(StackItem::BigMap(Self::Map(map)))
             },
-            _ => err_type!(ty, data)
+            _ => err_type!("Data::Int or Data::Sequence", data)
         }
     }
 

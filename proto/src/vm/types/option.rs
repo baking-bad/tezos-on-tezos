@@ -27,7 +27,7 @@ impl OptionItem {
         Ok(Self { inner_type: val.get_type()?, outer_value: Some(Box::new(val)) })
     }
 
-    pub fn from_data(data: Data, ty: &Type, val_type: &Type) -> Result<StackItem> {
+    pub fn from_data(data: Data, val_type: &Type) -> Result<StackItem> {
         match data {
             Data::None(_) => Ok(Self::none(val_type).into()),
             Data::Some(val) => {
@@ -35,7 +35,7 @@ impl OptionItem {
                 let outer = Self::new(Some(Box::new(inner)), val_type);
                 Ok(outer.into())
             },
-            _ => err_type!(ty, data)
+            _ => err_type!("Data::None or Data::Some", data)
         }
     }
 

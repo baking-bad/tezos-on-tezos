@@ -26,7 +26,7 @@ impl PairItem {
         }
     }
 
-    pub fn from_data(data: Data, ty: &Type, first_type: &Type, second_type: &Type) -> Result<StackItem> {
+    pub fn from_data(data: Data, first_type: &Type, second_type: &Type) -> Result<StackItem> {
         match data {
             Data::Pair(mut pair) => {
                 assert_eq!(2, pair.values.len());
@@ -34,7 +34,7 @@ impl PairItem {
                 let second = StackItem::from_data(pair.values.remove(0), second_type)?;
                 Ok(StackItem::Pair(Self::new(first, second)))
             },
-            _ => err_type!(ty, data)
+            _ => err_type!("Data::Pair", data)
         }
     }
     

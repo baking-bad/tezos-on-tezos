@@ -21,11 +21,11 @@ impl TimestampItem {
         Ok(Self(value))  // TODO: check non-negative
     }
 
-    pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
+    pub fn from_data(data: Data) -> Result<StackItem> {
         let timestamp = match data {
             Data::String(val) => DateTime::parse_from_rfc3339(val.to_str())?.timestamp(),
             Data::Int(val) => val.to_integer()?,
-            _ => return err_type!(ty, data)
+            _ => return err_type!("Data::String or Data::Int", data)
         };
         Ok(StackItem::Timestamp(Self::new(timestamp)?))
     }

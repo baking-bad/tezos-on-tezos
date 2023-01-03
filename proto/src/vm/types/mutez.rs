@@ -26,7 +26,7 @@ impl MutezItem {
         Ok(Self(value)) // TODO: check overflow
     }
 
-    pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
+    pub fn from_data(data: Data) -> Result<StackItem> {
         match data {
             Data::Int(val) => {
                 match val.to_integer::<i64>() {
@@ -34,7 +34,7 @@ impl MutezItem {
                     Err(_) => Err(InterpreterError::MutezOverflow.into())
                 }                
             },
-            _ => err_type!(ty, data)
+            _ => err_type!("Data::Int", data)
         }
     }
 

@@ -18,10 +18,10 @@ use crate::{
 impl UnitItem {
     type_check_fn_comparable!(Unit);
 
-    pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
+    pub fn from_data(data: Data) -> Result<StackItem> {
         match data {
             Data::Unit(_) => Ok(StackItem::Unit(Self(()))),
-            _ => err_type!(ty, data)
+            _ => err_type!("Data::Unit", data)
         }
     }
 
@@ -34,11 +34,11 @@ impl UnitItem {
 impl BoolItem {
     type_check_fn_comparable!(Bool);
 
-    pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
+    pub fn from_data(data: Data) -> Result<StackItem> {
         match data {
             Data::True(_) => return Ok(StackItem::Bool(true.into())),
             Data::False(_) => return Ok(StackItem::Bool(false.into())),
-            _ => err_type!(ty, data)
+            _ => err_type!("Data::True or Data::False", data)
         }
     }
 
@@ -58,10 +58,10 @@ impl BoolItem {
 impl StringItem {
     type_check_fn_comparable!(String);
 
-    pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
+    pub fn from_data(data: Data) -> Result<StackItem> {
         match data {
             Data::String(val) => Ok(StackItem::String(Self(val.into_string()))),
-            _ => err_type!(ty, data)
+            _ => err_type!("Data::String", data)
         }
     }
 
@@ -92,10 +92,10 @@ impl StringItem {
 impl BytesItem {
     type_check_fn_comparable!(Bytes);
 
-    pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
+    pub fn from_data(data: Data) -> Result<StackItem> {
         match data {
             Data::Bytes(val) => Ok(StackItem::Bytes(Self((&val).into()))),
-            _ => err_type!(ty, data)
+            _ => err_type!("Data::Bytes", data)
         }
     }
 

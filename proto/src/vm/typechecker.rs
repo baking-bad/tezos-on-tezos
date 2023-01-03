@@ -112,31 +112,31 @@ impl StackItem {
     pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
         match ty {
             Type::Comparable(cmp) => match cmp {
-                ComparableType::Unit(_) => UnitItem::from_data(data, ty),
-                ComparableType::Bool(_) => BoolItem::from_data(data, ty),
-                ComparableType::String(_) => StringItem::from_data(data, ty),
-                ComparableType::Bytes(_) => BytesItem::from_data(data, ty),
-                ComparableType::Int(_) => IntItem::from_data(data, ty),
-                ComparableType::Nat(_) => NatItem::from_data(data, ty),
-                ComparableType::Mutez(_) => MutezItem::from_data(data, ty),
-                ComparableType::Timestamp(_) => TimestampItem::from_data(data, ty),
-                ComparableType::Address(_) => AddressItem::from_data(data, ty),
-                ComparableType::Key(_) => KeyItem::from_data(data, ty),
-                ComparableType::KeyHash(_) => KeyHashItem::from_data(data, ty),
-                ComparableType::Signature(_) => SignatureItem::from_data(data, ty),
+                ComparableType::Unit(_) => UnitItem::from_data(data),
+                ComparableType::Bool(_) => BoolItem::from_data(data),
+                ComparableType::String(_) => StringItem::from_data(data),
+                ComparableType::Bytes(_) => BytesItem::from_data(data),
+                ComparableType::Int(_) => IntItem::from_data(data),
+                ComparableType::Nat(_) => NatItem::from_data(data),
+                ComparableType::Mutez(_) => MutezItem::from_data(data),
+                ComparableType::Timestamp(_) => TimestampItem::from_data(data),
+                ComparableType::Address(_) => AddressItem::from_data(data),
+                ComparableType::Key(_) => KeyItem::from_data(data),
+                ComparableType::KeyHash(_) => KeyHashItem::from_data(data),
+                ComparableType::Signature(_) => SignatureItem::from_data(data),
                 _ => Err(InterpreterError::MichelsonTypeUnsupported { ty: ty.clone() }.into())
             },
-            Type::Option(option_ty) => OptionItem::from_data(data, ty, &option_ty.r#type),
-            Type::Or(or_ty) => OrItem::from_data(data, ty, &or_ty.lhs, &or_ty.rhs),
+            Type::Option(option_ty) => OptionItem::from_data(data, &option_ty.r#type),
+            Type::Or(or_ty) => OrItem::from_data(data, &or_ty.lhs, &or_ty.rhs),
             Type::Pair(pair_ty) => {
                 assert_eq!(2, pair_ty.types.len());
-                PairItem::from_data(data, ty, &pair_ty.types[0], &pair_ty.types[1])
+                PairItem::from_data(data, &pair_ty.types[0], &pair_ty.types[1])
             },
-            Type::List(list_ty) => ListItem::from_data(data, ty, &list_ty.r#type),
-            Type::Set(set_ty) => SetItem::from_data(data, ty, cmp_ty!(set_ty.r#type)),
-            Type::Map(map_ty) => MapItem::from_data(data, ty, cmp_ty!(*map_ty.key_type), &map_ty.value_type),
+            Type::List(list_ty) => ListItem::from_data(data, &list_ty.r#type),
+            Type::Set(set_ty) => SetItem::from_data(data, cmp_ty!(set_ty.r#type)),
+            Type::Map(map_ty) => MapItem::from_data(data, cmp_ty!(*map_ty.key_type), &map_ty.value_type),
             Type::BigMap(map_ty) => BigMapItem::from_data(data, ty, cmp_ty!(*map_ty.key_type), &map_ty.value_type),
-            Type::Lambda(lambda_ty) => LambdaItem::from_data(data, ty, &lambda_ty.parameter_type, &lambda_ty.return_type),
+            Type::Lambda(lambda_ty) => LambdaItem::from_data(data, &lambda_ty.parameter_type, &lambda_ty.return_type),
             Type::Parameter(param_ty) => StackItem::from_data(data, &param_ty.r#type),
             Type::Storage(storage_ty) => StackItem::from_data(data, &storage_ty.r#type),
             _ => Err(InterpreterError::MichelsonTypeUnsupported { ty: ty.clone() }.into())

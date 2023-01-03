@@ -17,14 +17,14 @@ impl SetItem {
         Self { outer_value: items, inner_type: val_type }
     }
 
-    pub fn from_data(data: Data, ty: &Type, val_type: &Type) -> Result<StackItem> {        
+    pub fn from_data(data: Data, val_type: &Type) -> Result<StackItem> {        
         match data {
             Data::Sequence(seq) => {
                 let items = seq_into_item_vec(seq, val_type)?;
                 // TODO: ensure no duplicates
                 Ok(StackItem::Set(Self::new(items, val_type.clone())))
             },
-            _ => err_type!(ty, data)
+            _ => err_type!("Data::Sequence", data)
         }
     }
 

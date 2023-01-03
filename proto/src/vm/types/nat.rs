@@ -17,10 +17,10 @@ use crate::{
 impl NatItem {
     type_check_fn_comparable!(Nat);
 
-    pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
+    pub fn from_data(data: Data) -> Result<StackItem> {
         match data {
             Data::Int(val) => Ok(StackItem::Nat(UBig::from_str_radix(val.to_str(), 10)?.into())),
-            _ => err_type!(ty, data)
+            _ => err_type!("Data::Int", data)
         }
     }
 

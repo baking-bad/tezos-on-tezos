@@ -20,10 +20,10 @@ macro_rules! impl_for_encoded {
         impl $item_ty {
             type_check_fn_comparable!($cmp_ty);
 
-            pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
+            pub fn from_data(data: Data) -> Result<StackItem> {
                 match data {
                     Data::String(val) => Ok($item_ty(<$impl_ty>::new(val.into_string())?).into()),
-                    _ => err_type!(ty, data)
+                    _ => err_type!("Data::String", data)
                 }
             }
                 
