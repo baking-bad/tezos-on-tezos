@@ -43,6 +43,9 @@ build:
 test:
 	RUSTC_BOOTSTRAP=1 RUST_BACKTRACE=1 cargo test -Z sparse-registry --no-fail-fast --tests -- --nocapture
 
+nextest:
+	cargo nextest run --tests
+
 trace:
 # TODO: pass test suite name
 	cargo test --jobs 1 --no-fail-fast --test tzt_iter --features trace -- --nocapture --test-threads=1
