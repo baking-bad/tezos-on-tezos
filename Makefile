@@ -41,9 +41,10 @@ build:
 	$(MAKE) build-installer
 
 test:
-	RUSTC_BOOTSTRAP=1 RUST_BACKTRACE=1 cargo test -Z sparse-registry --lib test -- --nocapture
+	RUSTC_BOOTSTRAP=1 RUST_BACKTRACE=1 cargo test -Z sparse-registry --no-fail-fast --tests -- --nocapture
 
 trace:
+# TODO: pass test suite name
 	cargo test --jobs 1 --no-fail-fast --test tzt_packunpack --features trace -- --nocapture --test-threads=1
 
 image-daily:
