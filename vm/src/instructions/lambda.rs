@@ -50,7 +50,7 @@ impl PureInterpreter for Apply {
                 assert_eq!(2, pair_ty.types.len());
                 (pair_ty.types[0].clone(), pair_ty.types[1].clone())
             },
-            ty => return err_type!("Pair", ty)
+            ty => return err_type!("PairItem", ty)
         };
 
         let const_arg = const_arg.into_data(&const_ty)?;

@@ -11,7 +11,6 @@ use crate::{
     types::{MapItem, StackItem, PairItem, OptionItem},
     typechecker::check_types_equal,
     err_type,
-    cmp_ty
 };
 
 impl MapItem {
@@ -48,7 +47,7 @@ impl MapItem {
         match ty {
             Type::Map(map_ty) => {
                 if self.outer_value.is_empty() {
-                    check_types_equal(cmp_ty!(*map_ty.key_type), &self.inner_type.0)?;
+                    check_types_equal(&map_ty.key_type, &self.inner_type.0)?;
                     check_types_equal(&map_ty.value_type, &self.inner_type.1)?;
                     Ok(Data::Sequence(data::sequence(vec![])))
                 } else {
@@ -75,7 +74,7 @@ impl MapItem {
 
     pub fn get_type(&self) -> Result<Type> {
         let (kty, vty) = self.inner_type.clone();
-        Ok(types::map(kty.try_into()?, vty))
+        Ok(types::map(kty, vty))
     }
 
     pub fn get_keys(&self) -> Vec<StackItem> {

@@ -31,7 +31,7 @@ impl SetItem {
     pub fn into_data(self, ty: &Type) -> Result<Data> {
         match ty {
             Type::Set(set_ty) => {
-                item_vec_into_seq(self.outer_value, &self.inner_type, &set_ty.r#type.clone().into())
+                item_vec_into_seq(self.outer_value, &self.inner_type, &set_ty.r#type)
             },
             _ => err_type!(ty, self)
         }
@@ -43,8 +43,8 @@ impl SetItem {
 
     pub fn get_type(&self) -> Result<Type> {
         match &self.inner_type {
-            Type::Comparable(ty) => Ok(types::set(ty.clone())),
-            ty => err_type!("ComparableType", ty)
+            Type::Comparable(ty) => Ok(types::set(ty.clone().into())),
+            ty => err_type!("Type::Comparable", ty)
         }
     }
 

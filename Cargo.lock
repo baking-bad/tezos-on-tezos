@@ -936,7 +936,7 @@ dependencies = [
 [[package]]
 name = "host"
 version = "0.1.0"
-source = "git+https://gitlab.com/tezos/kernel#53e9c763eb78d29a05560189bfabc1b2c235dac5"
+source = "git+https://gitlab.com/tezos/kernel#67972e81114dd5e055bd08f950105fafd6122fff"
 
 [[package]]
 name = "http"
@@ -1240,7 +1240,7 @@ dependencies = [
 [[package]]
 name = "mock_runtime"
 version = "0.1.0"
-source = "git+https://gitlab.com/tezos/kernel#53e9c763eb78d29a05560189bfabc1b2c235dac5"
+source = "git+https://gitlab.com/tezos/kernel#67972e81114dd5e055bd08f950105fafd6122fff"
 dependencies = [
  "crypto",
  "host",
@@ -1844,7 +1844,7 @@ dependencies = [
 [[package]]
 name = "tezos-core"
 version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#ed51c35eaeeeddbd0498fcb95640a6df1a3eb25e"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#6c4c1a5147fac5e360c402eaf312f4fe1321761c"
 dependencies = [
  "blake2",
  "bs58",
@@ -1863,7 +1863,7 @@ dependencies = [
 [[package]]
 name = "tezos-michelson"
 version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#ed51c35eaeeeddbd0498fcb95640a6df1a3eb25e"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#6c4c1a5147fac5e360c402eaf312f4fe1321761c"
 dependencies = [
  "chrono",
  "derive_more",
@@ -1879,7 +1879,7 @@ dependencies = [
 [[package]]
 name = "tezos-operation"
 version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#ed51c35eaeeeddbd0498fcb95640a6df1a3eb25e"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#6c4c1a5147fac5e360c402eaf312f4fe1321761c"
 dependencies = [
  "chrono",
  "derive_more",
@@ -1893,7 +1893,7 @@ dependencies = [
 [[package]]
 name = "tezos-rpc"
 version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#ed51c35eaeeeddbd0498fcb95640a6df1a3eb25e"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#6c4c1a5147fac5e360c402eaf312f4fe1321761c"
 dependencies = [
  "async-trait",
  "chrono",
@@ -1938,7 +1938,7 @@ dependencies = [
 [[package]]
 name = "tezos_rollup_encoding"
 version = "0.1.0"
-source = "git+https://gitlab.com/tezos/kernel#53e9c763eb78d29a05560189bfabc1b2c235dac5"
+source = "git+https://gitlab.com/tezos/kernel#67972e81114dd5e055bd08f950105fafd6122fff"
 dependencies = [
  "crypto",
  "host",

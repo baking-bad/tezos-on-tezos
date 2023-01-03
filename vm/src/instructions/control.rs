@@ -177,7 +177,7 @@ impl Interpreter for Map {
                 };
                 Ok(MapItem::new(output, key_type, val_type).into())
             },
-            item => err_type!("ListItem | MapItem", item)
+            item => err_type!("ListItem or MapItem", item)
         };
         stack.push(res?)
     }
@@ -189,7 +189,7 @@ impl Interpreter for Iter {
             StackItem::Set(set) => set.unwrap().0,
             StackItem::List(list) => list.unwrap().0,
             StackItem::Map(map) => map.unwrap().0,
-            item => return err_type!("SetItem | ListItem | MapItem", item)
+            item => return err_type!("SetItem, ListItem, or MapItem", item)
         };
         for item in input {
             stack.push(item)?;

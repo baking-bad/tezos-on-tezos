@@ -54,7 +54,7 @@ impl PairItem {
             n if n > 2 => {
                 let mut items = match self.0.1 {
                     StackItem::Pair(inner_pair) => inner_pair.into_items(arity - 1)?,
-                    item => return err_type!("Inner pair", item)
+                    item => return err_type!("PairItem (inner)", item)
                 };
                 items.insert(0, self.0.0);
                 Ok(items)
@@ -73,7 +73,7 @@ impl PairItem {
             1 => Ok(self.0.1.clone()),
             _ => match &self.0.1 {
                 StackItem::Pair(inner_pair) => inner_pair.get(idx - 1),
-                item => err_type!("Inner pair", item)
+                item => err_type!("PairItem (inner)", item)
             }
         }
     }
@@ -84,7 +84,7 @@ impl PairItem {
             1 => Ok(Self::new(self.0.0, item)),
             _ => match self.0.1 {
                 StackItem::Pair(inner_pair) => inner_pair.update(idx - 1, item),
-                item => err_type!("Inner pair", item)
+                item => err_type!("PairItem (inner)", item)
             }
         }
     }

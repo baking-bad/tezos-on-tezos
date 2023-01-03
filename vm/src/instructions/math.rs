@@ -30,7 +30,7 @@ impl PureInterpreter for Add {
             (StackItem::Timestamp(a), StackItem::Int(b)) => (a + b)?.into(),
             (StackItem::Int(a), StackItem::Timestamp(b)) => (b + a)?.into(),
             (StackItem::Mutez(a), StackItem::Mutez(b)) => (a + b)?.into(),
-            items => return err_type!("numeric types", items)
+            items => return err_type!("NatItem, IntItem, TimestampItem, or MutezItem", items)
         };
         stack.push(res)
     }
@@ -47,7 +47,7 @@ impl PureInterpreter for Ediv {
             (StackItem::Int(a), StackItem::Int(b)) => (a / b).into(),
             (StackItem::Mutez(a), StackItem::Nat(b)) => (a / b)?.into(),
             (StackItem::Mutez(a), StackItem::Mutez(b)) => (a / b)?.into(),
-            items => return err_type!("numeric types", items)
+            items => return err_type!("NatItem, IntItem, or MutezItem", items)
         };
         stack.push(res)
     }
@@ -82,7 +82,7 @@ impl PureInterpreter for Mul {
             (StackItem::Int(a), StackItem::Int(b)) => (a * b).into(),
             (StackItem::Mutez(a), StackItem::Nat(b)) => (a * b)?.into(),
             (StackItem::Nat(a), StackItem::Mutez(b)) => (b * a)?.into(),
-            items => return err_type!("numeric types", items)
+            items => return err_type!("NatItem, IntItem, or MutezItem", items)
         };
         stack.push(res)
     }
@@ -93,7 +93,7 @@ impl PureInterpreter for Neg {
         let res: StackItem = match stack.pop()? {
             StackItem::Nat(a) => (-a).into(),
             StackItem::Int(a) => (-a).into(),
-            items => return err_type!("numeric types", items)
+            items => return err_type!("NatItem or IntItem", items)
         };
         stack.push(res)
     }
@@ -111,7 +111,7 @@ impl PureInterpreter for Sub {
             (StackItem::Timestamp(a), StackItem::Int(b)) => (a - b)?.into(),
             (StackItem::Timestamp(a), StackItem::Timestamp(b)) => (a - b).into(),
             (StackItem::Mutez(a), StackItem::Mutez(b)) => (a - b)?.into(),
-            items => return err_type!("numeric types", items)
+            items => return err_type!("NatItem, IntItem, TimestampItem, or MutezItem", items)
         };
         stack.push(res)
     }
@@ -138,7 +138,7 @@ impl PureInterpreter for Or {
         let res: StackItem = match (a, b) {
             (StackItem::Bool(a), StackItem::Bool(b)) => (a | b).into(),
             (StackItem::Nat(a), StackItem::Nat(b)) => (a | b).into(),
-            items => return err_type!("numeric types", items)
+            items => return err_type!("BoolItem or NatItem", items)
         };
         stack.push(res)
     }
@@ -151,7 +151,7 @@ impl PureInterpreter for Xor {
         let res: StackItem = match (a, b) {
             (StackItem::Bool(a), StackItem::Bool(b)) => (a ^ b).into(),
             (StackItem::Nat(a), StackItem::Nat(b)) => (a ^ b).into(),
-            items => return err_type!("numeric types", items)
+            items => return err_type!("BoolItem or NatItem", items)
         };
         stack.push(res)
     }
@@ -165,7 +165,7 @@ impl PureInterpreter for And {
             (StackItem::Bool(a), StackItem::Bool(b)) => (a & b).into(),
             (StackItem::Nat(a), StackItem::Nat(b)) => (a & b).into(),
             (StackItem::Int(a), StackItem::Nat(b)) => (a & b)?.into(),
-            items => return err_type!("numeric types", items)
+            items => return err_type!("BoolItem, IntItem, or NatItem", items)
         };
         stack.push(res)
     }
@@ -177,7 +177,7 @@ impl PureInterpreter for Not {
             StackItem::Bool(a) => (!a).into(),
             StackItem::Nat(a) => (!a).into(),
             StackItem::Int(a) => (!a).into(),
-            items => return err_type!("numeric types", items)
+            items => return err_type!("BoolItem, IntItem, or NatItem", items)
         };
         stack.push(res)
     }

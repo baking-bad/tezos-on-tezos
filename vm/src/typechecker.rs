@@ -12,13 +12,6 @@ use crate::{
     err_type
 };
 
-#[macro_export]
-macro_rules! cmp_ty {
-    ($ty: expr) => {
-        &Type::Comparable($ty.clone())
-    };
-}
-
 pub fn type_comparable(ty: &Type) -> bool {
     match ty {
         Type::Comparable(_) => true,
@@ -32,7 +25,7 @@ pub fn type_comparable(ty: &Type) -> bool {
 pub fn check_type_comparable(ty: &Type) -> Result<()> {
     match type_comparable(ty) {
         true => Ok(()),
-        false => err_type!("comparable", ty),
+        false => err_type!("Comparable type", ty),
     }
 }
 
@@ -81,13 +74,13 @@ pub fn types_equal(lhs: &Type, rhs: &Type) -> Result<bool> {
             types_equal(&lty.types[1], &rty.types[1])
         },
         (Type::List(lty), Type::List(rty)) => types_equal(&lty.r#type, &rty.r#type),
-        (Type::Set(lty), Type::Set(rty)) => comparable_types_equal(&lty.r#type, &rty.r#type),
+        (Type::Set(lty), Type::Set(rty)) => types_equal(&lty.r#type, &rty.r#type),
         (Type::Map(lty), Type::Map(rty)) => {
-            comparable_types_equal(&lty.key_type, &rty.key_type)?;
+            types_equal(&lty.key_type, &rty.key_type)?;
             types_equal(&lty.value_type, &rty.value_type)
         },
         (Type::BigMap(lty), Type::BigMap(rty)) => {
-            comparable_types_equal(&lty.key_type, &rty.key_type)?;
+            types_equal(&lty.key_type, &rty.key_type)?;
             types_equal(&lty.value_type, &rty.value_type)
         },
         (Type::Lambda(lty), Type::Lambda(rty)) => {
@@ -133,9 +126,9 @@ impl StackItem {
                 PairItem::from_data(data, &pair_ty.types[0], &pair_ty.types[1])
             },
             Type::List(list_ty) => ListItem::from_data(data, &list_ty.r#type),
-            Type::Set(set_ty) => SetItem::from_data(data, cmp_ty!(set_ty.r#type)),
-            Type::Map(map_ty) => MapItem::from_data(data, cmp_ty!(*map_ty.key_type), &map_ty.value_type),
-            Type::BigMap(map_ty) => BigMapItem::from_data(data, ty, cmp_ty!(*map_ty.key_type), &map_ty.value_type),
+            Type::Set(set_ty) => SetItem::from_data(data, &set_ty.r#type),
+            Type::Map(map_ty) => MapItem::from_data(data, &map_ty.key_type, &map_ty.value_type),
+            Type::BigMap(map_ty) => BigMapItem::from_data(data, ty, &map_ty.key_type, &map_ty.value_type),
             Type::Lambda(lambda_ty) => LambdaItem::from_data(data, &lambda_ty.parameter_type, &lambda_ty.return_type),
             Type::Parameter(param_ty) => StackItem::from_data(data, &param_ty.r#type),
             Type::Storage(storage_ty) => StackItem::from_data(data, &storage_ty.r#type),

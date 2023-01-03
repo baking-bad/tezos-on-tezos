@@ -48,7 +48,7 @@ impl ContextIntepreter for Mem {
             StackItem::Set(set) => set.contains(&key)?,
             StackItem::Map(map) => map.contains(&key)?,
             StackItem::BigMap(big_map) => todo!("Context bindings"),
-            item => return err_type!("set, map, or big_map", item)
+            item => return err_type!("SetItem, MapItem, or BigMapItem", item)
         };
         stack.push(StackItem::Bool(res.into()))
     }
@@ -65,7 +65,7 @@ impl ContextIntepreter for Get {
             match stack.pop()? {
                 StackItem::Map(map) => map.get(&key)?.into(),
                 StackItem::BigMap(big_map) => todo!("Context bindings"),
-                item => return err_type!("map or big_map", item)
+                item => return err_type!("MapItem or BigMapItem", item)
             }
         };
         stack.push(res)
@@ -92,9 +92,9 @@ impl ContextIntepreter for Update {
                         res.into()
                     },
                     StackItem::BigMap(big_map) => todo!("Context bindings"),
-                    item => return err_type!("map or big_map", item)
+                    item => return err_type!("MapItem or BigMapItem", item)
                 },
-                item => return err_type!("bool or option", item)
+                item => return err_type!("BoolItem or OptionItem", item)
             }
         };
         stack.push(res)
@@ -112,7 +112,7 @@ impl ContextIntepreter for GetAndUpdate {
                 stack.push(old.into())
             },
             StackItem::BigMap(big_map) => todo!(),
-            item => return err_type!("map or big_map", item)
+            item => return err_type!("MapItem or BigMapItem", item)
         }
     }
 }

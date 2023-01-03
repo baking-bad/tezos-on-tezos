@@ -59,7 +59,7 @@ impl PureInterpreter for Size {
             StackItem::List(item) => item.len(),
             StackItem::Set(item) => item.len(),
             StackItem::Map(item) => item.len(),
-            item => return err_type!("Sizeable", item)
+            item => return err_type!("StringItem, BytesItem, ListItem, SetItem, or MapItem", item)
         };
         stack.push(StackItem::Nat(UBig::from(size).into()))
     }
@@ -76,7 +76,7 @@ impl PureInterpreter for Slice {
         let res = match stack.pop()? {
             StackItem::String(item) => item.slice(offset, offset + length),
             StackItem::Bytes(item) => item.slice(offset, offset + length),
-            item => return err_type!("string or bytes", item)
+            item => return err_type!("StringItem or BytesItem", item)
         };
         stack.push(res.into())
     }
@@ -93,7 +93,7 @@ impl PureInterpreter for Concat {
                         for item in items {
                             match item {
                                 StackItem::String(item) => output.push(item.unwrap()),
-                                _ => return err_type!("string", item)
+                                _ => return err_type!("StringItem", item)
                             }
                         }
                         StackItem::String(output.concat().into())
@@ -103,12 +103,12 @@ impl PureInterpreter for Concat {
                         for item in items {
                             match item {
                                 StackItem::Bytes(item) => output.append(item.unwrap().as_mut()),
-                                _ => return err_type!("bytes", item)
+                                _ => return err_type!("BytesItem", item)
                             }
                         }
                         StackItem::Bytes(output.into())
                     },
-                    ty => return err_type!("string or bytes", ty)
+                    ty => return err_type!("StringItem or BytesItem", ty)
                 }
             },
             StackItem::String(a) => {
@@ -119,7 +119,7 @@ impl PureInterpreter for Concat {
                 let b = pop_cast!(stack, Bytes);
                 (a + b).into()
             },
-            item => return err_type!("list(str | bytes) or (str, str) or (bytes, bytes)", item)
+            item => return err_type!("ListItem<StringItem or BytesItem>, SringItem, or BytesItem", item)
         };
         stack.push(res)
     }
