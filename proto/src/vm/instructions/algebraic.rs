@@ -64,7 +64,7 @@ impl PureInterpreter for Unpair {
         let pair = pop_cast!(stack, Pair);
         let n = parse_arity(&self.n)?;
         let items = pair.into_items(n)?;
-        for item in items {
+        for item in items.into_iter().rev() {
             stack.push(item)?;
         }
         Ok(())

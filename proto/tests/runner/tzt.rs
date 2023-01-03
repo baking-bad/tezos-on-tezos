@@ -1,3 +1,4 @@
+
 use serde_json_wasm;
 use std::fs::File;
 use std::io::Read;
@@ -15,8 +16,10 @@ use proto::{
     Result,
     Error,
     error::InterpreterError,
-    vm::{StackItem, Stack, Interpreter, TransactionScope, trace_init, trace_ret},
+    vm::{StackItem, Stack, Interpreter, TransactionScope},
     context::ephemeral::EphemeralContext,
+    trace_enter,
+    trace_exit
 };
 
 pub struct TZT {
@@ -40,7 +43,7 @@ impl TZT {
         let mut stack = Stack::new();
         let mut context = EphemeralContext::new();
         let scope = TransactionScope::default();
-        trace_init("tzt");
+        trace_enter!();
 
         for input in self.input.items.iter().rev() {
             stack.push(input.clone())?;
@@ -54,12 +57,12 @@ impl TZT {
                     let item = stack.pop()?;
                     assert_eq!(*output, item);
                 }
-                trace_ret(None);
+                trace_exit!();
             },
             Err(Error::InterpreterError(err)) => {
                 let expected = self.output.error.as_ref().expect("Error undefined");
                 assert_eq!(*expected, err);
-                trace_ret(Some(&err.into()));
+                trace_exit!(Some(&err.into()));
             },
             _ => unreachable!("Unexpected result")
         }

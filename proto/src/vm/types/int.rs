@@ -34,13 +34,19 @@ impl IntItem {
     }
 
     pub fn nat(self) -> Result<OptionItem> {
-        let outer_value = if self.0 > 0.into() {
+        let outer_value = if self.0 >= 0.into() {
             let nat = NatItem(self.0.try_into()?);
             Some(Box::new(StackItem::Nat(nat)))
         } else {
             None
         };
         Ok(OptionItem { outer_value, inner_type: nat() })
+    }
+}
+
+impl From<i64> for IntItem {
+    fn from(value: i64) -> Self {
+        Self(value.into())
     }
 }
 

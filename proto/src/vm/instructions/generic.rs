@@ -9,12 +9,12 @@ use tezos_michelson::michelson::types::{Type, ComparableType};
 use crate::{
     Result,
     vm::interpreter::{PureInterpreter},
-    vm::types::{StackItem, OptionItem},
+    vm::types::{StackItem, OptionItem, IntItem},
     vm::typechecker::{check_type_comparable, check_types_equal},
     vm::stack::Stack,
-    vm::trace_err,
     pop_cast,
-    err_type
+    err_type,
+    trace_log
 };
 
 impl PureInterpreter for Compare {
@@ -36,15 +36,8 @@ macro_rules! impl_interpreter_for_op {
     ($instr: ty, $op: tt) => {
         impl PureInterpreter for $instr {
             fn execute(&self, stack: &mut Stack) -> Result<()> {
-                let a = stack.pop()?;
-                let b = stack.pop()?;
-        
-                let lty = a.get_type()?;
-                check_type_comparable(&lty)?;
-                let rty = b.get_type()?;
-                check_types_equal(&lty, &rty)?;
-        
-                let res = a $op b;
+                let a = pop_cast!(stack, Int);        
+                let res = a $op IntItem::from(0);
                 stack.push(StackItem::Bool(res.into()))
             }
         }
@@ -146,11 +139,13 @@ impl PureInterpreter for Pack {
 impl PureInterpreter for Unpack {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let item = pop_cast!(stack, Bytes);
-        let data = Michelson::unpack(item.unwrap().as_slice(), Some(&self.r#type))?;
-        let value = match StackItem::from_data(data.try_into()?, &self.r#type) {
-            Ok(item) => Some(Box::new(item)),
+        let value = match Michelson::unpack(item.unwrap().as_slice(), Some(&self.r#type)) {
+            Ok(data) => {
+                let item = StackItem::from_data(data.try_into()?, &self.r#type)?;
+                Some(Box::new(item))
+            },
             Err(err) => {
-                trace_err(&err);
+                trace_log!(&err.into());
                 None
             }
         };

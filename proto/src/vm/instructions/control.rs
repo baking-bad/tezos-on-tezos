@@ -11,7 +11,9 @@ use crate::{
     vm::stack::Stack,
     context::Context,
     pop_cast,
-    err_type
+    err_type,
+    trace_enter,
+    trace_exit
 };
 
 impl Interpreter for Sequence {
@@ -27,7 +29,7 @@ impl Interpreter for Dip {
     fn execute(&self, stack: &mut Stack, tx_scope: &TransactionScope, global_ctx: &mut impl Context) -> Result<()> {
         let count: usize = match &self.n {
             Some(n) => n.to_integer()?,
-            None => 0
+            None => 1
         };
         stack.protect(count)?;
         self.instruction.execute(stack, tx_scope, global_ctx)?;
@@ -46,7 +48,13 @@ impl PureInterpreter for FailWith {
 impl Interpreter for If {
     fn execute(&self, stack: &mut Stack, tx_scope: &TransactionScope, global_ctx: &mut impl Context) -> Result<()> {
         let cond = pop_cast!(stack, Bool);
-        let branch = if cond.is_true() { &self.if_branch } else { &self.else_branch };
+        let branch = if cond.is_true() {
+            trace_exit!("Yes");
+            &self.if_branch
+        } else {
+            trace_exit!("Else");
+            &self.else_branch
+        };        
         branch.execute(stack, tx_scope, global_ctx)
     }
 }
@@ -58,8 +66,10 @@ impl Interpreter for IfCons {
             let (head, tail) = list.split_head()?;
             stack.push(tail.into())?;
             stack.push(head)?;
+            trace_exit!("Yes");
             &self.if_branch
         } else {
+            trace_exit!("Else");
             &self.else_branch
         };
         branch.execute(stack, tx_scope, global_ctx)
@@ -69,8 +79,15 @@ impl Interpreter for IfCons {
 impl Interpreter for IfLeft {
     fn execute(&self, stack: &mut Stack, tx_scope: &TransactionScope, global_ctx: &mut impl Context) -> Result<()> {
         let or = pop_cast!(stack, Or);
-        let branch = if or.is_left() { &self.if_branch } else { &self.else_branch };
+        let cond = or.is_left();
         stack.push(or.unwrap())?;
+        let branch = if cond {
+            trace_exit!("Yes");
+            &self.if_branch
+        } else {
+            trace_exit!("Else");
+            &self.else_branch
+        };
         branch.execute(stack, tx_scope, global_ctx)
     }
 }
@@ -79,9 +96,13 @@ impl Interpreter for IfNone {
     fn execute(&self, stack: &mut Stack, tx_scope: &TransactionScope, global_ctx: &mut impl Context) -> Result<()> {
         let option = pop_cast!(stack, Option);
         let branch = match option.unwrap() {
-            None => &self.if_branch,
+            None => {
+                trace_exit!("Yes");
+                &self.if_branch
+            },
             Some(item) => {
                 stack.push(item)?;
+                trace_exit!("Else");
                 &self.else_branch
             }
         };
@@ -94,12 +115,14 @@ impl Interpreter for Loop {
         loop {
             let cond = pop_cast!(stack, Bool);
             if cond.is_true() {
-                self.body.execute(stack, tx_scope, global_ctx)?;
+                trace_enter!("Step");
+                let res = self.body.execute(stack, tx_scope, global_ctx);
+                trace_exit!(res.as_ref().err());
+                res?
             } else {
-                break
+                break Ok(())
             }
         }
-        Ok(())
     }
 }
 
@@ -110,12 +133,14 @@ impl Interpreter for LoopLeft {
             let cond = or.is_left();
             stack.push(or.unwrap())?;
             if cond {
-                self.body.execute(stack, tx_scope, global_ctx)?;
+                trace_enter!("Step");
+                let res = self.body.execute(stack, tx_scope, global_ctx);
+                trace_exit!(res.as_ref().err());
+                res?
             } else {
-                break
+                break Ok(())
             }
         }
-        Ok(())
     }
 }
 
@@ -127,7 +152,10 @@ impl Interpreter for Map {
             let mut output: Vec<StackItem> = Vec::with_capacity(input.len());
             for item in input {
                 stack.push(item)?;
-                self.expression.execute(stack, tx_scope, global_ctx)?;
+                trace_enter!("Step");
+                let res = self.expression.execute(stack, tx_scope, global_ctx);
+                trace_exit!(res.as_ref().err());
+                res?;
                 output.push(stack.pop()?);
             }
             Ok(output)
@@ -167,7 +195,10 @@ impl Interpreter for Iter {
         };
         for item in input {
             stack.push(item)?;
-            self.expression.execute(stack, tx_scope, global_ctx)?;
+            trace_enter!("Step");
+            let res = self.expression.execute(stack, tx_scope, global_ctx);
+            trace_exit!(res.as_ref().err());
+            res?;
         }
         Ok(())
     }

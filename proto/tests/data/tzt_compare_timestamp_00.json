@@ -18,7 +18,7 @@
               "prim": "timestamp"
             },
             {
-              "string": "1"
+              "int": "1"
             }
           ],
           "prim": "Stack_elt"
@@ -29,7 +29,7 @@
               "prim": "timestamp"
             },
             {
-              "string": "1"
+              "int": "1"
             }
           ],
           "prim": "Stack_elt"

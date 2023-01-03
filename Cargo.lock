@@ -1845,7 +1845,7 @@ dependencies = [
 [[package]]
 name = "tezos-core"
 version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#f335a5bf7ae55f412b9fed6c853d21f964c6a35c"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#ed51c35eaeeeddbd0498fcb95640a6df1a3eb25e"
 dependencies = [
  "blake2",
  "bs58",
@@ -1864,7 +1864,7 @@ dependencies = [
 [[package]]
 name = "tezos-michelson"
 version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#f335a5bf7ae55f412b9fed6c853d21f964c6a35c"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#ed51c35eaeeeddbd0498fcb95640a6df1a3eb25e"
 dependencies = [
  "chrono",
  "derive_more",
@@ -1880,7 +1880,7 @@ dependencies = [
 [[package]]
 name = "tezos-operation"
 version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#f335a5bf7ae55f412b9fed6c853d21f964c6a35c"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#ed51c35eaeeeddbd0498fcb95640a6df1a3eb25e"
 dependencies = [
  "chrono",
  "derive_more",
@@ -1894,7 +1894,7 @@ dependencies = [
 [[package]]
 name = "tezos-rpc"
 version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#f335a5bf7ae55f412b9fed6c853d21f964c6a35c"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#ed51c35eaeeeddbd0498fcb95640a6df1a3eb25e"
 dependencies = [
  "async-trait",
  "chrono",

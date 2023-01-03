@@ -38,22 +38,16 @@ macro_rules! type_check_fn_comparable {
 }
 
 #[macro_export]
-macro_rules! partial_traits_unreachable {
+macro_rules! not_comparable {
     ($item: ty) => {
-        impl PartialEq for $item {
-            fn eq(&self, _: &Self) -> bool {
-                unreachable!("Not a comparable type")
-            }
-        }
-
         impl PartialOrd for $item {
-            fn partial_cmp(&self, _: &Self) -> Option<std::cmp::Ordering> {
+            fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
                 unreachable!("Not a comparable type")
             }
         }
 
         impl Ord for $item {
-            fn cmp(&self, _: &Self) -> std::cmp::Ordering {
+            fn cmp(&self, other: &Self) -> std::cmp::Ordering {
                 unreachable!("Not a comparable type")
             }
         }
@@ -106,12 +100,12 @@ define_item_rec!(SetItem, Vec<StackItem>, Type);  // collections
 define_item_rec!(MapItem, Vec<(StackItem, StackItem)>, (Type, Type));  // collections
 define_item_rec!(LambdaItem, Instruction, (Type, Type));  // domain
 
-partial_traits_unreachable!(ListItem);
-partial_traits_unreachable!(SetItem);
-partial_traits_unreachable!(MapItem);
-partial_traits_unreachable!(BigMapItem);
-partial_traits_unreachable!(LambdaItem);
-partial_traits_unreachable!(OperationItem);
+not_comparable!(ListItem);
+not_comparable!(SetItem);
+not_comparable!(MapItem);
+not_comparable!(LambdaItem);
+not_comparable!(BigMapItem);
+not_comparable!(OperationItem);
 
 #[derive(Debug, Clone)]
 pub struct OperationItem(OperationContent); // domain
@@ -131,13 +125,13 @@ pub enum OrItem {  // algebraic
     Right(OrVariant)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct BigMapPtr {
     value: i64,
     outer_type: Type
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum BigMapItem {  // collections
     Ptr(BigMapPtr),
     Map(MapItem)

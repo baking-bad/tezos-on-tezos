@@ -16,7 +16,8 @@ use crate::{
     vm::stack::Stack,
     constants::*,
     context::Context,
-    vm::{trace_into, trace_ret}
+    trace_enter,
+    trace_exit
 };
 
 pub struct TransactionScope {
@@ -71,7 +72,7 @@ pub trait ContextIntepreter {
 
 impl Interpreter for Instruction {
     fn execute(&self, stack: &mut Stack, tx_scope: &TransactionScope, global_ctx: &mut impl Context) -> Result<()> {
-        trace_into(self);
+        trace_enter!(self);
         let res = match self {
             Instruction::Sequence(seq) => return seq.execute(stack, tx_scope, global_ctx),
             Instruction::Push(instr) => instr.execute(stack),
@@ -84,10 +85,10 @@ impl Interpreter for Instruction {
             Instruction::Cast(_) => Ok(()),
             Instruction::FailWith(instr) => instr.execute(stack),
             Instruction::Dip(instr) => instr.execute(stack, tx_scope, global_ctx),
-            Instruction::If(instr) => instr.execute(stack, tx_scope, global_ctx),
-            Instruction::IfCons(instr) => instr.execute(stack, tx_scope, global_ctx),
-            Instruction::IfLeft(instr) => instr.execute(stack, tx_scope, global_ctx),
-            Instruction::IfNone(instr) => instr.execute(stack, tx_scope, global_ctx),
+            Instruction::If(instr) => return instr.execute(stack, tx_scope, global_ctx),
+            Instruction::IfCons(instr) => return instr.execute(stack, tx_scope, global_ctx),
+            Instruction::IfLeft(instr) => return instr.execute(stack, tx_scope, global_ctx),
+            Instruction::IfNone(instr) => return instr.execute(stack, tx_scope, global_ctx),
             Instruction::Loop(instr) => instr.execute(stack, tx_scope, global_ctx),
             Instruction::LoopLeft(instr) => instr.execute(stack, tx_scope, global_ctx),
             Instruction::Map(instr) => instr.execute(stack, tx_scope, global_ctx),
@@ -140,7 +141,7 @@ impl Interpreter for Instruction {
             Instruction::GetAndUpdate(instr) => instr.execute(stack, global_ctx),
             _ => Err(InterpreterError::MichelsonInstructionUnsupported { instruction: self.clone() }.into())
         };
-        trace_ret(res.as_ref().err());
+        trace_exit!(res.as_ref().err(), format!("Len {}", &stack.len()).as_str());
         res
     }
 }

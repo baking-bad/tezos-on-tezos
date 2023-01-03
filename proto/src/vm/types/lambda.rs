@@ -42,6 +42,13 @@ impl LambdaItem {
     }
 }
 
+impl PartialEq for LambdaItem {
+    fn eq(&self, other: &Self) -> bool {
+        // For testing purposes
+        self.outer_value == other.outer_value
+    }
+}
+
 impl Display for LambdaItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("Lambda")

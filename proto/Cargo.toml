@@ -19,3 +19,7 @@ chrono = { version = "0.4", default-features = false }
 hex = "*"
 ibig = { version = "0.3", features = ["std", "num-traits"], default-features = false }
 once_cell = "*"
+
+[features]
+default = []
+trace = []

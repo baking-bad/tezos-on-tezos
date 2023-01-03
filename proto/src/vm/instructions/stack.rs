@@ -15,10 +15,13 @@ impl PureInterpreter for Push {
 
 impl PureInterpreter for Drop {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        match &self.n {
-            Some(n) => stack.pop_at(n.to_integer()?)?,
-            None => stack.pop()?
+        let count: usize = match &self.n {
+            Some(n) => n.to_integer()?,
+            None => 1
         };
+        for _ in 0..count {
+            stack.pop()?;
+        }
         Ok(())
     }
 }
@@ -29,8 +32,8 @@ impl PureInterpreter for Dup {
             Some(n) => n.to_integer()?,
             None => 0
         };
-        stack.dup_at(depth)?;
-        Ok(())
+        let res = stack.dup_at(depth)?;
+        stack.push(res)
     }
 }
 

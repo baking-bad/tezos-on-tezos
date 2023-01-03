@@ -119,6 +119,13 @@ impl MapItem {
     }
 }
 
+impl PartialEq for MapItem {
+    fn eq(&self, other: &Self) -> bool {
+        // For testing purposes
+        self.outer_value == other.outer_value
+    }
+}
+
 impl Display for MapItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("{")?;

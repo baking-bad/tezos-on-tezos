@@ -47,7 +47,7 @@
               "prim": "timestamp"
             },
             {
-              "string": "-30610224001"
+              "int": "-30610224001"
             }
           ],
           "prim": "Stack_elt"

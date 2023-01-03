@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use crate::{
     error::{Result, InterpreterError},
     vm::types::StackItem,
-    vm::trace_stack
+    trace_log
 };
 
 #[macro_export]
@@ -27,7 +27,7 @@ impl Stack {
     }
 
     pub fn len(&self) -> usize {
-        self.items.len() - self.protected
+        self.items.len()
     }
 
     pub fn protect(&mut self, count: usize) -> Result<()> {
@@ -48,7 +48,7 @@ impl Stack {
 
     pub fn push_at(&mut self, depth: usize, item: StackItem) -> Result<()> {
         let depth = depth + self.protected;
-        trace_stack("Insert", &item, Some(&depth));
+        trace_log!("Insert", &item, Some(&depth));
         if self.items.len() < depth {
             return Err(InterpreterError::BadStack { location: depth }.into())
         }
@@ -60,7 +60,7 @@ impl Stack {
         if self.protected > 0 {
             self.push_at(0, item)
         } else {
-            trace_stack("Push", &item, None);
+            trace_log!("Push", &item, None);
             self.items.push_front(item);
             Ok(())
         }
@@ -70,7 +70,7 @@ impl Stack {
         let depth = depth + self.protected;
         match self.items.remove(depth) {
             Some(item) => {
-                trace_stack("Remove", &item, Some(&depth));
+                trace_log!("Remove", &item, Some(&depth));
                 Ok(item)
             },
             None => Err(InterpreterError::BadStack { location: depth }.into())
@@ -83,7 +83,7 @@ impl Stack {
         } else {
             match self.items.pop_front() {
                 Some(item) => {
-                    trace_stack("Pop", &item, None);
+                    trace_log!("Pop", &item, None);
                     Ok(item)
                 },
                 None => Err(InterpreterError::BadStack { location: 0 }.into())
@@ -95,7 +95,7 @@ impl Stack {
         let depth = depth + self.protected;
         match self.items.get(depth) {
             Some(item) => {
-                trace_stack("Dup", &item, Some(&depth));
+                trace_log!("Peek", &item, Some(&depth));
                 Ok(item.clone())
             },
             None => Err(InterpreterError::BadStack { location: depth }.into())

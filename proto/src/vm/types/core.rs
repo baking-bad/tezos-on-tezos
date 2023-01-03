@@ -79,7 +79,7 @@ impl StringItem {
     }
 
     pub fn slice(self, start: usize, end: usize) -> OptionItem {
-        let outer_value = if start <= end && end <= self.len() {
+        let outer_value = if self.len() > 0 && start <= end && end <= self.len() {
             let item = Self(self.0[start..end].to_string());
             Some(Box::new(item.into()))
         } else {
@@ -113,7 +113,7 @@ impl BytesItem {
     }
 
     pub fn slice(self, start: usize, end: usize) -> OptionItem {
-        let outer_value = if start <= end && end <= self.len() {
+        let outer_value = if self.len() > 0 && start <= end && end <= self.len() {
             let item = Self(self.0[start..end].to_vec());
             Some(Box::new(item.into()))
         } else {
