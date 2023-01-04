@@ -37,7 +37,7 @@ pub trait TransactionContext {
     fn move_big_map(&mut self, ptr: i64, owner: Address) -> Result<()>;
     fn has_big_map_value(&self, ptr: i64, key_hash: &ScriptExprHash) -> Result<bool>;
     fn get_big_map_value(&self, ptr: i64, key_hash: &ScriptExprHash) -> Result<Option<Micheline>>;
-    fn set_big_map_value(&mut self, ptr: i64, key_hash: ScriptExprHash, value: Option<Micheline>) -> Result<()>;
+    fn set_big_map_value(&mut self, ptr: i64, key_hash: ScriptExprHash, value: Option<Micheline>) -> Result<Option<Micheline>>;
 }
 
 pub struct TransactionResult {

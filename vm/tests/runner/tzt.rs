@@ -15,7 +15,10 @@ use tezos_michelson::michelson::{
     types::{Code, Type},
     data::Instruction
 };
-use tezos_core::types::encoded::{self, Encoded};
+use tezos_core::{
+    types::encoded::{self, ScriptExprHash, Encoded},
+    internal::crypto::blake2b
+};
 use vm::{
     Result,
     Error,
@@ -25,7 +28,6 @@ use vm::{
     trace_enter,
     trace_exit
 };
-
 use crate::runner::mock::{default_scope, MockContext};
 
 pub struct TZT {
@@ -176,6 +178,56 @@ fn parse_other(section: PrimitiveApplication) -> Result<HashMap<String, Michelin
     panic!("Other section is empty")
 }
 
+pub fn script_expr_hash(data: Micheline, schema: &Micheline) -> Result<ScriptExprHash> {
+    let payload = data.pack(Some(&schema))?;
+    let hash = blake2b(payload.as_slice(), 32)?;
+    let res = ScriptExprHash::from_bytes(hash.as_slice())?;
+    Ok(res)
+}
+
+fn parse_big_map_values(sequence: Sequence) -> Result<HashMap<(i64, String), Micheline>> {
+    let mut values: HashMap<(i64, String), Micheline> = HashMap::new();
+    for item in sequence.into_values() {
+        let prim = PrimitiveApplication::try_from(item)?;
+        match prim.prim() {
+            "Big_map" => {
+                let mut args = prim.into_args().expect("Contract args missing");
+                assert_eq!(4, args.len());
+                let ptr: i64 = args.remove(0)
+                    .into_literal().expect("Expected literal")
+                    .into_micheline_int().expect("Expected int")
+                    .to_integer()?;
+                let schema = args.remove(0);
+                let elts: Vec<PrimitiveApplication> = args.remove(1)
+                    .into_sequence().expect("Expected sequence")
+                    .into_values()
+                    .into_iter().map(|elt| elt.into_primitive_application().expect("Expected `Elt`"))
+                    .collect();
+                for elt in elts {
+                    let mut args = elt.into_args().expect("Elt args missing");
+                    assert_eq!(2, args.len());
+                    let key = args.remove(0);
+                    let value = args.remove(0);
+                    let key_hash = script_expr_hash(key, &schema)?.into_string();
+                    values.insert((ptr, key_hash), value);
+                }
+            },
+            _ => panic!("Expected `Big_map`")
+        }
+    }
+    Ok(values)
+}
+
+fn parse_big_maps(section: PrimitiveApplication) -> Result<HashMap<(i64, String), Micheline>> {
+    for arg in section.into_args().expect("Expected single arg") { 
+        match arg {
+            Micheline::Sequence(seq) => return parse_big_map_values(seq),
+            _ => panic!("Expected other sequence")
+        }
+    }
+    panic!("Bigmaps section is empty")
+}
+
 impl TryFrom<Micheline> for TZT {
     type Error = Error;
 
@@ -203,6 +255,7 @@ impl TryFrom<Micheline> for TZT {
                 "now" => scope.now = i64::from_str_radix(parse_literal(prim).as_str(), 10).expect("ts"),
                 "balance" => context.balance = parse_literal(prim).try_into()?,
                 "other_contracts" => context.contracts = parse_other(prim)?,
+                "big_maps" => context.big_map_values = parse_big_maps(prim)?,
                 "self" => scope.self_address = parse_literal(prim).try_into()?,
                 "parameter" => {
                     context.contracts.insert(scope.self_address.into_string(), prim.into_args().unwrap().remove(0));

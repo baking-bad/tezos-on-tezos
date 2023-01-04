@@ -10,10 +10,18 @@ pub mod error;
 pub use error::{Error, Result};
 
 #[cfg(feature = "trace")]
-pub use tracer::{trace_init, trace_into, trace_stack, trace_err, trace_ret};
+pub use tracer::{trace_init, trace_into, trace_stack, trace_err, trace_ret, trace_log};
 
 #[macro_export]
 macro_rules! trace_log {
+    ($cmd: expr, $arg: expr) => {
+        #[cfg(feature = "trace")]
+        $crate::trace_log(format!("{} {}", $cmd, $arg));
+    };
+}
+
+#[macro_export]
+macro_rules! trace_stack {
     ($cmd: expr, $item: expr, $arg: expr) => {
         #[cfg(feature = "trace")]
         $crate::trace_stack($cmd, $item, $arg);

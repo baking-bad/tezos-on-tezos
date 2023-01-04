@@ -89,23 +89,19 @@ impl MapItem {
         }
     }
 
-    pub fn update(self, key: StackItem, val: Option<StackItem>) -> Result<(Self, OptionItem)> {
-        let (key_type, val_type) = self.inner_type;
-        let mut items = self.outer_value;
+    pub fn update(&mut self, key: StackItem, val: Option<StackItem>) -> Result<OptionItem> {
         let mut old_val: Option<Box<StackItem>> = None;
-        key.type_check(&key_type)?;
-        match items.binary_search_by(|(k, _)| k.cmp(&key)) {
+        key.type_check(&self.inner_type.0)?;
+        match self.outer_value.binary_search_by(|(k, _)| k.cmp(&key)) {
             Ok(pos) => if val.is_none() {
-                let (_, v) = items.remove(pos);
+                let (_, v) = self.outer_value.remove(pos);
                 old_val = Some(Box::new(v));
             },
             Err(pos) => if let Some(val) = val {
-                items.insert(pos, (key, val));
+                self.outer_value.insert(pos, (key, val));
             }
         }
-        let old = OptionItem::new(old_val, &val_type);
-        let map = Self::new(items, key_type, val_type);
-        Ok((map, old))
+        Ok(OptionItem::new(old_val, &self.inner_type.1))
     }
 
     pub fn contains(&self, key: &StackItem) -> Result<bool> {

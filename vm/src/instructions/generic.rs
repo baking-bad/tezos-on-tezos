@@ -14,7 +14,7 @@ use crate::{
     stack::Stack,
     pop_cast,
     err_type,
-    trace_log
+    trace_stack
 };
 
 impl PureInterpreter for Compare {
@@ -145,8 +145,8 @@ impl PureInterpreter for Unpack {
                 let item = StackItem::from_data(data.try_into()?, &self.r#type)?;
                 Some(Box::new(item))
             },
-            Err(err) => {
-                trace_log!(&err.into());
+            Err(_err) => {
+                trace_stack!(&_err.into());
                 None
             }
         };

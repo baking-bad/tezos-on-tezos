@@ -4,7 +4,7 @@ use crate::{
     Result,
     Error,
     types::StackItem,
-    trace_log
+    trace_stack
 };
 
 #[macro_export]
@@ -49,7 +49,7 @@ impl Stack {
 
     pub fn push_at(&mut self, depth: usize, item: StackItem) -> Result<()> {
         let depth = depth + self.protected;
-        trace_log!("Insert", &item, Some(&depth));
+        trace_stack!("Insert", &item, Some(&depth));
         if self.items.len() < depth {
             return Err(Error::BadStack { location: depth }.into())
         }
@@ -61,7 +61,7 @@ impl Stack {
         if self.protected > 0 {
             self.push_at(0, item)
         } else {
-            trace_log!("Push", &item, None);
+            trace_stack!("Push", &item, None);
             self.items.push_front(item);
             Ok(())
         }
@@ -71,7 +71,7 @@ impl Stack {
         let depth = depth + self.protected;
         match self.items.remove(depth) {
             Some(item) => {
-                trace_log!("Remove", &item, Some(&depth));
+                trace_stack!("Remove", &item, Some(&depth));
                 Ok(item)
             },
             None => Err(Error::BadStack { location: depth }.into())
@@ -84,7 +84,7 @@ impl Stack {
         } else {
             match self.items.pop_front() {
                 Some(item) => {
-                    trace_log!("Pop", &item, None);
+                    trace_stack!("Pop", &item, None);
                     Ok(item)
                 },
                 None => Err(Error::BadStack { location: 0 }.into())
@@ -96,7 +96,7 @@ impl Stack {
         let depth = depth + self.protected;
         match self.items.get(depth) {
             Some(item) => {
-                trace_log!("Peek", &item, Some(&depth));
+                trace_stack!("Peek", &item, Some(&depth));
                 Ok(item.clone())
             },
             None => Err(Error::BadStack { location: depth }.into())

@@ -1,5 +1,5 @@
 use tezos_michelson::michelson::data::instructions::{
-    Amount, Sender, Source, Now, Level, SelfAddress, ChainId
+    Amount, Sender, Source, Now, Level, SelfAddress, ChainId, TransferTokens
 };
 use tezos_core::types::{
     encoded
@@ -58,5 +58,11 @@ impl ScopedInterpreter for SelfAddress {
     fn execute(&self, stack: &mut Stack, scope: &TransactionScope) -> Result<()> {
         let self_address = AddressItem::new(encoded::Address::Originated(scope.self_address.clone()));
         stack.push(self_address.into())
+    }
+}
+
+impl ScopedInterpreter for TransferTokens {
+    fn execute(&self, stack: &mut Stack, scope: &TransactionScope) -> Result<()> {
+        Ok(())
     }
 }

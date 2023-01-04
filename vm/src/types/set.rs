@@ -53,18 +53,17 @@ impl SetItem {
         Ok(self.outer_value.contains(key))
     }
 
-    pub fn update(self, key: StackItem, val: bool) -> Result<Self> {
+    pub fn update(&mut self, key: StackItem, val: bool) -> Result<()> {
         key.type_check(&self.inner_type)?;
-        let (mut items, val_type) = self.unwrap();
-        match items.binary_search(&key) {
+        match self.outer_value.binary_search(&key) {
             Ok(pos) => if !val {
-                items.remove(pos);
+                self.outer_value.remove(pos);
             },
             Err(pos) => if val {
-                items.insert(pos, key);
+                self.outer_value.insert(pos, key);
             }
         }
-        Ok(Self::new(items, val_type))
+        Ok(())
     }
 
     pub fn len(&self) -> usize {

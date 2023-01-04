@@ -22,9 +22,9 @@ impl PureInterpreter for Nil {
 impl PureInterpreter for Cons {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let item = stack.pop()?;
-        let list = pop_cast!(stack, List);
-        let res = list.prepend(item)?;
-        stack.push(res.into())
+        let mut list = pop_cast!(stack, List);
+        list.prepend(item)?;
+        stack.push(list.into())
     }
 }
 
@@ -58,7 +58,7 @@ impl ContextIntepreter for Mem {
         let res = match stack.pop()? {
             StackItem::Set(set) => set.contains(&key)?,
             StackItem::Map(map) => map.contains(&key)?,
-            StackItem::BigMap(big_map) => todo!("Context bindings"),
+            StackItem::BigMap(big_map) => big_map.contains(&key, context)?,
             item => return err_type!("SetItem, MapItem, or BigMapItem", item)
         };
         stack.push(StackItem::Bool(res.into()))
@@ -75,7 +75,7 @@ impl ContextIntepreter for Get {
             let key = stack.pop()?;
             match stack.pop()? {
                 StackItem::Map(map) => map.get(&key)?.into(),
-                StackItem::BigMap(big_map) => todo!("Context bindings"),
+                StackItem::BigMap(big_map) => big_map.get(&key, context)?.into(),
                 item => return err_type!("MapItem or BigMapItem", item)
             }
         };
@@ -94,15 +94,19 @@ impl ContextIntepreter for Update {
             let key = stack.pop()?;
             match stack.pop()? {
                 StackItem::Bool(val) => {
-                    let set = pop_cast!(stack, Set);
-                    set.update(key, val.is_true())?.into()
+                    let mut set = pop_cast!(stack, Set);
+                    set.update(key, val.is_true())?;
+                    set.into()
                 },
                 StackItem::Option(val) => match stack.pop()? {
-                    StackItem::Map(map) => {
-                        let (res, _) = map.update(key, val.unwrap())?;
-                        res.into()
+                    StackItem::Map(mut map) => {
+                        map.update(key, val.unwrap())?;
+                        map.into()
                     },
-                    StackItem::BigMap(big_map) => todo!("Context bindings"),
+                    StackItem::BigMap(mut big_map) => {
+                        big_map.update(key, val.unwrap(), context)?;
+                        big_map.into()
+                    },
                     item => return err_type!("MapItem or BigMapItem", item)
                 },
                 item => return err_type!("BoolItem or OptionItem", item)
@@ -117,12 +121,16 @@ impl ContextIntepreter for GetAndUpdate {
         let key = stack.pop()?;
         let val = pop_cast!(stack, Option);
         match stack.pop()? {
-            StackItem::Map(map) => {
-                let (res, old) = map.update(key, val.unwrap())?;
-                stack.push(res.into())?;
+            StackItem::Map(mut map) => {
+                let old = map.update(key, val.unwrap())?;
+                stack.push(map.into())?;
                 stack.push(old.into())
             },
-            StackItem::BigMap(big_map) => todo!(),
+            StackItem::BigMap(mut big_map) => {
+                let old = big_map.update(key, val.unwrap(), context)?;
+                stack.push(big_map.into())?;
+                stack.push(old.into())
+            },
             item => return err_type!("MapItem or BigMapItem", item)
         }
     }

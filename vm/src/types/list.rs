@@ -76,11 +76,10 @@ impl ListItem {
         }
     }
 
-    pub fn prepend(self, item: StackItem) -> Result<ListItem> {
+    pub fn prepend(&mut self, item: StackItem) -> Result<()> {
         item.type_check(&self.inner_type)?;
-        let (mut items, val_type) = self.unwrap();
-        items.insert(0, item);
-        Ok(Self::new(items, val_type))
+        self.outer_value.insert(0, item);
+        Ok(())
     }
 
     pub fn len(&self) -> usize {

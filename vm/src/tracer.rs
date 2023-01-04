@@ -201,3 +201,9 @@ pub fn trace_ret(err: Option<&Error>, msg: Option<&str>) {
         TRACER.step_out(err, msg);
     }
 }
+
+pub fn trace_log(msg: String) {
+    unsafe {
+        TRACER.log(msg)
+    }
+}

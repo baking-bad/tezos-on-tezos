@@ -10,7 +10,8 @@ use tezos_core::types::{
 use vm::{
     Result,
     Error,
-    interpreter::{TransactionScope, TransactionContext}
+    interpreter::{TransactionScope, TransactionContext},
+    trace_log
 };
 
 pub const CHAIN_ID: &str = "NetXP2FfcNxFANL";
@@ -36,6 +37,7 @@ pub struct MockContext {
     pub balance: Mutez,
     pub big_map_counter: i64,
     pub big_maps: HashMap<i64, encoded::Address>,
+    pub big_map_values: HashMap<(i64, String), Micheline>,
     pub contracts: HashMap<String, Micheline>,
 }
 
@@ -45,13 +47,14 @@ impl MockContext {
             balance: 0u8.try_into().unwrap(),
             big_map_counter: 0,
             big_maps: HashMap::new(),
-            contracts: HashMap::new()
+            big_map_values: HashMap::new(),
+            contracts: HashMap::new(),
         }
     }
 }
 
 impl TransactionContext for MockContext {
-    fn get_balance(&self, address: &encoded::Address) -> Result<Option<Mutez>> {
+    fn get_balance(&self, _: &encoded::Address) -> Result<Option<Mutez>> {
         Ok(Some(self.balance))
     }
 
@@ -80,14 +83,21 @@ impl TransactionContext for MockContext {
     }
 
     fn has_big_map_value(&self, ptr: i64, key_hash: &encoded::ScriptExprHash) -> Result<bool> {
-        Ok(false)
+        trace_log!("Has", key_hash.value());
+        Ok(self.big_map_values.contains_key(&(ptr, key_hash.into_string())))
     }
 
     fn get_big_map_value(&self, ptr: i64, key_hash: &encoded::ScriptExprHash) -> Result<Option<Micheline>> {
-        Ok(None)
+        trace_log!("Get", key_hash.value());
+        Ok(self.big_map_values.get(&(ptr, key_hash.into_string())).map(|v| v.clone()))
     }
 
-    fn set_big_map_value(&mut self, ptr: i64, key_hash: encoded::ScriptExprHash, value: Option<Micheline>) -> Result<()> {
-        Ok(())
+    fn set_big_map_value(&mut self, ptr: i64, key_hash: encoded::ScriptExprHash, value: Option<Micheline>) -> Result<Option<Micheline>> {
+        trace_log!("Update", key_hash.value());
+        let k = (ptr, key_hash.into_string());
+        match value {
+            Some(v) => Ok(self.big_map_values.insert(k, v)),
+            None => Ok(self.big_map_values.remove(&k))
+        }
     }
 }

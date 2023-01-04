@@ -42,13 +42,13 @@ macro_rules! type_check_fn_comparable {
 macro_rules! not_comparable {
     ($item: ty) => {
         impl PartialOrd for $item {
-            fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+            fn partial_cmp(&self, _: &Self) -> Option<std::cmp::Ordering> {
                 unreachable!("Not a comparable type")
             }
         }
 
         impl Ord for $item {
-            fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+            fn cmp(&self, _: &Self) -> std::cmp::Ordering {
                 unreachable!("Not a comparable type")
             }
         }

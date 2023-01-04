@@ -1,15 +1,10 @@
 use tezos_michelson::michelson::data::instructions::{
-    Balance, Address, Contract, Self_, ImplicitAccount, TransferTokens
+    Balance, Address, Contract, Self_, ImplicitAccount
 };
 use tezos_michelson::michelson::{
-    types::{Type, Parameter},
+    types::Type,
     types,
     annotations::{Kind, Annotation}
-};
-use tezos_michelson::micheline::{
-    Micheline,
-    sequence::Sequence,
-    primitive_application::PrimitiveApplication
 };
 use tezos_core::types::encoded;
 
@@ -20,7 +15,7 @@ use crate::{
     types::{MutezItem, AddressItem, StackItem, OptionItem, ContractItem},
     stack::Stack,
     typechecker::check_types_equal,
-    trace_log,
+    trace_stack,
     pop_cast,
     err_type
 };
@@ -68,7 +63,7 @@ fn get_contract_type(
     context: &mut impl TransactionContext
 ) -> Result<Type> {
     match address {
-        encoded::Address::Implicit(addr) => {
+        encoded::Address::Implicit(_) => {
             match context.get_balance(&address)? {
                 Some(_) => Ok(types::unit()),
                 None => Err(Error::ContractNotFound)
@@ -110,8 +105,8 @@ impl ContextIntepreter for Contract {
                 let item = ContractItem::new(address, self.r#type.clone());
                 OptionItem::some(item.into())?
             },
-            Err(err) => {
-                trace_log!(&err);
+            Err(_err) => {
+                trace_stack!(&_err);
                 OptionItem::none(&types::contract(self.r#type.clone()))
             }
         };
