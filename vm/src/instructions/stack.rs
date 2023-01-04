@@ -9,6 +9,7 @@ use crate::{
 
 impl PureInterpreter for Push {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
+        // TODO: check if pushable
         stack.push(StackItem::from_data(*self.value.to_owned(), &self.r#type)?)
     }
 }
@@ -32,6 +33,7 @@ impl PureInterpreter for Dup {
             Some(n) => n.to_integer()?,
             None => 0
         };
+        // TODO: check if copyable
         let res = stack.dup_at(depth)?;
         stack.push(res)
     }

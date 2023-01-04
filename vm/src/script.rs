@@ -45,6 +45,7 @@ impl TryFrom<Micheline> for Script {
             }
         }
 
+        // TODO: check if all types in storage are storable
         Ok(Self {
             parameter_type: param_ty.ok_or(Error::MissingScriptField { prim: "parameter".into() })?,
             storage_type: storage_ty.ok_or(Error::MissingScriptField { prim: "storage".into() })?,
@@ -67,6 +68,7 @@ impl Script {
             return Err(Error::BadReturn.into());
         }
         let param_item = StackItem::from_micheline(parameter, &self.parameter_type)?;
+        // TODO: check permissions for moving big maps
         let storage_item = StackItem::from_micheline(storage, &self.storage_type)?;
         let input = PairItem::new(param_item, storage_item);
         stack.push(input.into())

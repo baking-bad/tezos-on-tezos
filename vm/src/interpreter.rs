@@ -1,17 +1,13 @@
 use tezos_michelson::michelson::data::Instruction;
 use tezos_michelson::micheline::{
     Micheline,
-    primitive_application
 };
 use tezos_operation::operations::OperationContent;
 use tezos_rpc::models::operation::operation_result::lazy_storage_diff::LazyStorageDiff;
 use tezos_core::types::{
-    encoded::{ImplicitAddress, Address, ContractAddress},
+    encoded::{ImplicitAddress, Address, ContractAddress, ScriptExprHash, ChainId},
     mutez::Mutez
 };
-
-pub const DEFAULT_ORIGINATED_ADDRESS: &str = "KT1BEqzn5Wx8uJrZNvuS9DVHmLvG9td3fDLi";
-pub const DEFAULT_IMPLICIT_ADDRESS: &str = "tz1Ke2h7sDdakHJQh8WX4Z372du1KChsksyU";
 
 use crate::{
     Result,
@@ -22,10 +18,10 @@ use crate::{
 };
 
 pub struct TransactionScope {
+    pub chain_id: ChainId,
     pub source: ImplicitAddress,
     pub sender: Address,
     pub amount: Mutez,
-    pub balance: Mutez,
     pub entrypoint: String,
     pub parameter: Micheline,
     pub storage: Micheline,
@@ -35,30 +31,19 @@ pub struct TransactionScope {
 }
 
 pub trait TransactionContext {
-
+    fn get_balance(&self, address: &Address) -> Result<Option<Mutez>>;
+    fn get_contract_type(&self, address: &ContractAddress) -> Result<Option<Micheline>>;
+    fn allocate_big_map(&mut self, owner: Address) -> Result<i64>;
+    fn move_big_map(&mut self, ptr: i64, owner: Address) -> Result<()>;
+    fn has_big_map_value(&self, ptr: i64, key_hash: &ScriptExprHash) -> Result<bool>;
+    fn get_big_map_value(&self, ptr: i64, key_hash: &ScriptExprHash) -> Result<Option<Micheline>>;
+    fn set_big_map_value(&mut self, ptr: i64, key_hash: ScriptExprHash, value: Option<Micheline>) -> Result<()>;
 }
 
 pub struct TransactionResult {
     pub storage: Micheline,
     pub internal_operations: Vec<OperationContent>,
     pub lazy_storage_diff: Vec<LazyStorageDiff>
-}
-
-impl TransactionScope {
-    pub fn default() -> Self {
-        Self {
-            amount: 0u32.into(),
-            balance: 0u32.into(),
-            level: 0.into(),
-            now: 0,
-            entrypoint: "default".into(),
-            parameter: Micheline::PrimitiveApplication(primitive_application("Unit")),
-            storage: Micheline::PrimitiveApplication(primitive_application("Unit")),
-            self_address: DEFAULT_ORIGINATED_ADDRESS.try_into().unwrap(),
-            sender: DEFAULT_IMPLICIT_ADDRESS.try_into().unwrap(),
-            source: DEFAULT_IMPLICIT_ADDRESS.try_into().unwrap(),
-        }
-    }
 }
 
 pub trait Interpreter {
@@ -147,12 +132,18 @@ impl Interpreter for Instruction {
             Instruction::Update(instr) => instr.execute(stack, context),
             Instruction::GetAndUpdate(instr) => instr.execute(stack, context),
             Instruction::Amount(instr) => instr.execute(stack, scope),
-            Instruction::Balance(instr) => instr.execute(stack, scope),
+            Instruction::ChainId(instr) => instr.execute(stack, scope),
             Instruction::Sender(instr) => instr.execute(stack, scope),
             Instruction::Source(instr) => instr.execute(stack, scope),
             Instruction::Now(instr) => instr.execute(stack, scope),
             Instruction::Level(instr) => instr.execute(stack, scope),
             Instruction::SelfAddress(instr) => instr.execute(stack, scope),
+            Instruction::Balance(instr) => instr.execute(stack, scope, context),
+            Instruction::Address(instr) => instr.execute(stack),
+            Instruction::Contract(instr) => instr.execute(stack, context),
+            Instruction::Self_(instr) => instr.execute(stack, scope, context),
+            Instruction::ImplicitAccount(instr) => instr.execute(stack, context),
+            Instruction::EmptyBigMap(instr) => instr.execute(stack, scope, context),
             _ => Err(Error::MichelsonInstructionUnsupported { instruction: self.clone() }.into())
         };
         trace_exit!(res.as_ref().err(), format!("Len {}", &stack.len()).as_str());

@@ -87,6 +87,7 @@ pub fn types_equal(lhs: &Type, rhs: &Type) -> Result<bool> {
             types_equal(&lty.parameter_type, &rty.parameter_type)?;
             types_equal(&lty.return_type, &rty.return_type)
         },
+        (Type::Contract(lty), Type::Contract(rty)) => types_equal(&lty.r#type, &rty.r#type),
         (Type::Parameter(lty), Type::Parameter(rty)) => types_equal(&lty.r#type, &rty.r#type),
         (Type::Storage(lty), Type::Storage(rty)) => types_equal(&lty.r#type, &rty.r#type),
         _ => Err(Error::MichelsonTypeUnsupported { ty: lhs.clone() }.into())
@@ -117,6 +118,7 @@ impl StackItem {
                 ComparableType::Key(_) => KeyItem::from_data(data),
                 ComparableType::KeyHash(_) => KeyHashItem::from_data(data),
                 ComparableType::Signature(_) => SignatureItem::from_data(data),
+                ComparableType::ChainId(_) => ChainIdItem::from_data(data),
                 _ => Err(Error::MichelsonTypeUnsupported { ty: ty.clone() }.into())
             },
             Type::Option(option_ty) => OptionItem::from_data(data, &option_ty.r#type),
@@ -128,8 +130,9 @@ impl StackItem {
             Type::List(list_ty) => ListItem::from_data(data, &list_ty.r#type),
             Type::Set(set_ty) => SetItem::from_data(data, &set_ty.r#type),
             Type::Map(map_ty) => MapItem::from_data(data, &map_ty.key_type, &map_ty.value_type),
-            Type::BigMap(map_ty) => BigMapItem::from_data(data, ty, &map_ty.key_type, &map_ty.value_type),
+            Type::BigMap(map_ty) => BigMapItem::from_data(data, &map_ty.key_type, &map_ty.value_type),
             Type::Lambda(lambda_ty) => LambdaItem::from_data(data, &lambda_ty.parameter_type, &lambda_ty.return_type),
+            Type::Contract(contract_ty) => ContractItem::from_data(data, &contract_ty.r#type),
             Type::Parameter(param_ty) => StackItem::from_data(data, &param_ty.r#type),
             Type::Storage(storage_ty) => StackItem::from_data(data, &storage_ty.r#type),
             _ => Err(Error::MichelsonTypeUnsupported { ty: ty.clone() }.into())
@@ -150,6 +153,7 @@ impl StackItem {
             StackItem::Key(item) => item.into_data(ty),
             StackItem::KeyHash(item) => item.into_data(ty),
             StackItem::Signature(item) => item.into_data(ty),
+            StackItem::ChainId(item) => item.into_data(ty),
             StackItem::Option(item) => item.into_data(ty),
             StackItem::Or(item) => item.into_data(ty),
             StackItem::Pair(item) => item.into_data(ty),
@@ -158,6 +162,7 @@ impl StackItem {
             StackItem::Map(item) => item.into_data(ty),
             StackItem::BigMap(item) => item.into_data(ty),
             StackItem::Lambda(item) => item.into_data(ty),
+            StackItem::Contract(item) => item.into_data(ty),
             _ => Err(Error::MichelsonTypeUnsupported { ty: ty.clone() }.into())
         }
     }
@@ -176,6 +181,7 @@ impl StackItem {
             StackItem::Key(_) => Ok(types::key()),
             StackItem::KeyHash(_) => Ok(types::key_hash()),
             StackItem::Signature(_) => Ok(types::signature()),
+            StackItem::ChainId(_) => Ok(types::chain_id()),
             StackItem::Option(item) => Ok(item.get_type()),
             StackItem::Or(item) => item.get_type(),
             StackItem::Pair(item) => item.get_type(),
@@ -184,7 +190,8 @@ impl StackItem {
             StackItem::Map(item) => item.get_type(),
             StackItem::BigMap(item) => item.get_type(),
             StackItem::Operation(_) => Ok(types::operation()),
-            StackItem::Lambda(item) => item.get_type()
+            StackItem::Lambda(item) => item.get_type(),
+            StackItem::Contract(item) => Ok(item.get_type()),
         }
     }
 

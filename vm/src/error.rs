@@ -30,6 +30,14 @@ pub enum Error {
     MissingScriptField {
         prim: String
     },
+    ContractNotFound,
+    EntrypointNotFound {
+        name: String
+    },
+    BigMapNotAllocated {
+        ptr: i64
+    },
+    ConflictingEntrypoints,
     BadStack {
         location: usize
     },

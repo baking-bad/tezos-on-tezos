@@ -1,11 +1,12 @@
 use tezos_michelson::michelson::{
-    data::instructions::{Nil, Cons, EmptySet, EmptyMap, Mem, Get, Update, GetAndUpdate}
+    data::instructions::{Nil, Cons, EmptySet, EmptyMap, EmptyBigMap, Mem, Get, Update, GetAndUpdate}
 };
+use tezos_core::types::encoded::Address;
 
 use crate::{
     Result,
-    interpreter::{PureInterpreter, ContextIntepreter, TransactionContext},
-    types::{StackItem, ListItem, SetItem, MapItem},
+    interpreter::{Interpreter, PureInterpreter, ContextIntepreter, TransactionContext, TransactionScope},
+    types::{StackItem, ListItem, SetItem, MapItem, BigMapItem, BigMapPtr},
     stack::Stack,
     pop_cast,
     err_type
@@ -38,6 +39,16 @@ impl PureInterpreter for EmptyMap {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let map = MapItem::new(vec![], self.key_type.clone(), self.value_type.clone());
         stack.push(map.into())
+    }
+}
+
+impl Interpreter for EmptyBigMap {
+    fn execute(&self, stack: &mut Stack, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()> {
+        let ptr = context.allocate_big_map(Address::Originated(scope.self_address.clone()))?;
+        let big_map = BigMapItem::Ptr(
+            BigMapPtr::new(ptr, self.key_type.clone(), self.value_type.clone())
+        );
+        stack.push(big_map.into())
     }
 }
 

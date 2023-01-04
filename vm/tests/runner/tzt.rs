@@ -3,6 +3,8 @@ use serde_json_wasm;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
+use std::collections::HashMap;
+use hex;
 use tezos_michelson::micheline::{
     Micheline,
     sequence::Sequence,
@@ -13,15 +15,18 @@ use tezos_michelson::michelson::{
     types::{Code, Type},
     data::Instruction
 };
+use tezos_core::types::encoded::{self, Encoded};
 use vm::{
     Result,
     Error,
     stack::Stack,
     types::StackItem,
-    interpreter::{Interpreter, TransactionScope, TransactionContext},
+    interpreter::{Interpreter, TransactionScope},
     trace_enter,
     trace_exit
 };
+
+use crate::runner::mock::{default_scope, MockContext};
 
 pub struct TZT {
     input: Input,
@@ -31,7 +36,8 @@ pub struct TZT {
 
 pub struct Input {
     pub items: Vec<StackItem>,
-    pub scope: TransactionScope
+    pub scope: TransactionScope,
+    pub context: MockContext
 }
 
 pub struct Output {
@@ -39,23 +45,16 @@ pub struct Output {
     pub error: Option<Error>
 }
 
-pub struct Context {
-}
-
-impl TransactionContext for Context {
-}
-
 impl TZT {
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&mut self) -> Result<()> {
         let mut stack = Stack::new();
-        let mut context = Context {};
         trace_enter!();
 
         for input in self.input.items.iter().rev() {
             stack.push(input.clone())?;
         }
 
-        match self.code.execute(&mut stack, &self.input.scope, &mut context) {
+        match self.code.execute(&mut stack, &self.input.scope, &mut self.input.context) {
             Ok(()) => {
                 for output in self.output.items.iter() {
                     let item = stack.pop()?;
@@ -132,7 +131,8 @@ fn parse_literal(outer: PrimitiveApplication) -> String {
     match args.remove(0) {
         Micheline::Literal(Literal::Int(int)) => int.to_string(),
         Micheline::Literal(Literal::String(string)) => string.into_string(),
-        _ => panic!("Unexpected literal")
+        Micheline::Literal(Literal::Bytes(bytes)) => bytes.value()[2..].to_string(),
+        _ => panic!("Expected literal")
     }
 }
 
@@ -146,12 +146,43 @@ fn parse_input(section: PrimitiveApplication) -> Result<Vec<StackItem>> {
     panic!("Input section is empty")
 }
 
+fn parse_contracts(sequence: Sequence) -> Result<HashMap<String, Micheline>> {
+    let mut contracts: HashMap<String, Micheline> = HashMap::new();
+    for item in sequence.into_values() {
+        let prim = PrimitiveApplication::try_from(item)?;
+        match prim.prim() {
+            "Contract" => {
+                let mut args = prim.into_args().expect("Contract args missing");
+                assert_eq!(2, args.len());
+                let key = args.remove(0)
+                    .into_literal().expect("Expected literal")
+                    .into_micheline_string().expect("Expected string")
+                    .into_string();
+                contracts.insert(key, args.remove(0));
+            },
+            _ => panic!("Expected `Contract`")
+        }
+    }
+    Ok(contracts)
+}
+
+fn parse_other(section: PrimitiveApplication) -> Result<HashMap<String, Micheline>> {
+    for arg in section.into_args().expect("Expected single arg") { 
+        match arg {
+            Micheline::Sequence(seq) => return parse_contracts(seq),
+            _ => panic!("Expected other sequence")
+        }
+    }
+    panic!("Other section is empty")
+}
+
 impl TryFrom<Micheline> for TZT {
     type Error = Error;
 
     fn try_from(src: Micheline) -> Result<Self> {
         let mut items: Vec<StackItem> = Vec::new();
-        let mut scope = TransactionScope::default();
+        let mut scope = default_scope();
+        let mut context = MockContext::default();
         let mut output: Option<Output> = None;
         let mut code: Option<Instruction> = None;
 
@@ -163,10 +194,19 @@ impl TryFrom<Micheline> for TZT {
                 "output" => output = Some(parse_output(prim)?),
                 "code" => code = Some(*Code::try_from(prim)?.code),
                 "amount" => scope.amount = parse_literal(prim).try_into()?,
-                "balance" => scope.balance = parse_literal(prim).try_into()?,
                 "sender" => scope.sender = parse_literal(prim).try_into()?,
                 "source" => scope.source = parse_literal(prim).try_into()?,
+                "chain_id" => {
+                    let bytes = hex::decode(parse_literal(prim)).expect("Chain ID");
+                    scope.chain_id = encoded::ChainId::from_bytes(bytes.as_slice())?;
+                },
                 "now" => scope.now = i64::from_str_radix(parse_literal(prim).as_str(), 10).expect("ts"),
+                "balance" => context.balance = parse_literal(prim).try_into()?,
+                "other_contracts" => context.contracts = parse_other(prim)?,
+                "self" => scope.self_address = parse_literal(prim).try_into()?,
+                "parameter" => {
+                    context.contracts.insert(scope.self_address.into_string(), prim.into_args().unwrap().remove(0));
+                },
                 prim => panic!("Unexpected section {}", prim)
             }
         }
@@ -174,7 +214,7 @@ impl TryFrom<Micheline> for TZT {
         Ok(Self {
             code: code.expect("Failed to parse code"),
             output: output.expect("Failed to parse output"),
-            input: Input { items, scope },
+            input: Input { items, scope, context },
         })
     }
 }

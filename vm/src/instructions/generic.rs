@@ -129,6 +129,7 @@ impl PureInterpreter for Pack {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let item = stack.pop()?;
         let ty = item.get_type()?;
+        // TODO: check if packable
         let data = item.into_micheline(&ty)?;
         let schema: Micheline = Michelson::from(ty).into();
         let res = data.pack(Some(&schema))?;

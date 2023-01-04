@@ -13,10 +13,11 @@ pub mod option;
 pub mod or;
 pub mod lambda;
 pub mod operation;
+pub mod contract;
 
 use ibig::{IBig, UBig};
 use tezos_core::types::encoded::{
-    Address, PublicKey, ImplicitAddress, Signature
+    Address, PublicKey, ImplicitAddress, Signature, ChainId
 };
 use tezos_michelson::michelson::{
     data::{Instruction},
@@ -93,17 +94,20 @@ define_item!(AddressItem, Address);  // domain
 define_item!(KeyItem, PublicKey);  // domain
 define_item!(KeyHashItem, ImplicitAddress);  // domain
 define_item!(SignatureItem, Signature);  // domain
+define_item!(ChainIdItem, ChainId);  // domain
 
 define_item_rec!(OptionItem, Option<Box<StackItem>>, Type);  // algebraic
 define_item_rec!(ListItem, Vec<StackItem>, Type);  // collections
 define_item_rec!(SetItem, Vec<StackItem>, Type);  // collections
 define_item_rec!(MapItem, Vec<(StackItem, StackItem)>, (Type, Type));  // collections
 define_item_rec!(LambdaItem, Instruction, (Type, Type));  // domain
+define_item_rec!(ContractItem, Address, Type); // domain
 
 not_comparable!(ListItem);
 not_comparable!(SetItem);
 not_comparable!(MapItem);
 not_comparable!(LambdaItem);
+not_comparable!(ContractItem);
 not_comparable!(BigMapItem);
 not_comparable!(OperationItem);
 
@@ -127,8 +131,9 @@ pub enum OrItem {  // algebraic
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct BigMapPtr {
-    value: i64,
-    outer_type: Type
+    ptr: i64,
+    inner_type: (Type, Type),
+    diff: Vec<(StackItem, Option<StackItem>)>
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -151,6 +156,8 @@ pub enum StackItem {
     Key(KeyItem),
     KeyHash(KeyHashItem),
     Signature(SignatureItem),
+    ChainId(ChainIdItem),
+    Contract(ContractItem),
     Operation(OperationItem),
     Option(OptionItem),
     Or(OrItem),

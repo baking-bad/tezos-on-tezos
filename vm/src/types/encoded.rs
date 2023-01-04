@@ -1,6 +1,6 @@
 use std::fmt::Display;
 use tezos_core::types::{
-    encoded::{Address, PublicKey, ImplicitAddress, Signature, Encoded}
+    encoded::{Address, PublicKey, ImplicitAddress, Signature, ChainId, Encoded}
 };
 use tezos_michelson::michelson::{
     types::{Type, ComparableType},
@@ -10,7 +10,7 @@ use tezos_michelson::michelson::{
 
 use crate::{
     Result,
-    types::{AddressItem, KeyItem, KeyHashItem, SignatureItem, StackItem},
+    types::{AddressItem, KeyItem, KeyHashItem, SignatureItem, ChainIdItem, StackItem},
     err_type,
     type_check_fn_comparable,
 };
@@ -27,6 +27,10 @@ macro_rules! impl_for_encoded {
             pub fn from_data(data: Data) -> Result<StackItem> {
                 match data {
                     Data::String(val) => Ok($item_ty(<$impl_ty>::new(val.into_string())?).into()),
+                    Data::Bytes(val) => {
+                        let bytes: Vec<u8> = (&val).into();
+                        Ok($item_ty(<$impl_ty>::from_bytes(bytes.as_slice())?).into())   
+                    },
                     _ => err_type!("Data::String", data)
                 }
             }
@@ -34,6 +38,10 @@ macro_rules! impl_for_encoded {
             pub fn into_data(self, ty: &Type) -> Result<Data> {
                 self.type_check(ty)?;
                 Ok(Data::String(data::String::from_string(self.0.into_string())?))
+            }
+
+            pub fn unwrap(self) -> $impl_ty {
+                self.0
             }
         }
 
@@ -55,6 +63,7 @@ impl_for_encoded!(AddressItem, Address, Address);
 impl_for_encoded!(KeyItem, PublicKey, Key);
 impl_for_encoded!(KeyHashItem, ImplicitAddress, KeyHash);
 impl_for_encoded!(SignatureItem, Signature, Signature);
+impl_for_encoded!(ChainIdItem, ChainId, ChainId);
 
 impl Ord for AddressItem {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
@@ -89,6 +98,12 @@ impl Ord for KeyItem {
 }
 
 impl Ord for SignatureItem {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.0.value().cmp(other.0.value())
+    }
+}
+
+impl Ord for ChainIdItem {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.0.value().cmp(other.0.value())
     }
