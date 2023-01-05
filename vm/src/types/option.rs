@@ -15,25 +15,20 @@ use crate::{
 };
 
 impl OptionItem {
-    pub fn new(value: Option<Box<StackItem>>, val_type: &Type) -> Self {
-        Self { outer_value: value, inner_type: val_type.clone() }
+    pub fn some(item: StackItem) -> Self {
+        Self::Some(Box::new(item))
     }
-
-    pub fn none(val_type: &Type) -> Self {
-        Self { outer_value: None, inner_type: val_type.clone() }
-    }
-
-    pub fn some(val: StackItem) -> Result<Self> {
-        Ok(Self { inner_type: val.get_type()?, outer_value: Some(Box::new(val)) })
+    
+    pub fn none(ty: &Type) -> Self {
+        Self::None(ty.clone())
     }
 
     pub fn from_data(data: Data, val_type: &Type) -> Result<StackItem> {
         match data {
-            Data::None(_) => Ok(Self::none(val_type).into()),
+            Data::None(_) => Ok(Self::None(val_type.clone()).into()),
             Data::Some(val) => {
                 let inner = StackItem::from_data(*val.value, val_type)?;
-                let outer = Self::new(Some(Box::new(inner)), val_type);
-                Ok(outer.into())
+                Ok(Self::Some(Box::new(inner)).into())
             },
             _ => err_type!("Data::None or Data::Some", data)
         }
@@ -41,12 +36,12 @@ impl OptionItem {
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
         if let Type::Option(option_ty) = ty {
-            return match self.outer_value {
-                None => {
-                    check_types_equal(&option_ty.r#type, &self.inner_type)?;
+            return match self {
+                Self::None(ty) => {
+                    check_types_equal(&option_ty.r#type, &ty)?;
                     Ok(Data::None(data::none()))
                 },
-                Some(val) => {
+                Self::Some(val) => {
                     let inner = (*val).into_data(&option_ty.r#type)?;
                     Ok(Data::Some(data::some(inner)))
                 }
@@ -56,26 +51,32 @@ impl OptionItem {
     }
 
     pub fn is_none(&self) -> bool {
-        self.outer_value.is_none()
-    }
-
-    pub fn unwrap(self) -> Option<StackItem> {
-        match self.outer_value {
-            Some(value) => Some(*value),
-            None => None
+        match self {
+            Self::None(_) => true,
+            Self::Some(_) => false
         }
     }
 
-    pub fn get_type(&self) -> Type {
-        types::option(self.inner_type.clone())
+    pub fn unwrap(self) -> Option<StackItem> {
+        match self {
+            Self::Some(value) => Some(*value),
+            Self::None(_) => None
+        }
+    }
+
+    pub fn get_type(&self) -> Result<Type> {
+        match self {
+            Self::None(ty) => Ok(ty.clone()),
+            Self::Some(inner) => Ok(types::option(inner.get_type()?))
+        }        
     }
 }
 
 impl Display for OptionItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self.outer_value {
-            Some(val) => f.write_fmt(format_args!("{}?", &val)),
-            None => f.write_str("None")
+        match self {
+            Self::Some(val) => f.write_fmt(format_args!("{}?", &val)),
+            Self::None(_) => f.write_str("None")
         }
     }
 }
@@ -84,17 +85,21 @@ impl Eq for OptionItem {}
 
 impl PartialEq for OptionItem {
     fn eq(&self, rhs: &Self) -> bool {
-        self.outer_value == rhs.outer_value
+        match (self, rhs) {
+            (Self::None(_), Self::None(_)) => true,
+            (Self::Some(lval), Self::Some(rval)) => lval == rval,
+            _ => false
+        }
     }
 }
 
 impl Ord for OptionItem {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        match (&self.outer_value, &other.outer_value) {
-            (None, Some(_)) => std::cmp::Ordering::Less,
-            (Some(_), None) => std::cmp::Ordering::Greater,
-            (None, None) => std::cmp::Ordering::Equal,
-            (Some(lval), Some(rval)) => lval.cmp(&rval)
+        match (self, other) {
+            (Self::None(_), Self::Some(_)) => std::cmp::Ordering::Less,
+            (Self::Some(_), Self::None(_)) => std::cmp::Ordering::Greater,
+            (Self::None(_), Self::None(_)) => std::cmp::Ordering::Equal,
+            (Self::Some(lval), Self::Some(rval)) => lval.cmp(&rval)
         }
     }
 }

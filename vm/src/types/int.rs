@@ -34,13 +34,12 @@ impl IntItem {
     }
 
     pub fn nat(self) -> Result<OptionItem> {
-        let outer_value = if self.0 >= 0.into() {
+        if self.0 >= 0.into() {
             let nat = NatItem(self.0.try_into()?);
-            Some(Box::new(StackItem::Nat(nat)))
+            Ok(OptionItem::Some(Box::new(StackItem::Nat(nat))))
         } else {
-            None
-        };
-        Ok(OptionItem { outer_value, inner_type: nat() })
+            Ok(OptionItem::None(nat()))
+        }
     }
 }
 
@@ -92,21 +91,19 @@ impl Div<IntItem> for IntItem {
     type Output = OptionItem;
 
     fn div(self, rhs: IntItem) -> Self::Output {
-        let inner_type = pair(vec![int(), nat()]);
-        let outer_value = if rhs.0 == 0i8.into() {
-            None
+        if rhs.0 == 0i8.into() {
+            OptionItem::None(pair(vec![int(), nat()]))
         } else {
             let (mut q, mut r) = (&self.0 / &rhs.0, &self.0 % &rhs.0);
             if r < 0i8.into() {
                 r += rhs.0.abs();
                 q += 1
             }
-            Some(Box::new(PairItem::new(
+            OptionItem::some(PairItem::new(
                 IntItem(q).into(), 
                 NatItem(UBig::try_from(r).expect("positive remainder")).into()
-            ).into()))
-        };
-        OptionItem { outer_value, inner_type }
+            ).into())
+        }
     }
 }
 

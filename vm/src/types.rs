@@ -15,14 +15,16 @@ pub mod lambda;
 pub mod operation;
 pub mod contract;
 
+use std::collections::BTreeMap;
 use ibig::{IBig, UBig};
 use tezos_core::types::encoded::{
     Address, PublicKey, ImplicitAddress, Signature, ChainId
 };
 use tezos_michelson::michelson::{
-    data::{Instruction},
+    data::Instruction,
     types::Type,
 };
+use tezos_michelson::micheline::Micheline;
 use tezos_operation::operations::OperationContent;
 use derive_more::{From, TryInto, Display};
 
@@ -96,7 +98,6 @@ define_item!(KeyHashItem, ImplicitAddress);  // domain
 define_item!(SignatureItem, Signature);  // domain
 define_item!(ChainIdItem, ChainId);  // domain
 
-define_item_rec!(OptionItem, Option<Box<StackItem>>, Type);  // algebraic
 define_item_rec!(ListItem, Vec<StackItem>, Type);  // collections
 define_item_rec!(SetItem, Vec<StackItem>, Type);  // collections
 define_item_rec!(MapItem, Vec<(StackItem, StackItem)>, (Type, Type));  // collections
@@ -118,6 +119,12 @@ pub struct OperationItem(OperationContent); // domain
 pub struct PairItem(Box<(StackItem, StackItem)>);  // algebraic
 
 #[derive(Debug, Clone)]
+pub enum OptionItem {  // algebraic
+    None(Type),
+    Some(Box<StackItem>)
+}
+
+#[derive(Debug, Clone)]
 pub struct OrVariant {
     value: Box<StackItem>,
     other_type: Type
@@ -129,11 +136,12 @@ pub enum OrItem {  // algebraic
     Right(OrVariant)
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct BigMapPtr {
     ptr: i64,
     inner_type: (Type, Type),
-    diff: Vec<(StackItem, Option<StackItem>)>
+    diff: BTreeMap<String, (Micheline, Option<Micheline>)>,
+    new: bool
 }
 
 #[derive(Debug, Clone, PartialEq)]

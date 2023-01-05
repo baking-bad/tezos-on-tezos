@@ -84,24 +84,25 @@ impl MapItem {
     pub fn get(&self, key: &StackItem) -> Result<OptionItem> {
         key.type_check(&self.inner_type.0)?;
         match self.outer_value.iter().find(|(k, _)| k == key) {
-            Some((_, val)) => OptionItem::some(val.clone()),
-            None => Ok(OptionItem::none(&self.inner_type.0))
+            Some((_, val)) => Ok(OptionItem::Some(Box::new(val.clone()))),
+            None => Ok(OptionItem::None(self.inner_type.0.clone()))
         }
     }
 
     pub fn update(&mut self, key: StackItem, val: Option<StackItem>) -> Result<OptionItem> {
-        let mut old_val: Option<Box<StackItem>> = None;
         key.type_check(&self.inner_type.0)?;
         match self.outer_value.binary_search_by(|(k, _)| k.cmp(&key)) {
-            Ok(pos) => if val.is_none() {
-                let (_, v) = self.outer_value.remove(pos);
-                old_val = Some(Box::new(v));
+            Ok(pos) => {
+                if val.is_none() {
+                    let (_, v) = self.outer_value.remove(pos);
+                    return Ok(OptionItem::some(v))
+                }
             },
             Err(pos) => if let Some(val) = val {
                 self.outer_value.insert(pos, (key, val));
             }
         }
-        Ok(OptionItem::new(old_val, &self.inner_type.1))
+        Ok(OptionItem::none(&self.inner_type.1))
     }
 
     pub fn contains(&self, key: &StackItem) -> Result<bool> {

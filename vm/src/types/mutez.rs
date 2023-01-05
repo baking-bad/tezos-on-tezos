@@ -102,9 +102,8 @@ impl Div<NatItem> for MutezItem {
     type Output = Result<OptionItem>;
 
     fn div(self, rhs: NatItem) -> Self::Output {
-        let inner_type = pair(vec![mutez(), mutez()]);
-        let outer_value = if rhs.0 == 0u8.into() {
-            None
+        if rhs.0 == 0u8.into() {
+            Ok(OptionItem::None(pair(vec![mutez(), mutez()])))
         } else {
             let (a, b) = (IBig::from(self.0), IBig::from(rhs.0));
             let (mut q, mut r) = (&a / &b, &a % &b);
@@ -112,12 +111,9 @@ impl Div<NatItem> for MutezItem {
                 r += b.abs();
                 q += 1
             }
-            Some(Box::new(PairItem::new(
-                MutezItem::try_from(q)?.into(), 
-                MutezItem::try_from(r)?.into()
-            ).into()))
-        };
-        Ok(OptionItem { outer_value, inner_type })
+            let res = PairItem::new(MutezItem::try_from(q)?.into(), MutezItem::try_from(r)?.into());
+            Ok(OptionItem::some(res.into()))
+        }
     }
 }
 
@@ -125,9 +121,8 @@ impl Div<MutezItem> for MutezItem {
     type Output = Result<OptionItem>;
 
     fn div(self, rhs: MutezItem) -> Self::Output {
-        let inner_type = pair(vec![nat(), mutez()]);
-        let outer_value = if rhs.0 == 0u8.into() {
-            None
+        if rhs.0 == 0u8.into() {
+            Ok(OptionItem::None(pair(vec![nat(), mutez()])))
         } else {
             let (a, b) = (self.0, rhs.0);
             let (mut q, mut r) = (a / b, a % b);
@@ -135,11 +130,8 @@ impl Div<MutezItem> for MutezItem {
                 r += b.abs();
                 q += 1
             }
-            Some(Box::new(PairItem::new(
-                NatItem(q.try_into()?).into(), 
-                MutezItem::new(r)?.into()
-            ).into()))
-        };
-        Ok(OptionItem { outer_value, inner_type })
+            let res = PairItem::new(NatItem(q.try_into()?).into(), MutezItem::new(r)?.into());
+            Ok(OptionItem::some(res.into()))
+        }
     }
 }

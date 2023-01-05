@@ -182,7 +182,7 @@ impl StackItem {
             StackItem::KeyHash(_) => Ok(types::key_hash()),
             StackItem::Signature(_) => Ok(types::signature()),
             StackItem::ChainId(_) => Ok(types::chain_id()),
-            StackItem::Option(item) => Ok(item.get_type()),
+            StackItem::Option(item) => item.get_type(),
             StackItem::Or(item) => item.get_type(),
             StackItem::Pair(item) => item.get_type(),
             StackItem::List(item) => Ok(item.get_type()),

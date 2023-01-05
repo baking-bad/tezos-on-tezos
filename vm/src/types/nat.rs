@@ -85,17 +85,13 @@ impl Div<NatItem> for NatItem {
     type Output = OptionItem;
 
     fn div(self, rhs: NatItem) -> Self::Output {
-        let inner_type = pair(vec![nat(), nat()]);
-        let outer_value = if rhs.0 == 0u8.into() {
-            None
+        if rhs.0 == 0u8.into() {
+            OptionItem::None(pair(vec![nat(), nat()]))
         } else {
             let (q, r) = (&self.0 / &rhs.0, &self.0 % &rhs.0);
-            Some(Box::new(PairItem::new(
-                NatItem(q).into(), 
-                NatItem(r).into()
-            ).into()))
-        };
-        OptionItem { outer_value, inner_type }
+            let res = PairItem::new(NatItem(q).into(), NatItem(r).into());
+            OptionItem::some(res.into())
+        }
     }
 }
 

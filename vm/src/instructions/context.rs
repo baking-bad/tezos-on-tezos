@@ -11,7 +11,7 @@ use tezos_core::types::encoded;
 use crate::{
     Result,
     Error,
-    interpreter::{TransactionScope, PureInterpreter, Interpreter, TransactionContext, ContextIntepreter},
+    interpreter::{TransactionScope, PureInterpreter, Interpreter, TransactionContext, ContextInterpreter},
     types::{MutezItem, AddressItem, StackItem, OptionItem, ContractItem},
     stack::Stack,
     typechecker::check_types_equal,
@@ -90,7 +90,7 @@ fn get_contract_type(
     }
 }
 
-impl ContextIntepreter for Contract {
+impl ContextInterpreter for Contract {
     fn execute(&self, stack: &mut Stack, context: &mut impl TransactionContext) -> Result<()> {
         let address = pop_cast!(stack, Address);
         let address = address.unwrap();
@@ -103,11 +103,11 @@ impl ContextIntepreter for Contract {
         let item = match res {
             Ok(()) => {
                 let item = ContractItem::new(address, self.r#type.clone());
-                OptionItem::some(item.into())?
+                OptionItem::some(item.into())
             },
             Err(_err) => {
                 trace_stack!(&_err);
-                OptionItem::none(&types::contract(self.r#type.clone()))
+                OptionItem::None(types::contract(self.r#type.clone()))
             }
         };
 
@@ -124,7 +124,7 @@ impl Interpreter for Self_ {
     }
 }
 
-impl ContextIntepreter for ImplicitAccount {
+impl ContextInterpreter for ImplicitAccount {
     fn execute(&self, stack: &mut Stack, context: &mut impl TransactionContext) -> Result<()> {
         let key_hash = pop_cast!(stack, KeyHash);
         let address = encoded::Address::Implicit(key_hash.unwrap());

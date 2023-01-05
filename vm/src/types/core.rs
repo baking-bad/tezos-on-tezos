@@ -79,13 +79,12 @@ impl StringItem {
     }
 
     pub fn slice(self, start: usize, end: usize) -> OptionItem {
-        let outer_value = if self.len() > 0 && start <= end && end <= self.len() {
+        if self.len() > 0 && start <= end && end <= self.len() {
             let item = Self(self.0[start..end].to_string());
-            Some(Box::new(item.into()))
+            OptionItem::some(item.into())
         } else {
-            None
-        };
-        OptionItem { outer_value, inner_type: types::string() }
+            OptionItem::None(types::string())
+        }
     }
 }
 
@@ -113,13 +112,12 @@ impl BytesItem {
     }
 
     pub fn slice(self, start: usize, end: usize) -> OptionItem {
-        let outer_value = if self.len() > 0 && start <= end && end <= self.len() {
+        if self.len() > 0 && start <= end && end <= self.len() {
             let item = Self(self.0[start..end].to_vec());
-            Some(Box::new(item.into()))
+            OptionItem::some(item.into())
         } else {
-            None
-        };
-        OptionItem { outer_value, inner_type: types::bytes() }
+            OptionItem::None(types::bytes())
+        }
     }
 }
 

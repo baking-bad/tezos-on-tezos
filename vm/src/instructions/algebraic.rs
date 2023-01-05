@@ -81,7 +81,7 @@ impl PureInterpreter for None {
 impl PureInterpreter for Some {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let val = stack.pop()?;
-        let item = OptionItem::some(val)?;
+        let item = OptionItem::some(val);
         stack.push(item.into())
     }
 }

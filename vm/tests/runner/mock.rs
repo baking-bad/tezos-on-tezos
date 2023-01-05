@@ -36,7 +36,7 @@ pub fn default_scope() -> TransactionScope {
 pub struct MockContext {
     pub balance: Mutez,
     pub big_map_counter: i64,
-    pub big_maps: HashMap<i64, encoded::Address>,
+    pub big_maps: HashMap<i64, encoded::ContractAddress>,
     pub big_map_values: HashMap<(i64, String), Micheline>,
     pub contracts: HashMap<String, Micheline>,
 }
@@ -66,13 +66,14 @@ impl TransactionContext for MockContext {
         }
     }
 
-    fn allocate_big_map(&mut self, owner: encoded::Address) -> Result<i64> {
+    fn allocate_big_map(&mut self, owner: encoded::ContractAddress) -> Result<i64> {
         self.big_map_counter += 1;
+        trace_log!("Alloc", self.big_map_counter);
         self.big_maps.insert(self.big_map_counter.clone(), owner);
         Ok(self.big_map_counter)
     }
 
-    fn move_big_map(&mut self, ptr: i64, owner: encoded::Address) -> Result<()> {
+    fn move_big_map(&mut self, ptr: i64, owner: encoded::ContractAddress) -> Result<()> {
         match self.big_maps.remove(&ptr) {
             Some(_) => {
                 self.big_maps.insert(ptr, owner);

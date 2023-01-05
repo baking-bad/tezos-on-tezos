@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use std::collections::BTreeMap;
 use tezos_michelson::michelson::{
     Michelson,
     data::Data,
@@ -8,7 +9,7 @@ use tezos_michelson::michelson::{
 };
 use tezos_michelson::micheline::Micheline;
 use tezos_core::{
-    types::encoded::{ScriptExprHash, Encoded},
+    types::encoded::{ScriptExprHash, ContractAddress, Encoded},
     internal::crypto::blake2b
 };
 
@@ -20,8 +21,7 @@ use crate::{
     err_type,
 };
 
-pub fn script_expr_hash(item: &StackItem, ty: &Type) -> Result<ScriptExprHash> {
-    let expr = item.clone().into_micheline(&ty)?;
+pub fn script_expr_hash(expr: Micheline, ty: &Type) -> Result<ScriptExprHash> {
     let schema: Micheline = Michelson::from(ty.clone()).into();
     let payload = expr.pack(Some(&schema))?;
     let hash = blake2b(payload.as_slice(), 32)?;
@@ -29,9 +29,18 @@ pub fn script_expr_hash(item: &StackItem, ty: &Type) -> Result<ScriptExprHash> {
     Ok(res)
 }
 
+pub fn get_key_hash(key: &StackItem, ty: &Type) -> Result<ScriptExprHash> {
+    let expr = key.clone().into_micheline(&ty)?;
+    script_expr_hash(expr, ty)
+}
+
 impl BigMapPtr {
     pub fn new(ptr: i64, key_type: Type, val_type: Type) -> Self {
-        Self { ptr, inner_type: (key_type, val_type), diff: Vec::new() }
+        Self { ptr, inner_type: (key_type, val_type), diff: BTreeMap::new(), new: true }
+    }
+
+    pub fn update(&mut self, key_hash: String, key: Micheline, val: Option<Micheline>) {
+        self.diff.insert(key_hash, (key, val));
     }
 }
 
@@ -39,7 +48,12 @@ impl BigMapItem {
     pub fn from_data(data: Data, key_type: &Type, val_type: &Type) -> Result<StackItem> {
         match data {
             Data::Int(ptr) => {
-                let lazy = BigMapPtr::new(ptr.to_integer()?, key_type.clone(), val_type.clone());
+                let lazy = BigMapPtr {
+                    ptr: ptr.to_integer()?,
+                    inner_type: (key_type.clone(), val_type.clone()),
+                    diff: BTreeMap::new(),
+                    new: false
+                };
                 Ok(StackItem::BigMap(Self::Ptr(lazy)))
             },
             Data::Sequence(sequence) => {
@@ -77,7 +91,7 @@ impl BigMapItem {
         match self {
             Self::Map(map) => map.contains(key),
             Self::Ptr(lazy) => {
-                let key_hash = script_expr_hash(key, &lazy.inner_type.0)?;
+                let key_hash = get_key_hash(key, &lazy.inner_type.0)?;
                 context.has_big_map_value(lazy.ptr, &key_hash)
             }
         }
@@ -87,11 +101,11 @@ impl BigMapItem {
         match self {
             Self::Map(map) => map.get(key),
             Self::Ptr(lazy) => {
-                let key_hash = script_expr_hash(key, &lazy.inner_type.0)?;
+                let key_hash = get_key_hash(key, &lazy.inner_type.0)?;
                 match context.get_big_map_value(lazy.ptr, &key_hash)? {
                     Some(val) => {
                         let item = StackItem::from_micheline(val, &lazy.inner_type.1)?;
-                        OptionItem::some(item)
+                        Ok(OptionItem::some(item))
                     },
                     None => Ok(OptionItem::none(&lazy.inner_type.1))
                 }
@@ -106,18 +120,38 @@ impl BigMapItem {
                 Ok(old_val)
             },
             Self::Ptr(lazy) => {
-                let key_hash = script_expr_hash(&key, &lazy.inner_type.0)?;
-                let value = match val {
+                let key_expr = key.into_micheline(&lazy.inner_type.0)?;
+                let key_hash = script_expr_hash(key_expr.clone(), &lazy.inner_type.0)?;
+                let val_expr = match val {
                     Some(val) => Some(val.into_micheline(&lazy.inner_type.1)?),
                     None => None
                 };
-                match context.set_big_map_value(lazy.ptr, key_hash, value)? {
+                lazy.update(key_hash.into_string(), key_expr, val_expr.clone());
+                match context.set_big_map_value(lazy.ptr, key_hash, val_expr)? {
                     Some(old_val) => {
                         let item = StackItem::from_micheline(old_val, &lazy.inner_type.1)?;
-                        OptionItem::some(item)
+                        Ok(OptionItem::some(item))
                     },
                     None => Ok(OptionItem::none(&lazy.inner_type.1))
                 }
+            }
+        }
+    }
+
+    pub fn try_allocate(self, owner: &ContractAddress, context: &mut impl TransactionContext) -> Result<Self> {
+        match self {
+            Self::Ptr(_) => Ok(self),
+            Self::Map(map) => {
+                let ptr = context.allocate_big_map(owner.clone())?;
+                let mut lazy = BigMapPtr::new(ptr, map.inner_type.0.clone(), map.inner_type.1.clone());
+                for (key, val) in map.outer_value.clone() {
+                    let key_expr = key.into_micheline(&lazy.inner_type.0)?;
+                    let val_expr = val.into_micheline(&lazy.inner_type.1)?;
+                    let key_hash = script_expr_hash(key_expr.clone(), &lazy.inner_type.0)?;
+                    lazy.update(key_hash.into_string(), key_expr, Some(val_expr.clone()));
+                    context.set_big_map_value(lazy.ptr, key_hash, Some(val_expr))?;
+                }
+                Ok(Self::Ptr(lazy))
             }
         }
     }
@@ -129,5 +163,12 @@ impl Display for BigMapItem {
             Self::Map(map) => map.fmt(f),
             Self::Ptr(lazy) => f.write_fmt(format_args!("${}", lazy.ptr))
         }
+    }
+}
+
+impl PartialEq for BigMapPtr {
+    fn eq(&self, other: &Self) -> bool {
+        // for testing purposes only (ignoring pointer and types)
+        self.diff == other.diff
     }
 }
