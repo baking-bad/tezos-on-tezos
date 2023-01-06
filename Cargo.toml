@@ -4,7 +4,8 @@ members = [
   "proto",
   "facade",
   "installer",
-  "dac_codec"
+  "dac_codec",
+  "vm"
 ]
 
 [profile.release]

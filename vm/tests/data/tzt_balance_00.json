@@ -1,0 +1,44 @@
+[
+  {
+    "args": [
+      [
+        {
+          "prim": "BALANCE"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "mutez"
+            },
+            {
+              "int": "22"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  },
+  {
+    "args": [
+      {
+        "int": "22"
+      }
+    ],
+    "prim": "balance"
+  }
+]

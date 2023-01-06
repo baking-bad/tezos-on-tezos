@@ -1,0 +1,70 @@
+[
+  {
+    "args": [
+      [
+        {
+          "prim": "SIZE"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "int"
+                }
+              ],
+              "prim": "set"
+            },
+            [
+              {
+                "int": "1"
+              },
+              {
+                "int": "2"
+              },
+              {
+                "int": "3"
+              },
+              {
+                "int": "4"
+              },
+              {
+                "int": "5"
+              },
+              {
+                "int": "6"
+              }
+            ]
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "6"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

@@ -1,19 +1,28 @@
 use tezos_operation::operations::{SignedOperation, OperationContent};
 use tezos_core::types::{
-    encoded::{Encoded, OperationHash},
+    encoded::{Encoded, ImplicitAddress, OperationHash},
     mutez::Mutez,
+    number::Nat
 };
 
 use crate::{
     context::Context,
-    validator::ManagerOperation,
     error::{Error, Result, RpcErrors}
 };
+
+pub struct ManagerOperation {
+    pub hash: OperationHash,
+    pub origin: SignedOperation,
+    pub source: ImplicitAddress,
+    pub total_fees: Mutez,
+    pub total_spent: Mutez,
+    pub last_counter: Nat
+}
 
 macro_rules! err {
     ($hash: expr, $err: expr) => {
         Err(Error::ValidationError {
-            hash: ($hash as OperationHash).into_string(),
+            hash: $hash,
             inner: $err
         })
     };

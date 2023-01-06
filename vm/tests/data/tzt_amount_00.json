@@ -1,0 +1,44 @@
+[
+  {
+    "args": [
+      [
+        {
+          "prim": "AMOUNT"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "mutez"
+            },
+            {
+              "int": "10"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  },
+  {
+    "args": [
+      {
+        "int": "10"
+      }
+    ],
+    "prim": "amount"
+  }
+]

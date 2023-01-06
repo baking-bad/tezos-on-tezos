@@ -1,0 +1,77 @@
+[
+  {
+    "args": [
+      [
+        {
+          "args": [
+            []
+          ],
+          "prim": "MAP"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "string"
+                }
+              ],
+              "prim": "list"
+            },
+            [
+              {
+                "string": "1"
+              },
+              {
+                "string": "2"
+              },
+              {
+                "string": "3"
+              }
+            ]
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "string"
+                }
+              ],
+              "prim": "list"
+            },
+            [
+              {
+                "string": "1"
+              },
+              {
+                "string": "2"
+              },
+              {
+                "string": "3"
+              }
+            ]
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

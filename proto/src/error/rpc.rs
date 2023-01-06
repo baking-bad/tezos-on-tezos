@@ -90,6 +90,41 @@ impl RpcErrors {
         }
     }
 
+    pub fn bad_stack(message: String) -> RpcError {
+        RpcError {
+            kind: "temporary".into(),
+            id: "michelson_v1.bad_stack".into(),
+            message: Some(message),
+            ..DEFAULT_ERROR
+        }
+    }
+
+    pub fn ill_typed_data(message: String) -> RpcError {
+        RpcError {
+            kind: "temporary".into(),
+            id: "michelson_v1.ill_typed_data".into(),
+            message: Some(message),
+            ..DEFAULT_ERROR
+        }
+    }
+
+    pub fn invalid_never_expr() -> RpcError {
+        RpcError {
+            kind: "temporary".into(),
+            id: "michelson_v1.invalid_never_expr".into(),
+            ..DEFAULT_ERROR
+        }
+    }
+
+    pub fn invalid_primitive(prim: String) -> RpcError {
+        RpcError {
+            kind: "temporary".into(),
+            id: "michelson_v1.invalid_primitive".into(),
+            message: Some(prim),
+            ..DEFAULT_ERROR
+        }
+    }
+
     pub fn inconsistent_hash(&mut self, contract: &impl TezosAddress) {
         self.errors.push(RpcError {
             kind: "temporary".into(),

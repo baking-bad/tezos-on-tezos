@@ -135,7 +135,7 @@ mod test {
     };
     use tezos_michelson::michelson::{
         types::{code, storage, parameter, unit},
-        data::instructions::{fail_with},
+        data::instructions::{failwith},
         data::Unit
     };
 
@@ -160,7 +160,7 @@ mod test {
                 code: vec![
                     parameter(unit()),
                     storage(unit()),
-                    code(fail_with())
+                    code(failwith())
                 ].into(),
                 storage: Unit.into()
             }

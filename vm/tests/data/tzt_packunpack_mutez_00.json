@@ -1,0 +1,66 @@
+[
+  {
+    "args": [
+      [
+        {
+          "prim": "PACK"
+        },
+        {
+          "args": [
+            {
+              "prim": "mutez"
+            }
+          ],
+          "prim": "UNPACK"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "mutez"
+            },
+            {
+              "int": "1000"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "mutez"
+                }
+              ],
+              "prim": "option"
+            },
+            {
+              "args": [
+                {
+                  "int": "1000"
+                }
+              ],
+              "prim": "Some"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

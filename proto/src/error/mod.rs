@@ -1,10 +1,8 @@
-pub mod rpc_errors;
+mod rpc;
 
 use core::result;
-use tezos_core;
-use tezos_operation;
-use serde_json_wasm;
 use derive_more::{From, Display, Error};
+use tezos_core::types::encoded::{OperationHash};
 
 pub use tezos_rpc::Error as TezosRpcError;
 pub use tezos_core::Error as TezosCoreError;
@@ -12,8 +10,12 @@ pub use tezos_operation::Error as TezosOperationError;
 pub use tezos_michelson::Error as TezosMichelsonError;
 pub use serde_json_wasm::ser::Error as SerializationError;
 pub use serde_json_wasm::de::Error as DeserializationError;
+pub use ibig::error::ParseError as BigIntParsingError;
+pub use ibig::error::OutOfBoundsError as BigIntOutOfBoundsError;
+pub use chrono::ParseError as TimestampParsingError;
+pub use vm::Error as InterpreterError;
 
-pub use rpc_errors::{RpcErrors, RpcError};
+pub use rpc::{RpcErrors, RpcError};
 
 #[derive(Debug, From, Display, Error)]
 pub enum Error {
@@ -23,16 +25,20 @@ pub enum Error {
     TezosMichelsonError(TezosMichelsonError),
     SerializationError(SerializationError),
     DeserializationError(DeserializationError),
-    OperationKindUnsupported,
-    #[display(fmt = "operation {}, caused by {}", hash, inner)]
-    ValidationError {
-        hash: String,
-        inner: RpcError
-    },
+    BigIntParsingError(BigIntParsingError),
+    BigIntOutOfBoundsError(BigIntOutOfBoundsError),
+    TimestampParsingError(TimestampParsingError),
     ContextUnstagedError,
     ExternalError {
         message: String
     },
+    OperationKindUnsupported,
+    #[display(fmt = "operation {:?}, caused by {:?}", hash, inner)]
+    ValidationError {
+        hash: OperationHash,
+        inner: RpcError
+    },
+    InterpreterError(InterpreterError),
 }
 
 pub type Result<T> = result::Result<T, Error>;

@@ -56,6 +56,9 @@ Non-supported Michelson features (at least in the first iteration):
 * Sapling
 * Tickets
 * Internal originations
+* Global constants
+* Chest
+* Rollups :)
 
 ## How to run
 

@@ -1,0 +1,119 @@
+[
+  {
+    "args": [
+      [
+        {
+          "args": [
+            [
+              {
+                "prim": "CDR"
+              },
+              {
+                "prim": "DUP"
+              },
+              {
+                "prim": "CONCAT"
+              }
+            ]
+          ],
+          "prim": "MAP"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "int"
+                },
+                {
+                  "prim": "string"
+                }
+              ],
+              "prim": "map"
+            },
+            [
+              {
+                "args": [
+                  {
+                    "int": "1"
+                  },
+                  {
+                    "string": "AB"
+                  }
+                ],
+                "prim": "Elt"
+              },
+              {
+                "args": [
+                  {
+                    "int": "5"
+                  },
+                  {
+                    "string": "CD"
+                  }
+                ],
+                "prim": "Elt"
+              }
+            ]
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "int"
+                },
+                {
+                  "prim": "string"
+                }
+              ],
+              "prim": "map"
+            },
+            [
+              {
+                "args": [
+                  {
+                    "int": "1"
+                  },
+                  {
+                    "string": "ABAB"
+                  }
+                ],
+                "prim": "Elt"
+              },
+              {
+                "args": [
+                  {
+                    "int": "5"
+                  },
+                  {
+                    "string": "CDCD"
+                  }
+                ],
+                "prim": "Elt"
+              }
+            ]
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

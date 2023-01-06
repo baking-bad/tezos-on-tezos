@@ -1,0 +1,44 @@
+[
+  {
+    "args": [
+      [
+        {
+          "prim": "NOW"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "timestamp"
+            },
+            {
+              "int": "45"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  },
+  {
+    "args": [
+      {
+        "int": "45"
+      }
+    ],
+    "prim": "now"
+  }
+]

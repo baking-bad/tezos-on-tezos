@@ -23,8 +23,17 @@ jobs:
           components: rustfmt, clippy
           target: wasm32-unknown-unknown
 
+      - name: Install nextest
+        uses: taiki-e/install-action@nextest
+
       - name: Run tests
-        run: make test
+        run: cargo nextest run --tests
+
+      - name: Publish results
+        uses: EnricoMi/publish-unit-test-result-action/composite@v2
+        if: always()
+        with:
+          junit_files: "target/nextest/default/*.xml"
 
       - name: Install WASM tools
         run: make install
