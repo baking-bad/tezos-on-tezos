@@ -203,7 +203,7 @@ impl StackItem {
     }
 
     pub fn from_micheline(expr: Micheline, ty: &Type) -> Result<Self> {
-        Self::from_data(expr.try_into()?, ty)
+        Self::from_data(expr.normalized().try_into()?, ty)
     }
 
     pub fn into_micheline(self, ty: &Type) -> Result<Micheline> {

@@ -86,7 +86,7 @@ impl PureInterpreter for Concat {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let res = match stack.pop()? {
             StackItem::List(list) => {
-                let (items, inner_ty) = list.unwrap();
+                let (items, inner_ty) = list.into_elements();
                 match inner_ty {
                     Type::Comparable(ComparableType::String(_)) => {
                         let mut output: Vec<String> = Vec::with_capacity(items.len());

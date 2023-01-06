@@ -50,6 +50,12 @@ pub enum Error {
     GeneralOverflow,
     MutezOverflow,
     MutezUnderflow,
+    #[display(fmt = "owner {}, offender: {} (ptr: {})", owner, offender, ptr)]
+    BigMapAccessDenied {
+        ptr: i64,
+        owner: String,
+        offender: String
+    }
 }
 
 #[macro_export]

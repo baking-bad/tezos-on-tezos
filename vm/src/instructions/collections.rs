@@ -103,7 +103,7 @@ impl Interpreter for Update {
                         map.into()
                     },
                     StackItem::BigMap(big_map) => {
-                        let mut big_map = big_map.try_allocate(&scope.self_address, context)?;
+                        let mut big_map = big_map.acquire(scope, context)?;
                         big_map.update(key, val.unwrap(), context)?;
                         big_map.into()
                     },
@@ -127,7 +127,7 @@ impl Interpreter for GetAndUpdate {
                 stack.push(old.into())
             },
             StackItem::BigMap(big_map) => {
-                let mut big_map = big_map.try_allocate(&scope.self_address, context)?;
+                let mut big_map = big_map.acquire(scope, context)?;
                 let old = big_map.update(key, val.unwrap(), context)?;
                 stack.push(big_map.into())?;
                 stack.push(old.into())

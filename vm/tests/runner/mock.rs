@@ -53,6 +53,18 @@ impl MockContext {
     }
 }
 
+impl MockContext {
+    pub fn get_elements_count(&self, ptr: i64) -> usize {
+        self.big_map_values.iter().filter(|((id, _), _)| id == &ptr).count()
+    }
+
+    pub fn init_big_map(&mut self, ptr: i64, owner: encoded::ContractAddress) {
+        trace_log!("Init", ptr);
+        self.big_map_counter = ptr;
+        self.big_maps.insert(ptr, owner);
+    }
+}
+
 impl TransactionContext for MockContext {
     fn get_balance(&self, _: &encoded::Address) -> Result<Option<Mutez>> {
         Ok(Some(self.balance))
@@ -73,13 +85,10 @@ impl TransactionContext for MockContext {
         Ok(self.big_map_counter)
     }
 
-    fn move_big_map(&mut self, ptr: i64, owner: encoded::ContractAddress) -> Result<()> {
-        match self.big_maps.remove(&ptr) {
-            Some(_) => {
-                self.big_maps.insert(ptr, owner);
-                Ok(())
-            },
-            None => Err(Error::BigMapNotAllocated { ptr: ptr })
+    fn get_big_map_owner(&self, ptr: i64) -> Result<encoded::ContractAddress> {
+        match self.big_maps.get(&ptr) {
+            Some(owner) => Ok(owner.clone()),
+            None => Err(Error::BigMapNotAllocated { ptr })
         }
     }
 

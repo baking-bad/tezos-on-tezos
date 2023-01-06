@@ -89,7 +89,7 @@ impl PureInterpreter for Some {
 impl PureInterpreter for Left {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let left_val = stack.pop()?;
-        let res = OrItem::left(left_val, &self.r#type);
+        let res = OrItem::left(left_val, self.r#type.clone());
         stack.push(res.into())
     }
 }
@@ -97,7 +97,7 @@ impl PureInterpreter for Left {
 impl PureInterpreter for Right {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let right_val = stack.pop()?;
-        let res = OrItem::right(right_val, &self.r#type);
+        let res = OrItem::right(right_val, self.r#type.clone());
         stack.push(res.into())
     }
 }

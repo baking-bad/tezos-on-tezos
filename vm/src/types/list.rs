@@ -58,7 +58,7 @@ impl ListItem {
         }
     }
 
-    pub fn unwrap(self) -> (Vec<StackItem>, Type) {
+    pub fn into_elements(self) -> (Vec<StackItem>, Type) {
         (self.outer_value, self.inner_type)
     }
 
@@ -68,7 +68,7 @@ impl ListItem {
 
     pub fn split_head(self) -> Result<(StackItem, ListItem)> {
         if self.outer_value.len() > 0 {
-            let (mut items, val_type) = self.unwrap();
+            let (mut items, val_type) = self.into_elements();
             let head = items.remove(0);
             Ok((head, Self::new(items, val_type)))
         } else {

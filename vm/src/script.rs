@@ -15,7 +15,7 @@ use crate::{
     Error,
     stack::Stack,
     types::{StackItem, PairItem},
-    interpreter::{Interpreter, TransactionResult, TransactionScope, TransactionContext},
+    interpreter::{Interpreter, TransactionResult, TransactionScope, TransactionContext, LazyStorage},
     err_type
 };
 
@@ -33,7 +33,7 @@ impl TryFrom<Micheline> for Script {
         let mut storage_ty: Option<Type> = None;
         let mut code_ty: Option<Instruction> = None;
 
-        let sections = Sequence::try_from(src.normalized())?;  // TODO: normalize in-place for better perf
+        let sections = Sequence::try_from(src)?;
         for section in sections.into_values() {
             let prim = PrimitiveApplication::try_from(section)?;
             match prim.prim() {
@@ -55,10 +55,6 @@ impl TryFrom<Micheline> for Script {
 }
 
 impl Script {
-    pub fn allocate_lazy_storage(&self, storage: Micheline, context: &mut impl TransactionContext) -> Result<Vec<LazyStorageDiff>> {
-        Ok(vec![])
-    }
-
     fn aggregate_lazy_storage_diff(&self, context: &mut impl TransactionContext) -> Result<Vec<LazyStorageDiff>> {
         Ok(vec![])
     }
@@ -68,21 +64,21 @@ impl Script {
             return Err(Error::BadReturn.into());
         }
         let param_item = StackItem::from_micheline(parameter, &self.parameter_type)?;
-        // TODO: check permissions for moving big maps
         let storage_item = StackItem::from_micheline(storage, &self.storage_type)?;
         let input = PairItem::new(param_item, storage_item);
         stack.push(input.into())
     }
 
-    fn end(&self, stack: &mut Stack) -> Result<(Micheline, Vec<OperationContent>)> {
+    fn end(&self, stack: &mut Stack, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<(Micheline, Vec<OperationContent>)> {
         if stack.len() != 1 {
             return Err(Error::BadReturn.into());
         }
         match stack.pop()? {
             StackItem::Pair(pair) => match pair.unpair() {
-                (storage, StackItem::List(operations)) => {
+                (mut storage, StackItem::List(operations)) => {
+                    storage.try_acquire(scope, context)?;
                     let mut internal_operations: Vec<OperationContent> = Vec::with_capacity(operations.len());
-                    let (items, _) = operations.unwrap();
+                    let (items, _) = operations.into_elements();
                     for operation in items {
                         match operation {
                             StackItem::Operation(op) => internal_operations.push(op.into_content()),
@@ -101,7 +97,7 @@ impl Script {
         let mut stack = Stack::new();
         self.begin(&mut stack, scope.parameter.clone(), scope.storage.clone())?;
         self.code.execute(&mut stack, scope, context)?;
-        let (storage, internal_operations) = self.end(&mut stack)?;
+        let (storage, internal_operations) = self.end(&mut stack, scope, context)?;
         debug_assert_eq!(0, stack.len());
         let lazy_storage_diff = self.aggregate_lazy_storage_diff(context)?;
         Ok(TransactionResult { storage, internal_operations, lazy_storage_diff })

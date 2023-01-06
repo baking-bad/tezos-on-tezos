@@ -9,15 +9,16 @@ use tezos_michelson::michelson::{
 };
 use tezos_michelson::micheline::Micheline;
 use tezos_core::{
-    types::encoded::{ScriptExprHash, ContractAddress, Encoded},
+    types::encoded::{ScriptExprHash, Encoded},
     internal::crypto::blake2b
 };
 
 use crate::{
     Result,
-    types::{BigMapItem, StackItem, MapItem, BigMapPtr, OptionItem},
+    Error,
+    types::{BigMapItem, StackItem, MapItem, BigMapPtr, OptionItem, OrItem, ListItem, PairItem},
     typechecker::check_types_equal,
-    interpreter::TransactionContext,
+    interpreter::{TransactionContext, TransactionScope, LazyStorage},
     err_type,
 };
 
@@ -34,6 +35,19 @@ pub fn get_key_hash(key: &StackItem, ty: &Type) -> Result<ScriptExprHash> {
     script_expr_hash(expr, ty)
 }
 
+pub fn check_ownership(ptr: i64, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()> {
+    let owner = context.get_big_map_owner(ptr)?;
+    if owner == scope.self_address {
+        Ok(())
+    } else {
+        Err(Error::BigMapAccessDenied {
+            ptr, owner:
+            owner.into_string(),
+            offender: scope.self_address.clone().into_string()
+        })
+    }
+}
+
 impl BigMapPtr {
     pub fn new(ptr: i64, key_type: Type, val_type: Type) -> Self {
         Self { ptr, inner_type: (key_type, val_type), diff: BTreeMap::new(), new: true }
@@ -41,6 +55,10 @@ impl BigMapPtr {
 
     pub fn update(&mut self, key_hash: String, key: Micheline, val: Option<Micheline>) {
         self.diff.insert(key_hash, (key, val));
+    }
+
+    pub fn value(&self) -> i64 {
+        self.ptr
     }
 }
 
@@ -137,12 +155,15 @@ impl BigMapItem {
             }
         }
     }
-
-    pub fn try_allocate(self, owner: &ContractAddress, context: &mut impl TransactionContext) -> Result<Self> {
+ 
+    pub fn acquire(self, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<Self> {
         match self {
-            Self::Ptr(_) => Ok(self),
+            Self::Ptr(ref lazy) => {
+                check_ownership(lazy.ptr, scope, context)?;
+                Ok(self)
+            },
             Self::Map(map) => {
-                let ptr = context.allocate_big_map(owner.clone())?;
+                let ptr = context.allocate_big_map(scope.self_address.clone())?;
                 let mut lazy = BigMapPtr::new(ptr, map.inner_type.0.clone(), map.inner_type.1.clone());
                 for (key, val) in map.outer_value.clone() {
                     let key_expr = key.into_micheline(&lazy.inner_type.0)?;
@@ -170,5 +191,61 @@ impl PartialEq for BigMapPtr {
     fn eq(&self, other: &Self) -> bool {
         // for testing purposes only (ignoring pointer and types)
         self.diff == other.diff
+    }
+}
+
+impl LazyStorage for BigMapItem {
+    fn try_acquire(&mut self, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()> {
+        match self {
+            Self::Ptr(lazy) => check_ownership(lazy.ptr, scope, context),
+            Self::Map(_) => {
+                *self = self.clone().acquire(scope, context)?;
+                Ok(())
+            }
+        }
+    }
+}
+
+impl LazyStorage for OptionItem {
+    fn try_acquire(&mut self, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()> {
+        match self {
+            Self::None(_) => Ok(()),
+            Self::Some(val) => val.try_acquire(scope, context)
+        }
+    }
+}
+
+impl LazyStorage for OrItem {
+    fn try_acquire(&mut self, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()> {
+        let var = match self {
+            Self::Left(var) => var,
+            Self::Right(var) => var
+        };
+        var.value.try_acquire(scope, context)
+    }
+}
+
+impl LazyStorage for PairItem {
+    fn try_acquire(&mut self, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()> {
+        self.0.0.try_acquire(scope, context)?;
+        self.0.1.try_acquire(scope, context)
+    }
+}
+
+impl LazyStorage for ListItem {
+    fn try_acquire(&mut self, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()> {
+        self.outer_value
+            .iter_mut()
+            .map(|e| e.try_acquire(scope, context))
+            .collect()
+    }
+}
+
+impl LazyStorage for MapItem {
+    fn try_acquire(&mut self, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()> {
+        self.outer_value
+            .iter_mut()
+            .map(|(_, v)| v.try_acquire(scope, context))
+            .collect()
     }
 }

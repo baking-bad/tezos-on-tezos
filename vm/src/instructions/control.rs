@@ -161,13 +161,13 @@ impl Interpreter for Map {
 
         let res = match src {
             StackItem::List(list) => {
-                let (input, val_type) = list.unwrap();
+                let (input, val_type) = list.into_elements();
                 let output = if input.is_empty() { vec![] } else { process(input)? };
                 Ok(ListItem::new(output, val_type).into())
             },
             StackItem::Map(map) => {
                 let keys = map.get_keys();
-                let (input, (key_type, mut val_type)) = map.unwrap();
+                let (input, (key_type, mut val_type)) = map.into_pairs();
                 let output: Vec<(StackItem, StackItem)> = if input.is_empty() {
                     vec![]
                 } else {
@@ -186,9 +186,9 @@ impl Interpreter for Map {
 impl Interpreter for Iter {
     fn execute(&self, stack: &mut Stack, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()> {
         let input = match stack.pop()? {
-            StackItem::Set(set) => set.unwrap().0,
-            StackItem::List(list) => list.unwrap().0,
-            StackItem::Map(map) => map.unwrap().0,
+            StackItem::Set(set) => set.into_elements().0,
+            StackItem::List(list) => list.into_elements().0,
+            StackItem::Map(map) => map.into_pairs().0,
             item => return err_type!("SetItem, ListItem, or MapItem", item)
         };
         for item in input {

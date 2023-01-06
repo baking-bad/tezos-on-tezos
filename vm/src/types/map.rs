@@ -64,12 +64,16 @@ impl MapItem {
         }
     }
 
-    pub fn unwrap(self) -> (Vec<StackItem>, (Type, Type)) {
+    pub fn into_pairs(self) -> (Vec<StackItem>, (Type, Type)) {
         let mut elements: Vec<StackItem> = Vec::with_capacity(self.outer_value.len());
         for (key_item, val_item) in self.outer_value {
             elements.push(PairItem::new(key_item, val_item).into());
         }
         (elements, self.inner_type)
+    }
+
+    pub fn into_elements(self) -> (Vec<(StackItem, StackItem)>, (Type, Type)) {
+        (self.outer_value, self.inner_type)
     }
 
     pub fn get_type(&self) -> Result<Type> {
@@ -93,16 +97,19 @@ impl MapItem {
         key.type_check(&self.inner_type.0)?;
         match self.outer_value.binary_search_by(|(k, _)| k.cmp(&key)) {
             Ok(pos) => {
-                if val.is_none() {
-                    let (_, v) = self.outer_value.remove(pos);
-                    return Ok(OptionItem::some(v))
+                let (_, v) = self.outer_value.remove(pos);
+                if let Some(val) = val {
+                    self.outer_value.insert(pos, (key, val));
                 }
+                Ok(OptionItem::some(v))
             },
-            Err(pos) => if let Some(val) = val {
-                self.outer_value.insert(pos, (key, val));
+            Err(pos) => {
+                if let Some(val) = val {
+                    self.outer_value.insert(pos, (key, val));
+                }
+                Ok(OptionItem::none(&self.inner_type.1))
             }
         }
-        Ok(OptionItem::none(&self.inner_type.1))
     }
 
     pub fn contains(&self, key: &StackItem) -> Result<bool> {

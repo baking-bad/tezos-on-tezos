@@ -14,13 +14,13 @@ use crate::{
 };
 
 impl OrItem {
-    pub fn left(left_val: StackItem, right_type: &Type) -> Self {
-        let var = OrVariant { value: Box::new(left_val), other_type: right_type.clone() };
+    pub fn left(left_val: StackItem, right_type: Type) -> Self {
+        let var = OrVariant { value: Box::new(left_val), other_type: right_type };
         Self::Left(var)
     }
 
-    pub fn right(right_val: StackItem, left_type: &Type) -> Self {
-        let var = OrVariant { value: Box::new(right_val), other_type: left_type.clone() };
+    pub fn right(right_val: StackItem, left_type: Type) -> Self {
+        let var = OrVariant { value: Box::new(right_val), other_type: left_type };
         Self::Right(var)
     }
 
@@ -28,11 +28,11 @@ impl OrItem {
         match data {
             Data::Left(left) => {
                 let inner = StackItem::from_data(*left.value, left_type)?;
-                Ok(StackItem::Or(Self::left(inner, right_type)))
+                Ok(StackItem::Or(Self::left(inner, right_type.clone())))
             },
             Data::Right(right) => {
                 let inner = StackItem::from_data(*right.value, right_type)?;
-                Ok(StackItem::Or(Self::right(inner, left_type)))
+                Ok(StackItem::Or(Self::right(inner, left_type.clone())))
             },
             _ => err_type!("Data::Left or Data::Right", data)
         }

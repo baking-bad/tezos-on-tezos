@@ -11,7 +11,7 @@ use crate::{
     Result,
     Error,
     stack::Stack,
-    types::{StackItem, BigMapItem},
+    types::StackItem,
     trace_enter,
     trace_exit
 };
@@ -33,7 +33,7 @@ pub trait TransactionContext {
     fn get_balance(&self, address: &Address) -> Result<Option<Mutez>>;
     fn get_contract_type(&self, address: &ContractAddress) -> Result<Option<Micheline>>;
     fn allocate_big_map(&mut self, owner: ContractAddress) -> Result<i64>;
-    fn move_big_map(&mut self, ptr: i64, owner: ContractAddress) -> Result<()>;
+    fn get_big_map_owner(&self, ptr: i64) -> Result<ContractAddress>;
     fn has_big_map_value(&self, ptr: i64, key_hash: &ScriptExprHash) -> Result<bool>;
     fn get_big_map_value(&self, ptr: i64, key_hash: &ScriptExprHash) -> Result<Option<Micheline>>;
     fn set_big_map_value(&mut self, ptr: i64, key_hash: ScriptExprHash, value: Option<Micheline>) -> Result<Option<Micheline>>;
@@ -59,6 +59,10 @@ pub trait ScopedInterpreter {
 
 pub trait ContextInterpreter {
     fn execute(&self, stack: &mut Stack, context: &mut impl TransactionContext) -> Result<()>;
+}
+
+pub trait LazyStorage {
+    fn try_acquire(&mut self, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()>;
 }
 
 impl Interpreter for Instruction {
@@ -150,17 +154,16 @@ impl Interpreter for Instruction {
     }
 }
 
-// impl StackItem {
-//     pub fn try_allocate(self, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<Self> {
-//         match self {
-//             StackItem::BigMap(big_map) => {
-//                 big_map
-//                     .try_allocate(&scope.self_address, context)
-//                     .map(|i| i.into())
-//             },
-//             StackItem::Option(option) => {
-                
-//             }
-//         }
-//     }
-// }
+impl LazyStorage for StackItem {
+    fn try_acquire(&mut self, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()> {
+        match self {
+            StackItem::BigMap(item) => item.try_acquire(scope, context),
+            StackItem::Option(item) => item.try_acquire(scope, context),
+            StackItem::Or(item) => item.try_acquire(scope, context),
+            StackItem::Pair(item) => item.try_acquire(scope, context),
+            StackItem::List(item) => item.try_acquire(scope, context),
+            StackItem::Map(item) => item.try_acquire(scope, context),
+            _ => Ok(())
+        }
+    }
+}

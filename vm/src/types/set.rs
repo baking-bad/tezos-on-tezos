@@ -37,7 +37,7 @@ impl SetItem {
         }
     }
 
-    pub fn unwrap(self) -> (Vec<StackItem>, Type) {
+    pub fn into_elements(self) -> (Vec<StackItem>, Type) {
         (self.outer_value, self.inner_type)
     }
 

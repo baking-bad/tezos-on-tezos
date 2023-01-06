@@ -23,8 +23,9 @@ use vm::{
     Result,
     Error,
     stack::Stack,
-    types::StackItem,
-    interpreter::{Interpreter, TransactionScope},
+    types::{StackItem, BigMapItem, MapItem, BigMapPtr},
+    types::big_map::get_key_hash,
+    interpreter::{Interpreter, LazyStorage, TransactionScope, TransactionContext},
     trace_enter,
     trace_exit
 };
@@ -47,6 +48,19 @@ pub struct Output {
     pub error: Option<Error>
 }
 
+fn compare_big_maps(lhs: MapItem, rhs: BigMapPtr, context: &MockContext) -> Result<()> {
+    let ptr = rhs.value();
+    let (elements, (kty, vty)) = lhs.into_elements();
+    let count = elements.len();
+    for (key, act) in elements {
+        let key_hash = get_key_hash(&key, &kty)?;
+        let exp = context.get_big_map_value(ptr, &key_hash)?.expect("Value is missing");
+        assert_eq!(exp, act.into_micheline(&vty)?);
+    }
+    assert_eq!(count, context.get_elements_count(ptr));
+    Ok(())
+}
+
 impl TZT {
     pub fn run(&mut self) -> Result<()> {
         let mut stack = Stack::new();
@@ -59,8 +73,15 @@ impl TZT {
         match self.code.execute(&mut stack, &self.input.scope, &mut self.input.context) {
             Ok(()) => {
                 for output in self.output.items.iter() {
-                    let item = stack.pop()?;
-                    assert_eq!(*output, item);
+                    let expected = output.clone();
+                    let mut actual = stack.pop()?;
+                    actual.try_acquire(&self.input.scope, &mut self.input.context)?;
+                    match (expected, actual) {
+                        (StackItem::BigMap(BigMapItem::Map(lhs)), StackItem::BigMap(BigMapItem::Ptr(rhs))) => {
+                            compare_big_maps(lhs, rhs, &self.input.context)?;
+                        },
+                        (lhs, rhs) => assert_eq!(lhs, rhs)
+                    }
                 }
                 trace_exit!();
             },
@@ -185,8 +206,7 @@ pub fn script_expr_hash(data: Micheline, schema: &Micheline) -> Result<ScriptExp
     Ok(res)
 }
 
-fn parse_big_map_values(sequence: Sequence) -> Result<HashMap<(i64, String), Micheline>> {
-    let mut values: HashMap<(i64, String), Micheline> = HashMap::new();
+fn parse_big_map_values(sequence: Sequence, scope: &TransactionScope, context: &mut MockContext) -> Result<()> {
     for item in sequence.into_values() {
         let prim = PrimitiveApplication::try_from(item)?;
         match prim.prim() {
@@ -197,6 +217,7 @@ fn parse_big_map_values(sequence: Sequence) -> Result<HashMap<(i64, String), Mic
                     .into_literal().expect("Expected literal")
                     .into_micheline_int().expect("Expected int")
                     .to_integer()?;
+                context.init_big_map(ptr, scope.self_address.clone());
                 let schema = args.remove(0);
                 let elts: Vec<PrimitiveApplication> = args.remove(1)
                     .into_sequence().expect("Expected sequence")
@@ -208,20 +229,20 @@ fn parse_big_map_values(sequence: Sequence) -> Result<HashMap<(i64, String), Mic
                     assert_eq!(2, args.len());
                     let key = args.remove(0);
                     let value = args.remove(0);
-                    let key_hash = script_expr_hash(key, &schema)?.into_string();
-                    values.insert((ptr, key_hash), value);
+                    let key_hash = script_expr_hash(key, &schema)?;
+                    context.set_big_map_value(ptr, key_hash, Some(value))?;
                 }
             },
             _ => panic!("Expected `Big_map`")
         }
     }
-    Ok(values)
+    Ok(())
 }
 
-fn parse_big_maps(section: PrimitiveApplication) -> Result<HashMap<(i64, String), Micheline>> {
+fn parse_big_maps(section: PrimitiveApplication, scope: &TransactionScope, context: &mut MockContext) -> Result<()> {
     for arg in section.into_args().expect("Expected single arg") { 
         match arg {
-            Micheline::Sequence(seq) => return parse_big_map_values(seq),
+            Micheline::Sequence(seq) => return parse_big_map_values(seq, scope, context),
             _ => panic!("Expected other sequence")
         }
     }
@@ -255,7 +276,7 @@ impl TryFrom<Micheline> for TZT {
                 "now" => scope.now = i64::from_str_radix(parse_literal(prim).as_str(), 10).expect("ts"),
                 "balance" => context.balance = parse_literal(prim).try_into()?,
                 "other_contracts" => context.contracts = parse_other(prim)?,
-                "big_maps" => context.big_map_values = parse_big_maps(prim)?,
+                "big_maps" => parse_big_maps(prim, &scope, &mut context)?,
                 "self" => scope.self_address = parse_literal(prim).try_into()?,
                 "parameter" => {
                     context.contracts.insert(scope.self_address.into_string(), prim.into_args().unwrap().remove(0));
