@@ -11,8 +11,8 @@ use crate::{
 macro_rules! pop_cast {
     ($stack: expr, $var: ident) => {
         match $stack.pop()? {
-            StackItem::$var(item) => item,
-            item => return err_type!(stringify!($var), item)
+            StackItem::$var(item) => Ok(item),
+            item => err_type!(stringify!($var), item)
         }
     };
 }

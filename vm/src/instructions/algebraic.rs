@@ -21,7 +21,7 @@ impl PureInterpreter for Unit {
 
 impl PureInterpreter for Car {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let pair = pop_cast!(stack, Pair);
+        let pair = pop_cast!(stack, Pair)?;
         let (first, _) = pair.unpair();
         stack.push(first)
     }
@@ -29,7 +29,7 @@ impl PureInterpreter for Car {
 
 impl PureInterpreter for Cdr {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let pair = pop_cast!(stack, Pair);
+        let pair = pop_cast!(stack, Pair)?;
         let (_, second) = pair.unpair();
         stack.push(second)
     }
@@ -61,7 +61,7 @@ impl PureInterpreter for Pair {
 
 impl PureInterpreter for Unpair {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let pair = pop_cast!(stack, Pair);
+        let pair = pop_cast!(stack, Pair)?;
         let n = parse_arity(&self.n)?;
         let items = pair.into_items(n)?;
         for item in items.into_iter().rev() {

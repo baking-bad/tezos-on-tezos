@@ -10,6 +10,7 @@ use crate::{
     types::{SetItem, StackItem},
     types::list::{seq_into_item_vec, item_vec_into_seq},
     err_type,
+    type_cast
 };
 
 impl SetItem {
@@ -29,12 +30,8 @@ impl SetItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        match ty {
-            Type::Set(set_ty) => {
-                item_vec_into_seq(self.outer_value, &self.inner_type, &set_ty.r#type)
-            },
-            _ => err_type!(ty, self)
-        }
+        let ty = type_cast!(ty, Set)?;
+        item_vec_into_seq(self.outer_value, &self.inner_type, &ty.r#type)
     }
 
     pub fn into_elements(self) -> (Vec<StackItem>, Type) {

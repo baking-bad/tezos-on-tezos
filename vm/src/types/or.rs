@@ -11,6 +11,7 @@ use crate::{
     types::{OrItem, StackItem, OrVariant},
     typechecker::{check_types_equal},
     err_type,
+    type_cast
 };
 
 impl OrItem {
@@ -39,21 +40,19 @@ impl OrItem {
     }
     
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        if let Type::Or(or_ty) = ty {
-            return match self {
-                Self::Left(var) => {
-                    check_types_equal(&or_ty.rhs, &var.other_type)?;
-                    let inner = var.value.into_data(&or_ty.lhs)?;
-                    Ok(Data::Left(data::left(inner)))
-                },
-                Self::Right(var) => {
-                    check_types_equal(&or_ty.lhs, &var.other_type)?;
-                    let inner = var.value.into_data(&or_ty.rhs)?;
-                    Ok(Data::Right(data::right(inner)))
-                }
+        let ty = type_cast!(ty, Or)?;
+        match self {
+            Self::Left(var) => {
+                check_types_equal(&ty.rhs, &var.other_type)?;
+                let inner = var.value.into_data(&ty.lhs)?;
+                Ok(Data::Left(data::left(inner)))
+            },
+            Self::Right(var) => {
+                check_types_equal(&ty.lhs, &var.other_type)?;
+                let inner = var.value.into_data(&ty.rhs)?;
+                Ok(Data::Right(data::right(inner)))
             }
         }
-        err_type!(ty, self)
     }
 
     pub fn is_left(&self) -> bool {

@@ -11,6 +11,7 @@ use crate::{
     Error,
     types::{PairItem, StackItem},
     err_type,
+    type_cast
 };
 
 impl PairItem {
@@ -39,13 +40,11 @@ impl PairItem {
     }
     
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        if let Type::Pair(pair_ty) = ty {
-            assert_eq!(2, pair_ty.types.len());
-            let first = self.0.0.into_data(&pair_ty.types[0])?;
-            let second = self.0.1.into_data(&pair_ty.types[1])?;
-            return Ok(Data::Pair(data::pair(vec![first, second])))
-        }
-        err_type!(ty, self)
+        let ty = type_cast!(ty, Pair)?;
+        assert_eq!(2, ty.types.len());
+        let first = self.0.0.into_data(&ty.types[0])?;
+        let second = self.0.1.into_data(&ty.types[1])?;
+        Ok(Data::Pair(data::pair(vec![first, second])))
     }
 
     pub fn into_items(self, arity: usize) -> Result<Vec<StackItem>> {

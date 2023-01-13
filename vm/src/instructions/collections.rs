@@ -4,8 +4,8 @@ use tezos_michelson::michelson::{
 
 use crate::{
     Result,
-    interpreter::{Interpreter, PureInterpreter, ContextInterpreter, TransactionContext, TransactionScope},
-    types::{StackItem, ListItem, SetItem, MapItem, BigMapItem, BigMapPtr},
+    interpreter::{Interpreter, PureInterpreter, ContextInterpreter, InterpreterContext, OperationScope},
+    types::{StackItem, ListItem, SetItem, MapItem, BigMapItem, BigMapDiff},
     stack::Stack,
     pop_cast,
     err_type
@@ -21,7 +21,7 @@ impl PureInterpreter for Nil {
 impl PureInterpreter for Cons {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let item = stack.pop()?;
-        let mut list = pop_cast!(stack, List);
+        let mut list = pop_cast!(stack, List)?;
         list.prepend(item)?;
         stack.push(list.into())
     }
@@ -42,17 +42,17 @@ impl PureInterpreter for EmptyMap {
 }
 
 impl Interpreter for EmptyBigMap {
-    fn execute(&self, stack: &mut Stack, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()> {
+    fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
         let ptr = context.allocate_big_map(scope.self_address.clone())?;
-        let big_map = BigMapItem::Ptr(
-            BigMapPtr::new(ptr, self.key_type.clone(), self.value_type.clone())
+        let big_map = BigMapItem::Diff(
+            BigMapDiff::new(ptr, self.key_type.clone(), self.value_type.clone())
         );
         stack.push(big_map.into())
     }
 }
 
 impl ContextInterpreter for Mem {
-    fn execute(&self, stack: &mut Stack, context: &mut impl TransactionContext) -> Result<()> {
+    fn execute(&self, stack: &mut Stack, context: &mut impl InterpreterContext) -> Result<()> {
         let key = stack.pop()?;
         let res = match stack.pop()? {
             StackItem::Set(set) => set.contains(&key)?,
@@ -65,9 +65,9 @@ impl ContextInterpreter for Mem {
 }
 
 impl ContextInterpreter for Get {
-    fn execute(&self, stack: &mut Stack, context: &mut impl TransactionContext) -> Result<()> {
+    fn execute(&self, stack: &mut Stack, context: &mut impl InterpreterContext) -> Result<()> {
         let res = if let Some(n) = &self.n {
-            let pair = pop_cast!(stack, Pair);
+            let pair = pop_cast!(stack, Pair)?;
             let idx: usize = n.to_integer()?;
             pair.get(idx)?
         } else {
@@ -83,17 +83,17 @@ impl ContextInterpreter for Get {
 }
 
 impl Interpreter for Update {
-    fn execute(&self, stack: &mut Stack, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()> {
+    fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
         let res: StackItem = if let Some(n) = &self.n {
             let item = stack.pop()?;
             let idx = n.to_integer()?;
-            let pair = pop_cast!(stack, Pair);
+            let pair = pop_cast!(stack, Pair)?;
             pair.update(idx, item)?.into()
         } else {
             let key = stack.pop()?;
             match stack.pop()? {
                 StackItem::Bool(val) => {
-                    let mut set = pop_cast!(stack, Set);
+                    let mut set = pop_cast!(stack, Set)?;
                     set.update(key, val.is_true())?;
                     set.into()
                 },
@@ -103,7 +103,7 @@ impl Interpreter for Update {
                         map.into()
                     },
                     StackItem::BigMap(big_map) => {
-                        let mut big_map = big_map.acquire(scope, context)?;
+                        let mut big_map = big_map.acquire(&scope.self_address, context)?;
                         big_map.update(key, val.unwrap(), context)?;
                         big_map.into()
                     },
@@ -117,9 +117,9 @@ impl Interpreter for Update {
 }
 
 impl Interpreter for GetAndUpdate {
-    fn execute(&self, stack: &mut Stack, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()> {
+    fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
         let key = stack.pop()?;
-        let val = pop_cast!(stack, Option);
+        let val = pop_cast!(stack, Option)?;
         match stack.pop()? {
             StackItem::Map(mut map) => {
                 let old = map.update(key, val.unwrap())?;
@@ -127,7 +127,7 @@ impl Interpreter for GetAndUpdate {
                 stack.push(old.into())
             },
             StackItem::BigMap(big_map) => {
-                let mut big_map = big_map.acquire(scope, context)?;
+                let mut big_map = big_map.acquire(&scope.self_address, context)?;
                 let old = big_map.update(key, val.unwrap(), context)?;
                 stack.push(big_map.into())?;
                 stack.push(old.into())

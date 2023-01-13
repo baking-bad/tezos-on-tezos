@@ -11,6 +11,7 @@ use crate::{
     types::{MapItem, StackItem, PairItem, OptionItem},
     typechecker::check_types_equal,
     err_type,
+    type_cast
 };
 
 impl MapItem {
@@ -44,23 +45,19 @@ impl MapItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        match ty {
-            Type::Map(map_ty) => {
-                if self.outer_value.is_empty() {
-                    check_types_equal(&map_ty.key_type, &self.inner_type.0)?;
-                    check_types_equal(&map_ty.value_type, &self.inner_type.1)?;
-                    Ok(Data::Sequence(data::sequence(vec![])))
-                } else {
-                    let mut elements: Vec<Data> = Vec::with_capacity(self.outer_value.len());
-                    for (key_item, val_item) in self.outer_value {
-                        let key = key_item.into_data(&self.inner_type.0)?;
-                        let value = val_item.into_data(&self.inner_type.1)?;
-                        elements.push(Data::Elt(data::elt(key, value)));
-                    }
-                    Ok(Data::Sequence(data::sequence(elements)))
-                }
-            },
-            _ => err_type!(ty, self)
+        let ty = type_cast!(ty, Map)?;        
+        if self.outer_value.is_empty() {
+            check_types_equal(&ty.key_type, &self.inner_type.0)?;
+            check_types_equal(&ty.value_type, &self.inner_type.1)?;
+            Ok(Data::Sequence(data::sequence(vec![])))
+        } else {
+            let mut elements: Vec<Data> = Vec::with_capacity(self.outer_value.len());
+            for (key_item, val_item) in self.outer_value {
+                let key = key_item.into_data(&self.inner_type.0)?;
+                let value = val_item.into_data(&self.inner_type.1)?;
+                elements.push(Data::Elt(data::elt(key, value)));
+            }
+            Ok(Data::Sequence(data::sequence(elements)))
         }
     }
 

@@ -12,14 +12,12 @@ use crate::{
     Result,
     types::{AddressItem, KeyItem, KeyHashItem, SignatureItem, ChainIdItem, StackItem},
     err_type,
-    type_check_fn_comparable,
+    comparable_type_cast
 };
 
 macro_rules! impl_for_encoded {
     ($item_ty: ident, $impl_ty: ty, $cmp_ty: ident) => {
         impl $item_ty {
-            type_check_fn_comparable!($cmp_ty);
-
             pub fn new(value: $impl_ty) -> Self {
                 Self(value)
             }
@@ -36,7 +34,7 @@ macro_rules! impl_for_encoded {
             }
                 
             pub fn into_data(self, ty: &Type) -> Result<Data> {
-                self.type_check(ty)?;
+                comparable_type_cast!(ty, $cmp_ty)?;
                 Ok(Data::String(data::String::from_string(self.0.into_string())?))
             }
 
@@ -89,7 +87,7 @@ impl Ord for KeyItem {
         let res = l.0.cmp(&r.0);
         if res == std::cmp::Ordering::Equal {
             match (self.0.to_bytes().ok(), other.0.to_bytes().ok()) {
-                (Some(self_data), Some(other_data)) => return self_data[l.1..].cmp(&other_data[l.1..]),
+                (Some(self_data), Some(other_data)) => return self_data[l.1..].cmp(&other_data[r.1..]),
                 _ => unreachable!("Invalid keys")
             }
         }

@@ -9,6 +9,7 @@ use crate::{
     Result,
     types::{LambdaItem, StackItem},
     err_type,
+    type_cast
 };
 
 fn parse_instruction(data: Data) -> Result<Instruction> {
@@ -38,10 +39,8 @@ impl LambdaItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        if let Type::Lambda(_) = ty {
-            return Ok(Data::Instruction(self.outer_value))
-        }
-        err_type!(ty, self)
+        type_cast!(ty, Lambda)?;
+        Ok(Data::Instruction(self.outer_value))
     } 
 
     pub fn get_type(&self) -> Result<Type> {

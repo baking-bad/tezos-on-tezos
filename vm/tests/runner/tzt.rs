@@ -3,7 +3,6 @@ use serde_json_wasm;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
-use std::collections::HashMap;
 use hex;
 use tezos_michelson::micheline::{
     Micheline,
@@ -23,9 +22,9 @@ use vm::{
     Result,
     Error,
     stack::Stack,
-    types::{StackItem, BigMapItem, MapItem, BigMapPtr},
+    types::{StackItem, BigMapItem, MapItem, BigMapDiff},
     types::big_map::get_key_hash,
-    interpreter::{Interpreter, LazyStorage, TransactionScope, TransactionContext},
+    interpreter::{Interpreter, LazyStorage, OperationScope, InterpreterContext},
     trace_enter,
     trace_exit
 };
@@ -39,7 +38,7 @@ pub struct TZT {
 
 pub struct Input {
     pub items: Vec<StackItem>,
-    pub scope: TransactionScope,
+    pub scope: OperationScope,
     pub context: MockContext
 }
 
@@ -48,7 +47,7 @@ pub struct Output {
     pub error: Option<Error>
 }
 
-fn compare_big_maps(lhs: MapItem, rhs: BigMapPtr, context: &MockContext) -> Result<()> {
+fn compare_big_maps(lhs: MapItem, rhs: BigMapDiff, context: &MockContext) -> Result<()> {
     let ptr = rhs.value();
     let (elements, (kty, vty)) = lhs.into_elements();
     let count = elements.len();
@@ -73,11 +72,12 @@ impl TZT {
         match self.code.execute(&mut stack, &self.input.scope, &mut self.input.context) {
             Ok(()) => {
                 for output in self.output.items.iter() {
-                    let expected = output.clone();
                     let mut actual = stack.pop()?;
-                    actual.try_acquire(&self.input.scope, &mut self.input.context)?;
+                    actual.try_acquire(&self.input.scope.self_address, &mut self.input.context)?;
+
+                    let expected = output.clone();
                     match (expected, actual) {
-                        (StackItem::BigMap(BigMapItem::Map(lhs)), StackItem::BigMap(BigMapItem::Ptr(rhs))) => {
+                        (StackItem::BigMap(BigMapItem::Map(lhs)), StackItem::BigMap(BigMapItem::Diff(rhs))) => {
                             compare_big_maps(lhs, rhs, &self.input.context)?;
                         },
                         (lhs, rhs) => assert_eq!(lhs, rhs)
@@ -169,8 +169,7 @@ fn parse_input(section: PrimitiveApplication) -> Result<Vec<StackItem>> {
     panic!("Input section is empty")
 }
 
-fn parse_contracts(sequence: Sequence) -> Result<HashMap<String, Micheline>> {
-    let mut contracts: HashMap<String, Micheline> = HashMap::new();
+fn parse_contracts(sequence: Sequence, context: &mut MockContext) -> Result<()> {
     for item in sequence.into_values() {
         let prim = PrimitiveApplication::try_from(item)?;
         match prim.prim() {
@@ -180,19 +179,20 @@ fn parse_contracts(sequence: Sequence) -> Result<HashMap<String, Micheline>> {
                 let key = args.remove(0)
                     .into_literal().expect("Expected literal")
                     .into_micheline_string().expect("Expected string")
-                    .into_string();
-                contracts.insert(key, args.remove(0));
+                    .into_string()
+                    .try_into()?;
+                context.set_contract_type(key, args.remove(0))?;
             },
             _ => panic!("Expected `Contract`")
         }
     }
-    Ok(contracts)
+    Ok(())
 }
 
-fn parse_other(section: PrimitiveApplication) -> Result<HashMap<String, Micheline>> {
+fn parse_other(section: PrimitiveApplication, context: &mut MockContext) -> Result<()> {
     for arg in section.into_args().expect("Expected single arg") { 
         match arg {
-            Micheline::Sequence(seq) => return parse_contracts(seq),
+            Micheline::Sequence(seq) => return parse_contracts(seq, context),
             _ => panic!("Expected other sequence")
         }
     }
@@ -206,7 +206,7 @@ pub fn script_expr_hash(data: Micheline, schema: &Micheline) -> Result<ScriptExp
     Ok(res)
 }
 
-fn parse_big_map_values(sequence: Sequence, scope: &TransactionScope, context: &mut MockContext) -> Result<()> {
+fn parse_big_map_values(sequence: Sequence, scope: &OperationScope, context: &mut MockContext) -> Result<()> {
     for item in sequence.into_values() {
         let prim = PrimitiveApplication::try_from(item)?;
         match prim.prim() {
@@ -239,7 +239,7 @@ fn parse_big_map_values(sequence: Sequence, scope: &TransactionScope, context: &
     Ok(())
 }
 
-fn parse_big_maps(section: PrimitiveApplication, scope: &TransactionScope, context: &mut MockContext) -> Result<()> {
+fn parse_big_maps(section: PrimitiveApplication, scope: &OperationScope, context: &mut MockContext) -> Result<()> {
     for arg in section.into_args().expect("Expected single arg") { 
         match arg {
             Micheline::Sequence(seq) => return parse_big_map_values(seq, scope, context),
@@ -267,20 +267,18 @@ impl TryFrom<Micheline> for TZT {
                 "output" => output = Some(parse_output(prim)?),
                 "code" => code = Some(*Code::try_from(prim)?.code),
                 "amount" => scope.amount = parse_literal(prim).try_into()?,
+                "balance" => scope.balance = parse_literal(prim).try_into()?,
                 "sender" => scope.sender = parse_literal(prim).try_into()?,
-                "source" => scope.source = parse_literal(prim).try_into()?,
+                "source" => scope.source = parse_literal(prim).try_into()?,                
+                "now" => scope.now = i64::from_str_radix(parse_literal(prim).as_str(), 10).expect("ts"),
+                "self" => scope.self_address = parse_literal(prim).try_into()?,
+                "parameter" => scope.self_type = prim.into(),
                 "chain_id" => {
                     let bytes = hex::decode(parse_literal(prim)).expect("Chain ID");
                     scope.chain_id = encoded::ChainId::from_bytes(bytes.as_slice())?;
                 },
-                "now" => scope.now = i64::from_str_radix(parse_literal(prim).as_str(), 10).expect("ts"),
-                "balance" => context.balance = parse_literal(prim).try_into()?,
-                "other_contracts" => context.contracts = parse_other(prim)?,
+                "other_contracts" => parse_other(prim, &mut context)?,
                 "big_maps" => parse_big_maps(prim, &scope, &mut context)?,
-                "self" => scope.self_address = parse_literal(prim).try_into()?,
-                "parameter" => {
-                    context.contracts.insert(scope.self_address.into_string(), prim.into_args().unwrap().remove(0));
-                },
                 prim => panic!("Unexpected section {}", prim)
             }
         }

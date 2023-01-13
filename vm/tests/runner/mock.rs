@@ -3,6 +3,7 @@ use tezos_michelson::micheline::{
     Micheline,
     primitive_application,
 };
+use tezos_michelson::michelson::types::unit;
 use tezos_core::types::{
     mutez::Mutez,
     encoded::{self, Encoded}
@@ -10,7 +11,7 @@ use tezos_core::types::{
 use vm::{
     Result,
     Error,
-    interpreter::{TransactionScope, TransactionContext},
+    interpreter::{OperationScope, InterpreterContext},
     trace_log
 };
 
@@ -18,37 +19,38 @@ pub const CHAIN_ID: &str = "NetXP2FfcNxFANL";
 pub const DEFAULT_ORIGINATED_ADDRESS: &str = "KT1BEqzn5Wx8uJrZNvuS9DVHmLvG9td3fDLi";
 pub const DEFAULT_IMPLICIT_ADDRESS: &str = "tz1Ke2h7sDdakHJQh8WX4Z372du1KChsksyU";
 
-pub fn default_scope() -> TransactionScope {
-    TransactionScope {
+pub fn default_scope() -> OperationScope {
+    OperationScope {
         chain_id: CHAIN_ID.try_into().unwrap(),
         amount: 0u32.into(),
+        balance: 0u32.into(),
         level: 0.into(),
         now: 0,
-        entrypoint: "default".into(),
-        parameter: Micheline::PrimitiveApplication(primitive_application("Unit")),
+        parameters: None,
         storage: Micheline::PrimitiveApplication(primitive_application("Unit")),
         self_address: DEFAULT_ORIGINATED_ADDRESS.try_into().unwrap(),
+        self_type: unit(),
         sender: DEFAULT_IMPLICIT_ADDRESS.try_into().unwrap(),
         source: DEFAULT_IMPLICIT_ADDRESS.try_into().unwrap(),
     }
 }
 
 pub struct MockContext {
-    pub balance: Mutez,
     pub big_map_counter: i64,
     pub big_maps: HashMap<i64, encoded::ContractAddress>,
     pub big_map_values: HashMap<(i64, String), Micheline>,
     pub contracts: HashMap<String, Micheline>,
+    pub balances: HashMap<String, Mutez>,
 }
 
 impl MockContext {
     pub fn default() -> Self {
         Self {
-            balance: 0u8.try_into().unwrap(),
             big_map_counter: 0,
             big_maps: HashMap::new(),
             big_map_values: HashMap::new(),
             contracts: HashMap::new(),
+            balances: HashMap::new(),
         }
     }
 }
@@ -65,9 +67,11 @@ impl MockContext {
     }
 }
 
-impl TransactionContext for MockContext {
-    fn get_balance(&self, _: &encoded::Address) -> Result<Option<Mutez>> {
-        Ok(Some(self.balance))
+impl InterpreterContext for MockContext {
+    fn set_contract_type(&mut self, address: encoded::ContractAddress, value: Micheline) -> Result<()> {
+        let key = address.into_string();
+        self.contracts.insert(key, value);
+        Ok(())
     }
 
     fn get_contract_type(&self, address: &encoded::ContractAddress) -> Result<Option<Micheline>> {

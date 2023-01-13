@@ -2140,8 +2140,6 @@ dependencies = [
  "serde-json-wasm",
  "tezos-core",
  "tezos-michelson",
- "tezos-operation",
- "tezos-rpc",
 ]
 
 [[package]]

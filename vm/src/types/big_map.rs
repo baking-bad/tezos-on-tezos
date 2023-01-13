@@ -9,16 +9,17 @@ use tezos_michelson::michelson::{
 };
 use tezos_michelson::micheline::Micheline;
 use tezos_core::{
-    types::encoded::{ScriptExprHash, Encoded},
+    types::encoded::{ScriptExprHash, ContractAddress, Encoded},
     internal::crypto::blake2b
 };
 
 use crate::{
     Result,
     Error,
-    types::{BigMapItem, StackItem, MapItem, BigMapPtr, OptionItem, OrItem, ListItem, PairItem},
+    types::{BigMapItem, StackItem, MapItem, BigMapDiff, OptionItem, OrItem, ListItem, PairItem},
+    interpreter::{InterpreterContext, LazyStorage},
     typechecker::check_types_equal,
-    interpreter::{TransactionContext, TransactionScope, LazyStorage},
+    type_cast,
     err_type,
 };
 
@@ -35,30 +36,30 @@ pub fn get_key_hash(key: &StackItem, ty: &Type) -> Result<ScriptExprHash> {
     script_expr_hash(expr, ty)
 }
 
-pub fn check_ownership(ptr: i64, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()> {
-    let owner = context.get_big_map_owner(ptr)?;
-    if owner == scope.self_address {
+pub fn check_ownership(ptr: i64, owner: &ContractAddress, context: &mut impl InterpreterContext) -> Result<()> {
+    let actual_owner = context.get_big_map_owner(ptr)?;
+    if *owner == actual_owner {
         Ok(())
     } else {
         Err(Error::BigMapAccessDenied {
-            ptr, owner:
-            owner.into_string(),
-            offender: scope.self_address.clone().into_string()
+            ptr, 
+            owner: actual_owner.into_string(),
+            offender: owner.clone().into_string()
         })
     }
 }
 
-impl BigMapPtr {
+impl BigMapDiff {
     pub fn new(ptr: i64, key_type: Type, val_type: Type) -> Self {
-        Self { ptr, inner_type: (key_type, val_type), diff: BTreeMap::new(), new: true }
+        Self { id: ptr, inner_type: (key_type, val_type), updates: BTreeMap::new(), alloc: true }
     }
 
     pub fn update(&mut self, key_hash: String, key: Micheline, val: Option<Micheline>) {
-        self.diff.insert(key_hash, (key, val));
+        self.updates.insert(key_hash, (key, val));
     }
 
     pub fn value(&self) -> i64 {
-        self.ptr
+        self.id
     }
 }
 
@@ -66,13 +67,13 @@ impl BigMapItem {
     pub fn from_data(data: Data, key_type: &Type, val_type: &Type) -> Result<StackItem> {
         match data {
             Data::Int(ptr) => {
-                let lazy = BigMapPtr {
-                    ptr: ptr.to_integer()?,
+                let diff = BigMapDiff {
+                    id: ptr.to_integer()?,
                     inner_type: (key_type.clone(), val_type.clone()),
-                    diff: BTreeMap::new(),
-                    new: false
+                    updates: BTreeMap::new(),
+                    alloc: false
                 };
-                Ok(StackItem::BigMap(Self::Ptr(lazy)))
+                Ok(StackItem::BigMap(Self::Diff(diff)))
             },
             Data::Sequence(sequence) => {
                 let map = MapItem::from_sequence(sequence, key_type.clone(), val_type.clone())?;
@@ -83,14 +84,10 @@ impl BigMapItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        if let Type::BigMap(big_map_ty) = ty {
+        if let Type::BigMap(_) = ty {
             return match self {
-                Self::Ptr(lazy) => {
-                    check_types_equal(&big_map_ty.key_type, &lazy.inner_type.0)?;
-                    check_types_equal(&big_map_ty.value_type, &lazy.inner_type.1)?;
-                    Ok(Data::Int(data::int(lazy.ptr)))
-                },
-                Self::Map(_) => err_type!(ty, self)  // NOTE: not supported
+                Self::Ptr(id) => Ok(Data::Int(data::int(id))),
+                _ => err_type!("Ptr", self)
             }
         }
         err_type!(ty, self)
@@ -98,82 +95,87 @@ impl BigMapItem {
 
     pub fn get_type(&self) -> Result<Type> {
         match self {
-            Self::Ptr(lazy) => {
-                Ok(types::big_map(lazy.inner_type.0.clone(), lazy.inner_type.1.clone()))
+            Self::Diff(diff) => {
+                Ok(types::big_map(diff.inner_type.0.clone(), diff.inner_type.1.clone()))
             },
-            Self::Map(map) => map.get_type()
+            Self::Map(map) => map.get_type(),
+            Self::Ptr(_) => err_type!("Diff or Map", self)
         }
     }
 
-    pub fn contains(&self, key: &StackItem, context: &impl TransactionContext) -> Result<bool> {
+    pub fn contains(&self, key: &StackItem, context: &impl InterpreterContext) -> Result<bool> {
         match self {
             Self::Map(map) => map.contains(key),
-            Self::Ptr(lazy) => {
-                let key_hash = get_key_hash(key, &lazy.inner_type.0)?;
-                context.has_big_map_value(lazy.ptr, &key_hash)
-            }
+            Self::Diff(diff) => {
+                let key_hash = get_key_hash(key, &diff.inner_type.0)?;
+                context.has_big_map_value(diff.id, &key_hash)
+            },
+            Self::Ptr(_) => err_type!("Diff or Map", self)
         }
     }
 
-    pub fn get(&self, key: &StackItem, context: &impl TransactionContext) -> Result<OptionItem> {
+    pub fn get(&self, key: &StackItem, context: &impl InterpreterContext) -> Result<OptionItem> {
         match self {
             Self::Map(map) => map.get(key),
-            Self::Ptr(lazy) => {
-                let key_hash = get_key_hash(key, &lazy.inner_type.0)?;
-                match context.get_big_map_value(lazy.ptr, &key_hash)? {
+            Self::Diff(diff) => {
+                let key_hash = get_key_hash(key, &diff.inner_type.0)?;
+                match context.get_big_map_value(diff.id, &key_hash)? {
                     Some(val) => {
-                        let item = StackItem::from_micheline(val, &lazy.inner_type.1)?;
+                        let item = StackItem::from_micheline(val, &diff.inner_type.1)?;
                         Ok(OptionItem::some(item))
                     },
-                    None => Ok(OptionItem::none(&lazy.inner_type.1))
+                    None => Ok(OptionItem::none(&diff.inner_type.1))
                 }
-            }
+            },
+            Self::Ptr(_) => err_type!("Diff or Map", self)
         }
     }
 
-    pub fn update(&mut self, key: StackItem, val: Option<StackItem>, context: &mut impl TransactionContext) -> Result<OptionItem> {
+    pub fn update(&mut self, key: StackItem, val: Option<StackItem>, context: &mut impl InterpreterContext) -> Result<OptionItem> {
         match self {
             Self::Map(map) => {
                 let old_val = map.update(key, val)?;
                 Ok(old_val)
             },
-            Self::Ptr(lazy) => {
-                let key_expr = key.into_micheline(&lazy.inner_type.0)?;
-                let key_hash = script_expr_hash(key_expr.clone(), &lazy.inner_type.0)?;
+            Self::Diff(diff) => {
+                let key_expr = key.into_micheline(&diff.inner_type.0)?;
+                let key_hash = script_expr_hash(key_expr.clone(), &diff.inner_type.0)?;
                 let val_expr = match val {
-                    Some(val) => Some(val.into_micheline(&lazy.inner_type.1)?),
+                    Some(val) => Some(val.into_micheline(&diff.inner_type.1)?),
                     None => None
                 };
-                lazy.update(key_hash.into_string(), key_expr, val_expr.clone());
-                match context.set_big_map_value(lazy.ptr, key_hash, val_expr)? {
+                diff.update(key_hash.into_string(), key_expr, val_expr.clone());
+                match context.set_big_map_value(diff.id, key_hash, val_expr)? {
                     Some(old_val) => {
-                        let item = StackItem::from_micheline(old_val, &lazy.inner_type.1)?;
+                        let item = StackItem::from_micheline(old_val, &diff.inner_type.1)?;
                         Ok(OptionItem::some(item))
                     },
-                    None => Ok(OptionItem::none(&lazy.inner_type.1))
+                    None => Ok(OptionItem::none(&diff.inner_type.1))
                 }
-            }
+            },
+            Self::Ptr(_) => err_type!("Diff or Map", self)
         }
     }
  
-    pub fn acquire(self, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<Self> {
+    pub fn acquire(self, owner: &ContractAddress, context: &mut impl InterpreterContext) -> Result<Self> {
         match self {
-            Self::Ptr(ref lazy) => {
-                check_ownership(lazy.ptr, scope, context)?;
+            Self::Diff(ref diff) => {
+                check_ownership(diff.id, owner, context)?;
                 Ok(self)
             },
             Self::Map(map) => {
-                let ptr = context.allocate_big_map(scope.self_address.clone())?;
-                let mut lazy = BigMapPtr::new(ptr, map.inner_type.0.clone(), map.inner_type.1.clone());
+                let ptr = context.allocate_big_map(owner.clone())?;
+                let mut diff = BigMapDiff::new(ptr, map.inner_type.0.clone(), map.inner_type.1.clone());
                 for (key, val) in map.outer_value.clone() {
-                    let key_expr = key.into_micheline(&lazy.inner_type.0)?;
-                    let val_expr = val.into_micheline(&lazy.inner_type.1)?;
-                    let key_hash = script_expr_hash(key_expr.clone(), &lazy.inner_type.0)?;
-                    lazy.update(key_hash.into_string(), key_expr, Some(val_expr.clone()));
-                    context.set_big_map_value(lazy.ptr, key_hash, Some(val_expr))?;
+                    let key_expr = key.into_micheline(&diff.inner_type.0)?;
+                    let val_expr = val.into_micheline(&diff.inner_type.1)?;
+                    let key_hash = script_expr_hash(key_expr.clone(), &diff.inner_type.0)?;
+                    diff.update(key_hash.into_string(), key_expr, Some(val_expr.clone()));
+                    context.set_big_map_value(diff.id, key_hash, Some(val_expr))?;
                 }
-                Ok(Self::Ptr(lazy))
-            }
+                Ok(Self::Diff(diff))
+            },
+            Self::Ptr(_) => err_type!("Diff or Map", self)
         }
     }
 }
@@ -182,70 +184,128 @@ impl Display for BigMapItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Map(map) => map.fmt(f),
-            Self::Ptr(lazy) => f.write_fmt(format_args!("${}", lazy.ptr))
+            Self::Diff(diff) => f.write_fmt(format_args!("${}", diff.id)),
+            Self::Ptr(id) => f.write_fmt(format_args!("${}", id))
         }
     }
 }
 
-impl PartialEq for BigMapPtr {
+impl PartialEq for BigMapDiff {
     fn eq(&self, other: &Self) -> bool {
         // for testing purposes only (ignoring pointer and types)
-        self.diff == other.diff
+        self.updates == other.updates
     }
 }
 
 impl LazyStorage for BigMapItem {
-    fn try_acquire(&mut self, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()> {
+    fn try_acquire(&mut self, owner: &ContractAddress, context: &mut impl InterpreterContext) -> Result<()> {
         match self {
-            Self::Ptr(lazy) => check_ownership(lazy.ptr, scope, context),
+            Self::Diff(diff) => check_ownership(diff.id, owner, context),
             Self::Map(_) => {
-                *self = self.clone().acquire(scope, context)?;
+                *self = self.clone().acquire(owner, context)?;
                 Ok(())
-            }
+            },
+            Self::Ptr(_) => err_type!("Diff or Map", self)
+        }
+    }
+
+    fn try_aggregate(&mut self, output: &mut Vec<BigMapDiff>, ty: &Type) -> Result<()> {
+        match self {
+            Self::Diff(diff) => {
+                let big_map_ty = type_cast!(ty, BigMap)?;
+                check_types_equal(&big_map_ty.key_type, &diff.inner_type.0)?;
+                check_types_equal(&big_map_ty.value_type, &diff.inner_type.1)?;
+                output.push(diff.clone());
+                *self = Self::Ptr(diff.id);
+                Ok(())
+            },
+            _ => err_type!("Diff", self)
         }
     }
 }
 
 impl LazyStorage for OptionItem {
-    fn try_acquire(&mut self, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()> {
+    fn try_acquire(&mut self, owner: &ContractAddress, context: &mut impl InterpreterContext) -> Result<()> {
         match self {
             Self::None(_) => Ok(()),
-            Self::Some(val) => val.try_acquire(scope, context)
+            Self::Some(val) => val.try_acquire(owner, context),
+        }
+    }
+
+    fn try_aggregate(&mut self, output: &mut Vec<BigMapDiff>, ty: &Type) -> Result<()> {
+        match self {
+            Self::None(_) => Ok(()),
+            Self::Some(val) => {
+                let ty = type_cast!(ty, Option)?;
+                val.try_aggregate(output, &ty.r#type)
+            },
         }
     }
 }
 
 impl LazyStorage for OrItem {
-    fn try_acquire(&mut self, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()> {
+    fn try_acquire(&mut self, owner: &ContractAddress, context: &mut impl InterpreterContext) -> Result<()> {
         let var = match self {
             Self::Left(var) => var,
             Self::Right(var) => var
         };
-        var.value.try_acquire(scope, context)
+        var.value.try_acquire(owner, context)
+    }
+
+    fn try_aggregate(&mut self, output: &mut Vec<BigMapDiff>, ty: &Type) -> Result<()> {
+        let ty = type_cast!(ty, Or)?;
+        let (var, ty) = match self {
+            Self::Left(var) => (var, &ty.lhs),
+            Self::Right(var) => (var, &ty.rhs)
+        };
+        var.value.try_aggregate(output, ty)
     }
 }
 
 impl LazyStorage for PairItem {
-    fn try_acquire(&mut self, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()> {
-        self.0.0.try_acquire(scope, context)?;
-        self.0.1.try_acquire(scope, context)
+    fn try_acquire(&mut self, owner: &ContractAddress, context: &mut impl InterpreterContext) -> Result<()> {
+        self.0.0.try_acquire(owner, context)?;
+        self.0.1.try_acquire(owner, context)
+    }
+
+    fn try_aggregate(&mut self, output: &mut Vec<BigMapDiff>, ty: &Type) -> Result<()> {
+        let ty = type_cast!(ty, Pair)?;
+        assert_eq!(2, ty.types.len());
+        self.0.0.try_aggregate(output, &ty.types[0])?;
+        self.0.1.try_aggregate(output, &ty.types[1])
     }
 }
 
 impl LazyStorage for ListItem {
-    fn try_acquire(&mut self, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()> {
+    fn try_acquire(&mut self, owner: &ContractAddress, context: &mut impl InterpreterContext) -> Result<()> {
         self.outer_value
             .iter_mut()
-            .map(|e| e.try_acquire(scope, context))
+            .map(|e| e.try_acquire(owner, context))
+            .collect()
+    }
+
+    fn try_aggregate(&mut self, output: &mut Vec<BigMapDiff>, ty: &Type) -> Result<()> {
+        let ty = type_cast!(ty, List)?;
+        self.outer_value
+            .iter_mut()
+            .map(|e| e.try_aggregate(output, &ty.r#type))
             .collect()
     }
 }
 
 impl LazyStorage for MapItem {
-    fn try_acquire(&mut self, scope: &TransactionScope, context: &mut impl TransactionContext) -> Result<()> {
+    fn try_acquire(&mut self, owner: &ContractAddress, context: &mut impl InterpreterContext) -> Result<()> {
         self.outer_value
             .iter_mut()
-            .map(|(_, v)| v.try_acquire(scope, context))
+            .map(|(_, v)| v.try_acquire(owner, context))
+            .collect()
+    }
+
+    fn try_aggregate(&mut self, output: &mut Vec<BigMapDiff>, ty: &Type) -> Result<()> {
+        let ty = type_cast!(ty, Map)?;
+        self.outer_value
+            .iter_mut()
+            .map(|(_, v)| v.try_aggregate(output, &ty.value_type))
             .collect()
     }
 }

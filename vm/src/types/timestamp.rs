@@ -11,12 +11,10 @@ use crate::{
     Result,
     types::{IntItem, TimestampItem, StackItem},
     err_type,
-    type_check_fn_comparable,
+    comparable_type_cast
 };
 
 impl TimestampItem {
-    type_check_fn_comparable!(Timestamp);
-
     pub fn new(value: i64) -> Result<Self> {
         Ok(Self(value))
     }
@@ -31,7 +29,7 @@ impl TimestampItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        self.type_check(ty)?;
+        comparable_type_cast!(ty, Timestamp)?;
         let dt = match NaiveDateTime::from_timestamp_opt(self.0, 0) {
             Some(dt) => DateTime::<Utc>::from_utc(dt, Utc),
             None => return err_type!(ty, self)

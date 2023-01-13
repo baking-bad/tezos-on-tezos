@@ -11,7 +11,7 @@ use crate::{
     Result,
     types::{ContractItem, StackItem},
     typechecker::check_types_equal,
-    err_type,
+    err_type, type_cast,
 };
 
 impl ContractItem {
@@ -34,20 +34,16 @@ impl ContractItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        match ty {
-            Type::Contract(contract_ty) => {
-                check_types_equal(&contract_ty.r#type, &self.inner_type)?;
-                Ok(Data::String(data::String::from_string(self.outer_value.into_string())?))
-            },
-            _ => err_type!(ty, self)
-        }
+        let ty = type_cast!(ty, Contract)?;
+        check_types_equal(&ty.r#type, &self.inner_type)?;
+        Ok(Data::String(data::String::from_string(self.outer_value.into_string())?))
     }
 
     pub fn get_type(&self) -> Type {
         types::contract(self.inner_type.clone())
     }
 
-    pub fn unwrap(self) -> (Address, Type) {
+    pub fn into_components(self) -> (Address, Type) {
         (self.outer_value, self.inner_type)
     }
 }

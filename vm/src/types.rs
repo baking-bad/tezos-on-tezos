@@ -17,28 +17,16 @@ pub mod contract;
 
 use std::collections::BTreeMap;
 use ibig::{IBig, UBig};
-use tezos_core::types::encoded::{
-    Address, PublicKey, ImplicitAddress, Signature, ChainId
+use tezos_core::types::{
+    encoded::{Address, PublicKey, ImplicitAddress, Signature, ChainId},
+    mutez::Mutez
 };
 use tezos_michelson::michelson::{
     data::Instruction,
     types::Type,
 };
 use tezos_michelson::micheline::Micheline;
-use tezos_operation::operations::OperationContent;
 use derive_more::{From, TryInto, Display};
-
-#[macro_export]
-macro_rules! type_check_fn_comparable {
-    ($cmp_ty: ident) => {
-        pub fn type_check(&self, ty: &Type) -> Result<()> {
-            match ty {
-                Type::Comparable(ComparableType::$cmp_ty(_)) => Ok(()),
-                _ => err_type!(ty, self)
-            }
-        }
-    };
-}
 
 #[macro_export]
 macro_rules! not_comparable {
@@ -112,8 +100,20 @@ not_comparable!(ContractItem);
 not_comparable!(BigMapItem);
 not_comparable!(OperationItem);
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum InternalContent {
+    Transaction {
+        destination: Address,
+        parameter: Micheline,
+        amount: Mutez,
+    }
+}
+
 #[derive(Debug, Clone)]
-pub struct OperationItem(OperationContent); // domain
+pub struct OperationItem { // domain
+    content: InternalContent,
+    big_map_diff: Vec<BigMapDiff>
+}
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
 pub struct PairItem(Box<(StackItem, StackItem)>);  // algebraic
@@ -137,17 +137,18 @@ pub enum OrItem {  // algebraic
 }
 
 #[derive(Debug, Clone)]
-pub struct BigMapPtr {
-    ptr: i64,
-    inner_type: (Type, Type),
-    diff: BTreeMap<String, (Micheline, Option<Micheline>)>,
-    new: bool
+pub struct BigMapDiff {
+    pub id: i64,
+    pub inner_type: (Type, Type),
+    pub updates: BTreeMap<String, (Micheline, Option<Micheline>)>,
+    pub alloc: bool
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum BigMapItem {  // collections
-    Ptr(BigMapPtr),
-    Map(MapItem)
+    Diff(BigMapDiff),
+    Map(MapItem),
+    Ptr(i64)
 }
 
 #[derive(Debug, Display, Clone, From, TryInto, PartialEq, PartialOrd, Eq, Ord)]

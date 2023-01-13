@@ -12,6 +12,26 @@ use crate::{
     err_type
 };
 
+#[macro_export]
+macro_rules! type_cast {
+    ($typ: expr, $var: ident) => {
+        match $typ {
+            Type::$var(var) => Ok(var),
+            _ => err_type!($typ, stringify!($var))
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! comparable_type_cast {
+    ($typ: expr, $var: ident) => {
+        match $typ {
+            Type::Comparable(ComparableType::$var(var)) => Ok(var),
+            _ => err_type!($typ, stringify!($var))
+        }
+    };
+}
+
 pub fn type_comparable(ty: &Type) -> bool {
     match ty {
         Type::Comparable(_) => true,
@@ -203,7 +223,7 @@ impl StackItem {
     }
 
     pub fn from_micheline(expr: Micheline, ty: &Type) -> Result<Self> {
-        Self::from_data(expr.normalized().try_into()?, ty)
+        Self::from_data(expr.try_into()?, ty)
     }
 
     pub fn into_micheline(self, ty: &Type) -> Result<Micheline> {

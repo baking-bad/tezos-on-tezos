@@ -12,6 +12,7 @@ use crate::{
     types::{OptionItem, StackItem},
     typechecker::{check_types_equal},
     err_type,
+    type_cast
 };
 
 impl OptionItem {
@@ -35,19 +36,17 @@ impl OptionItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        if let Type::Option(option_ty) = ty {
-            return match self {
-                Self::None(ty) => {
-                    check_types_equal(&option_ty.r#type, &ty)?;
-                    Ok(Data::None(data::none()))
-                },
-                Self::Some(val) => {
-                    let inner = (*val).into_data(&option_ty.r#type)?;
-                    Ok(Data::Some(data::some(inner)))
-                }
+        let ty = type_cast!(ty, Option)?;
+        match self {
+            Self::None(inner_ty) => {
+                check_types_equal(&ty.r#type, &inner_ty)?;
+                Ok(Data::None(data::none()))
+            },
+            Self::Some(val) => {
+                let inner = (*val).into_data(&ty.r#type)?;
+                Ok(Data::Some(data::some(inner)))
             }
         }
-        err_type!(ty, self)
     }
 
     pub fn is_none(&self) -> bool {

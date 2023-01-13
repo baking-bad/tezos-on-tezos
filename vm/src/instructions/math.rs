@@ -13,7 +13,7 @@ use crate::{
 
 impl PureInterpreter for Abs {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let int = pop_cast!(stack, Int);
+        let int = pop_cast!(stack, Int)?;
         stack.push(int.abs()?.into())
     }
 }
@@ -55,8 +55,8 @@ impl PureInterpreter for Ediv {
 
 impl PureInterpreter for Lsl {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let a = pop_cast!(stack, Nat);
-        let b = pop_cast!(stack, Nat);
+        let a = pop_cast!(stack, Nat)?;
+        let b = pop_cast!(stack, Nat)?;
         let res = (a << b)?;
         stack.push(res.into())
     }
@@ -64,8 +64,8 @@ impl PureInterpreter for Lsl {
 
 impl PureInterpreter for Lsr {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let a = pop_cast!(stack, Nat);
-        let b = pop_cast!(stack, Nat);
+        let a = pop_cast!(stack, Nat)?;
+        let b = pop_cast!(stack, Nat)?;
         let res = (a >> b)?;
         stack.push(res.into())
     }
@@ -119,14 +119,14 @@ impl PureInterpreter for Sub {
 
 impl PureInterpreter for Int {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let nat = pop_cast!(stack, Nat);
+        let nat = pop_cast!(stack, Nat)?;
         stack.push(nat.int().into())
     }
 }
 
 impl PureInterpreter for IsNat {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let int = pop_cast!(stack, Int);
+        let int = pop_cast!(stack, Int)?;
         stack.push(int.nat()?.into())
     }
 }

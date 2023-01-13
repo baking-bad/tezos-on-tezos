@@ -12,6 +12,7 @@ use crate::{
     types::{ListItem, StackItem},
     typechecker::check_types_equal,
     err_type,
+    type_cast
 };
 
 pub fn seq_into_item_vec(sequence: data::Sequence, val_type: &Type) -> Result<Vec<StackItem>> {
@@ -52,10 +53,8 @@ impl ListItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        match ty {
-            Type::List(list_ty) => item_vec_into_seq(self.outer_value, &self.inner_type, &list_ty.r#type),
-            _ => err_type!(ty, self)
-        }
+        let ty = type_cast!(ty, List)?;
+        item_vec_into_seq(self.outer_value, &self.inner_type, &ty.r#type)
     }
 
     pub fn into_elements(self) -> (Vec<StackItem>, Type) {

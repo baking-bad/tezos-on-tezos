@@ -10,7 +10,8 @@ use crate::{
 impl PureInterpreter for Push {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         // TODO: check if pushable
-        stack.push(StackItem::from_data(*self.value.to_owned(), &self.r#type)?)
+        let item = StackItem::from_data(*self.value.to_owned(), &self.r#type)?;
+        stack.push(item)
     }
 }
 

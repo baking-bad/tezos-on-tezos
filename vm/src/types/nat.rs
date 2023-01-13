@@ -11,12 +11,10 @@ use crate::{
     Error,
     types::{IntItem, NatItem, StackItem, OptionItem, PairItem},
     err_type,
-    type_check_fn_comparable,
+    comparable_type_cast
 };
 
 impl NatItem {
-    type_check_fn_comparable!(Nat);
-
     pub fn from_data(data: Data) -> Result<StackItem> {
         match data {
             Data::Int(val) => Ok(StackItem::Nat(UBig::from_str_radix(val.to_str(), 10)?.into())),
@@ -25,7 +23,7 @@ impl NatItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        self.type_check(ty)?;
+        comparable_type_cast!(ty, Nat)?;
         let int: IBig = self.0.into();
         Ok(Data::Int(int.into()))
     }

@@ -107,6 +107,7 @@ fn format_instr(instr: &Instruction) -> String {
         Instruction::Contract(instr) => format_annot("Contract", instr.annotations()),
         Instruction::Self_(instr) => format_annot("Self_", instr.annotations()),
         Instruction::ImplicitAccount(_) => "ImplicitAccount".into(),
+        Instruction::TransferTokens(_) => "TransferTokens".into(),
         _ => format!("{:?}", instr)
     }
 }

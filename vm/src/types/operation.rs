@@ -1,18 +1,25 @@
 use std::fmt::Display;
-use tezos_operation::operations::OperationContent;
 
-use crate::types::OperationItem;
+use crate::types::{OperationItem, InternalContent, BigMapDiff};
 
 impl OperationItem {
-    pub fn into_content(self) -> OperationContent {
-        self.0
+    pub fn new(content: InternalContent) -> Self {
+        Self { content, big_map_diff: Vec::new() }
+    }
+
+    pub fn into_content(self) -> InternalContent {
+        self.content
+    }
+
+    pub fn aggregate_diff(&mut self, big_map_diff: &mut Vec<BigMapDiff>) {
+        big_map_diff.append(&mut self.big_map_diff)
     }
 }
 
 impl PartialEq for OperationItem {
     fn eq(&self, other: &Self) -> bool {
         // For testing purposes
-        self.0 == other.0
+        self.content == other.content
     }
 }
 

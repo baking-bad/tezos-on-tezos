@@ -4,20 +4,20 @@ use ibig::{IBig, UBig};
 use ibig::ops::Abs;
 use tezos_michelson::michelson::{
     data::Data,
-    types::{Type, ComparableType, nat, mutez, pair}
+    types::{Type, ComparableType},
+    types
 };
+use tezos_core::types::mutez::Mutez;
 
 use crate::{
     Result,
     Error,
     types::{NatItem, MutezItem, StackItem, OptionItem, PairItem},
     err_type,
-    type_check_fn_comparable,
+    comparable_type_cast
 };
 
 impl MutezItem {
-    type_check_fn_comparable!(Mutez);
-
     pub fn new(value: i64) -> Result<Self> {
         if value < 0 {
             return Err(Error::MutezUnderflow.into())
@@ -38,7 +38,7 @@ impl MutezItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        self.type_check(ty)?;
+        comparable_type_cast!(ty, Mutez)?;
         Ok(Data::Int(self.0.into()))
     }
 }
@@ -68,6 +68,23 @@ impl TryFrom<UBig> for MutezItem {
             Ok(val) => MutezItem::new(val),
             Err(_) => Err(Error::MutezOverflow.into())
         }
+    }
+}
+
+impl TryInto<Mutez> for MutezItem {
+    type Error = Error;
+
+    fn try_into(self) -> Result<Mutez> {
+        // MutezItem restricts internal value to be non-negative, so casting is safe
+        Mutez::try_from(self.0 as u64).map_err(|e| e.into())
+    }
+}
+
+impl TryFrom<Mutez> for MutezItem {
+    type Error = Error;
+
+    fn try_from(value: Mutez) -> Result<MutezItem> {
+        MutezItem::new(value.try_into()?)
     }
 }
 
@@ -103,7 +120,7 @@ impl Div<NatItem> for MutezItem {
 
     fn div(self, rhs: NatItem) -> Self::Output {
         if rhs.0 == 0u8.into() {
-            Ok(OptionItem::None(pair(vec![mutez(), mutez()])))
+            Ok(OptionItem::None(types::pair(vec![types::mutez(), types::mutez()])))
         } else {
             let (a, b) = (IBig::from(self.0), IBig::from(rhs.0));
             let (mut q, mut r) = (&a / &b, &a % &b);
@@ -122,7 +139,7 @@ impl Div<MutezItem> for MutezItem {
 
     fn div(self, rhs: MutezItem) -> Self::Output {
         if rhs.0 == 0u8.into() {
-            Ok(OptionItem::None(pair(vec![nat(), mutez()])))
+            Ok(OptionItem::None(types::pair(vec![types::nat(), types::mutez()])))
         } else {
             let (a, b) = (self.0, rhs.0);
             let (mut q, mut r) = (a / b, a % b);
