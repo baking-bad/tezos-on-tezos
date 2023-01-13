@@ -1,7 +1,7 @@
 use std::fmt::Display;
 use std::ops::{Add, Sub};
 use ibig::IBig;
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc, SecondsFormat};
 use tezos_michelson::michelson::{
     data::Data, data,
     types::{Type, ComparableType}
@@ -34,14 +34,16 @@ impl TimestampItem {
             Some(dt) => DateTime::<Utc>::from_utc(dt, Utc),
             None => return err_type!(ty, self)
         };
-        Ok(Data::String(data::String::from_string(dt.to_rfc3339())?))
+        let string = dt.to_rfc3339_opts(SecondsFormat::Secs, true);
+        Ok(Data::String(data::String::from_string(string)?))
     }
 }
 
 impl Display for TimestampItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = match NaiveDateTime::from_timestamp_opt(self.0, 0) {
-            Some(dt) => DateTime::<Utc>::from_utc(dt, Utc).to_rfc3339(),
+            Some(dt) => DateTime::<Utc>::from_utc(dt, Utc)
+                .to_rfc3339_opts(SecondsFormat::Secs, true),
             None => format!("{}+0", self.0)
         };
         f.write_str(str.as_str())

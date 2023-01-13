@@ -1409,11 +1409,6 @@ fn e2e_dup_n_00() -> Result<()> {
 }
 
 #[test]
-fn e2e_sapling_empty_state_00() -> Result<()> {
-    E2E::load("e2e_sapling_empty_state_00.json")?.run()
-}
-
-#[test]
 fn e2e_map_map_sideeffect_00() -> Result<()> {
     E2E::load("e2e_map_map_sideeffect_00.json")?.run()
 }

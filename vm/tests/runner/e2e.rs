@@ -32,6 +32,9 @@ impl E2E {
         let scope = OperationScope {
             parameters: Some(("default".into(), self.parameter.clone())),
             storage: self.storage.clone(),
+            balance: "4000000000000".try_into()?,
+            level: 1,
+            chain_id: "NetXdQprcVkpaWU".try_into()?,
             ..default_scope()
         };
         let mut context = MockContext::default();
