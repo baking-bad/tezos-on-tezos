@@ -48,7 +48,7 @@ nextest:
 
 trace:
 # TODO: pass test suite name
-	cargo test --jobs 1 --no-fail-fast --test tzt_iter --features trace -- --nocapture --test-threads=1
+	RUST_BACKTRACE=1 cargo test --jobs 1 --no-fail-fast --test e2e --features trace -- --nocapture --test-threads=1 e2e_abs_00
 
 image-daily:
 	docker build -t ghcr.io/baking-bad/tz-rollup-operator:daily --build-arg OCTEZ_TAG=$(DAILY_TAG) --build-arg NETWORK=$(DAILY_NETWORK) --file ./build/Dockerfile.local .

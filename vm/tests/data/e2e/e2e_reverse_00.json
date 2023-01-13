@@ -1,0 +1,32 @@
+[
+  {
+    "args": [
+      {
+        "string": "reverse.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      [
+        {
+          "string": ""
+        }
+      ]
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "result"
+  }
+]

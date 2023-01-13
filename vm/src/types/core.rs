@@ -24,7 +24,7 @@ impl UnitItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        comparable_type_cast!(ty, Unit)?;
+        comparable_type_cast!(ty, Unit);
         Ok(Data::Unit(data::unit()))
     }
 }
@@ -39,7 +39,7 @@ impl BoolItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        comparable_type_cast!(ty, Bool)?;
+        comparable_type_cast!(ty, Bool);
         match self.0 {
             true => Ok(Data::True(data::True)),
             false => Ok(Data::False(data::False))
@@ -60,7 +60,7 @@ impl StringItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        comparable_type_cast!(ty, String)?;
+        comparable_type_cast!(ty, String);
         Ok(Data::String(data::String::from_string(self.0)?))
     }
 
@@ -91,7 +91,7 @@ impl BytesItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        comparable_type_cast!(ty, Bytes)?;
+        comparable_type_cast!(ty, Bytes);
         Ok(Data::Bytes(data::bytes(self.0)))
     }
 

@@ -1,0 +1,39 @@
+[
+  {
+    "args": [
+      {
+        "string": "neg.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "int": "2"
+          }
+        ],
+        "prim": "Left"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "int": "0"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "int": "-2"
+      }
+    ],
+    "prim": "result"
+  }
+]

@@ -23,7 +23,7 @@ use crate::{
 
 impl PureInterpreter for Address {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let contract = pop_cast!(stack, Contract)?;
+        let contract = pop_cast!(stack, Contract);
         let (address, _) = contract.into_components();
         stack.push(AddressItem::new(address).into())
     }
@@ -31,7 +31,7 @@ impl PureInterpreter for Address {
 
 impl PureInterpreter for ImplicitAccount {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let key_hash = pop_cast!(stack, KeyHash)?;
+        let key_hash = pop_cast!(stack, KeyHash);
         let address = encoded::Address::Implicit(key_hash.unwrap());
         let item = ContractItem::new(address, types::unit());
         stack.push(item.into())
@@ -87,7 +87,7 @@ fn get_contract_type(
 
 impl ContextInterpreter for Contract {
     fn execute(&self, stack: &mut Stack, context: &mut impl InterpreterContext) -> Result<()> {
-        let address = pop_cast!(stack, Address)?;
+        let address = pop_cast!(stack, Address);
         let address = address.unwrap();
 
         let res = match get_contract_type(&address, self.annotations(), context) {
@@ -113,8 +113,8 @@ impl ContextInterpreter for Contract {
 impl Interpreter for TransferTokens {
     fn execute(&self, stack: &mut Stack, _scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
         let mut param = stack.pop()?;
-        let amount = pop_cast!(stack, Mutez)?;
-        let destination = pop_cast!(stack, Contract)?;
+        let amount = pop_cast!(stack, Mutez);
+        let destination = pop_cast!(stack, Contract);
 
         let (destination, param_type) = destination.into_components();
 

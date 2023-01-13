@@ -1,0 +1,95 @@
+[
+  {
+    "args": [
+      {
+        "prim": "mutez"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "bls12_381_fr"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "CAR"
+        },
+        {
+          "args": [
+            {
+              "prim": "mutez"
+            },
+            {
+              "int": "1"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "SWAP"
+        },
+        {
+          "prim": "EDIV"
+        },
+        [
+          {
+            "args": [
+              [
+                [
+                  {
+                    "prim": "UNIT"
+                  },
+                  {
+                    "prim": "FAILWITH"
+                  }
+                ]
+              ],
+              [
+                {
+                  "prim": "RENAME"
+                }
+              ]
+            ],
+            "prim": "IF_NONE"
+          }
+        ],
+        {
+          "prim": "CAR"
+        },
+        {
+          "args": [
+            {
+              "prim": "bls12_381_fr"
+            },
+            {
+              "int": "1"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "MUL"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

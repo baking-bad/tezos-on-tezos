@@ -36,7 +36,7 @@ impl OptionItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        let ty = type_cast!(ty, Option)?;
+        let ty = type_cast!(ty, Option);
         match self {
             Self::None(inner_ty) => {
                 check_types_equal(&ty.r#type, &inner_ty)?;

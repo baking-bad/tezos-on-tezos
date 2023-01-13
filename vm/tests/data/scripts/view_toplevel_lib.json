@@ -1,0 +1,578 @@
+[
+  {
+    "args": [
+      {
+        "prim": "nat"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "nat"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "CAR"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      {
+        "string": "add"
+      },
+      {
+        "prim": "nat"
+      },
+      {
+        "prim": "nat"
+      },
+      [
+        {
+          "prim": "UNPAIR"
+        },
+        {
+          "prim": "ADD"
+        }
+      ]
+    ],
+    "prim": "view"
+  },
+  {
+    "args": [
+      {
+        "string": "id"
+      },
+      {
+        "prim": "nat"
+      },
+      {
+        "args": [
+          {
+            "prim": "nat"
+          },
+          {
+            "prim": "nat"
+          }
+        ],
+        "prim": "pair"
+      },
+      []
+    ],
+    "prim": "view"
+  },
+  {
+    "args": [
+      {
+        "string": "test_failwith"
+      },
+      {
+        "prim": "nat"
+      },
+      {
+        "args": [
+          {
+            "prim": "nat"
+          },
+          {
+            "prim": "nat"
+          }
+        ],
+        "prim": "pair"
+      },
+      [
+        {
+          "prim": "FAILWITH"
+        }
+      ]
+    ],
+    "prim": "view"
+  },
+  {
+    "args": [
+      {
+        "string": "step_constants"
+      },
+      {
+        "prim": "unit"
+      },
+      {
+        "args": [
+          {
+            "args": [
+              {
+                "prim": "mutez"
+              },
+              {
+                "prim": "mutez"
+              }
+            ],
+            "prim": "pair"
+          },
+          {
+            "args": [
+              {
+                "args": [
+                  {
+                    "prim": "address"
+                  },
+                  {
+                    "prim": "address"
+                  }
+                ],
+                "prim": "pair"
+              },
+              {
+                "prim": "address"
+              }
+            ],
+            "prim": "pair"
+          }
+        ],
+        "prim": "pair"
+      },
+      [
+        {
+          "prim": "DROP"
+        },
+        {
+          "prim": "SOURCE"
+        },
+        {
+          "prim": "SENDER"
+        },
+        {
+          "prim": "SELF_ADDRESS"
+        },
+        {
+          "prim": "PAIR"
+        },
+        {
+          "prim": "PAIR"
+        },
+        {
+          "prim": "BALANCE"
+        },
+        {
+          "prim": "AMOUNT"
+        },
+        {
+          "prim": "PAIR"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "view"
+  },
+  {
+    "args": [
+      {
+        "string": "succ"
+      },
+      {
+        "args": [
+          {
+            "prim": "nat"
+          },
+          {
+            "prim": "address"
+          }
+        ],
+        "prim": "pair"
+      },
+      {
+        "prim": "nat"
+      },
+      [
+        {
+          "prim": "CAR"
+        },
+        {
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "1"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "ADD"
+        },
+        {
+          "prim": "PAIR"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "prim": "CDR"
+        },
+        {
+          "prim": "SWAP"
+        },
+        {
+          "args": [
+            {
+              "string": "is_twenty"
+            },
+            {
+              "prim": "nat"
+            }
+          ],
+          "prim": "VIEW"
+        },
+        [
+          {
+            "args": [
+              [
+                [
+                  {
+                    "prim": "UNIT"
+                  },
+                  {
+                    "prim": "FAILWITH"
+                  }
+                ]
+              ],
+              [
+                {
+                  "prim": "RENAME"
+                }
+              ]
+            ],
+            "prim": "IF_NONE"
+          }
+        ]
+      ]
+    ],
+    "prim": "view"
+  },
+  {
+    "args": [
+      {
+        "string": "is_twenty"
+      },
+      {
+        "args": [
+          {
+            "prim": "nat"
+          },
+          {
+            "prim": "address"
+          }
+        ],
+        "prim": "pair"
+      },
+      {
+        "prim": "nat"
+      },
+      [
+        {
+          "prim": "CAR"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "prim": "CAR"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "20"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "COMPARE"
+        },
+        {
+          "prim": "EQ"
+        },
+        {
+          "args": [
+            [
+              {
+                "prim": "CAR"
+              }
+            ],
+            [
+              {
+                "prim": "DUP"
+              },
+              {
+                "prim": "CDR"
+              },
+              {
+                "prim": "SWAP"
+              },
+              {
+                "args": [
+                  {
+                    "string": "succ"
+                  },
+                  {
+                    "prim": "nat"
+                  }
+                ],
+                "prim": "VIEW"
+              },
+              [
+                {
+                  "args": [
+                    [
+                      [
+                        {
+                          "prim": "UNIT"
+                        },
+                        {
+                          "prim": "FAILWITH"
+                        }
+                      ]
+                    ],
+                    [
+                      {
+                        "prim": "RENAME"
+                      }
+                    ]
+                  ],
+                  "prim": "IF_NONE"
+                }
+              ]
+            ]
+          ],
+          "prim": "IF"
+        }
+      ]
+    ],
+    "prim": "view"
+  },
+  {
+    "args": [
+      {
+        "string": "fib"
+      },
+      {
+        "prim": "nat"
+      },
+      {
+        "prim": "nat"
+      },
+      [
+        {
+          "prim": "CAR"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "0"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "COMPARE"
+        },
+        {
+          "prim": "EQ"
+        },
+        {
+          "args": [
+            [],
+            [
+              {
+                "prim": "DUP"
+              },
+              {
+                "args": [
+                  {
+                    "prim": "nat"
+                  },
+                  {
+                    "int": "1"
+                  }
+                ],
+                "prim": "PUSH"
+              },
+              {
+                "prim": "COMPARE"
+              },
+              {
+                "prim": "EQ"
+              },
+              {
+                "args": [
+                  [],
+                  [
+                    {
+                      "prim": "DUP"
+                    },
+                    {
+                      "args": [
+                        {
+                          "prim": "nat"
+                        },
+                        {
+                          "int": "1"
+                        }
+                      ],
+                      "prim": "PUSH"
+                    },
+                    {
+                      "prim": "SWAP"
+                    },
+                    {
+                      "prim": "SUB"
+                    },
+                    {
+                      "prim": "ABS"
+                    },
+                    {
+                      "prim": "SELF_ADDRESS"
+                    },
+                    {
+                      "prim": "SWAP"
+                    },
+                    {
+                      "args": [
+                        {
+                          "string": "fib"
+                        },
+                        {
+                          "prim": "nat"
+                        }
+                      ],
+                      "prim": "VIEW"
+                    },
+                    [
+                      {
+                        "args": [
+                          [
+                            [
+                              {
+                                "prim": "UNIT"
+                              },
+                              {
+                                "prim": "FAILWITH"
+                              }
+                            ]
+                          ],
+                          [
+                            {
+                              "prim": "SWAP"
+                            },
+                            {
+                              "args": [
+                                {
+                                  "prim": "nat"
+                                },
+                                {
+                                  "int": "2"
+                                }
+                              ],
+                              "prim": "PUSH"
+                            },
+                            {
+                              "prim": "SWAP"
+                            },
+                            {
+                              "prim": "SUB"
+                            },
+                            {
+                              "prim": "ABS"
+                            },
+                            {
+                              "prim": "SELF_ADDRESS"
+                            },
+                            {
+                              "prim": "SWAP"
+                            },
+                            {
+                              "args": [
+                                {
+                                  "string": "fib"
+                                },
+                                {
+                                  "prim": "nat"
+                                }
+                              ],
+                              "prim": "VIEW"
+                            },
+                            [
+                              {
+                                "args": [
+                                  [
+                                    [
+                                      {
+                                        "prim": "UNIT"
+                                      },
+                                      {
+                                        "prim": "FAILWITH"
+                                      }
+                                    ]
+                                  ],
+                                  [
+                                    {
+                                      "prim": "ADD"
+                                    }
+                                  ]
+                                ],
+                                "prim": "IF_NONE"
+                              }
+                            ]
+                          ]
+                        ],
+                        "prim": "IF_NONE"
+                      }
+                    ]
+                  ]
+                ],
+                "prim": "IF"
+              }
+            ]
+          ],
+          "prim": "IF"
+        }
+      ]
+    ],
+    "prim": "view"
+  }
+]

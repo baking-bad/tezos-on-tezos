@@ -1,0 +1,57 @@
+[
+  {
+    "args": [
+      {
+        "string": "xor.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "args": [
+              {
+                "int": "0"
+              },
+              {
+                "int": "0"
+              }
+            ],
+            "prim": "Pair"
+          }
+        ],
+        "prim": "Right"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "None"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "args": [
+              {
+                "int": "0"
+              }
+            ],
+            "prim": "Right"
+          }
+        ],
+        "prim": "Some"
+      }
+    ],
+    "prim": "result"
+  }
+]

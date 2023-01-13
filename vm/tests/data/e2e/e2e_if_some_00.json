@@ -1,0 +1,39 @@
+[
+  {
+    "args": [
+      {
+        "string": "if_some.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "string": "hello"
+          }
+        ],
+        "prim": "Some"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "string": "?"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "string": "hello"
+      }
+    ],
+    "prim": "result"
+  }
+]

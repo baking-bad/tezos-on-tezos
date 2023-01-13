@@ -1,0 +1,56 @@
+[
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "annots": [
+              ":l"
+            ],
+            "prim": "nat"
+          },
+          {
+            "annots": [
+              ":r"
+            ],
+            "prim": "nat"
+          }
+        ],
+        "prim": "pair"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "nat"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "CAR"
+        },
+        {
+          "prim": "CDR"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

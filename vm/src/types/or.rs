@@ -40,7 +40,7 @@ impl OrItem {
     }
     
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        let ty = type_cast!(ty, Or)?;
+        let ty = type_cast!(ty, Or);
         match self {
             Self::Left(var) => {
                 check_types_equal(&ty.rhs, &var.other_type)?;

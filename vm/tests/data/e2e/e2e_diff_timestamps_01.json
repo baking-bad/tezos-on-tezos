@@ -1,0 +1,42 @@
+[
+  {
+    "args": [
+      {
+        "string": "diff_timestamps.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "int": "0"
+          },
+          {
+            "int": "1"
+          }
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "int": "111"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "int": "-1"
+      }
+    ],
+    "prim": "result"
+  }
+]

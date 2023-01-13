@@ -1,0 +1,28 @@
+[
+  {
+    "args": [
+      {
+        "string": "set_id.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "result"
+  }
+]

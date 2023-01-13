@@ -1,0 +1,32 @@
+[
+  {
+    "args": [
+      {
+        "string": "sapling_empty_state.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "prim": "Unit"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "int": "0"
+      }
+    ],
+    "prim": "result"
+  }
+]

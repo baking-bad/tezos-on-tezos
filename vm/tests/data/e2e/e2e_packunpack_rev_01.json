@@ -1,0 +1,98 @@
+[
+  {
+    "args": [
+      {
+        "string": "packunpack_rev.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "int": "-1"
+          },
+          {
+            "args": [
+              {
+                "int": "1"
+              },
+              {
+                "args": [
+                  {
+                    "string": "foobar"
+                  },
+                  {
+                    "args": [
+                      {
+                        "bytes": "00AABBCC"
+                      },
+                      {
+                        "args": [
+                          {
+                            "int": "1000"
+                          },
+                          {
+                            "args": [
+                              {
+                                "prim": "False"
+                              },
+                              {
+                                "args": [
+                                  {
+                                    "string": "tz1cxcwwnzENRdhe2Kb8ZdTrdNy4bFNyScx5"
+                                  },
+                                  {
+                                    "args": [
+                                      {
+                                        "string": "2019-09-09T08:35:33Z"
+                                      },
+                                      {
+                                        "string": "tz1cxcwwnzENRdhe2Kb8ZdTrdNy4bFNyScx5"
+                                      }
+                                    ],
+                                    "prim": "Pair"
+                                  }
+                                ],
+                                "prim": "Pair"
+                              }
+                            ],
+                            "prim": "Pair"
+                          }
+                        ],
+                        "prim": "Pair"
+                      }
+                    ],
+                    "prim": "Pair"
+                  }
+                ],
+                "prim": "Pair"
+              }
+            ],
+            "prim": "Pair"
+          }
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "Unit"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "prim": "Unit"
+      }
+    ],
+    "prim": "result"
+  }
+]

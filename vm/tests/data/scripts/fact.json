@@ -1,0 +1,128 @@
+[
+  {
+    "args": [
+      {
+        "prim": "nat"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "nat"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "CAR"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "prim": "nat"
+            },
+            [
+              {
+                "args": [
+                  {
+                    "prim": "int"
+                  },
+                  {
+                    "int": "-1"
+                  }
+                ],
+                "prim": "PUSH"
+              },
+              {
+                "prim": "ADD"
+              },
+              {
+                "prim": "ISNAT"
+              },
+              {
+                "args": [
+                  [
+                    {
+                      "prim": "DROP"
+                    },
+                    {
+                      "args": [
+                        {
+                          "prim": "nat"
+                        },
+                        {
+                          "int": "1"
+                        }
+                      ],
+                      "prim": "PUSH"
+                    }
+                  ],
+                  [
+                    {
+                      "prim": "DUP"
+                    },
+                    {
+                      "args": [
+                        [
+                          {
+                            "prim": "EXEC"
+                          }
+                        ]
+                      ],
+                      "prim": "DIP"
+                    },
+                    {
+                      "args": [
+                        {
+                          "prim": "nat"
+                        },
+                        {
+                          "int": "1"
+                        }
+                      ],
+                      "prim": "PUSH"
+                    },
+                    {
+                      "prim": "ADD"
+                    },
+                    {
+                      "prim": "MUL"
+                    }
+                  ]
+                ],
+                "prim": "IF_NONE"
+              }
+            ]
+          ],
+          "prim": "LAMBDA_REC"
+        },
+        {
+          "prim": "SWAP"
+        },
+        {
+          "prim": "EXEC"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

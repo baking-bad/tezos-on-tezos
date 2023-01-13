@@ -53,7 +53,7 @@ impl ListItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        let ty = type_cast!(ty, List)?;
+        let ty = type_cast!(ty, List);
         item_vec_into_seq(self.outer_value, &self.inner_type, &ty.r#type)
     }
 

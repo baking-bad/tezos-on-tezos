@@ -58,17 +58,24 @@ pub enum Error {
     }
 }
 
+pub type Result<T> = std::result::Result<T, Error>;
+
+#[macro_export]
+macro_rules! err {
+    ($err: expr) => {
+        Err($err.into())
+    };
+}
+
 #[macro_export]
 macro_rules! err_type {
     ($expected: expr, $found: expr) => {
-        Err($crate::Error::TypeMismatch {
+        $crate::err!($crate::Error::TypeMismatch {
             expected: format!("{:?}", $expected),
             found: format!("{:?}", $found)
         })
     };
 }
-
-pub type Result<T> = std::result::Result<T, Error>;
 
 impl From<tezos_core::Error> for Error {
     fn from(error: tezos_core::Error) -> Self {

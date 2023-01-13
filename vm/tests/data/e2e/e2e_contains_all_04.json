@@ -1,0 +1,66 @@
+[
+  {
+    "args": [
+      {
+        "string": "contains_all.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          [
+            {
+              "string": "B"
+            },
+            {
+              "string": "C"
+            },
+            {
+              "string": "asdf"
+            }
+          ],
+          [
+            {
+              "string": "B"
+            },
+            {
+              "string": "B"
+            },
+            {
+              "string": "asdf"
+            },
+            {
+              "string": "C"
+            }
+          ]
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "None"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "True"
+          }
+        ],
+        "prim": "Some"
+      }
+    ],
+    "prim": "result"
+  }
+]

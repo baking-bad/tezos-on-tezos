@@ -1,0 +1,75 @@
+[
+  {
+    "args": [
+      {
+        "string": "map_mem_nat.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "int": "1"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          [
+            {
+              "args": [
+                {
+                  "int": "0"
+                },
+                {
+                  "int": "1"
+                }
+              ],
+              "prim": "Elt"
+            }
+          ],
+          {
+            "prim": "None"
+          }
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          [
+            {
+              "args": [
+                {
+                  "int": "0"
+                },
+                {
+                  "int": "1"
+                }
+              ],
+              "prim": "Elt"
+            }
+          ],
+          {
+            "args": [
+              {
+                "prim": "False"
+              }
+            ],
+            "prim": "Some"
+          }
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "result"
+  }
+]

@@ -1,0 +1,34 @@
+[
+  {
+    "args": [
+      {
+        "string": "contract.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "string": "tz1cxcwwnzENRdhe2Kb8ZdTrdNy4bFNyScx5"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "Unit"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "prim": "Unit"
+      }
+    ],
+    "prim": "result"
+  }
+]

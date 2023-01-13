@@ -1,0 +1,36 @@
+[
+  {
+    "args": [
+      {
+        "string": "list_size.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      [
+        {
+          "int": "1"
+        }
+      ]
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "int": "111"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "int": "1"
+      }
+    ],
+    "prim": "result"
+  }
+]

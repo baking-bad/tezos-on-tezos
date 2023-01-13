@@ -1,0 +1,42 @@
+[
+  {
+    "args": [
+      {
+        "string": "empty_map.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "prim": "Unit"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "string": "hello"
+            },
+            {
+              "string": "world"
+            }
+          ],
+          "prim": "Elt"
+        }
+      ]
+    ],
+    "prim": "result"
+  }
+]

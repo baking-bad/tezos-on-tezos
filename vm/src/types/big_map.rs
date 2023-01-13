@@ -212,7 +212,7 @@ impl LazyStorage for BigMapItem {
     fn try_aggregate(&mut self, output: &mut Vec<BigMapDiff>, ty: &Type) -> Result<()> {
         match self {
             Self::Diff(diff) => {
-                let big_map_ty = type_cast!(ty, BigMap)?;
+                let big_map_ty = type_cast!(ty, BigMap);
                 check_types_equal(&big_map_ty.key_type, &diff.inner_type.0)?;
                 check_types_equal(&big_map_ty.value_type, &diff.inner_type.1)?;
                 output.push(diff.clone());
@@ -236,7 +236,7 @@ impl LazyStorage for OptionItem {
         match self {
             Self::None(_) => Ok(()),
             Self::Some(val) => {
-                let ty = type_cast!(ty, Option)?;
+                let ty = type_cast!(ty, Option);
                 val.try_aggregate(output, &ty.r#type)
             },
         }
@@ -253,7 +253,7 @@ impl LazyStorage for OrItem {
     }
 
     fn try_aggregate(&mut self, output: &mut Vec<BigMapDiff>, ty: &Type) -> Result<()> {
-        let ty = type_cast!(ty, Or)?;
+        let ty = type_cast!(ty, Or);
         let (var, ty) = match self {
             Self::Left(var) => (var, &ty.lhs),
             Self::Right(var) => (var, &ty.rhs)
@@ -269,7 +269,7 @@ impl LazyStorage for PairItem {
     }
 
     fn try_aggregate(&mut self, output: &mut Vec<BigMapDiff>, ty: &Type) -> Result<()> {
-        let ty = type_cast!(ty, Pair)?;
+        let ty = type_cast!(ty, Pair);
         assert_eq!(2, ty.types.len());
         self.0.0.try_aggregate(output, &ty.types[0])?;
         self.0.1.try_aggregate(output, &ty.types[1])
@@ -285,7 +285,7 @@ impl LazyStorage for ListItem {
     }
 
     fn try_aggregate(&mut self, output: &mut Vec<BigMapDiff>, ty: &Type) -> Result<()> {
-        let ty = type_cast!(ty, List)?;
+        let ty = type_cast!(ty, List);
         self.outer_value
             .iter_mut()
             .map(|e| e.try_aggregate(output, &ty.r#type))
@@ -302,7 +302,7 @@ impl LazyStorage for MapItem {
     }
 
     fn try_aggregate(&mut self, output: &mut Vec<BigMapDiff>, ty: &Type) -> Result<()> {
-        let ty = type_cast!(ty, Map)?;
+        let ty = type_cast!(ty, Map);
         self.outer_value
             .iter_mut()
             .map(|(_, v)| v.try_aggregate(output, &ty.value_type))

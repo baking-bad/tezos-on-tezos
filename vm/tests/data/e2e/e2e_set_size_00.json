@@ -1,0 +1,32 @@
+[
+  {
+    "args": [
+      {
+        "string": "set_size.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "int": "111"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "int": "0"
+      }
+    ],
+    "prim": "result"
+  }
+]

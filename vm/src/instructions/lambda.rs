@@ -26,7 +26,7 @@ impl PureInterpreter for Lambda {
 impl Interpreter for Exec {
     fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
         let arg = stack.pop()?;
-        let (body, (param_type, return_type)) = pop_cast!(stack, Lambda)?.unwrap();
+        let (body, (param_type, return_type)) = pop_cast!(stack, Lambda).unwrap();
         arg.type_check(&param_type)?;
         
         let mut inner_stack = Stack::new();
@@ -43,7 +43,7 @@ impl Interpreter for Exec {
 impl PureInterpreter for Apply {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let const_arg = stack.pop()?;
-        let (body, (param_type, return_type)) = pop_cast!(stack, Lambda)?.unwrap();
+        let (body, (param_type, return_type)) = pop_cast!(stack, Lambda).unwrap();
 
         let (const_ty, arg_ty) = match param_type {
             Type::Pair(pair_ty) => {

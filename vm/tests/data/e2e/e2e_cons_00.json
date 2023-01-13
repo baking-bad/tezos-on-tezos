@@ -1,0 +1,34 @@
+[
+  {
+    "args": [
+      {
+        "string": "cons.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "int": "10"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "int": "10"
+        }
+      ]
+    ],
+    "prim": "result"
+  }
+]

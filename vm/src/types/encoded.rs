@@ -34,7 +34,7 @@ macro_rules! impl_for_encoded {
             }
                 
             pub fn into_data(self, ty: &Type) -> Result<Data> {
-                comparable_type_cast!(ty, $cmp_ty)?;
+                comparable_type_cast!(ty, $cmp_ty);
                 Ok(Data::String(data::String::from_string(self.0.into_string())?))
             }
 

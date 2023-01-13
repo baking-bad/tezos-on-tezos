@@ -36,7 +36,7 @@ macro_rules! impl_interpreter_for_op {
     ($instr: ty, $op: tt) => {
         impl PureInterpreter for $instr {
             fn execute(&self, stack: &mut Stack) -> Result<()> {
-                let a = pop_cast!(stack, Int)?;        
+                let a = pop_cast!(stack, Int);        
                 let res = a $op IntItem::from(0);
                 stack.push(StackItem::Bool(res.into()))
             }
@@ -67,8 +67,8 @@ impl PureInterpreter for Size {
 
 impl PureInterpreter for Slice {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let offset = pop_cast!(stack, Nat)?;
-        let length = pop_cast!(stack, Nat)?;
+        let offset = pop_cast!(stack, Nat);
+        let length = pop_cast!(stack, Nat);
 
         let offset: usize = offset.try_into()?;
         let length: usize = length.try_into()?;
@@ -112,11 +112,11 @@ impl PureInterpreter for Concat {
                 }
             },
             StackItem::String(a) => {
-                let b = pop_cast!(stack, String)?;
+                let b = pop_cast!(stack, String);
                 (a + b).into()
             },
             StackItem::Bytes(a) => {
-                let b = pop_cast!(stack, Bytes)?;
+                let b = pop_cast!(stack, Bytes);
                 (a + b).into()
             },
             item => return err_type!("ListItem<StringItem or BytesItem>, SringItem, or BytesItem", item)
@@ -139,7 +139,7 @@ impl PureInterpreter for Pack {
 
 impl PureInterpreter for Unpack {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let item = pop_cast!(stack, Bytes)?;
+        let item = pop_cast!(stack, Bytes);
         let res = match Michelson::unpack(item.unwrap().as_slice(), Some(&self.r#type)) {
             Ok(data) => {
                 let item = StackItem::from_data(data.try_into()?, &self.r#type)?;

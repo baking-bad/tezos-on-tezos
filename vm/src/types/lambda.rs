@@ -39,7 +39,7 @@ impl LambdaItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        type_cast!(ty, Lambda)?;
+        type_cast!(ty, Lambda);
         Ok(Data::Instruction(self.outer_value))
     } 
 

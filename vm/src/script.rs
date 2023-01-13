@@ -15,7 +15,9 @@ use crate::{
     stack::Stack,
     types::{StackItem, PairItem, InternalContent, BigMapDiff},
     interpreter::{Interpreter, InterpreterContext, OperationScope, LazyStorage},
-    err_type
+    err_type,
+    trace_enter,
+    trace_exit
 };
 
 pub struct MichelsonScript {
@@ -69,7 +71,8 @@ fn normalize_parameter(parameter: Micheline, entrypoint: &str, param_ty: &Type) 
 }
 
 impl MichelsonScript {
-    fn call_begin(&self, stack: &mut Stack, scope: &OperationScope) -> Result<()> {
+    pub fn call_begin(&self, stack: &mut Stack, scope: &OperationScope) -> Result<()> {
+        trace_enter!();
         if stack.len() != 0 {
             return Err(Error::BadReturn.into());
         }
@@ -89,43 +92,66 @@ impl MichelsonScript {
         stack.push(input.into())
     }
 
-    fn call_end(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<ScriptReturn> {
+    pub fn call_end(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<ScriptReturn> {
         if stack.len() != 1 {
             return Err(Error::BadReturn.into());
         }
-        match stack.pop()? {
-            StackItem::Pair(pair) => match pair.unpair() {
-                (mut storage, StackItem::List(op_list)) => {
-                    let mut big_map_diff: Vec<BigMapDiff> = Vec::new();
-                    storage.try_acquire(&scope.self_address, context)?;
-                    storage.try_aggregate(&mut big_map_diff, &self.storage_type)?;
 
-                    let mut operations: Vec<InternalContent> = Vec::with_capacity(op_list.len());
-                    let (items, _) = op_list.into_elements();
-                    for item in items {
-                        match item {
-                            StackItem::Operation(mut op) => {
-                                op.aggregate_diff(&mut big_map_diff);
-                                operations.push(op.into_content())
-                            },
-                            item => return err_type!("OperationItem", item)
-                        }                        
-                    }                    
-                    
-                    let ret = ScriptReturn {
-                        big_map_diff,
-                        operations,
-                        storage: storage.into_micheline(&self.storage_type)?,
-                    };
-                    Ok(ret)
-                },
-                items => err_type!("(StackItem, ListItem)", items)
+        let (op_list, mut storage) = match stack.pop()? {
+            StackItem::Pair(pair) => match pair.unpair() {
+                (StackItem::List(op_list), storage) => (op_list, storage),
+                items => return err_type!("(ListItem, StackItem)", items)
             },
-            item => err_type!("PairItem", item)
+            item => return err_type!("PairItem", item)
+        };
+
+        let mut big_map_diff: Vec<BigMapDiff> = Vec::new();
+        storage.try_acquire(&scope.self_address, context)?;
+        storage.try_aggregate(&mut big_map_diff, &self.storage_type)?;
+
+        let mut operations: Vec<InternalContent> = Vec::with_capacity(op_list.len());
+        let (items, _) = op_list.into_elements();
+        for item in items {
+            match item {
+                StackItem::Operation(mut op) => {
+                    op.aggregate_diff(&mut big_map_diff);
+                    operations.push(op.into_content())
+                },
+                item => return err_type!("OperationItem", item)
+            }                        
+        }                    
+        
+        let ret = ScriptReturn {
+            big_map_diff,
+            operations,
+            storage: storage.into_micheline(&self.storage_type)?,
+        };
+        Ok(ret)
+    }
+
+    pub fn call(&self, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<ScriptReturn> {
+        let mut stack = Stack::new();
+
+        if let Err(err) = self.call_begin(&mut stack, scope) {
+            trace_exit!(Some(&err));
+            return Err(err);
+        }
+
+        if let Err(err) = self.execute(&mut stack, scope, context) {
+            trace_exit!(Some(&err));
+            return Err(err);
+        }
+
+        match self.call_end(&mut stack, scope, context) {
+            Ok(ret) => Ok(ret),
+            Err(err) => {
+                trace_exit!(Some(&err));
+                Err(err)
+            }
         }
     }
 
-    fn originate(&self, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<ScriptReturn> {
+    pub fn originate(&self, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<ScriptReturn> {
         let expr = scope.storage.clone().normalized();
         let mut storage = StackItem::from_micheline(expr, &self.storage_type)?;
 
@@ -151,7 +177,7 @@ impl Interpreter for MichelsonScript {
 impl TryFrom<Micheline> for MichelsonScript {
     type Error = Error;
 
-    fn try_from(src: Micheline) -> Result<Self> {
+    fn try_from(src: Micheline) -> std::result::Result<Self, Error> {
         let mut param_ty: Option<Type> = None;
         let mut storage_ty: Option<Type> = None;
         let mut code_ty: Option<Instruction> = None;

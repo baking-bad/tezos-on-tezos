@@ -45,7 +45,7 @@ impl MapItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        let ty = type_cast!(ty, Map)?;        
+        let ty = type_cast!(ty, Map);        
         if self.outer_value.is_empty() {
             check_types_equal(&ty.key_type, &self.inner_type.0)?;
             check_types_equal(&ty.value_type, &self.inner_type.1)?;

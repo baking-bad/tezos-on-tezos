@@ -40,7 +40,7 @@ impl PairItem {
     }
     
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        let ty = type_cast!(ty, Pair)?;
+        let ty = type_cast!(ty, Pair);
         assert_eq!(2, ty.types.len());
         let first = self.0.0.into_data(&ty.types[0])?;
         let second = self.0.1.into_data(&ty.types[1])?;

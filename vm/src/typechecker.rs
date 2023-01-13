@@ -16,8 +16,8 @@ use crate::{
 macro_rules! type_cast {
     ($typ: expr, $var: ident) => {
         match $typ {
-            Type::$var(var) => Ok(var),
-            _ => err_type!($typ, stringify!($var))
+            Type::$var(var) => var,
+            _ => return err_type!($typ, stringify!($var))
         }
     };
 }
@@ -26,8 +26,8 @@ macro_rules! type_cast {
 macro_rules! comparable_type_cast {
     ($typ: expr, $var: ident) => {
         match $typ {
-            Type::Comparable(ComparableType::$var(var)) => Ok(var),
-            _ => err_type!($typ, stringify!($var))
+            Type::Comparable(ComparableType::$var(var)) => var,
+            _ => return err_type!($typ, stringify!($var))
         }
     };
 }

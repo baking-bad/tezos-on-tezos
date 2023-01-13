@@ -1,0 +1,97 @@
+[
+  {
+    "args": [
+      {
+        "string": "map_mem_string.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "string": "baz"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          [
+            {
+              "args": [
+                {
+                  "string": "bar"
+                },
+                {
+                  "int": "4"
+                }
+              ],
+              "prim": "Elt"
+            },
+            {
+              "args": [
+                {
+                  "string": "foo"
+                },
+                {
+                  "int": "11"
+                }
+              ],
+              "prim": "Elt"
+            }
+          ],
+          {
+            "prim": "None"
+          }
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          [
+            {
+              "args": [
+                {
+                  "string": "bar"
+                },
+                {
+                  "int": "4"
+                }
+              ],
+              "prim": "Elt"
+            },
+            {
+              "args": [
+                {
+                  "string": "foo"
+                },
+                {
+                  "int": "11"
+                }
+              ],
+              "prim": "Elt"
+            }
+          ],
+          {
+            "args": [
+              {
+                "prim": "False"
+              }
+            ],
+            "prim": "Some"
+          }
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "result"
+  }
+]

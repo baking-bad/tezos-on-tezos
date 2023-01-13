@@ -1,0 +1,34 @@
+[
+  {
+    "args": [
+      {
+        "string": "pexec.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "int": "38"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "int": "14"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "int": "52"
+      }
+    ],
+    "prim": "result"
+  }
+]

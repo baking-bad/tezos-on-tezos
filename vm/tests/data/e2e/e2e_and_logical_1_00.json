@@ -1,0 +1,42 @@
+[
+  {
+    "args": [
+      {
+        "string": "and_logical_1.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "False"
+          },
+          {
+            "prim": "False"
+          }
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "False"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "prim": "False"
+      }
+    ],
+    "prim": "result"
+  }
+]

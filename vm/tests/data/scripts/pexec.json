@@ -1,0 +1,82 @@
+[
+  {
+    "args": [
+      {
+        "prim": "nat"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "nat"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "nat"
+                },
+                {
+                  "prim": "nat"
+                }
+              ],
+              "prim": "pair"
+            },
+            {
+              "prim": "nat"
+            },
+            [
+              {
+                "prim": "UNPAIR"
+              },
+              {
+                "prim": "ADD"
+              }
+            ]
+          ],
+          "prim": "LAMBDA"
+        },
+        {
+          "prim": "SWAP"
+        },
+        {
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            [
+              {
+                "prim": "APPLY"
+              }
+            ]
+          ],
+          "prim": "DIP"
+        },
+        {
+          "prim": "EXEC"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

@@ -1,0 +1,42 @@
+[
+  {
+    "args": [
+      {
+        "string": "list_concat_bytes.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      [
+        {
+          "bytes": "00"
+        },
+        {
+          "bytes": "11"
+        },
+        {
+          "bytes": "00"
+        }
+      ]
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "bytes": ""
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "bytes": "001100"
+      }
+    ],
+    "prim": "result"
+  }
+]

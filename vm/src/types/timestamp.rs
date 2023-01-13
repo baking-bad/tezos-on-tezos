@@ -29,7 +29,7 @@ impl TimestampItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        comparable_type_cast!(ty, Timestamp)?;
+        comparable_type_cast!(ty, Timestamp);
         let dt = match NaiveDateTime::from_timestamp_opt(self.0, 0) {
             Some(dt) => DateTime::<Utc>::from_utc(dt, Utc),
             None => return err_type!(ty, self)

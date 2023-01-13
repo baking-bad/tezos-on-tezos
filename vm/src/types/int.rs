@@ -23,7 +23,7 @@ impl IntItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        comparable_type_cast!(ty, Int)?;
+        comparable_type_cast!(ty, Int);
         Ok(Data::Int(self.0.into()))
     }
 

@@ -38,7 +38,7 @@ impl MutezItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        comparable_type_cast!(ty, Mutez)?;
+        comparable_type_cast!(ty, Mutez);
         Ok(Data::Int(self.0.into()))
     }
 }

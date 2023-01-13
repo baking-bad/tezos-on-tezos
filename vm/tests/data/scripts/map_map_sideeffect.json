@@ -1,0 +1,148 @@
+[
+  {
+    "args": [
+      {
+        "prim": "nat"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "args": [
+              {
+                "prim": "string"
+              },
+              {
+                "prim": "nat"
+              }
+            ],
+            "prim": "map"
+          },
+          {
+            "prim": "nat"
+          }
+        ],
+        "prim": "pair"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "UNPAIR"
+        },
+        {
+          "prim": "SWAP"
+        },
+        {
+          "prim": "CAR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            },
+            [
+              {
+                "annots": [
+                  "@sum"
+                ],
+                "args": [
+                  {
+                    "prim": "nat"
+                  },
+                  {
+                    "int": "0"
+                  }
+                ],
+                "prim": "PUSH"
+              }
+            ]
+          ],
+          "prim": "DIP"
+        },
+        {
+          "args": [
+            [
+              {
+                "prim": "CDR"
+              },
+              {
+                "args": [
+                  [
+                    {
+                      "prim": "DUP"
+                    }
+                  ]
+                ],
+                "prim": "DIP"
+              },
+              {
+                "prim": "ADD"
+              },
+              {
+                "prim": "DUP"
+              },
+              {
+                "args": [
+                  {
+                    "int": "2"
+                  }
+                ],
+                "prim": "DUG"
+              },
+              {
+                "args": [
+                  {
+                    "int": "2"
+                  },
+                  [
+                    {
+                      "annots": [
+                        "@sum"
+                      ],
+                      "prim": "ADD"
+                    }
+                  ]
+                ],
+                "prim": "DIP"
+              }
+            ]
+          ],
+          "prim": "MAP"
+        },
+        {
+          "args": [
+            [
+              {
+                "prim": "DROP"
+              }
+            ]
+          ],
+          "prim": "DIP"
+        },
+        {
+          "prim": "PAIR"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

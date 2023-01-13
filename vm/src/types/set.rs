@@ -30,7 +30,7 @@ impl SetItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        let ty = type_cast!(ty, Set)?;
+        let ty = type_cast!(ty, Set);
         item_vec_into_seq(self.outer_value, &self.inner_type, &ty.r#type)
     }
 

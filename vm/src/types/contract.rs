@@ -34,7 +34,7 @@ impl ContractItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        let ty = type_cast!(ty, Contract)?;
+        let ty = type_cast!(ty, Contract);
         check_types_equal(&ty.r#type, &self.inner_type)?;
         Ok(Data::String(data::String::from_string(self.outer_value.into_string())?))
     }

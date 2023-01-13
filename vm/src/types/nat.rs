@@ -23,7 +23,7 @@ impl NatItem {
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        comparable_type_cast!(ty, Nat)?;
+        comparable_type_cast!(ty, Nat);
         let int: IBig = self.0.into();
         Ok(Data::Int(int.into()))
     }
