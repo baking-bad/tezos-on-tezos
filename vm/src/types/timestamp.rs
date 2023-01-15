@@ -10,7 +10,8 @@ use tezos_michelson::michelson::{
 use crate::{
     Result,
     types::{IntItem, TimestampItem, StackItem},
-    err_type,
+    formatter::Formatter,
+    err_mismatch,
     comparable_type_cast
 };
 
@@ -23,7 +24,7 @@ impl TimestampItem {
         let timestamp = match data {
             Data::String(val) => DateTime::parse_from_rfc3339(val.to_str())?.timestamp(),
             Data::Int(val) => val.to_integer()?,
-            _ => return err_type!("Data::String or Data::Int", data)
+            _ => return err_mismatch!("String or Int", data.format())
         };
         Ok(StackItem::Timestamp(Self::new(timestamp)?))
     }
@@ -32,7 +33,7 @@ impl TimestampItem {
         comparable_type_cast!(ty, Timestamp);
         let dt = match NaiveDateTime::from_timestamp_opt(self.0, 0) {
             Some(dt) => DateTime::<Utc>::from_utc(dt, Utc),
-            None => return err_type!(ty, self)
+            None => return err_mismatch!(ty.format(), self)
         };
         let string = dt.to_rfc3339_opts(SecondsFormat::Secs, true);
         Ok(Data::String(data::String::from_string(string)?))

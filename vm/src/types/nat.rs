@@ -10,7 +10,8 @@ use crate::{
     Result,
     Error,
     types::{IntItem, NatItem, StackItem, OptionItem, PairItem},
-    err_type,
+    formatter::Formatter,
+    err_mismatch,
     comparable_type_cast
 };
 
@@ -18,7 +19,7 @@ impl NatItem {
     pub fn from_data(data: Data) -> Result<StackItem> {
         match data {
             Data::Int(val) => Ok(StackItem::Nat(UBig::from_str_radix(val.to_str(), 10)?.into())),
-            _ => err_type!("Data::Int", data)
+            _ => err_mismatch!("Int", data.format())
         }
     }
 

@@ -11,7 +11,8 @@ use crate::{
     Result,
     types::{OptionItem, StackItem},
     typechecker::{check_types_equal},
-    err_type,
+    formatter::Formatter,
+    err_mismatch,
     type_cast
 };
 
@@ -31,7 +32,7 @@ impl OptionItem {
                 let inner = StackItem::from_data(*val.value, val_type)?;
                 Ok(Self::Some(Box::new(inner)).into())
             },
-            _ => err_type!("Data::None or Data::Some", data)
+            _ => err_mismatch!("None or Some", data.format())
         }
     }
 

@@ -9,7 +9,8 @@ use crate::{
     Error,
     Result,
     types::*,
-    err_type
+    formatter::Formatter,
+    err_mismatch
 };
 
 #[macro_export]
@@ -17,7 +18,7 @@ macro_rules! type_cast {
     ($typ: expr, $var: ident) => {
         match $typ {
             Type::$var(var) => var,
-            _ => return err_type!($typ, stringify!($var))
+            _ => return err_mismatch!($typ.format(), stringify!(Type::$var))
         }
     };
 }
@@ -27,7 +28,7 @@ macro_rules! comparable_type_cast {
     ($typ: expr, $var: ident) => {
         match $typ {
             Type::Comparable(ComparableType::$var(var)) => var,
-            _ => return err_type!($typ, stringify!($var))
+            _ => return err_mismatch!($typ.format(), stringify!($var))
         }
     };
 }
@@ -45,7 +46,7 @@ pub fn type_comparable(ty: &Type) -> bool {
 pub fn check_type_comparable(ty: &Type) -> Result<()> {
     match type_comparable(ty) {
         true => Ok(()),
-        false => err_type!("Comparable type", ty),
+        false => err_mismatch!("ComparableType", ty.format()),
     }
 }
 
@@ -69,7 +70,7 @@ pub fn comparable_types_equal(lhs: &ComparableType, rhs: &ComparableType) -> Res
         ComparableType::Key(_) => Ok(true),
         ComparableType::KeyHash(_) => Ok(true),
         ComparableType::Signature(_) => Ok(true),
-        _ => Err(Error::MichelsonTypeUnsupported { ty: lhs.clone().into() }.into())
+        _ => Err(Error::UnsupportedPrimitive { prim: lhs.format() })
     }
 }
 
@@ -110,14 +111,14 @@ pub fn types_equal(lhs: &Type, rhs: &Type) -> Result<bool> {
         (Type::Contract(lty), Type::Contract(rty)) => types_equal(&lty.r#type, &rty.r#type),
         (Type::Parameter(lty), Type::Parameter(rty)) => types_equal(&lty.r#type, &rty.r#type),
         (Type::Storage(lty), Type::Storage(rty)) => types_equal(&lty.r#type, &rty.r#type),
-        _ => Err(Error::MichelsonTypeUnsupported { ty: lhs.clone() }.into())
+        _ => Err(Error::UnsupportedPrimitive { prim: lhs.format() })
     }
 }
 
 pub fn check_types_equal(lhs: &Type, rhs: &Type) -> Result<()> {
     match types_equal(lhs, rhs) {
         Ok(true) => Ok(()),
-        Ok(false) => err_type!(lhs, rhs),
+        Ok(false) => err_mismatch!(lhs.format(), rhs.format()),
         Err(err) => Err(err)
     }
 }
@@ -139,7 +140,7 @@ impl StackItem {
                 ComparableType::KeyHash(_) => KeyHashItem::from_data(data),
                 ComparableType::Signature(_) => SignatureItem::from_data(data),
                 ComparableType::ChainId(_) => ChainIdItem::from_data(data),
-                _ => Err(Error::MichelsonTypeUnsupported { ty: ty.clone() }.into())
+                _ => Err(Error::UnsupportedPrimitive { prim: ty.format() })
             },
             Type::Option(option_ty) => OptionItem::from_data(data, &option_ty.r#type),
             Type::Or(or_ty) => OrItem::from_data(data, &or_ty.lhs, &or_ty.rhs),
@@ -155,7 +156,7 @@ impl StackItem {
             Type::Contract(contract_ty) => ContractItem::from_data(data, &contract_ty.r#type),
             Type::Parameter(param_ty) => StackItem::from_data(data, &param_ty.r#type),
             Type::Storage(storage_ty) => StackItem::from_data(data, &storage_ty.r#type),
-            _ => Err(Error::MichelsonTypeUnsupported { ty: ty.clone() }.into())
+            _ => Err(Error::UnsupportedPrimitive { prim: ty.format() })
         }
     }
 
@@ -180,10 +181,10 @@ impl StackItem {
             StackItem::List(item) => item.into_data(ty),
             StackItem::Set(item) => item.into_data(ty),
             StackItem::Map(item) => item.into_data(ty),
-            StackItem::BigMap(item) => item.into_data(ty),
+            StackItem::BigMap(item) => item.into_data(),
             StackItem::Lambda(item) => item.into_data(ty),
             StackItem::Contract(item) => item.into_data(ty),
-            _ => Err(Error::MichelsonTypeUnsupported { ty: ty.clone() }.into())
+            _ => Err(Error::UnsupportedPrimitive { prim: ty.format() })
         }
     }
 
@@ -218,7 +219,7 @@ impl StackItem {
     pub fn type_check(&self, ty: &Type) -> Result<()> {
         match types_equal(ty, &self.get_type()?)? {
             true => Ok(()),
-            false => err_type!(ty, self) 
+            false => err_mismatch!(ty.format(), self) 
         }
     }
 

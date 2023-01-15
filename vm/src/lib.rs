@@ -1,5 +1,6 @@
 pub mod typechecker;
 pub mod interpreter;
+pub mod formatter;
 pub mod stack;
 pub mod types;
 pub mod instructions;
@@ -18,6 +19,10 @@ macro_rules! trace_log {
         #[cfg(feature = "trace")]
         $crate::trace_log(format!("{} {}", $cmd, $arg));
     };
+    ($err: expr) => {
+        #[cfg(feature = "trace")]
+        $crate::trace_err($err);
+    };
 }
 
 #[macro_export]
@@ -29,10 +34,6 @@ macro_rules! trace_stack {
     ($cmd: expr, $item: expr) => {
         #[cfg(feature = "trace")]
         $crate::trace_stack($cmd, $item, None);
-    };
-    ($err: expr) => {
-        #[cfg(feature = "trace")]
-        $crate::trace_err($err);
     };
 }
 

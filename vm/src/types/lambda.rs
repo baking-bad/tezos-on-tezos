@@ -8,7 +8,8 @@ use tezos_michelson::michelson::{
 use crate::{
     Result,
     types::{LambdaItem, StackItem},
-    err_type,
+    formatter::Formatter,
+    err_mismatch,
     type_cast
 };
 
@@ -23,7 +24,7 @@ fn parse_instruction(data: Data) -> Result<Instruction> {
             }
             Ok(Instruction::Sequence(instructions.into()))
         },
-        _ => err_type!("Data::Instruction or Data::Sequence", data)
+        _ => err_mismatch!("Instruction or Sequence", data.format())
     }
 }
 

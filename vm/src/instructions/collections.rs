@@ -8,7 +8,7 @@ use crate::{
     types::{StackItem, ListItem, SetItem, MapItem, BigMapItem, BigMapDiff},
     stack::Stack,
     pop_cast,
-    err_type
+    err_mismatch
 };
 
 impl PureInterpreter for Nil {
@@ -58,7 +58,7 @@ impl ContextInterpreter for Mem {
             StackItem::Set(set) => set.contains(&key)?,
             StackItem::Map(map) => map.contains(&key)?,
             StackItem::BigMap(big_map) => big_map.contains(&key, context)?,
-            item => return err_type!("SetItem, MapItem, or BigMapItem", item)
+            item => return err_mismatch!("SetItem, MapItem, or BigMapItem", item)
         };
         stack.push(StackItem::Bool(res.into()))
     }
@@ -75,7 +75,7 @@ impl ContextInterpreter for Get {
             match stack.pop()? {
                 StackItem::Map(map) => map.get(&key)?.into(),
                 StackItem::BigMap(big_map) => big_map.get(&key, context)?.into(),
-                item => return err_type!("MapItem or BigMapItem", item)
+                item => return err_mismatch!("MapItem or BigMapItem", item)
             }
         };
         stack.push(res)
@@ -107,9 +107,9 @@ impl Interpreter for Update {
                         big_map.update(key, val.unwrap(), context)?;
                         big_map.into()
                     },
-                    item => return err_type!("MapItem or BigMapItem", item)
+                    item => return err_mismatch!("MapItem or BigMapItem", item)
                 },
-                item => return err_type!("BoolItem or OptionItem", item)
+                item => return err_mismatch!("BoolItem or OptionItem", item)
             }
         };
         stack.push(res)
@@ -132,7 +132,7 @@ impl Interpreter for GetAndUpdate {
                 stack.push(big_map.into())?;
                 stack.push(old.into())
             },
-            item => return err_type!("MapItem or BigMapItem", item)
+            item => return err_mismatch!("MapItem or BigMapItem", item)
         }
     }
 }

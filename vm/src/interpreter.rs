@@ -9,6 +9,7 @@ use crate::{
     Result,
     Error,
     stack::Stack,
+    formatter::Formatter,
     types::{StackItem, BigMapDiff},
     trace_enter,
     trace_exit
@@ -143,7 +144,7 @@ impl Interpreter for Instruction {
             Instruction::ImplicitAccount(instr) => instr.execute(stack),
             Instruction::EmptyBigMap(instr) => instr.execute(stack, scope, context),
             Instruction::TransferTokens(instr) => instr.execute(stack, scope, context),
-            _ => Err(Error::MichelsonInstructionUnsupported { instruction: self.clone() }.into())
+            _ => Err(Error::UnsupportedPrimitive { prim: self.format() })
         };
         trace_exit!(res.as_ref().err(), format!("Len {}", &stack.len()).as_str());
         res

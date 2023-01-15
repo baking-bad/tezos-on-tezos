@@ -6,7 +6,7 @@ use tezos_michelson::michelson::{
     types,
     annotations::{Kind, Annotation}
 };
-use tezos_core::types::encoded;
+use tezos_core::types::{encoded, encoded::Encoded};
 
 use crate::interpreter::LazyStorage;
 use crate::{
@@ -16,9 +16,9 @@ use crate::{
     types::{AddressItem, StackItem, OptionItem, ContractItem, InternalContent, OperationItem},
     stack::Stack,
     typechecker::check_types_equal,
-    trace_stack,
+    trace_log,
     pop_cast,
-    err_type
+    err_mismatch
 };
 
 impl PureInterpreter for Address {
@@ -79,7 +79,7 @@ fn get_contract_type(
 
             match context.get_contract_type(&kt)? {
                 Some(expr) => search_entrypoint(expr.try_into()?, entrypoint, 0),
-                None => Err(Error::ContractNotFound)
+                None => Err(Error::ContractNotFound { address: kt.clone().into_string() })
             }
         }
     }
@@ -101,7 +101,7 @@ impl ContextInterpreter for Contract {
                 OptionItem::some(item.into())
             },
             Err(_err) => {
-                trace_stack!(&_err);
+                trace_log!(&_err);
                 OptionItem::None(types::contract(self.r#type.clone()))
             }
         };

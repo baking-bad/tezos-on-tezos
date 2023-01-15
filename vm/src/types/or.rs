@@ -10,7 +10,8 @@ use crate::{
     Result,
     types::{OrItem, StackItem, OrVariant},
     typechecker::{check_types_equal},
-    err_type,
+    formatter::Formatter,
+    err_mismatch,
     type_cast
 };
 
@@ -35,7 +36,7 @@ impl OrItem {
                 let inner = StackItem::from_data(*right.value, right_type)?;
                 Ok(StackItem::Or(Self::right(inner, left_type.clone())))
             },
-            _ => err_type!("Data::Left or Data::Right", data)
+            _ => err_mismatch!("Left or Right", data.format())
         }
     }
     

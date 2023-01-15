@@ -38,7 +38,13 @@ impl E2E {
             ..default_scope()
         };
         let mut context = MockContext::default();
-        let ret = self.script.call(&scope, &mut context)?;
+        let ret = match self.script.call(&scope, &mut context) {
+            Ok(res) => res,
+            Err(err) => {
+                println!("{}", err);
+                return Err(err);
+            }
+        };
 
         match self.expected {
             Expectation::Storage(ref expected) => {

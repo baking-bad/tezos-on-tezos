@@ -12,7 +12,7 @@ macro_rules! pop_cast {
     ($stack: expr, $var: ident) => {
         match $stack.pop()? {
             StackItem::$var(item) => item,
-            item => return err_type!(stringify!($var), item)
+            item => return err_mismatch!(stringify!(StackItem::$var), item)
         }
     };
 }

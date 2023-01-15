@@ -10,7 +10,8 @@ use crate::{
     Result,
     Error,
     types::{PairItem, StackItem},
-    err_type,
+    formatter::Formatter,
+    err_mismatch,
     type_cast
 };
 
@@ -35,7 +36,7 @@ impl PairItem {
                 let second = StackItem::from_data(pair.values.remove(0), second_type)?;
                 Ok(StackItem::Pair(Self::new(first, second)))
             },
-            _ => err_type!("Data::Pair", data)
+            _ => err_mismatch!("Pair", data.format())
         }
     }
     
@@ -53,12 +54,12 @@ impl PairItem {
             n if n > 2 => {
                 let mut items = match self.0.1 {
                     StackItem::Pair(inner_pair) => inner_pair.into_items(arity - 1)?,
-                    item => return err_type!("PairItem (inner)", item)
+                    item => return err_mismatch!("PairItem (inner)", item)
                 };
                 items.insert(0, self.0.0);
                 Ok(items)
             },
-            n => Err(Error::InvalidArity { expected: 2, found: n }.into())
+            n => Err(Error::InvalidArity { arity: n })
         }
     }
 
@@ -72,7 +73,7 @@ impl PairItem {
             1 => Ok(self.0.1.clone()),
             _ => match &self.0.1 {
                 StackItem::Pair(inner_pair) => inner_pair.get(idx - 1),
-                item => err_type!("PairItem (inner)", item)
+                item => err_mismatch!("PairItem (inner)", item)
             }
         }
     }
@@ -83,7 +84,7 @@ impl PairItem {
             1 => Ok(Self::new(self.0.0, item)),
             _ => match self.0.1 {
                 StackItem::Pair(inner_pair) => inner_pair.update(idx - 1, item),
-                item => err_type!("PairItem (inner)", item)
+                item => err_mismatch!("PairItem (inner)", item)
             }
         }
     }

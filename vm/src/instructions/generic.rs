@@ -11,10 +11,11 @@ use crate::{
     interpreter::{PureInterpreter},
     types::{StackItem, OptionItem, IntItem},
     typechecker::{check_type_comparable, check_types_equal},
+    formatter::Formatter,
     stack::Stack,
     pop_cast,
-    err_type,
-    trace_stack
+    err_mismatch,
+    trace_log
 };
 
 impl PureInterpreter for Compare {
@@ -59,7 +60,7 @@ impl PureInterpreter for Size {
             StackItem::List(item) => item.len(),
             StackItem::Set(item) => item.len(),
             StackItem::Map(item) => item.len(),
-            item => return err_type!("StringItem, BytesItem, ListItem, SetItem, or MapItem", item)
+            item => return err_mismatch!("StringItem, BytesItem, ListItem, SetItem, or MapItem", item)
         };
         stack.push(StackItem::Nat(UBig::from(size).into()))
     }
@@ -76,7 +77,7 @@ impl PureInterpreter for Slice {
         let res = match stack.pop()? {
             StackItem::String(item) => item.slice(offset, offset + length),
             StackItem::Bytes(item) => item.slice(offset, offset + length),
-            item => return err_type!("StringItem or BytesItem", item)
+            item => return err_mismatch!("StringItem or BytesItem", item)
         };
         stack.push(res.into())
     }
@@ -93,7 +94,7 @@ impl PureInterpreter for Concat {
                         for item in items {
                             match item {
                                 StackItem::String(item) => output.push(item.unwrap()),
-                                _ => return err_type!("StringItem", item)
+                                _ => return err_mismatch!("StringItem", item)
                             }
                         }
                         StackItem::String(output.concat().into())
@@ -103,12 +104,12 @@ impl PureInterpreter for Concat {
                         for item in items {
                             match item {
                                 StackItem::Bytes(item) => output.append(item.unwrap().as_mut()),
-                                _ => return err_type!("BytesItem", item)
+                                _ => return err_mismatch!("BytesItem", item)
                             }
                         }
                         StackItem::Bytes(output.into())
                     },
-                    ty => return err_type!("StringItem or BytesItem", ty)
+                    ty => return err_mismatch!("list(string || bytes)", ty.format())
                 }
             },
             StackItem::String(a) => {
@@ -119,7 +120,7 @@ impl PureInterpreter for Concat {
                 let b = pop_cast!(stack, Bytes);
                 (a + b).into()
             },
-            item => return err_type!("ListItem<StringItem or BytesItem>, SringItem, or BytesItem", item)
+            item => return err_mismatch!("ListItem<StringItem or BytesItem>, SringItem, or BytesItem", item)
         };
         stack.push(res)
     }
@@ -146,7 +147,7 @@ impl PureInterpreter for Unpack {
                 OptionItem::some(item)
             },
             Err(_err) => {
-                trace_stack!(&_err.into());
+                trace_log!(&_err.into());
                 OptionItem::none(&self.r#type)
             }
         };

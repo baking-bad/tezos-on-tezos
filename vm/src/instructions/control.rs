@@ -9,7 +9,7 @@ use crate::{
     types::{StackItem, ListItem, MapItem},
     stack::Stack,
     pop_cast,
-    err_type,
+    err_mismatch,
     trace_enter,
     trace_exit
 };
@@ -177,7 +177,7 @@ impl Interpreter for Map {
                 };
                 MapItem::new(output, key_type, val_type).into()
             },
-            item => return err_type!("ListItem or MapItem", item)
+            item => return err_mismatch!("ListItem or MapItem", item)
         };
         stack.push(res)
     }
@@ -189,7 +189,7 @@ impl Interpreter for Iter {
             StackItem::Set(set) => set.into_elements().0,
             StackItem::List(list) => list.into_elements().0,
             StackItem::Map(map) => map.into_pairs().0,
-            item => return err_type!("SetItem, ListItem, or MapItem", item)
+            item => return err_mismatch!("SetItem, ListItem, or MapItem", item)
         };
         for item in input {
             stack.push(item)?;

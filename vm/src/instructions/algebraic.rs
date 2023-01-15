@@ -10,7 +10,7 @@ use crate::{
     types::{StackItem, PairItem, OptionItem, OrItem},
     stack::Stack,
     pop_cast,
-    err_type
+    err_mismatch
 };
 
 impl PureInterpreter for Unit {
@@ -41,7 +41,7 @@ fn parse_arity(n: &Option<Nat>) -> Result<usize> {
         None => 2
     };
     if n < 2 {
-        return Err(Error::InvalidArity { expected: 2, found: n }.into())
+        return Err(Error::InvalidArity { arity: n })
     }
     Ok(n)
 }

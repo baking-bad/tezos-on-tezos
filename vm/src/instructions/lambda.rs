@@ -5,11 +5,12 @@ use tezos_michelson::michelson::types::Type;
 
 use crate::{
     Result,
+    formatter::Formatter,
     interpreter::{Interpreter, OperationScope, PureInterpreter, InterpreterContext},
     types::{LambdaItem, StackItem},
     stack::Stack,
     pop_cast,
-    err_type,
+    err_mismatch,
 };
 
 impl PureInterpreter for Lambda {
@@ -50,7 +51,7 @@ impl PureInterpreter for Apply {
                 assert_eq!(2, pair_ty.types.len());
                 (pair_ty.types[0].clone(), pair_ty.types[1].clone())
             },
-            ty => return err_type!("PairItem", ty)
+            ty => return err_mismatch!("pair", ty.format())
         };
 
         let const_arg = const_arg.into_data(&const_ty)?;

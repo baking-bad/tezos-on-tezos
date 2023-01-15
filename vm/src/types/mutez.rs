@@ -13,7 +13,8 @@ use crate::{
     Result,
     Error,
     types::{NatItem, MutezItem, StackItem, OptionItem, PairItem},
-    err_type,
+    formatter::Formatter,
+    err_mismatch,
     comparable_type_cast
 };
 
@@ -33,7 +34,7 @@ impl MutezItem {
                     Err(_) => Err(Error::MutezOverflow.into())
                 }                
             },
-            _ => err_type!("Data::Int", data)
+            _ => err_mismatch!("Int", data.format())
         }
     }
 

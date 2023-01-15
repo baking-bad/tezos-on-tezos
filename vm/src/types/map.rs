@@ -10,12 +10,15 @@ use crate::{
     Result,
     types::{MapItem, StackItem, PairItem, OptionItem},
     typechecker::check_types_equal,
-    err_type,
+    formatter::Formatter,
+    err_mismatch,
     type_cast
 };
 
 impl MapItem {
     pub fn new(items: Vec<(StackItem, StackItem)>, key_type: Type, val_type: Type) -> Self {
+        let mut items = items;
+        items.sort_unstable_by(|(k1, _), (k2, _)| k1.cmp(&k2));
         Self { outer_value: items, inner_type: (key_type, val_type) }
     }
 
@@ -28,7 +31,7 @@ impl MapItem {
                 let val = StackItem::from_data(*elt.value, &val_type)?;
                 items.push((key, val));
             } else {
-                return err_type!((key_type, val_type), element)
+                return err_mismatch!(format!("Elt {} => {}", key_type.format(), val_type.format()), element.format());
             }
         }
         return Ok(Self::new(items, key_type, val_type))
@@ -40,7 +43,7 @@ impl MapItem {
                 let map = Self::from_sequence(sequence, key_type.clone(), val_type.clone())?;
                 Ok(StackItem::Map(map))
             },
-            _ => err_type!("Data::Sequence", data)
+            _ => err_mismatch!("Sequence", data.format())
         }
     }
 

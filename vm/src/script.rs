@@ -15,7 +15,7 @@ use crate::{
     stack::Stack,
     types::{StackItem, PairItem, InternalContent, BigMapDiff},
     interpreter::{Interpreter, InterpreterContext, OperationScope, LazyStorage},
-    err_type,
+    err_mismatch,
     trace_enter,
     trace_exit
 };
@@ -100,9 +100,9 @@ impl MichelsonScript {
         let (op_list, mut storage) = match stack.pop()? {
             StackItem::Pair(pair) => match pair.unpair() {
                 (StackItem::List(op_list), storage) => (op_list, storage),
-                items => return err_type!("(ListItem, StackItem)", items)
+                (f, s) => return err_mismatch!("(ListItem * StackItem)", format!("({} * {})", f, s))
             },
-            item => return err_type!("PairItem", item)
+            item => return err_mismatch!("PairItem", item)
         };
 
         let mut big_map_diff: Vec<BigMapDiff> = Vec::new();
@@ -117,7 +117,7 @@ impl MichelsonScript {
                     op.aggregate_diff(&mut big_map_diff);
                     operations.push(op.into_content())
                 },
-                item => return err_type!("OperationItem", item)
+                item => return err_mismatch!("OperationItem", item)
             }                        
         }                    
         

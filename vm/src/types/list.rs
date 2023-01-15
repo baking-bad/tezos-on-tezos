@@ -11,7 +11,8 @@ use crate::{
     Error,
     types::{ListItem, StackItem},
     typechecker::check_types_equal,
-    err_type,
+    formatter::Formatter,
+    err_mismatch,
     type_cast
 };
 
@@ -48,7 +49,7 @@ impl ListItem {
                 let items = seq_into_item_vec(seq, &val_type)?;
                 Ok(StackItem::List(Self::new(items, val_type.to_owned())))
             },
-            _ => err_type!("Data::Sequence", data)
+            _ => err_mismatch!("Sequence", data.format())
         }
     }
 
