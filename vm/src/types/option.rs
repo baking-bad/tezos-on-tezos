@@ -66,7 +66,7 @@ impl OptionItem {
 
     pub fn get_type(&self) -> Result<Type> {
         match self {
-            Self::None(ty) => Ok(ty.clone()),
+            Self::None(ty) => Ok(types::option(ty.clone())),
             Self::Some(inner) => Ok(types::option(inner.get_type()?))
         }        
     }
@@ -76,7 +76,7 @@ impl Display for OptionItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Some(val) => f.write_fmt(format_args!("{}?", &val)),
-            Self::None(_) => f.write_str("None")
+            Self::None(_) => f.write_fmt(format_args!("None"))
         }
     }
 }

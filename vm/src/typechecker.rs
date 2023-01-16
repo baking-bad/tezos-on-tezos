@@ -19,7 +19,7 @@ macro_rules! type_cast {
     ($typ: expr, $var: ident) => {
         match $typ {
             Type::$var(var) => var,
-            _ => return err_mismatch!($typ.format(), stringify!(Type::$var))
+            _ => return err_mismatch!($typ.format(), stringify!($var))
         }
     };
 }
@@ -225,9 +225,10 @@ impl StackItem {
     }
 
     pub fn type_check(&self, ty: &Type) -> Result<()> {
-        match types_equal(ty, &self.get_type()?)? {
+        let item_ty = self.get_type()?;
+        match types_equal(ty, &item_ty)? {
             true => Ok(()),
-            false => err_mismatch!(ty.format(), self) 
+            false => err_mismatch!(ty.format(), item_ty.format()) 
         }
     }
 

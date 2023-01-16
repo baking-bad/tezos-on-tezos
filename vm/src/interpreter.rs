@@ -73,7 +73,7 @@ impl Interpreter for Instruction {
             Instruction::Dig(instr) => instr.execute(stack),
             Instruction::Dug(instr) => instr.execute(stack),
             Instruction::Rename(_) => Ok(()),
-            Instruction::Cast(_) => Ok(()),
+            Instruction::Cast(instr) => instr.execute(stack),
             Instruction::FailWith(instr) => instr.execute(stack),
             Instruction::Dip(instr) => instr.execute(stack, scope, context),
             Instruction::If(instr) => return instr.execute(stack, scope, context),

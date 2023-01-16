@@ -1,5 +1,5 @@
 use tezos_michelson::michelson::data::instructions::{
-    Dip, Sequence, FailWith, If, IfCons, IfLeft, IfNone, Loop, LoopLeft, Map, Iter
+    Dip, Sequence, FailWith, If, IfCons, IfLeft, IfNone, Loop, LoopLeft, Map, Iter, Cast
 };
 
 use crate::{
@@ -161,8 +161,14 @@ impl Interpreter for Map {
 
         let res = match src {
             StackItem::List(list) => {
-                let (input, val_type) = list.into_elements();
-                let output = if input.is_empty() { vec![] } else { process(input)? };
+                let (input, mut val_type) = list.into_elements();
+                let output = if input.is_empty() {
+                    vec![]
+                } else {
+                    let values = process(input)?;
+                    val_type = values.first().unwrap().get_type()?;
+                    values
+                };
                 ListItem::new(output, val_type).into()
             },
             StackItem::Map(map) => {
@@ -199,5 +205,13 @@ impl Interpreter for Iter {
             res?;
         }
         Ok(())
+    }
+}
+
+// Used in some of the E2E tests
+impl PureInterpreter for Cast {
+    fn execute(&self, stack: &mut Stack) -> Result<()> {
+        let item = stack.dup_at(0)?;
+        item.type_check(&self.r#type)
     }
 }

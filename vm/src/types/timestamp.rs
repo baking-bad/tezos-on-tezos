@@ -33,7 +33,7 @@ impl TimestampItem {
         comparable_type_cast!(ty, Timestamp);
         let dt = match NaiveDateTime::from_timestamp_opt(self.0, 0) {
             Some(dt) => DateTime::<Utc>::from_utc(dt, Utc),
-            None => return err_mismatch!(ty.format(), self)
+            None => return Ok(Data::Int(self.0.into()))
         };
         let string = dt.to_rfc3339_opts(SecondsFormat::Secs, true);
         Ok(Data::String(data::String::from_string(string)?))
@@ -45,7 +45,7 @@ impl Display for TimestampItem {
         let str = match NaiveDateTime::from_timestamp_opt(self.0, 0) {
             Some(dt) => DateTime::<Utc>::from_utc(dt, Utc)
                 .to_rfc3339_opts(SecondsFormat::Secs, true),
-            None => format!("{}+0", self.0)
+            None => format!("{}Z", self.0)
         };
         f.write_str(str.as_str())
     }

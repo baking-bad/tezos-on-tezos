@@ -39,7 +39,7 @@ pub struct ScriptReturn {
 // In order to wrap parameter with "Left"s and "Right"s one need to go in reverse order
 fn get_entrypoint_mask(entrypoint: &str, ty: &Type, mask: i32) -> Result<i32> {
     if let Some(annot) = ty.metadata().field_name() {
-        if annot.value() == entrypoint {
+        if annot.value_without_prefix() == entrypoint {
             return Ok(mask)
         }
     }
@@ -61,7 +61,7 @@ fn normalize_parameter(parameter: Micheline, entrypoint: &str, param_ty: &Type) 
     let mut parameter = parameter.normalized();
     let mut mask = get_entrypoint_mask(entrypoint, param_ty, 1)?;
     assert!(mask > 0);
-    
+   
     while mask > 1  {
         let prim: String = if mask & 1 == 0 { "Left".into() } else { "Right".into() };
         parameter = PrimitiveApplication::new(prim, Some(vec![parameter]), None).into();
@@ -72,6 +72,10 @@ fn normalize_parameter(parameter: Micheline, entrypoint: &str, param_ty: &Type) 
 }
 
 impl MichelsonScript {
+    pub fn get_type(&self) -> Type {
+        self.parameter_type.clone()
+    }
+
     pub fn call_begin(&self, stack: &mut Stack, scope: &OperationScope) -> Result<()> {
         trace_enter!();
         if stack.len() != 0 {

@@ -37,13 +37,28 @@ impl MapItem {
         return Ok(Self::new(items, key_type, val_type))
     }
 
+    pub fn from_elt_map(map: data::Map, key_type: Type, val_type: Type) -> Result<Self> {
+        let elements = map.into_values();
+        let mut items: Vec<(StackItem, StackItem)> = Vec::with_capacity(elements.len());
+        for elt in elements {
+            let key = StackItem::from_data(*elt.key, &key_type)?;
+            let val = StackItem::from_data(*elt.value, &val_type)?;
+            items.push((key, val));
+        }
+        return Ok(Self::new(items, key_type, val_type))
+    }
+
     pub fn from_data(data: Data, key_type: &Type, val_type: &Type) -> Result<StackItem> {
         match data {
             Data::Sequence(sequence) => {
-                let map = Self::from_sequence(sequence, key_type.clone(), val_type.clone())?;
-                Ok(StackItem::Map(map))
+                let item = Self::from_sequence(sequence, key_type.clone(), val_type.clone())?;
+                Ok(item.into())
             },
-            _ => err_mismatch!("Sequence", data.format())
+            Data::Map(elt_map) => {
+                let item = Self::from_elt_map(elt_map, key_type.clone(), val_type.clone())?;
+                Ok(item.into())
+            }
+            _ => err_mismatch!("Sequence or Map", data.format())
         }
     }
 
@@ -131,13 +146,16 @@ impl PartialEq for MapItem {
 
 impl Display for MapItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("{")?;
+        f.write_str("{ ")?;
         for (i, (key, val)) in self.outer_value.iter().enumerate() {
             if i != 0 {
                 f.write_str(", ")?;
             }
             f.write_fmt(format_args!("{} => {}", key, val))?;
         }
-        f.write_str("}")
+        if self.len() == 0 {
+            f.write_fmt(format_args!(" /* {} => {} */ ", self.inner_type.0.format(), self.inner_type.1.format()))?;
+        }
+        f.write_str(" }")
     }
 }

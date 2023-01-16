@@ -17,10 +17,12 @@ use crate::{
 
 impl NatItem {
     pub fn from_data(data: Data) -> Result<StackItem> {
-        match data {
-            Data::Int(val) => Ok(StackItem::Nat(UBig::from_str_radix(val.to_str(), 10)?.into())),
-            _ => err_mismatch!("Int", data.format())
-        }
+        let val = match data {
+            Data::Int(val) => UBig::from_str_radix(val.to_str(), 10)?,
+            Data::Nat(val) => UBig::from_str_radix(val.to_str(), 10)?,
+            _ => return err_mismatch!("Int or Nat", data.format())
+        };
+        Ok(StackItem::Nat(val.into()))
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {

@@ -1,18 +1,17 @@
 use tezos_michelson::michelson::data::instructions::{
-    Address, Contract, ImplicitAccount, TransferTokens
+    Address, Contract, ImplicitAccount, TransferTokens, Self_
 };
 use tezos_michelson::michelson::{
     types::Type,
     types,
-    annotations::{Kind, Annotation}
+    annotations::{Annotation}
 };
 use tezos_core::types::{encoded, encoded::Encoded};
 
-use crate::interpreter::LazyStorage;
 use crate::{
     Result,
     Error,
-    interpreter::{PureInterpreter, InterpreterContext, ContextInterpreter, Interpreter, OperationScope},
+    interpreter::{LazyStorage, PureInterpreter, InterpreterContext, ScopedInterpreter, ContextInterpreter, Interpreter, OperationScope},
     types::{AddressItem, StackItem, OptionItem, ContractItem, InternalContent, OperationItem},
     stack::Stack,
     typechecker::check_types_equal,
@@ -38,18 +37,20 @@ impl PureInterpreter for ImplicitAccount {
     }
 }
 
-fn search_entrypoint(ty: Type, entrypoint: &str, depth: usize) -> Result<Type> {
+fn search_entrypoint(ty: Type, entrypoint: Option<&str>, depth: usize) -> Result<Type> {
+    let entrypoint = entrypoint.unwrap_or("default");
     if let Some(annot) = ty.metadata().field_name() {
-       if annot.value() == entrypoint {
+        if annot.value_without_prefix() == entrypoint {
             return Ok(ty)
         }
     }
     if let Type::Or(or) = ty.clone() {
-        for inner_ty in [or.lhs, or.rhs] {
-            if let Ok(ty) = search_entrypoint(*inner_ty, entrypoint, depth + 1) {
-                return Ok(ty)
-            }
-        }        
+        if let Ok(ty) = search_entrypoint(*or.lhs, Some(entrypoint), depth + 1) {
+            return Ok(ty)
+        }
+        if let Ok(ty) = search_entrypoint(*or.rhs, Some(entrypoint), depth + 1) {
+            return Ok(ty)
+        }
     }
     if depth == 0 && entrypoint == "default" {
         return Ok(ty)
@@ -57,28 +58,42 @@ fn search_entrypoint(ty: Type, entrypoint: &str, depth: usize) -> Result<Type> {
     Err(Error::EntrypointNotFound { name: entrypoint.into() })
 }
 
-fn get_contract_type(
-    address: &encoded::Address,
-    annots: Vec<&Annotation>,
-    context: &mut impl InterpreterContext
-) -> Result<Type> {
-    match address {
-        encoded::Address::Implicit(_) => Ok(types::unit()),
-        encoded::Address::Originated(kt) => {
-            let field_annot = annots
-                .into_iter()
-                .filter(|a| a.kind() == Kind::Field)
-                .last();
+fn make_contract(address: &str, entrypoint: Option<&str>) -> Result<encoded::Address> {
+    let contract_hash: encoded::ContractHash = address.try_into()?;
+    let entrypoint = match entrypoint {
+        Some("default") => None,
+        Some(val) => Some(val),
+        None => None,
+    };
+    let contract = encoded::ContractAddress::from_components(&contract_hash, entrypoint);
+    Ok(contract.into())
+}
 
-            let entrypoint = match (field_annot, kt.entrypoint()) {
-                (None, None) => "default",
-                (Some(annot), None) => annot.value(),
-                (None, Some(entrypoint)) => entrypoint,
+fn get_contract(
+    address: encoded::Address,
+    field_name: &Option<Annotation>,
+    expected_type: &Type,
+    context: &mut impl InterpreterContext,
+) -> Result<encoded::Address> {
+    match address {
+        encoded::Address::Implicit(_) => {
+            check_types_equal(expected_type, &types::unit())?;
+            Ok(address)
+        },
+        encoded::Address::Originated(kt) => {
+            let entrypoint = match (field_name, kt.entrypoint()) {
+                (None, None) => None,
+                (Some(annot), None) => Some(annot.value_without_prefix()),
+                (None, Some(entrypoint)) => Some(entrypoint),
                 (Some(_), Some(_)) => return Err(Error::ConflictingEntrypoints { address: kt.clone().into_string() })
             };
 
             match context.get_contract_type(&kt)? {
-                Some(expr) => search_entrypoint(expr.try_into()?, entrypoint, 0),
+                Some(expr) => {
+                    let ty = search_entrypoint(expr.try_into()?, entrypoint, 0)?;
+                    check_types_equal(expected_type, &ty)?;
+                    make_contract(kt.contract_hash(), entrypoint)
+                },
                 None => Err(Error::ContractNotFound { address: kt.clone().into_string() })
             }
         }
@@ -88,16 +103,15 @@ fn get_contract_type(
 impl ContextInterpreter for Contract {
     fn execute(&self, stack: &mut Stack, context: &mut impl InterpreterContext) -> Result<()> {
         let address = pop_cast!(stack, Address);
-        let address = address.unwrap();
-
-        let res = match get_contract_type(&address, self.annotations(), context) {
-            Ok(ty) => check_types_equal(&ty, &self.r#type),
-            Err(err) => Err(err)
-        };
-
-        let item = match res {
-            Ok(()) => {
-                let item = ContractItem::new(address, self.r#type.clone());
+        
+        let item = match get_contract(
+            address.unwrap(), 
+            self.metadata().field_name(), 
+            &self.r#type, 
+            context
+        ) {
+            Ok(contract) => {
+                let item = ContractItem::new(contract, self.r#type.clone());
                 OptionItem::some(item.into())
             },
             Err(_err) => {
@@ -107,6 +121,19 @@ impl ContextInterpreter for Contract {
         };
 
         stack.push(item.into())
+    }
+}
+
+impl ScopedInterpreter for Self_ {
+    fn execute(&self, stack: &mut Stack, scope: &OperationScope) -> Result<()> {
+        let contract_hash = scope.self_address.contract_hash();
+        let entrypoint = self.metadata().field_name().as_ref().map(|annot| annot.value_without_prefix());
+        let contract_type: Type = scope.self_type.clone().try_into()?;
+        let self_ = ContractItem::new(
+            make_contract(contract_hash, entrypoint)?,
+            search_entrypoint(contract_type, entrypoint, 0)?
+        );
+        stack.push(self_.into())
     }
 }
 

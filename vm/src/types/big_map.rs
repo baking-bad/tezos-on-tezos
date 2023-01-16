@@ -77,6 +77,10 @@ impl BigMapItem {
                 let map = MapItem::from_sequence(sequence, key_type.clone(), val_type.clone())?;
                 Ok(StackItem::BigMap(Self::Map(map)))
             },
+            Data::Map(elt_map) => {
+                let map = MapItem::from_elt_map(elt_map, key_type.clone(), val_type.clone())?;
+                Ok(StackItem::BigMap(Self::Map(map)))
+            },
             _ => err_mismatch!("Data::Int or Data::Sequence", data.format())
         }
     }

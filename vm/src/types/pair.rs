@@ -75,10 +75,11 @@ impl PairItem {
 
     pub fn get(&self, idx: usize) -> Result<StackItem> {
         match idx {
-            0 => Ok(self.0.0.clone()),
-            1 => Ok(self.0.1.clone()),
+            0 => Ok(self.clone().into()),
+            1 => Ok(self.0.0.clone()),
+            2 => Ok(self.0.1.clone()),
             _ => match &self.0.1 {
-                StackItem::Pair(inner_pair) => inner_pair.get(idx - 1),
+                StackItem::Pair(inner_pair) => inner_pair.get(idx - 2),
                 item => err_mismatch!("PairItem (inner)", item)
             }
         }

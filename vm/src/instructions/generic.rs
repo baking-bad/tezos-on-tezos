@@ -146,6 +146,7 @@ impl PureInterpreter for Unpack {
                 OptionItem::some(item)
             },
             Err(_err) => {
+                // _err.print();
                 trace_log!(&_err.into());
                 OptionItem::none(&self.r#type)
             }

@@ -103,6 +103,9 @@ impl Display for ListItem {
             }
             item.fmt(f)?;
         }
+        if self.len() == 0 {
+            f.write_fmt(format_args!(" /* {} */ ", self.inner_type.format()))?;
+        }
         f.write_str("]")
     }
 }

@@ -35,6 +35,7 @@ impl E2E {
             balance: "4000000000000".try_into()?,
             level: 1,
             chain_id: "NetXdQprcVkpaWU".try_into()?,
+            self_type: self.script.get_type().into(),
             ..default_scope()
         };
         let mut context = MockContext::default();

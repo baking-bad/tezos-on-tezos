@@ -53,7 +53,7 @@ impl PartialEq for InternalError {
 #[derive(Debug, Display, Error, PartialEq)]
 pub enum Error {
     Internal(InternalError),
-    #[display(fmt = "ScriptFailed with: {:?}", with)]
+    #[display(fmt = "ScriptFailed")]
     ScriptFailed {
         with: Micheline
     },
@@ -145,6 +145,13 @@ impl Error {
     pub fn print(&self) {
         match self {
             Self::Internal(internal) => internal.print(),
+            Self::ScriptFailed { with } => {
+                let msg = match serde_json_wasm::to_string(with) {
+                    Ok(res) => res,
+                    Err(err) => err.to_string()
+                };
+                println!("Script failed\nWith: {}", msg);
+            },
             err => println!("{:#?}", err),
         }
     }

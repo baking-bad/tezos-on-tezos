@@ -1,7 +1,7 @@
 use tezos_michelson::michelson::{
     types::{Type, ComparableType},
     data::{Data, Instruction},
-    annotations::{Kind, Annotation}
+    annotations::{Annotation}
 };
 use tezos_core::types::number::Nat;
 
@@ -17,13 +17,9 @@ fn format_instr_n(opcode: &str, arg: Option<&Nat>) -> String {
     }
 }
 
-fn format_instr_annot(opcode: &str, annots: Vec<&Annotation>) -> String {
-    let field_annot = annots
-        .into_iter()
-        .filter(|a| a.kind() == Kind::Field)
-        .last();
-    match field_annot {
-        Some(annot) => format!("{} %{}", opcode, annot.value()),
+fn format_instr_annot(opcode: &str, field_name: &Option<Annotation>) -> String {
+    match field_name {
+        Some(annot) => format!("{} {}", opcode, annot.value()),
         None => opcode.to_string()
     }
 }
@@ -105,8 +101,8 @@ impl Formatter for Instruction {
             Instruction::SelfAddress(_) => "SelfAddress".into(),
             Instruction::Balance(_) => "Balance".into(),
             Instruction::Address(_) => "Address".into(),
-            Instruction::Contract(instr) => format_instr_annot("Contract", instr.annotations()),
-            Instruction::Self_(instr) => format_instr_annot("Self_", instr.annotations()),
+            Instruction::Contract(instr) => format_instr_annot("Contract", instr.metadata().field_name()),
+            Instruction::Self_(instr) => format_instr_annot("Self", instr.metadata().field_name()),
             Instruction::ImplicitAccount(_) => "ImplicitAccount".into(),
             Instruction::TransferTokens(_) => "TransferTokens".into(),
             _ => format!("{:?}", self)
@@ -184,10 +180,9 @@ impl Formatter for Data {
             Data::Elt(val) => format!("Elt {} {}", val.key.format(), val.value.format()),
             Data::Map(val) => {
                 let args: Vec<String> = val.values().iter().map(|x| Data::Elt(x.clone()).format()).collect();
-                format!("{{{}}}", args.join(" "))
+                format!("{{ {} }}", args.join("; "))
             },
             Data::Instruction(val) => val.format(), // TODO: uppercase?
         }        
     }
 }
-
