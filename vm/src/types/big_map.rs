@@ -13,6 +13,7 @@ use tezos_core::{
     internal::crypto::blake2b
 };
 
+use crate::typechecker::check_pair_len;
 use crate::{
     Result,
     Error,
@@ -264,7 +265,7 @@ impl LazyStorage for PairItem {
 
     fn try_aggregate(&mut self, output: &mut Vec<BigMapDiff>, ty: &Type) -> Result<()> {
         let ty = type_cast!(ty, Pair);
-        assert_eq!(2, ty.types.len());
+        check_pair_len(ty.types.len())?;
         self.0.0.try_aggregate(output, &ty.types[0])?;
         self.0.1.try_aggregate(output, &ty.types[1])
     }

@@ -8,11 +8,10 @@ use tezos_michelson::michelson::{
 
 use crate::{
     Result,
-    Error,
     types::{PairItem, StackItem},
     formatter::Formatter,
     err_mismatch,
-    type_cast
+    type_cast, typechecker::check_pair_len
 };
 
 impl PairItem {
@@ -20,18 +19,22 @@ impl PairItem {
         Self(Box::new((first, second)))
     }
 
-    pub fn from_items(mut items: Vec<StackItem>) -> Self {
+    pub fn from_items(mut items: Vec<StackItem>) -> Result<Self> {
         match items.len() {
-            2 => Self::new(items.remove(0), items.remove(0)),
-            n if n > 2 => Self::new(items.remove(0), Self::from_items(items).into()),
-            _ => unreachable!("invalid number of args")
+            2 => Ok(Self::new(items.remove(0), items.remove(0))),
+            n if n > 2 => {
+                let leaf = items.remove(0);
+                let node = Self::from_items(items)?;
+                Ok(Self::new(leaf, node.into()))
+            },
+            i => err_mismatch!(">=2 args", i)
         }
     }
 
     pub fn from_data(data: Data, first_type: &Type, second_type: &Type) -> Result<StackItem> {
         match data {
             Data::Pair(mut pair) => {
-                assert_eq!(2, pair.values.len());
+                check_pair_len(pair.values.len())?;
                 let first = StackItem::from_data(pair.values.remove(0), first_type)?;
                 let second = StackItem::from_data(pair.values.remove(0), second_type)?;
                 Ok(StackItem::Pair(Self::new(first, second)))
@@ -42,7 +45,10 @@ impl PairItem {
     
     pub fn into_data(self, ty: &Type) -> Result<Data> {
         let ty = type_cast!(ty, Pair);
-        assert_eq!(2, ty.types.len());
+        match ty.types.len() {
+            2 => {},
+            i => return err_mismatch!(">=2 args", i)
+        }
         let first = self.0.0.into_data(&ty.types[0])?;
         let second = self.0.1.into_data(&ty.types[1])?;
         Ok(Data::Pair(data::pair(vec![first, second])))
@@ -59,7 +65,7 @@ impl PairItem {
                 items.insert(0, self.0.0);
                 Ok(items)
             },
-            n => Err(Error::InvalidArity { arity: n })
+            i => err_mismatch!(">=2 args", i)
         }
     }
 
@@ -78,14 +84,54 @@ impl PairItem {
         }
     }
 
-    pub fn update(self, idx: usize, item: StackItem) -> Result<Self> {
+    //        0
+    //      /   \
+    //     1     2
+    //         /   \
+    //        3     4
+    //            /   \
+    //           5    ...
+    //                2n-2
+    //              /      \
+    //            2n-1      2n
+    fn update_odd(&mut self, idx: usize, item: StackItem) -> Result<()> {
         match idx {
-            0 => Ok(Self::new(item, self.0.1)),
-            1 => Ok(Self::new(self.0.0, item)),
-            _ => match self.0.1 {
-                StackItem::Pair(inner_pair) => inner_pair.update(idx - 1, item),
-                item => err_mismatch!("PairItem (inner)", item)
+            0 => {
+                self.0.0 = item;
+                Ok(())
+            },
+            _ => match self.0.1.as_mut() {
+                StackItem::Pair(right_pair) => right_pair.update_odd(idx - 1, item),
+                _ => err_mismatch!(format!("PairItem (right {})", idx - 1), item)
             }
+        }   
+    }
+
+    fn update_even(&mut self, idx: usize, item: StackItem) -> Result<()> {
+        match idx {
+            0 => match item {
+                StackItem::Pair(root_pair) => {
+                    *self = root_pair;
+                    Ok(())
+                },
+                _ => err_mismatch!("PairItem (root)", item)
+            },
+            1 => {
+                self.0.1 = item;
+                Ok(())
+            },
+            _ => match self.0.1.as_mut() {
+                StackItem::Pair(right_pair) => right_pair.update_even(idx - 1, item),
+                _ => err_mismatch!(format!("PairItem (right {})", idx - 1), item)
+            }
+        }
+    }
+
+    pub fn update(&mut self, idx: usize, item: StackItem) -> Result<()> {
+        match idx % 2 {
+            0 => self.update_even(idx / 2, item),
+            1 => self.update_odd((idx - 1) / 2, item),
+            _ => unreachable!()
         }
     }
 

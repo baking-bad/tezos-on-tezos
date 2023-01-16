@@ -7,12 +7,12 @@ use tezos_core::types::{
 
 use crate::{
     Result,
-    Error,
     stack::Stack,
     formatter::Formatter,
     types::{StackItem, BigMapDiff},
     trace_enter,
-    trace_exit
+    trace_exit,
+    err_unsupported
 };
 
 pub trait InterpreterContext {
@@ -95,6 +95,7 @@ impl Interpreter for Instruction {
             Instruction::Mul(instr) => instr.execute(stack),
             Instruction::Neg(instr) => instr.execute(stack),
             Instruction::Sub(instr) => instr.execute(stack),
+            Instruction::SubMutez(instr) => instr.execute(stack),
             Instruction::Int(instr) => instr.execute(stack),
             Instruction::IsNat(instr) => instr.execute(stack),
             Instruction::Or(instr) => instr.execute(stack),
@@ -144,7 +145,7 @@ impl Interpreter for Instruction {
             Instruction::ImplicitAccount(instr) => instr.execute(stack),
             Instruction::EmptyBigMap(instr) => instr.execute(stack, scope, context),
             Instruction::TransferTokens(instr) => instr.execute(stack, scope, context),
-            _ => Err(Error::UnsupportedPrimitive { prim: self.format() })
+            _ => err_unsupported!(self.format())
         };
         trace_exit!(res.as_ref().err(), format!("Len {}", &stack.len()).as_str());
         res

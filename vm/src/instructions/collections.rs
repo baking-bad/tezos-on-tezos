@@ -87,8 +87,9 @@ impl Interpreter for Update {
         let res: StackItem = if let Some(n) = &self.n {
             let item = stack.pop()?;
             let idx = n.to_integer()?;
-            let pair = pop_cast!(stack, Pair);
-            pair.update(idx, item)?.into()
+            let mut pair = pop_cast!(stack, Pair);
+            pair.update(idx, item)?;
+            pair.into()
         } else {
             let key = stack.pop()?;
             match stack.pop()? {

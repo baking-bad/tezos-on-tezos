@@ -13,6 +13,7 @@ use tezos_core::{
     types::encoded::{self, ScriptExprHash, Encoded},
     internal::crypto::blake2b
 };
+use vm::typechecker::check_pair_len;
 use vm::{
     Result,
     Error,
@@ -106,7 +107,7 @@ fn parse_elements(sequence: Sequence) -> Result<Vec<StackItem>> {
         let prim = PrimitiveApplication::try_from(item)?;
         match prim.prim() {
             "Stack_elt" => {
-                assert_eq!(2, prim.args_count());
+                check_pair_len(prim.args_count())?;
                 let ty: Type = prim.nth_arg(0).expect("type").clone().try_into()?;
                 let data = prim.nth_arg(1).expect("data").clone();
                 items.push(StackItem::from_micheline(data, &ty)?);

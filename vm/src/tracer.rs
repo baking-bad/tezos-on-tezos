@@ -56,7 +56,7 @@ impl Tracer {
 
     pub fn step_out(&mut self, err: Option<&Error>, msg: Option<&str>) {
         match err {
-            Some(err) => self.write(RET, format!("\x1b[{}mErr {}\x1b[0m", 91 + self.depth, err).as_str()),
+            Some(err) => self.write(RET, format!("\x1b[{}mErr {}\x1b[0m", 91 + self.depth, err.to_string()).as_str()),
             None => self.write(RET, format!("\x1b[{}m{}\x1b[0m", 91 + self.depth, msg.unwrap_or("Ok")).as_str())
         }
         if self.depth > 0 {

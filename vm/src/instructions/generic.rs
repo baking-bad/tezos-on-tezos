@@ -141,9 +141,8 @@ impl PureInterpreter for Pack {
 impl PureInterpreter for Unpack {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let item = pop_cast!(stack, Bytes);
-        let res = match Michelson::unpack(item.unwrap().as_slice(), Some(&self.r#type)) {
-            Ok(data) => {
-                let item = StackItem::from_data(data.try_into()?, &self.r#type)?;
+        let res = match StackItem::from_bytes(item.unwrap(), &self.r#type) {
+            Ok(item) => {
                 OptionItem::some(item)
             },
             Err(_err) => {

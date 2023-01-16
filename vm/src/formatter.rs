@@ -60,6 +60,7 @@ impl Formatter for Instruction {
             Instruction::Mul(_) => "Mul".into(),
             Instruction::Neg(_) => "Neg".into(),
             Instruction::Sub(_) => "Sub".into(),
+            Instruction::SubMutez(_) => "SubMutez".into(),
             Instruction::Int(_) => "Int".into(),
             Instruction::IsNat(_) => "IsNat".into(),
             Instruction::Or(_) => "Or".into(),
@@ -115,19 +116,78 @@ impl Formatter for Instruction {
 
 impl Formatter for ComparableType {
     fn format(&self) -> String {
-        format!("{:?}", self)
+        match self {
+            ComparableType::Address(_) => "address".into(),
+            ComparableType::Bool(_) => "bool".into(),
+            ComparableType::Bytes(_) => "bytes".into(),
+            ComparableType::ChainId(_) => "chain_id".into(),
+            ComparableType::Int(_) => "int".into(),
+            ComparableType::Key(_) => "key".into(),
+            ComparableType::KeyHash(_) => "key_hash".into(),
+            ComparableType::Mutez(_) => "mutez".into(),
+            ComparableType::Nat(_) => "nat".into(),
+            ComparableType::Signature(_) => "signature".into(),
+            ComparableType::String(_) => "string".into(),
+            ComparableType::Timestamp(_) => "timestamp".into(),
+            ComparableType::Unit(_) => "unit".into(),
+            ty => format!("{:?}", ty)
+        }        
     }
 }
 
 impl Formatter for Type {
     fn format(&self) -> String {
-        format!("{:?}", self)
+        match self {
+            Type::Comparable(ty) => ty.format(),
+            Type::Option(ty) => format!("(option {})", ty.r#type.format()),
+            Type::Or(ty) => format!("(or {} {})", ty.lhs.format(), ty.rhs.format()),
+            Type::Pair(ty) => {
+                let args: Vec<String> = ty.types.iter().map(|x| x.format()).collect();
+                format!("(pair {})", args.join(" "))
+            },
+            Type::List(ty) => format!("(list {})", ty.r#type.format()),
+            Type::Set(ty) => format!("(set {})", ty.r#type.format()),
+            Type::Map(ty) => format!("(map {} {})", ty.key_type.format(), ty.value_type.format()),
+            Type::BigMap(ty) => format!("(big_map {} {})", ty.key_type.format(), ty.value_type.format()),
+            Type::Lambda(ty) => format!("(lambda {} {})", ty.parameter_type.format(), ty.return_type.format()),
+            Type::Contract(ty) => format!("(contract {})", ty.r#type.format()),
+            Type::Operation(_) => "operation".into(),
+            Type::Parameter(ty) => format!("(parameter {})", ty.r#type.format()),
+            Type::Storage(ty) => format!("(storage {})", ty.r#type.format()),
+            ty => format!("{:?}", ty)
+        }        
     }
 }
 
 impl Formatter for Data {
     fn format(&self) -> String {
-        format!("{:?}", self)
+        match self {
+            Data::Unit(_) => "Unit".into(),
+            Data::False(_) => "False".into(),
+            Data::True(_) => "True".into(),
+            Data::None(_) => "None".into(),
+            Data::Bytes(val) => val.value().into(),
+            Data::Int(val) => val.to_string(),
+            Data::Nat(val) => val.to_string(),
+            Data::String(val) => format!("\"{}\"", val.to_str()),
+            Data::Some(val) => format!("(Some {})", val.value.format()),
+            Data::Left(val) => format!("(Left {})", val.value.format()),
+            Data::Right(val) => format!("(Right {})", val.value.format()),
+            Data::Pair(val) => {
+                let args: Vec<String> = val.values.iter().map(|x| x.format()).collect();
+                format!("(Pair {})", args.join(" "))
+            },
+            Data::Sequence(val) => {
+                let args: Vec<String> = val.values().iter().map(|x| x.format()).collect();
+                format!("{{{}}}", args.join(" "))
+            },
+            Data::Elt(val) => format!("Elt {} {}", val.key.format(), val.value.format()),
+            Data::Map(val) => {
+                let args: Vec<String> = val.values().iter().map(|x| Data::Elt(x.clone()).format()).collect();
+                format!("{{{}}}", args.join(" "))
+            },
+            Data::Instruction(val) => val.format(), // TODO: uppercase?
+        }        
     }
 }
 

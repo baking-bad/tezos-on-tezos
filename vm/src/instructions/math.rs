@@ -1,11 +1,13 @@
 use tezos_michelson::michelson::data::instructions::{
-    Abs, Add, Ediv, Lsl, Lsr, Mul, Neg, Sub, Int, IsNat, Or, Xor, And, Not, 
+    Abs, Add, Ediv, Lsl, Lsr, Mul, Neg, Sub, SubMutez, Int, IsNat, Or, Xor, And, Not, 
 };
+use tezos_michelson::michelson::types;
 
 use crate::{
     Result,
+    Error,
     interpreter::{PureInterpreter},
-    types::StackItem,
+    types::{StackItem, OptionItem},
     stack::Stack,
     pop_cast,
     err_mismatch
@@ -120,6 +122,19 @@ impl PureInterpreter for Sub {
             (l, r) => return invalid_operands!("SUB", l, r)
         };
         stack.push(res)
+    }
+}
+
+impl PureInterpreter for SubMutez {
+    fn execute(&self, stack: &mut Stack) -> Result<()> {
+        let a = pop_cast!(stack, Mutez);
+        let b = pop_cast!(stack, Mutez);
+        let res = match a - b {
+            Ok(res) => OptionItem::some(res.into()),
+            Err(Error::MutezUnderflow) => OptionItem::none(&types::mutez()),
+            Err(err) => return Err(err)
+        };
+        stack.push(res.into())
     }
 }
 

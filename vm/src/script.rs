@@ -16,8 +16,9 @@ use crate::{
     types::{StackItem, PairItem, InternalContent, BigMapDiff},
     interpreter::{Interpreter, InterpreterContext, OperationScope, LazyStorage},
     err_mismatch,
+    internal_error,
     trace_enter,
-    trace_exit
+    trace_exit, err_unsupported
 };
 
 pub struct MichelsonScript {
@@ -74,7 +75,7 @@ impl MichelsonScript {
     pub fn call_begin(&self, stack: &mut Stack, scope: &OperationScope) -> Result<()> {
         trace_enter!();
         if stack.len() != 0 {
-            return Err(Error::BadReturn.into());
+            return Err(Error::BadStack { location: 0 });
         }
 
         let (entrypoint, parameter) = match &scope.parameters {
@@ -94,7 +95,7 @@ impl MichelsonScript {
 
     pub fn call_end(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<ScriptReturn> {
         if stack.len() != 1 {
-            return Err(Error::BadReturn.into());
+            return Err(Error::BadReturn);
         }
 
         let (op_list, mut storage) = match stack.pop()? {
@@ -120,7 +121,7 @@ impl MichelsonScript {
                 item => return err_mismatch!("OperationItem", item)
             }                        
         }                    
-        
+
         let ret = ScriptReturn {
             big_map_diff,
             operations,
@@ -182,15 +183,14 @@ impl TryFrom<Micheline> for MichelsonScript {
         let mut storage_ty: Option<Type> = None;
         let mut code_ty: Option<Instruction> = None;
 
-        let sections = Sequence::try_from(src)?;
+        let sections = Sequence::try_from(src.normalized())?;
         for section in sections.into_values() {
             let prim = PrimitiveApplication::try_from(section)?;
             match prim.prim() {
                 "parameter" => param_ty = Some(*Parameter::try_from(prim)?.r#type),
                 "storage" => storage_ty = Some(*Storage::try_from(prim)?.r#type),
                 "code" => code_ty = Some(*Code::try_from(prim)?.code),
-                "view" => (),  // not supported, ignore
-                _ => ()  // invalid, ignore
+                prim => return err_unsupported!(prim),
             }
         }
 
@@ -198,9 +198,9 @@ impl TryFrom<Micheline> for MichelsonScript {
         // - check if all types in storage are storable
         // - check if all types in parameter are passable
         Ok(Self {
-            parameter_type: param_ty.ok_or(Error::MissingScriptField { prim: "parameter".into() })?,
-            storage_type: storage_ty.ok_or(Error::MissingScriptField { prim: "storage".into() })?,
-            code: code_ty.ok_or(Error::MissingScriptField { prim: "code".into() })?
+            parameter_type: param_ty.ok_or(internal_error!(Parsing, "Missing section:\tparameter"))?,
+            storage_type: storage_ty.ok_or(internal_error!(Parsing, "Missing section:\tstorage"))?,
+            code: code_ty.ok_or(internal_error!(Parsing, "Missing section:\tcode"))?
         })
     }
 }

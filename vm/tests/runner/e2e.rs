@@ -41,8 +41,8 @@ impl E2E {
         let ret = match self.script.call(&scope, &mut context) {
             Ok(res) => res,
             Err(err) => {
-                println!("{}", err);
-                return Err(err);
+                err.print();
+                panic!("{}", err);
             }
         };
 
@@ -72,7 +72,7 @@ impl E2E {
                 "storage" => storage = Some(prim.into_args().unwrap().remove(0)),
                 "result" => expected = {
                     let result = prim.into_args().unwrap().remove(0);
-                    Some(Expectation::Storage(result))
+                    Some(Expectation::Storage(result.normalized()))  // VM output is always normalized 
                 },
                 "script" => {
                     let filename: String = parse_literal(prim);

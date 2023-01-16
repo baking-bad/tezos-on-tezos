@@ -5,7 +5,6 @@ use tezos_michelson::michelson::{
 
 use crate::{
     Result,
-    Error,
     interpreter::{PureInterpreter},
     types::{StackItem, PairItem, OptionItem, OrItem},
     stack::Stack,
@@ -41,7 +40,7 @@ fn parse_arity(n: &Option<Nat>) -> Result<usize> {
         None => 2
     };
     if n < 2 {
-        return Err(Error::InvalidArity { arity: n })
+        return err_mismatch!(">=2 args", n)
     }
     Ok(n)
 }
@@ -54,7 +53,7 @@ impl PureInterpreter for Pair {
             items.push(stack.pop()?);
         }
 
-        let pair = PairItem::from_items(items);
+        let pair = PairItem::from_items(items)?;
         stack.push(pair.into())
     }
 }

@@ -74,7 +74,7 @@ fn get_contract_type(
                 (None, None) => "default",
                 (Some(annot), None) => annot.value(),
                 (None, Some(entrypoint)) => entrypoint,
-                (Some(_), Some(_)) => return Err(Error::ConflictingEntrypoints)
+                (Some(_), Some(_)) => return Err(Error::ConflictingEntrypoints { address: kt.clone().into_string() })
             };
 
             match context.get_contract_type(&kt)? {

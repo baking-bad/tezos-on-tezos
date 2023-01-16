@@ -3,6 +3,7 @@ use tezos_michelson::michelson::data::instructions::{
 };
 use tezos_michelson::michelson::types::Type;
 
+use crate::typechecker::check_pair_len;
 use crate::{
     Result,
     formatter::Formatter,
@@ -48,7 +49,7 @@ impl PureInterpreter for Apply {
 
         let (const_ty, arg_ty) = match param_type {
             Type::Pair(pair_ty) => {
-                assert_eq!(2, pair_ty.types.len());
+                check_pair_len(pair_ty.types.len())?;
                 (pair_ty.types[0].clone(), pair_ty.types[1].clone())
             },
             ty => return err_mismatch!("pair", ty.format())
