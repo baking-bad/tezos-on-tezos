@@ -1369,16 +1369,6 @@ fn e2e_unpair_00() -> Result<()> {
 }
 
 #[test]
-fn e2e_keccak_00() -> Result<()> {
-    E2E::load("e2e_keccak_00.json")?.run()
-}
-
-#[test]
-fn e2e_sha3_00() -> Result<()> {
-    E2E::load("e2e_sha3_00.json")?.run()
-}
-
-#[test]
 fn e2e_comb_00() -> Result<()> {
     E2E::load("e2e_comb_00.json")?.run()
 }

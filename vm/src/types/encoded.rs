@@ -1,6 +1,6 @@
 use std::fmt::Display;
-use tezos_core::types::{
-    encoded::{Address, PublicKey, ImplicitAddress, Signature, ChainId, Encoded}
+use tezos_core::types::encoded::{
+    Address, PublicKey, ImplicitAddress, Signature, ChainId, Encoded,
 };
 use tezos_michelson::michelson::{
     types::{Type, ComparableType},

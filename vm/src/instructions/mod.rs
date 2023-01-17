@@ -7,4 +7,4 @@ mod algebraic;
 mod collections;
 mod contract;
 mod scope;
-//mod crypto;
+mod crypto;

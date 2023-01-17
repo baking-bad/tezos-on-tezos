@@ -145,6 +145,9 @@ impl Interpreter for Instruction {
             Instruction::ImplicitAccount(instr) => instr.execute(stack),
             Instruction::EmptyBigMap(instr) => instr.execute(stack, scope, context),
             Instruction::TransferTokens(instr) => instr.execute(stack, scope, context),
+            Instruction::Blake2B(instr) => instr.execute(stack),
+            Instruction::HashKey(instr) => instr.execute(stack),
+            Instruction::CheckSignature(instr) => instr.execute(stack),
             _ => err_unsupported!(self.format())
         };
         trace_exit!(res.as_ref().err(), format!("Len {}", &stack.len()).as_str());

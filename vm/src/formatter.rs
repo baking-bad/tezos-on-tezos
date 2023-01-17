@@ -105,6 +105,9 @@ impl Formatter for Instruction {
             Instruction::Self_(instr) => format_instr_annot("Self", instr.metadata().field_name()),
             Instruction::ImplicitAccount(_) => "ImplicitAccount".into(),
             Instruction::TransferTokens(_) => "TransferTokens".into(),
+            Instruction::Blake2B(_) => "Blake2B".into(),
+            Instruction::HashKey(_) => "HashKey".into(),
+            Instruction::CheckSignature(_) => "CheckSignature".into(),
             _ => format!("{:?}", self)
         }
     }
