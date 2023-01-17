@@ -30,12 +30,10 @@ Also in the scope of our developing tools and indexing stack we want to better u
 - [x] Troubleshoot kernel using REPL, get rid of `f64`
 - [x] Implement internal batch workflow
 - [x] Support origination operation kind
-- [ ] Interact with the kernel via inbox and access rollup state via RPC
-- [ ] Tezos RPC facade node with wallet sufficient endpoint set
-- [ ] Add indexer-sufficient endpoints
-- [ ] Implement a minimal subset of Michelson opcodes
-- [ ] Support big maps
-- [ ] Support internal transactions
+- [x] Implement a minimal viable Michelson interpreter
+- [x] Interact with the kernel via inbox and access rollup state via RPC
+- [ ] Support contract calls and internal transactions
+- [ ] Tezos RPC facade node
 - [ ] Rollup node RPC plugin
 
 ## Limitations

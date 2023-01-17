@@ -40,14 +40,7 @@ impl<Host> PVMContext<Host> where Host: Runtime {
 
 impl<Host> Context for PVMContext<Host> where Host: Runtime {
     fn log(&self, msg: String) {
-        #[cfg(target_arch = "wasm32")]
-        unsafe {
-            host::rollup_core::write_debug(msg.as_ptr(), msg.len())
-        };
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            eprintln!("[DEBUG] {}", msg);
-        };
+        self.host.write_debug(msg.as_str())
     }
 
     fn has(&self, key: String) -> Result<bool> {
