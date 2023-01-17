@@ -23,7 +23,7 @@ launch_rollup_node() {
         fi
         octez-smart-rollup-node --base-dir "$client_dir" init operator config for "$ROLLUP_ADDRESS" with operators "$OPERATOR_ADDRESS" --data-dir "$rollup_dir"
     fi
-    exec octez-smart-rollup-node --endpoint "$endpoint" -d "$client_dir" run --data-dir "$rollup_dir" --rpc-addr "0.0.0.0"
+    TEZOS_LOG='* -> info' exec octez-smart-rollup-node --endpoint "$endpoint" -d "$client_dir" run --data-dir "$rollup_dir" --rpc-addr "0.0.0.0"
 }
 
 originate_rollup() {

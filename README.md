@@ -48,17 +48,6 @@ Current design is intentionally simplified to speed up development while having 
 * No temporary BigMap allocations
 * (To be continued)
 
-Non-supported Michelson features (at least in the first iteration):
-* Views
-* Events
-* Sapling
-* Some hash functions (SHA3, Keccak)
-* Tickets
-* Internal originations
-* Global constants
-* Chest
-* Rollups :)
-
 ## How to run
 
 Install Rust toolchain:
