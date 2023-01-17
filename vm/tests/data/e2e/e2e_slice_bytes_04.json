@@ -1,0 +1,52 @@
+[
+  {
+    "args": [
+      {
+        "string": "slice_bytes.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "int": "1"
+          },
+          {
+            "int": "2"
+          }
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "bytes": "aabbcc"
+          }
+        ],
+        "prim": "Some"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "bytes": "bbcc"
+          }
+        ],
+        "prim": "Some"
+      }
+    ],
+    "prim": "result"
+  }
+]

@@ -11,7 +11,9 @@ use crate::{
     Result,
     types::{ContractItem, StackItem},
     typechecker::check_types_equal,
-    err_type, type_cast,
+    formatter::Formatter,
+    err_mismatch,
+    type_cast,
 };
 
 impl ContractItem {
@@ -28,13 +30,13 @@ impl ContractItem {
                 let bytes: Vec<u8> = (&val).into();
                 Address::from_bytes(bytes.as_slice())?
             },
-            _ => return err_type!("Data::String", data)
+            _ => return err_mismatch!("String or Bytes", data.format())
         };
         Ok(StackItem::Contract(Self::new(address, inner_type.clone())))
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        let ty = type_cast!(ty, Contract)?;
+        let ty = type_cast!(ty, Contract);
         check_types_equal(&ty.r#type, &self.inner_type)?;
         Ok(Data::String(data::String::from_string(self.outer_value.into_string())?))
     }

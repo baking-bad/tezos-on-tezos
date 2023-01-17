@@ -1,0 +1,88 @@
+[
+  {
+    "args": [
+      {
+        "annots": [
+          ":param_unit"
+        ],
+        "prim": "unit"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "annots": [
+          ":u1"
+        ],
+        "prim": "unit"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "DROP"
+        },
+        {
+          "annots": [
+            "@b"
+          ],
+          "prim": "UNIT"
+        },
+        {
+          "annots": [
+            "@a"
+          ],
+          "prim": "UNIT"
+        },
+        {
+          "annots": [
+            "%@",
+            "%@"
+          ],
+          "prim": "PAIR"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%c",
+            "%d"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DROP"
+        },
+        {
+          "prim": "UNIT"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

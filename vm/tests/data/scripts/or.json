@@ -1,0 +1,70 @@
+[
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "bool"
+          },
+          {
+            "prim": "bool"
+          }
+        ],
+        "prim": "pair"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "bool"
+          }
+        ],
+        "prim": "option"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "CAR"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "prim": "CAR"
+        },
+        {
+          "prim": "SWAP"
+        },
+        {
+          "prim": "CDR"
+        },
+        {
+          "prim": "OR"
+        },
+        {
+          "prim": "SOME"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

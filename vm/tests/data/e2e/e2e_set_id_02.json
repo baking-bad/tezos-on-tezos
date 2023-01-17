@@ -1,0 +1,42 @@
+[
+  {
+    "args": [
+      {
+        "string": "set_id.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      [
+        {
+          "string": "asdf"
+        },
+        {
+          "string": "bcde"
+        }
+      ]
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "string": "asdf"
+        },
+        {
+          "string": "bcde"
+        }
+      ]
+    ],
+    "prim": "result"
+  }
+]

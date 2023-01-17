@@ -1,19 +1,27 @@
 use tezos_michelson::michelson::data::instructions::{
-    Abs, Add, Ediv, Lsl, Lsr, Mul, Neg, Sub, Int, IsNat, Or, Xor, And, Not, 
+    Abs, Add, Ediv, Lsl, Lsr, Mul, Neg, Sub, SubMutez, Int, IsNat, Or, Xor, And, Not, 
 };
+use tezos_michelson::michelson::types;
 
 use crate::{
     Result,
+    Error,
     interpreter::{PureInterpreter},
-    types::StackItem,
+    types::{StackItem, OptionItem},
     stack::Stack,
     pop_cast,
-    err_type
+    err_mismatch
 };
+
+macro_rules! invalid_operands {
+    ($opcode: literal, $l: expr, $r: expr) => {
+        err_mismatch!(format!("{}-supported operands", $opcode), format!("{} * {}", $l, $r))
+    };
+}
 
 impl PureInterpreter for Abs {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let int = pop_cast!(stack, Int)?;
+        let int = pop_cast!(stack, Int);
         stack.push(int.abs()?.into())
     }
 }
@@ -30,7 +38,7 @@ impl PureInterpreter for Add {
             (StackItem::Timestamp(a), StackItem::Int(b)) => (a + b)?.into(),
             (StackItem::Int(a), StackItem::Timestamp(b)) => (b + a)?.into(),
             (StackItem::Mutez(a), StackItem::Mutez(b)) => (a + b)?.into(),
-            items => return err_type!("NatItem, IntItem, TimestampItem, or MutezItem", items)
+            (l, r) => return invalid_operands!("ADD", l, r)
         };
         stack.push(res)
     }
@@ -47,7 +55,7 @@ impl PureInterpreter for Ediv {
             (StackItem::Int(a), StackItem::Int(b)) => (a / b).into(),
             (StackItem::Mutez(a), StackItem::Nat(b)) => (a / b)?.into(),
             (StackItem::Mutez(a), StackItem::Mutez(b)) => (a / b)?.into(),
-            items => return err_type!("NatItem, IntItem, or MutezItem", items)
+            (l, r) => return invalid_operands!("EDIV", l, r)
         };
         stack.push(res)
     }
@@ -55,8 +63,8 @@ impl PureInterpreter for Ediv {
 
 impl PureInterpreter for Lsl {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let a = pop_cast!(stack, Nat)?;
-        let b = pop_cast!(stack, Nat)?;
+        let a = pop_cast!(stack, Nat);
+        let b = pop_cast!(stack, Nat);
         let res = (a << b)?;
         stack.push(res.into())
     }
@@ -64,8 +72,8 @@ impl PureInterpreter for Lsl {
 
 impl PureInterpreter for Lsr {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let a = pop_cast!(stack, Nat)?;
-        let b = pop_cast!(stack, Nat)?;
+        let a = pop_cast!(stack, Nat);
+        let b = pop_cast!(stack, Nat);
         let res = (a >> b)?;
         stack.push(res.into())
     }
@@ -82,7 +90,7 @@ impl PureInterpreter for Mul {
             (StackItem::Int(a), StackItem::Int(b)) => (a * b).into(),
             (StackItem::Mutez(a), StackItem::Nat(b)) => (a * b)?.into(),
             (StackItem::Nat(a), StackItem::Mutez(b)) => (b * a)?.into(),
-            items => return err_type!("NatItem, IntItem, or MutezItem", items)
+            (l, r) => return invalid_operands!("MUL", l, r)
         };
         stack.push(res)
     }
@@ -93,7 +101,7 @@ impl PureInterpreter for Neg {
         let res: StackItem = match stack.pop()? {
             StackItem::Nat(a) => (-a).into(),
             StackItem::Int(a) => (-a).into(),
-            items => return err_type!("NatItem or IntItem", items)
+            items => return err_mismatch!("NatItem or IntItem", items)
         };
         stack.push(res)
     }
@@ -111,22 +119,35 @@ impl PureInterpreter for Sub {
             (StackItem::Timestamp(a), StackItem::Int(b)) => (a - b)?.into(),
             (StackItem::Timestamp(a), StackItem::Timestamp(b)) => (a - b).into(),
             (StackItem::Mutez(a), StackItem::Mutez(b)) => (a - b)?.into(),
-            items => return err_type!("NatItem, IntItem, TimestampItem, or MutezItem", items)
+            (l, r) => return invalid_operands!("SUB", l, r)
         };
         stack.push(res)
     }
 }
 
+impl PureInterpreter for SubMutez {
+    fn execute(&self, stack: &mut Stack) -> Result<()> {
+        let a = pop_cast!(stack, Mutez);
+        let b = pop_cast!(stack, Mutez);
+        let res = match a - b {
+            Ok(res) => OptionItem::some(res.into()),
+            Err(Error::MutezUnderflow) => OptionItem::none(&types::mutez()),
+            Err(err) => return Err(err)
+        };
+        stack.push(res.into())
+    }
+}
+
 impl PureInterpreter for Int {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let nat = pop_cast!(stack, Nat)?;
+        let nat = pop_cast!(stack, Nat);
         stack.push(nat.int().into())
     }
 }
 
 impl PureInterpreter for IsNat {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let int = pop_cast!(stack, Int)?;
+        let int = pop_cast!(stack, Int);
         stack.push(int.nat()?.into())
     }
 }
@@ -138,7 +159,7 @@ impl PureInterpreter for Or {
         let res: StackItem = match (a, b) {
             (StackItem::Bool(a), StackItem::Bool(b)) => (a | b).into(),
             (StackItem::Nat(a), StackItem::Nat(b)) => (a | b).into(),
-            items => return err_type!("BoolItem or NatItem", items)
+            (l, r) => return invalid_operands!("OR", l, r)
         };
         stack.push(res)
     }
@@ -151,7 +172,7 @@ impl PureInterpreter for Xor {
         let res: StackItem = match (a, b) {
             (StackItem::Bool(a), StackItem::Bool(b)) => (a ^ b).into(),
             (StackItem::Nat(a), StackItem::Nat(b)) => (a ^ b).into(),
-            items => return err_type!("BoolItem or NatItem", items)
+            (l, r) => return invalid_operands!("XOR", l, r)
         };
         stack.push(res)
     }
@@ -165,7 +186,7 @@ impl PureInterpreter for And {
             (StackItem::Bool(a), StackItem::Bool(b)) => (a & b).into(),
             (StackItem::Nat(a), StackItem::Nat(b)) => (a & b).into(),
             (StackItem::Int(a), StackItem::Nat(b)) => (a & b)?.into(),
-            items => return err_type!("BoolItem, IntItem, or NatItem", items)
+            (l, r) => return invalid_operands!("AND", l, r)
         };
         stack.push(res)
     }
@@ -177,7 +198,7 @@ impl PureInterpreter for Not {
             StackItem::Bool(a) => (!a).into(),
             StackItem::Nat(a) => (!a).into(),
             StackItem::Int(a) => (!a).into(),
-            items => return err_type!("BoolItem, IntItem, or NatItem", items)
+            item => return err_mismatch!("NOT-supported operand", item)
         };
         stack.push(res)
     }

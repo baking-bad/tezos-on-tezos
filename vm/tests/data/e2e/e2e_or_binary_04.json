@@ -1,0 +1,47 @@
+[
+  {
+    "args": [
+      {
+        "string": "or_binary.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "int": "14"
+          },
+          {
+            "int": "1"
+          }
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "None"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "int": "15"
+          }
+        ],
+        "prim": "Some"
+      }
+    ],
+    "prim": "result"
+  }
+]

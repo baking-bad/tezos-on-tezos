@@ -1,0 +1,71 @@
+[
+  {
+    "args": [
+      {
+        "string": "map_iter.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "int": "1"
+            },
+            {
+              "int": "1"
+            }
+          ],
+          "prim": "Elt"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            },
+            {
+              "int": "100"
+            }
+          ],
+          "prim": "Elt"
+        }
+      ]
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "int": "0"
+          },
+          {
+            "int": "0"
+          }
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "int": "3"
+          },
+          {
+            "int": "101"
+          }
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "result"
+  }
+]

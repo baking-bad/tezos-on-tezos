@@ -1,0 +1,36 @@
+[
+  {
+    "args": [
+      {
+        "string": "concat_hello_bytes.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      [
+        {
+          "bytes": "cd"
+        }
+      ]
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "bytes": "ffcd"
+        }
+      ]
+    ],
+    "prim": "result"
+  }
+]

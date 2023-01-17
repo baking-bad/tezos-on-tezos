@@ -1,8 +1,3 @@
-
-use serde_json_wasm;
-use std::fs::File;
-use std::io::Read;
-use std::path::PathBuf;
 use hex;
 use tezos_michelson::micheline::{
     Micheline,
@@ -18,6 +13,7 @@ use tezos_core::{
     types::encoded::{self, ScriptExprHash, Encoded},
     internal::crypto::blake2b
 };
+use vm::typechecker::check_pair_len;
 use vm::{
     Result,
     Error,
@@ -28,7 +24,11 @@ use vm::{
     trace_enter,
     trace_exit
 };
-use crate::runner::mock::{default_scope, MockContext};
+
+use crate::runner::{
+    mock::{default_scope, MockContext},
+    micheline::read_from_file
+};
 
 pub struct TZT {
     input: Input,
@@ -95,16 +95,8 @@ impl TZT {
         Ok(())
     }
 
-    pub fn load(filename: &str) -> Result<Self> {
-        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        path.push("tests/data");
-        path.push(filename);
-
-        let mut file = File::open(path).expect("Failed to open tzt file");
-        let mut buffer: Vec<u8> = Vec::new();
-        file.read_to_end(&mut buffer).expect("Failed to read tzt file");
-        
-        let src: Micheline = serde_json_wasm::from_slice(buffer.as_slice())?;
+    pub fn load(filename: &str) -> Result<Self> {        
+        let src = read_from_file("tzt", filename)?;
         Self::try_from(src)
     }
 }
@@ -115,7 +107,7 @@ fn parse_elements(sequence: Sequence) -> Result<Vec<StackItem>> {
         let prim = PrimitiveApplication::try_from(item)?;
         match prim.prim() {
             "Stack_elt" => {
-                assert_eq!(2, prim.args_count());
+                check_pair_len(prim.args_count())?;
                 let ty: Type = prim.nth_arg(0).expect("type").clone().try_into()?;
                 let data = prim.nth_arg(1).expect("data").clone();
                 items.push(StackItem::from_micheline(data, &ty)?);

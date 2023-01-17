@@ -177,3 +177,9 @@ pub enum StackItem {
     BigMap(BigMapItem),
     Lambda(LambdaItem),
 }
+
+impl AsMut<StackItem> for StackItem {
+    fn as_mut(&mut self) -> &mut StackItem {
+        self
+    }
+}

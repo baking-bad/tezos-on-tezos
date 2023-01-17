@@ -4,15 +4,16 @@ use crate::{
     Result,
     Error,
     types::StackItem,
-    trace_stack
+    trace_stack,
+    trace_log
 };
 
 #[macro_export]
 macro_rules! pop_cast {
     ($stack: expr, $var: ident) => {
         match $stack.pop()? {
-            StackItem::$var(item) => Ok(item),
-            item => err_type!(stringify!($var), item)
+            StackItem::$var(item) => item,
+            item => return err_mismatch!(stringify!($var), item)
         }
     };
 }
@@ -29,6 +30,15 @@ impl Stack {
 
     pub fn len(&self) -> usize {
         self.items.len()
+    }
+
+    pub fn top(&self) -> Result<()> {
+        if self.items.len() > self.protected {
+            trace_stack!("Top", &self.items[self.protected], None);
+        } else {
+            trace_log!("Top", "empty stack");
+        }
+        Ok(())
     }
 
     pub fn protect(&mut self, count: usize) -> Result<()> {

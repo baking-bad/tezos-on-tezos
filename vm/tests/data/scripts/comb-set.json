@@ -1,0 +1,121 @@
+[
+  {
+    "args": [
+      {
+        "prim": "unit"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "nat"
+          },
+          {
+            "prim": "nat"
+          },
+          {
+            "prim": "nat"
+          },
+          {
+            "prim": "unit"
+          }
+        ],
+        "prim": "pair"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "CDR"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "args": [
+            {
+              "int": "1"
+            }
+          ],
+          "prim": "UPDATE"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "12"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "args": [
+            {
+              "int": "3"
+            }
+          ],
+          "prim": "UPDATE"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "8"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "args": [
+            {
+              "int": "5"
+            }
+          ],
+          "prim": "UPDATE"
+        },
+        {
+          "prim": "UNIT"
+        },
+        {
+          "args": [
+            {
+              "int": "6"
+            }
+          ],
+          "prim": "UPDATE"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

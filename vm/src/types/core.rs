@@ -11,7 +11,8 @@ use hex;
 use crate::{
     Result,
     types::{UnitItem, BoolItem, StringItem, BytesItem, StackItem, OptionItem},
-    err_type,
+    formatter::Formatter,
+    err_mismatch,
     comparable_type_cast
 };
 
@@ -19,12 +20,12 @@ impl UnitItem {
     pub fn from_data(data: Data) -> Result<StackItem> {
         match data {
             Data::Unit(_) => Ok(StackItem::Unit(Self(()))),
-            _ => err_type!("Data::Unit", data)
+            _ => err_mismatch!("Data::Unit", data.format())
         }
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        comparable_type_cast!(ty, Unit)?;
+        comparable_type_cast!(ty, Unit);
         Ok(Data::Unit(data::unit()))
     }
 }
@@ -34,12 +35,12 @@ impl BoolItem {
         match data {
             Data::True(_) => return Ok(StackItem::Bool(true.into())),
             Data::False(_) => return Ok(StackItem::Bool(false.into())),
-            _ => err_type!("Data::True or Data::False", data)
+            _ => err_mismatch!("True or False", data.format())
         }
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        comparable_type_cast!(ty, Bool)?;
+        comparable_type_cast!(ty, Bool);
         match self.0 {
             true => Ok(Data::True(data::True)),
             false => Ok(Data::False(data::False))
@@ -55,12 +56,12 @@ impl StringItem {
     pub fn from_data(data: Data) -> Result<StackItem> {
         match data {
             Data::String(val) => Ok(StackItem::String(Self(val.into_string()))),
-            _ => err_type!("Data::String", data)
+            _ => err_mismatch!("String", data.format())
         }
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        comparable_type_cast!(ty, String)?;
+        comparable_type_cast!(ty, String);
         Ok(Data::String(data::String::from_string(self.0)?))
     }
 
@@ -86,12 +87,12 @@ impl BytesItem {
     pub fn from_data(data: Data) -> Result<StackItem> {
         match data {
             Data::Bytes(val) => Ok(StackItem::Bytes(Self((&val).into()))),
-            _ => err_type!("Data::Bytes", data)
+            _ => err_mismatch!("Bytes", data.format())
         }
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        comparable_type_cast!(ty, Bytes)?;
+        comparable_type_cast!(ty, Bytes);
         Ok(Data::Bytes(data::bytes(self.0)))
     }
 

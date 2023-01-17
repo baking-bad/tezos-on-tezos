@@ -5,12 +5,11 @@ use tezos_michelson::michelson::{
 
 use crate::{
     Result,
-    Error,
     interpreter::{PureInterpreter},
     types::{StackItem, PairItem, OptionItem, OrItem},
     stack::Stack,
     pop_cast,
-    err_type
+    err_mismatch
 };
 
 impl PureInterpreter for Unit {
@@ -21,7 +20,7 @@ impl PureInterpreter for Unit {
 
 impl PureInterpreter for Car {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let pair = pop_cast!(stack, Pair)?;
+        let pair = pop_cast!(stack, Pair);
         let (first, _) = pair.unpair();
         stack.push(first)
     }
@@ -29,7 +28,7 @@ impl PureInterpreter for Car {
 
 impl PureInterpreter for Cdr {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let pair = pop_cast!(stack, Pair)?;
+        let pair = pop_cast!(stack, Pair);
         let (_, second) = pair.unpair();
         stack.push(second)
     }
@@ -41,7 +40,7 @@ fn parse_arity(n: &Option<Nat>) -> Result<usize> {
         None => 2
     };
     if n < 2 {
-        return Err(Error::InvalidArity { expected: 2, found: n }.into())
+        return err_mismatch!(">=2 args", n)
     }
     Ok(n)
 }
@@ -54,14 +53,14 @@ impl PureInterpreter for Pair {
             items.push(stack.pop()?);
         }
 
-        let pair = PairItem::from_items(items);
+        let pair = PairItem::from_items(items)?;
         stack.push(pair.into())
     }
 }
 
 impl PureInterpreter for Unpair {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let pair = pop_cast!(stack, Pair)?;
+        let pair = pop_cast!(stack, Pair);
         let n = parse_arity(&self.n)?;
         let items = pair.into_items(n)?;
         for item in items.into_iter().rev() {

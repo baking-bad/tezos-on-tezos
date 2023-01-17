@@ -1,6 +1,6 @@
 use std::fmt::Display;
-use tezos_core::types::{
-    encoded::{Address, PublicKey, ImplicitAddress, Signature, ChainId, Encoded}
+use tezos_core::types::encoded::{
+    Address, PublicKey, ImplicitAddress, Signature, ChainId, Encoded,
 };
 use tezos_michelson::michelson::{
     types::{Type, ComparableType},
@@ -11,7 +11,8 @@ use tezos_michelson::michelson::{
 use crate::{
     Result,
     types::{AddressItem, KeyItem, KeyHashItem, SignatureItem, ChainIdItem, StackItem},
-    err_type,
+    formatter::Formatter,
+    err_mismatch,
     comparable_type_cast
 };
 
@@ -29,12 +30,12 @@ macro_rules! impl_for_encoded {
                         let bytes: Vec<u8> = (&val).into();
                         Ok($item_ty(<$impl_ty>::from_bytes(bytes.as_slice())?).into())   
                     },
-                    _ => err_type!("Data::String", data)
+                    _ => err_mismatch!("String or Bytes", data.format())
                 }
             }
                 
             pub fn into_data(self, ty: &Type) -> Result<Data> {
-                comparable_type_cast!(ty, $cmp_ty)?;
+                comparable_type_cast!(ty, $cmp_ty);
                 Ok(Data::String(data::String::from_string(self.0.into_string())?))
             }
 

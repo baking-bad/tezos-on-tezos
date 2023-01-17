@@ -1,0 +1,58 @@
+[
+  {
+    "args": [
+      {
+        "string": "list_map_block.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      [
+        {
+          "int": "1"
+        },
+        {
+          "int": "1"
+        },
+        {
+          "int": "1"
+        },
+        {
+          "int": "1"
+        }
+      ]
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      [
+        {
+          "int": "0"
+        }
+      ]
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "int": "1"
+        },
+        {
+          "int": "2"
+        },
+        {
+          "int": "3"
+        },
+        {
+          "int": "4"
+        }
+      ]
+    ],
+    "prim": "result"
+  }
+]

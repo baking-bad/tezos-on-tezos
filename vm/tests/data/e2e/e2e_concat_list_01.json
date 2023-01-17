@@ -1,0 +1,32 @@
+[
+  {
+    "args": [
+      {
+        "string": "concat_list.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "string": ""
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "string": ""
+      }
+    ],
+    "prim": "result"
+  }
+]

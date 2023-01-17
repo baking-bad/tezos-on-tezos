@@ -9,12 +9,15 @@ use crate::{
     Result,
     types::{SetItem, StackItem},
     types::list::{seq_into_item_vec, item_vec_into_seq},
-    err_type,
+    formatter::Formatter,
+    err_mismatch,
     type_cast
 };
 
 impl SetItem {
     pub fn new(items: Vec<StackItem>, val_type: Type) -> Self {
+        let mut items = items;
+        items.sort_unstable();
         Self { outer_value: items, inner_type: val_type }
     }
 
@@ -25,12 +28,12 @@ impl SetItem {
                 // TODO: ensure no duplicates
                 Ok(StackItem::Set(Self::new(items, val_type.clone())))
             },
-            _ => err_type!("Data::Sequence", data)
+            _ => err_mismatch!("Sequence", data.format())
         }
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        let ty = type_cast!(ty, Set)?;
+        let ty = type_cast!(ty, Set);
         item_vec_into_seq(self.outer_value, &self.inner_type, &ty.r#type)
     }
 
@@ -41,7 +44,7 @@ impl SetItem {
     pub fn get_type(&self) -> Result<Type> {
         match &self.inner_type {
             Type::Comparable(ty) => Ok(types::set(ty.clone().into())),
-            ty => err_type!("Type::Comparable", ty)
+            ty => err_mismatch!("ComparableType", ty.format())
         }
     }
 
@@ -83,6 +86,9 @@ impl Display for SetItem {
                 f.write_str(", ")?;
             }
             item.fmt(f)?;
+        }
+        if self.len() == 0 {
+            f.write_fmt(format_args!(" /* {} */ ", self.inner_type.format()))?;
         }
         f.write_str("}")
     }

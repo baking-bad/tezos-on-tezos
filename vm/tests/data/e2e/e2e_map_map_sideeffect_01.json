@@ -1,0 +1,70 @@
+[
+  {
+    "args": [
+      {
+        "string": "map_map_sideeffect.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "int": "10"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          [
+            {
+              "args": [
+                {
+                  "string": "foo"
+                },
+                {
+                  "int": "1"
+                }
+              ],
+              "prim": "Elt"
+            }
+          ],
+          {
+            "int": "1"
+          }
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          [
+            {
+              "args": [
+                {
+                  "string": "foo"
+                },
+                {
+                  "int": "11"
+                }
+              ],
+              "prim": "Elt"
+            }
+          ],
+          {
+            "int": "11"
+          }
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "result"
+  }
+]

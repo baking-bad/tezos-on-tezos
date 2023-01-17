@@ -1,0 +1,112 @@
+[
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "unit"
+          },
+          {
+            "prim": "unit"
+          }
+        ],
+        "prim": "or"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "unit"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "CAR"
+        },
+        {
+          "args": [
+            [
+              {
+                "args": [
+                  {
+                    "prim": "nat"
+                  },
+                  {
+                    "int": "922337203685477580700"
+                  }
+                ],
+                "prim": "PUSH"
+              },
+              {
+                "args": [
+                  {
+                    "prim": "mutez"
+                  },
+                  {
+                    "int": "10"
+                  }
+                ],
+                "prim": "PUSH"
+              },
+              {
+                "prim": "MUL"
+              },
+              {
+                "prim": "DROP"
+              }
+            ],
+            [
+              {
+                "args": [
+                  {
+                    "prim": "mutez"
+                  },
+                  {
+                    "int": "10"
+                  }
+                ],
+                "prim": "PUSH"
+              },
+              {
+                "args": [
+                  {
+                    "prim": "nat"
+                  },
+                  {
+                    "int": "922337203685477580700"
+                  }
+                ],
+                "prim": "PUSH"
+              },
+              {
+                "prim": "MUL"
+              },
+              {
+                "prim": "DROP"
+              }
+            ]
+          ],
+          "prim": "IF_LEFT"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

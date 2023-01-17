@@ -1,0 +1,104 @@
+[
+  {
+    "args": [
+      {
+        "prim": "key"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "signature"
+          },
+          {
+            "prim": "string"
+          }
+        ],
+        "prim": "pair"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "DUP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "args": [
+            [
+              {
+                "prim": "CDR"
+              },
+              {
+                "prim": "DUP"
+              },
+              {
+                "prim": "CAR"
+              },
+              {
+                "args": [
+                  [
+                    {
+                      "prim": "CDR"
+                    },
+                    {
+                      "prim": "PACK"
+                    }
+                  ]
+                ],
+                "prim": "DIP"
+              }
+            ]
+          ],
+          "prim": "DIP"
+        },
+        {
+          "prim": "CAR"
+        },
+        {
+          "prim": "CHECK_SIGNATURE"
+        },
+        {
+          "args": [
+            [],
+            [
+              [
+                {
+                  "prim": "UNIT"
+                },
+                {
+                  "prim": "FAILWITH"
+                }
+              ]
+            ]
+          ],
+          "prim": "IF"
+        },
+        {
+          "prim": "CDR"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

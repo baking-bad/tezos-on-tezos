@@ -1,7 +1,7 @@
 use std::fmt::Display;
 use std::ops::{Add, Sub};
 use ibig::IBig;
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc, SecondsFormat};
 use tezos_michelson::michelson::{
     data::Data, data,
     types::{Type, ComparableType}
@@ -10,7 +10,8 @@ use tezos_michelson::michelson::{
 use crate::{
     Result,
     types::{IntItem, TimestampItem, StackItem},
-    err_type,
+    formatter::Formatter,
+    err_mismatch,
     comparable_type_cast
 };
 
@@ -23,26 +24,28 @@ impl TimestampItem {
         let timestamp = match data {
             Data::String(val) => DateTime::parse_from_rfc3339(val.to_str())?.timestamp(),
             Data::Int(val) => val.to_integer()?,
-            _ => return err_type!("Data::String or Data::Int", data)
+            _ => return err_mismatch!("String or Int", data.format())
         };
         Ok(StackItem::Timestamp(Self::new(timestamp)?))
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        comparable_type_cast!(ty, Timestamp)?;
+        comparable_type_cast!(ty, Timestamp);
         let dt = match NaiveDateTime::from_timestamp_opt(self.0, 0) {
             Some(dt) => DateTime::<Utc>::from_utc(dt, Utc),
-            None => return err_type!(ty, self)
+            None => return Ok(Data::Int(self.0.into()))
         };
-        Ok(Data::String(data::String::from_string(dt.to_rfc3339())?))
+        let string = dt.to_rfc3339_opts(SecondsFormat::Secs, true);
+        Ok(Data::String(data::String::from_string(string)?))
     }
 }
 
 impl Display for TimestampItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = match NaiveDateTime::from_timestamp_opt(self.0, 0) {
-            Some(dt) => DateTime::<Utc>::from_utc(dt, Utc).to_rfc3339(),
-            None => format!("{}+0", self.0)
+            Some(dt) => DateTime::<Utc>::from_utc(dt, Utc)
+                .to_rfc3339_opts(SecondsFormat::Secs, true),
+            None => format!("{}Z", self.0)
         };
         f.write_str(str.as_str())
     }

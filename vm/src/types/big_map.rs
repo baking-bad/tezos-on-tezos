@@ -13,14 +13,16 @@ use tezos_core::{
     internal::crypto::blake2b
 };
 
+use crate::typechecker::check_pair_len;
 use crate::{
     Result,
     Error,
     types::{BigMapItem, StackItem, MapItem, BigMapDiff, OptionItem, OrItem, ListItem, PairItem},
     interpreter::{InterpreterContext, LazyStorage},
     typechecker::check_types_equal,
+    formatter::Formatter,
     type_cast,
-    err_type,
+    err_mismatch,
 };
 
 pub fn script_expr_hash(expr: Micheline, ty: &Type) -> Result<ScriptExprHash> {
@@ -41,11 +43,7 @@ pub fn check_ownership(ptr: i64, owner: &ContractAddress, context: &mut impl Int
     if *owner == actual_owner {
         Ok(())
     } else {
-        Err(Error::BigMapAccessDenied {
-            ptr, 
-            owner: actual_owner.into_string(),
-            offender: owner.clone().into_string()
-        })
+        Err(Error::BigMapAccessDenied { ptr })
     }
 }
 
@@ -79,18 +77,19 @@ impl BigMapItem {
                 let map = MapItem::from_sequence(sequence, key_type.clone(), val_type.clone())?;
                 Ok(StackItem::BigMap(Self::Map(map)))
             },
-            _ => err_type!("Data::Int or Data::Sequence", data)
+            Data::Map(elt_map) => {
+                let map = MapItem::from_elt_map(elt_map, key_type.clone(), val_type.clone())?;
+                Ok(StackItem::BigMap(Self::Map(map)))
+            },
+            _ => err_mismatch!("Data::Int or Data::Sequence", data.format())
         }
     }
 
-    pub fn into_data(self, ty: &Type) -> Result<Data> {
-        if let Type::BigMap(_) = ty {
-            return match self {
-                Self::Ptr(id) => Ok(Data::Int(data::int(id))),
-                _ => err_type!("Ptr", self)
-            }
+    pub fn into_data(self) -> Result<Data> {
+        match self {
+            Self::Ptr(id) => Ok(Data::Int(data::int(id))),
+            _ => err_mismatch!("Ptr", self)
         }
-        err_type!(ty, self)
     }
 
     pub fn get_type(&self) -> Result<Type> {
@@ -99,7 +98,7 @@ impl BigMapItem {
                 Ok(types::big_map(diff.inner_type.0.clone(), diff.inner_type.1.clone()))
             },
             Self::Map(map) => map.get_type(),
-            Self::Ptr(_) => err_type!("Diff or Map", self)
+            Self::Ptr(_) => err_mismatch!("Diff or Map", self)
         }
     }
 
@@ -110,7 +109,7 @@ impl BigMapItem {
                 let key_hash = get_key_hash(key, &diff.inner_type.0)?;
                 context.has_big_map_value(diff.id, &key_hash)
             },
-            Self::Ptr(_) => err_type!("Diff or Map", self)
+            Self::Ptr(_) => err_mismatch!("Diff or Map", self)
         }
     }
 
@@ -127,7 +126,7 @@ impl BigMapItem {
                     None => Ok(OptionItem::none(&diff.inner_type.1))
                 }
             },
-            Self::Ptr(_) => err_type!("Diff or Map", self)
+            Self::Ptr(_) => err_mismatch!("Diff or Map", self)
         }
     }
 
@@ -153,7 +152,7 @@ impl BigMapItem {
                     None => Ok(OptionItem::none(&diff.inner_type.1))
                 }
             },
-            Self::Ptr(_) => err_type!("Diff or Map", self)
+            Self::Ptr(_) => err_mismatch!("Diff or Map", self)
         }
     }
  
@@ -175,7 +174,7 @@ impl BigMapItem {
                 }
                 Ok(Self::Diff(diff))
             },
-            Self::Ptr(_) => err_type!("Diff or Map", self)
+            Self::Ptr(_) => err_mismatch!("Diff or Map", self)
         }
     }
 }
@@ -205,21 +204,21 @@ impl LazyStorage for BigMapItem {
                 *self = self.clone().acquire(owner, context)?;
                 Ok(())
             },
-            Self::Ptr(_) => err_type!("Diff or Map", self)
+            Self::Ptr(_) => err_mismatch!("Diff or Map", self)
         }
     }
 
     fn try_aggregate(&mut self, output: &mut Vec<BigMapDiff>, ty: &Type) -> Result<()> {
         match self {
             Self::Diff(diff) => {
-                let big_map_ty = type_cast!(ty, BigMap)?;
+                let big_map_ty = type_cast!(ty, BigMap);
                 check_types_equal(&big_map_ty.key_type, &diff.inner_type.0)?;
                 check_types_equal(&big_map_ty.value_type, &diff.inner_type.1)?;
                 output.push(diff.clone());
                 *self = Self::Ptr(diff.id);
                 Ok(())
             },
-            _ => err_type!("Diff", self)
+            _ => err_mismatch!("Diff", self)
         }
     }
 }
@@ -236,7 +235,7 @@ impl LazyStorage for OptionItem {
         match self {
             Self::None(_) => Ok(()),
             Self::Some(val) => {
-                let ty = type_cast!(ty, Option)?;
+                let ty = type_cast!(ty, Option);
                 val.try_aggregate(output, &ty.r#type)
             },
         }
@@ -253,7 +252,7 @@ impl LazyStorage for OrItem {
     }
 
     fn try_aggregate(&mut self, output: &mut Vec<BigMapDiff>, ty: &Type) -> Result<()> {
-        let ty = type_cast!(ty, Or)?;
+        let ty = type_cast!(ty, Or);
         let (var, ty) = match self {
             Self::Left(var) => (var, &ty.lhs),
             Self::Right(var) => (var, &ty.rhs)
@@ -269,8 +268,8 @@ impl LazyStorage for PairItem {
     }
 
     fn try_aggregate(&mut self, output: &mut Vec<BigMapDiff>, ty: &Type) -> Result<()> {
-        let ty = type_cast!(ty, Pair)?;
-        assert_eq!(2, ty.types.len());
+        let ty = type_cast!(ty, Pair);
+        check_pair_len(ty.types.len())?;
         self.0.0.try_aggregate(output, &ty.types[0])?;
         self.0.1.try_aggregate(output, &ty.types[1])
     }
@@ -285,7 +284,7 @@ impl LazyStorage for ListItem {
     }
 
     fn try_aggregate(&mut self, output: &mut Vec<BigMapDiff>, ty: &Type) -> Result<()> {
-        let ty = type_cast!(ty, List)?;
+        let ty = type_cast!(ty, List);
         self.outer_value
             .iter_mut()
             .map(|e| e.try_aggregate(output, &ty.r#type))
@@ -302,7 +301,7 @@ impl LazyStorage for MapItem {
     }
 
     fn try_aggregate(&mut self, output: &mut Vec<BigMapDiff>, ty: &Type) -> Result<()> {
-        let ty = type_cast!(ty, Map)?;
+        let ty = type_cast!(ty, Map);
         self.outer_value
             .iter_mut()
             .map(|(_, v)| v.try_aggregate(output, &ty.value_type))

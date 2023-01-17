@@ -1,0 +1,42 @@
+[
+  {
+    "args": [
+      {
+        "string": "concat_hello_bytes.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      [
+        {
+          "bytes": "ab"
+        },
+        {
+          "bytes": "cd"
+        }
+      ]
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "bytes": "ffab"
+        },
+        {
+          "bytes": "ffcd"
+        }
+      ]
+    ],
+    "prim": "result"
+  }
+]

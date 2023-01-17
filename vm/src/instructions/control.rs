@@ -1,5 +1,5 @@
 use tezos_michelson::michelson::data::instructions::{
-    Dip, Sequence, FailWith, If, IfCons, IfLeft, IfNone, Loop, LoopLeft, Map, Iter
+    Dip, Sequence, FailWith, If, IfCons, IfLeft, IfNone, Loop, LoopLeft, Map, Iter, Cast
 };
 
 use crate::{
@@ -9,7 +9,7 @@ use crate::{
     types::{StackItem, ListItem, MapItem},
     stack::Stack,
     pop_cast,
-    err_type,
+    err_mismatch,
     trace_enter,
     trace_exit
 };
@@ -45,7 +45,7 @@ impl PureInterpreter for FailWith {
 
 impl Interpreter for If {
     fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
-        let cond = pop_cast!(stack, Bool)?;
+        let cond = pop_cast!(stack, Bool);
         let branch = if cond.is_true() {
             trace_exit!("Yes");
             &self.if_branch
@@ -59,7 +59,7 @@ impl Interpreter for If {
 
 impl Interpreter for IfCons {
     fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
-        let list = pop_cast!(stack, List)?;
+        let list = pop_cast!(stack, List);
         let branch = if list.len() > 0 {
             let (head, tail) = list.split_head()?;
             stack.push(tail.into())?;
@@ -76,7 +76,7 @@ impl Interpreter for IfCons {
 
 impl Interpreter for IfLeft {
     fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
-        let or = pop_cast!(stack, Or)?;
+        let or = pop_cast!(stack, Or);
         let cond = or.is_left();
         stack.push(or.unwrap())?;
         let branch = if cond {
@@ -92,7 +92,7 @@ impl Interpreter for IfLeft {
 
 impl Interpreter for IfNone {
     fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
-        let option = pop_cast!(stack, Option)?;
+        let option = pop_cast!(stack, Option);
         let branch = match option.unwrap() {
             None => {
                 trace_exit!("Yes");
@@ -111,7 +111,7 @@ impl Interpreter for IfNone {
 impl Interpreter for Loop {
     fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
         loop {
-            let cond = pop_cast!(stack, Bool)?;
+            let cond = pop_cast!(stack, Bool);
             if cond.is_true() {
                 trace_enter!("Step");
                 let res = self.body.execute(stack, scope, context);
@@ -127,7 +127,7 @@ impl Interpreter for Loop {
 impl Interpreter for LoopLeft {
     fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
         loop {
-            let or = pop_cast!(stack, Or)?;
+            let or = pop_cast!(stack, Or);
             let cond = or.is_left();
             stack.push(or.unwrap())?;
             if cond {
@@ -161,9 +161,15 @@ impl Interpreter for Map {
 
         let res = match src {
             StackItem::List(list) => {
-                let (input, val_type) = list.into_elements();
-                let output = if input.is_empty() { vec![] } else { process(input)? };
-                Ok(ListItem::new(output, val_type).into())
+                let (input, mut val_type) = list.into_elements();
+                let output = if input.is_empty() {
+                    vec![]
+                } else {
+                    let values = process(input)?;
+                    val_type = values.first().unwrap().get_type()?;
+                    values
+                };
+                ListItem::new(output, val_type).into()
             },
             StackItem::Map(map) => {
                 let keys = map.get_keys();
@@ -175,11 +181,11 @@ impl Interpreter for Map {
                     val_type = values.first().unwrap().get_type()?;
                     keys.into_iter().zip(values.into_iter()).collect()
                 };
-                Ok(MapItem::new(output, key_type, val_type).into())
+                MapItem::new(output, key_type, val_type).into()
             },
-            item => err_type!("ListItem or MapItem", item)
+            item => return err_mismatch!("ListItem or MapItem", item)
         };
-        stack.push(res?)
+        stack.push(res)
     }
 }
 
@@ -189,7 +195,7 @@ impl Interpreter for Iter {
             StackItem::Set(set) => set.into_elements().0,
             StackItem::List(list) => list.into_elements().0,
             StackItem::Map(map) => map.into_pairs().0,
-            item => return err_type!("SetItem, ListItem, or MapItem", item)
+            item => return err_mismatch!("SetItem, ListItem, or MapItem", item)
         };
         for item in input {
             stack.push(item)?;
@@ -199,5 +205,13 @@ impl Interpreter for Iter {
             res?;
         }
         Ok(())
+    }
+}
+
+// Used in some of the E2E tests
+impl PureInterpreter for Cast {
+    fn execute(&self, stack: &mut Stack) -> Result<()> {
+        let item = stack.dup_at(0)?;
+        item.type_check(&self.r#type)
     }
 }

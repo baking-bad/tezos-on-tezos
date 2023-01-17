@@ -1,0 +1,68 @@
+[
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "int"
+          }
+        ],
+        "prim": "set"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "int"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "CAR"
+        },
+        {
+          "args": [
+            {
+              "prim": "int"
+            },
+            {
+              "int": "0"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "SWAP"
+        },
+        {
+          "args": [
+            [
+              {
+                "prim": "ADD"
+              }
+            ]
+          ],
+          "prim": "ITER"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

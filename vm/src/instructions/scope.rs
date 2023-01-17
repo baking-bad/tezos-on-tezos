@@ -1,5 +1,5 @@
 use tezos_michelson::michelson::data::instructions::{
-    Amount, Sender, Source, Now, Level, SelfAddress, ChainId, Self_, Balance
+    Amount, Sender, Source, Now, Level, SelfAddress, ChainId, Balance
 };
 use tezos_core::types::{
     encoded
@@ -8,7 +8,7 @@ use tezos_core::types::{
 use crate::{
     Result,
     interpreter::{ScopedInterpreter, OperationScope},
-    types::{MutezItem, AddressItem, TimestampItem, NatItem, ChainIdItem, ContractItem},
+    types::{MutezItem, AddressItem, TimestampItem, NatItem, ChainIdItem},
     stack::Stack,
 };
 
@@ -58,16 +58,6 @@ impl ScopedInterpreter for SelfAddress {
     fn execute(&self, stack: &mut Stack, scope: &OperationScope) -> Result<()> {
         let self_address = AddressItem::new(encoded::Address::Originated(scope.self_address.clone()));
         stack.push(self_address.into())
-    }
-}
-
-impl ScopedInterpreter for Self_ {
-    fn execute(&self, stack: &mut Stack, scope: &OperationScope) -> Result<()> {
-        let self_ = ContractItem::new(
-            scope.self_address.clone().into(), 
-            scope.self_type.clone().try_into()?
-        );
-        stack.push(self_.into())
     }
 }
 

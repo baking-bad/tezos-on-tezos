@@ -1,0 +1,42 @@
+[
+  {
+    "args": [
+      {
+        "string": "slice.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "int": "0"
+          },
+          {
+            "int": "0"
+          }
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "None"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "prim": "None"
+      }
+    ],
+    "prim": "result"
+  }
+]

@@ -1,0 +1,67 @@
+[
+  {
+    "args": [
+      {
+        "string": "comb-set-2.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "int": "1"
+          },
+          {
+            "int": "4"
+          },
+          {
+            "int": "2"
+          },
+          {
+            "prim": "Unit"
+          }
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "None"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "args": [
+              {
+                "int": "2"
+              },
+              {
+                "int": "4"
+              },
+              {
+                "string": "toto"
+              },
+              {
+                "bytes": "01"
+              }
+            ],
+            "prim": "Pair"
+          }
+        ],
+        "prim": "Some"
+      }
+    ],
+    "prim": "result"
+  }
+]

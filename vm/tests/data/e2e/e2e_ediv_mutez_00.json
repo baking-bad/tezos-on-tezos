@@ -1,0 +1,70 @@
+[
+  {
+    "args": [
+      {
+        "string": "ediv_mutez.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "int": "10"
+          },
+          {
+            "args": [
+              {
+                "int": "10"
+              }
+            ],
+            "prim": "Left"
+          }
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "None"
+          }
+        ],
+        "prim": "Left"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "args": [
+              {
+                "args": [
+                  {
+                    "int": "1"
+                  },
+                  {
+                    "int": "0"
+                  }
+                ],
+                "prim": "Pair"
+              }
+            ],
+            "prim": "Some"
+          }
+        ],
+        "prim": "Left"
+      }
+    ],
+    "prim": "result"
+  }
+]

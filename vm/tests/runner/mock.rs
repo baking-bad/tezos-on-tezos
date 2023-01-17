@@ -83,10 +83,11 @@ impl InterpreterContext for MockContext {
     }
 
     fn allocate_big_map(&mut self, owner: encoded::ContractAddress) -> Result<i64> {
+        let counter = self.big_map_counter;
         self.big_map_counter += 1;
-        trace_log!("Alloc", self.big_map_counter);
-        self.big_maps.insert(self.big_map_counter.clone(), owner);
-        Ok(self.big_map_counter)
+        trace_log!("Alloc", counter);
+        self.big_maps.insert(counter, owner);
+        Ok(counter)
     }
 
     fn get_big_map_owner(&self, ptr: i64) -> Result<encoded::ContractAddress> {

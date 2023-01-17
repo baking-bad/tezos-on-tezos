@@ -1,0 +1,97 @@
+[
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "nat"
+          },
+          {
+            "prim": "address"
+          }
+        ],
+        "prim": "pair"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "bool"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "CAR"
+        },
+        {
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "string": "not_exist"
+            },
+            {
+              "prim": "bool"
+            }
+          ],
+          "prim": "VIEW"
+        },
+        [
+          {
+            "args": [
+              [
+                {
+                  "args": [
+                    {
+                      "prim": "bool"
+                    },
+                    {
+                      "prim": "False"
+                    }
+                  ],
+                  "prim": "PUSH"
+                }
+              ],
+              [
+                {
+                  "prim": "DROP"
+                },
+                {
+                  "args": [
+                    {
+                      "prim": "bool"
+                    },
+                    {
+                      "prim": "True"
+                    }
+                  ],
+                  "prim": "PUSH"
+                }
+              ]
+            ],
+            "prim": "IF_NONE"
+          }
+        ],
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

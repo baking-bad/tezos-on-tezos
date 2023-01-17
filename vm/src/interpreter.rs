@@ -7,11 +7,12 @@ use tezos_core::types::{
 
 use crate::{
     Result,
-    Error,
     stack::Stack,
+    formatter::Formatter,
     types::{StackItem, BigMapDiff},
     trace_enter,
-    trace_exit
+    trace_exit,
+    err_unsupported
 };
 
 pub trait InterpreterContext {
@@ -72,7 +73,7 @@ impl Interpreter for Instruction {
             Instruction::Dig(instr) => instr.execute(stack),
             Instruction::Dug(instr) => instr.execute(stack),
             Instruction::Rename(_) => Ok(()),
-            Instruction::Cast(_) => Ok(()),
+            Instruction::Cast(instr) => instr.execute(stack),
             Instruction::FailWith(instr) => instr.execute(stack),
             Instruction::Dip(instr) => instr.execute(stack, scope, context),
             Instruction::If(instr) => return instr.execute(stack, scope, context),
@@ -94,6 +95,7 @@ impl Interpreter for Instruction {
             Instruction::Mul(instr) => instr.execute(stack),
             Instruction::Neg(instr) => instr.execute(stack),
             Instruction::Sub(instr) => instr.execute(stack),
+            Instruction::SubMutez(instr) => instr.execute(stack),
             Instruction::Int(instr) => instr.execute(stack),
             Instruction::IsNat(instr) => instr.execute(stack),
             Instruction::Or(instr) => instr.execute(stack),
@@ -143,7 +145,10 @@ impl Interpreter for Instruction {
             Instruction::ImplicitAccount(instr) => instr.execute(stack),
             Instruction::EmptyBigMap(instr) => instr.execute(stack, scope, context),
             Instruction::TransferTokens(instr) => instr.execute(stack, scope, context),
-            _ => Err(Error::MichelsonInstructionUnsupported { instruction: self.clone() }.into())
+            Instruction::Blake2B(instr) => instr.execute(stack),
+            Instruction::HashKey(instr) => instr.execute(stack),
+            Instruction::CheckSignature(instr) => instr.execute(stack),
+            _ => err_unsupported!(self.format())
         };
         trace_exit!(res.as_ref().err(), format!("Len {}", &stack.len()).as_str());
         res

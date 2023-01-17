@@ -1,0 +1,49 @@
+[
+  {
+    "args": [
+      {
+        "string": "left_right.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "string": "a"
+          }
+        ],
+        "prim": "Right"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "string": "X"
+          }
+        ],
+        "prim": "Left"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "string": "a"
+          }
+        ],
+        "prim": "Left"
+      }
+    ],
+    "prim": "result"
+  }
+]

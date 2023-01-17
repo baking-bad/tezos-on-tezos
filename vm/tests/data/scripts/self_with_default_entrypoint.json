@@ -1,0 +1,137 @@
+[
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "args": [
+              {
+                "annots": [
+                  "%A"
+                ],
+                "prim": "nat"
+              },
+              {
+                "annots": [
+                  "%B"
+                ],
+                "prim": "bool"
+              }
+            ],
+            "prim": "or"
+          },
+          {
+            "annots": [
+              "%maybe_C"
+            ],
+            "args": [
+              {
+                "annots": [
+                  "%default"
+                ],
+                "prim": "unit"
+              },
+              {
+                "annots": [
+                  "%C"
+                ],
+                "prim": "string"
+              }
+            ],
+            "prim": "or"
+          }
+        ],
+        "prim": "or"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "unit"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "DROP"
+        },
+        {
+          "prim": "SELF"
+        },
+        {
+          "prim": "DROP"
+        },
+        {
+          "annots": [
+            "%A"
+          ],
+          "prim": "SELF"
+        },
+        {
+          "prim": "DROP"
+        },
+        {
+          "annots": [
+            "%default"
+          ],
+          "prim": "SELF"
+        },
+        {
+          "prim": "PACK"
+        },
+        {
+          "prim": "SELF"
+        },
+        {
+          "prim": "PACK"
+        },
+        [
+          [
+            {
+              "prim": "COMPARE"
+            },
+            {
+              "prim": "EQ"
+            }
+          ],
+          {
+            "args": [
+              [],
+              [
+                [
+                  {
+                    "prim": "UNIT"
+                  },
+                  {
+                    "prim": "FAILWITH"
+                  }
+                ]
+              ]
+            ],
+            "prim": "IF"
+          }
+        ],
+        {
+          "prim": "UNIT"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

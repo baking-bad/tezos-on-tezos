@@ -11,7 +11,8 @@ use crate::{
     Result,
     types::{OptionItem, StackItem},
     typechecker::{check_types_equal},
-    err_type,
+    formatter::Formatter,
+    err_mismatch,
     type_cast
 };
 
@@ -31,12 +32,12 @@ impl OptionItem {
                 let inner = StackItem::from_data(*val.value, val_type)?;
                 Ok(Self::Some(Box::new(inner)).into())
             },
-            _ => err_type!("Data::None or Data::Some", data)
+            _ => err_mismatch!("None or Some", data.format())
         }
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        let ty = type_cast!(ty, Option)?;
+        let ty = type_cast!(ty, Option);
         match self {
             Self::None(inner_ty) => {
                 check_types_equal(&ty.r#type, &inner_ty)?;
@@ -65,7 +66,7 @@ impl OptionItem {
 
     pub fn get_type(&self) -> Result<Type> {
         match self {
-            Self::None(ty) => Ok(ty.clone()),
+            Self::None(ty) => Ok(types::option(ty.clone())),
             Self::Some(inner) => Ok(types::option(inner.get_type()?))
         }        
     }
@@ -75,7 +76,7 @@ impl Display for OptionItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Some(val) => f.write_fmt(format_args!("{}?", &val)),
-            Self::None(_) => f.write_str("None")
+            Self::None(_) => f.write_fmt(format_args!("None"))
         }
     }
 }

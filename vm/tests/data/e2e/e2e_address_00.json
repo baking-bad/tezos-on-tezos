@@ -1,0 +1,39 @@
+[
+  {
+    "args": [
+      {
+        "string": "address.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "string": "tz1cxcwwnzENRdhe2Kb8ZdTrdNy4bFNyScx5"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "None"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "string": "tz1cxcwwnzENRdhe2Kb8ZdTrdNy4bFNyScx5"
+          }
+        ],
+        "prim": "Some"
+      }
+    ],
+    "prim": "result"
+  }
+]

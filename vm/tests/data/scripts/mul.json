@@ -1,0 +1,405 @@
+[
+  {
+    "args": [
+      {
+        "prim": "unit"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "unit"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "CAR"
+        },
+        {
+          "prim": "DROP"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "7987"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "args": [
+            {
+              "prim": "mutez"
+            },
+            {
+              "int": "10"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "MUL"
+        },
+        {
+          "args": [
+            {
+              "prim": "mutez"
+            },
+            {
+              "int": "79870"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "COMPARE"
+        },
+        [
+          {
+            "prim": "EQ"
+          },
+          {
+            "args": [
+              [],
+              [
+                [
+                  {
+                    "prim": "UNIT"
+                  },
+                  {
+                    "prim": "FAILWITH"
+                  }
+                ]
+              ]
+            ],
+            "prim": "IF"
+          }
+        ],
+        {
+          "args": [
+            {
+              "prim": "mutez"
+            },
+            {
+              "int": "10"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "7987"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "MUL"
+        },
+        {
+          "args": [
+            {
+              "prim": "mutez"
+            },
+            {
+              "int": "79870"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "COMPARE"
+        },
+        [
+          {
+            "prim": "EQ"
+          },
+          {
+            "args": [
+              [],
+              [
+                [
+                  {
+                    "prim": "UNIT"
+                  },
+                  {
+                    "prim": "FAILWITH"
+                  }
+                ]
+              ]
+            ],
+            "prim": "IF"
+          }
+        ],
+        {
+          "args": [
+            {
+              "prim": "int"
+            },
+            {
+              "int": "10"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "args": [
+            {
+              "prim": "int"
+            },
+            {
+              "int": "-7987"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "MUL"
+        },
+        {
+          "args": [
+            {
+              "prim": "int"
+            },
+            {
+              "int": "-79870"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "COMPARE"
+        },
+        [
+          {
+            "prim": "EQ"
+          },
+          {
+            "args": [
+              [],
+              [
+                [
+                  {
+                    "prim": "UNIT"
+                  },
+                  {
+                    "prim": "FAILWITH"
+                  }
+                ]
+              ]
+            ],
+            "prim": "IF"
+          }
+        ],
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "10"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "args": [
+            {
+              "prim": "int"
+            },
+            {
+              "int": "-7987"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "MUL"
+        },
+        {
+          "args": [
+            {
+              "prim": "int"
+            },
+            {
+              "int": "-79870"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "COMPARE"
+        },
+        [
+          {
+            "prim": "EQ"
+          },
+          {
+            "args": [
+              [],
+              [
+                [
+                  {
+                    "prim": "UNIT"
+                  },
+                  {
+                    "prim": "FAILWITH"
+                  }
+                ]
+              ]
+            ],
+            "prim": "IF"
+          }
+        ],
+        {
+          "args": [
+            {
+              "prim": "int"
+            },
+            {
+              "int": "-10"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "7987"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "MUL"
+        },
+        {
+          "args": [
+            {
+              "prim": "int"
+            },
+            {
+              "int": "-79870"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "COMPARE"
+        },
+        [
+          {
+            "prim": "EQ"
+          },
+          {
+            "args": [
+              [],
+              [
+                [
+                  {
+                    "prim": "UNIT"
+                  },
+                  {
+                    "prim": "FAILWITH"
+                  }
+                ]
+              ]
+            ],
+            "prim": "IF"
+          }
+        ],
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "10"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "7987"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "MUL"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "79870"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "COMPARE"
+        },
+        [
+          {
+            "prim": "EQ"
+          },
+          {
+            "args": [
+              [],
+              [
+                [
+                  {
+                    "prim": "UNIT"
+                  },
+                  {
+                    "prim": "FAILWITH"
+                  }
+                ]
+              ]
+            ],
+            "prim": "IF"
+          }
+        ],
+        {
+          "prim": "UNIT"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

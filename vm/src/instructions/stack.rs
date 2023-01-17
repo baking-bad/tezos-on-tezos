@@ -4,7 +4,8 @@ use crate::{
     Result,
     interpreter::PureInterpreter,
     types::StackItem,
-    stack::Stack
+    stack::Stack,
+    err_unsupported
 };
 
 impl PureInterpreter for Push {
@@ -30,12 +31,15 @@ impl PureInterpreter for Drop {
 
 impl PureInterpreter for Dup {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let depth: usize = match &self.n {
+        let n: usize = match &self.n {
             Some(n) => n.to_integer()?,
-            None => 0
+            None => 1
         };
+        if n == 0 {
+            return err_unsupported!("DUP 0")
+        }
         // TODO: check if copyable
-        let res = stack.dup_at(depth)?;
+        let res = stack.dup_at(n - 1)?;
         stack.push(res)
     }
 }
@@ -43,7 +47,8 @@ impl PureInterpreter for Dup {
 impl PureInterpreter for Swap {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let item = stack.pop()?;
-        stack.push_at(1, item)
+        stack.push_at(1, item)?;
+        stack.top()
     }
 }
 

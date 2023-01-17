@@ -1,0 +1,75 @@
+[
+  {
+    "args": [
+      {
+        "string": "get_map_value.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "string": "hello"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "None"
+          },
+          [
+            {
+              "args": [
+                {
+                  "string": "hello"
+                },
+                {
+                  "string": "hi"
+                }
+              ],
+              "prim": "Elt"
+            }
+          ]
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "args": [
+              {
+                "string": "hi"
+              }
+            ],
+            "prim": "Some"
+          },
+          [
+            {
+              "args": [
+                {
+                  "string": "hello"
+                },
+                {
+                  "string": "hi"
+                }
+              ],
+              "prim": "Elt"
+            }
+          ]
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "result"
+  }
+]

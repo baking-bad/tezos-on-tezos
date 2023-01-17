@@ -1,4 +1,5 @@
 use tezos_michelson::michelson::{
+    Michelson,
     data::Data,
     types::{Type, ComparableType},
     types,
@@ -6,18 +7,19 @@ use tezos_michelson::michelson::{
 use tezos_michelson::micheline::Micheline;
 
 use crate::{
-    Error,
     Result,
     types::*,
-    err_type
+    formatter::Formatter,
+    err_mismatch,
+    err_unsupported
 };
 
 #[macro_export]
 macro_rules! type_cast {
     ($typ: expr, $var: ident) => {
         match $typ {
-            Type::$var(var) => Ok(var),
-            _ => err_type!($typ, stringify!($var))
+            Type::$var(var) => var,
+            _ => return err_mismatch!($typ.format(), stringify!($var))
         }
     };
 }
@@ -26,8 +28,8 @@ macro_rules! type_cast {
 macro_rules! comparable_type_cast {
     ($typ: expr, $var: ident) => {
         match $typ {
-            Type::Comparable(ComparableType::$var(var)) => Ok(var),
-            _ => err_type!($typ, stringify!($var))
+            Type::Comparable(ComparableType::$var(var)) => var,
+            _ => return err_mismatch!($typ.format(), stringify!($var))
         }
     };
 }
@@ -42,10 +44,17 @@ pub fn type_comparable(ty: &Type) -> bool {
     }
 }
 
+pub fn check_pair_len(len: usize) -> Result<()> {
+    match len {
+        2 => Ok(()),
+        i => err_mismatch!("2 args", i)
+    }
+}
+
 pub fn check_type_comparable(ty: &Type) -> Result<()> {
     match type_comparable(ty) {
         true => Ok(()),
-        false => err_type!("Comparable type", ty),
+        false => err_mismatch!("ComparableType", ty.format()),
     }
 }
 
@@ -69,7 +78,7 @@ pub fn comparable_types_equal(lhs: &ComparableType, rhs: &ComparableType) -> Res
         ComparableType::Key(_) => Ok(true),
         ComparableType::KeyHash(_) => Ok(true),
         ComparableType::Signature(_) => Ok(true),
-        _ => Err(Error::MichelsonTypeUnsupported { ty: lhs.clone().into() }.into())
+        _ => err_unsupported!(lhs.format())
     }
 }
 
@@ -88,8 +97,8 @@ pub fn types_equal(lhs: &Type, rhs: &Type) -> Result<bool> {
             types_equal(&lty.rhs, &rty.rhs)
         },
         (Type::Pair(lty), Type::Pair(rty)) => {
-            assert_eq!(2, lty.types.len());
-            assert_eq!(2, rty.types.len());
+            check_pair_len(lty.types.len())?;
+            check_pair_len(rty.types.len())?;
             types_equal(&lty.types[0], &rty.types[0])?;
             types_equal(&lty.types[1], &rty.types[1])
         },
@@ -110,14 +119,14 @@ pub fn types_equal(lhs: &Type, rhs: &Type) -> Result<bool> {
         (Type::Contract(lty), Type::Contract(rty)) => types_equal(&lty.r#type, &rty.r#type),
         (Type::Parameter(lty), Type::Parameter(rty)) => types_equal(&lty.r#type, &rty.r#type),
         (Type::Storage(lty), Type::Storage(rty)) => types_equal(&lty.r#type, &rty.r#type),
-        _ => Err(Error::MichelsonTypeUnsupported { ty: lhs.clone() }.into())
+        _ => err_unsupported!(lhs.format())
     }
 }
 
 pub fn check_types_equal(lhs: &Type, rhs: &Type) -> Result<()> {
     match types_equal(lhs, rhs) {
         Ok(true) => Ok(()),
-        Ok(false) => err_type!(lhs, rhs),
+        Ok(false) => err_mismatch!(lhs.format(), rhs.format()),
         Err(err) => Err(err)
     }
 }
@@ -139,12 +148,12 @@ impl StackItem {
                 ComparableType::KeyHash(_) => KeyHashItem::from_data(data),
                 ComparableType::Signature(_) => SignatureItem::from_data(data),
                 ComparableType::ChainId(_) => ChainIdItem::from_data(data),
-                _ => Err(Error::MichelsonTypeUnsupported { ty: ty.clone() }.into())
+                _ => err_unsupported!(ty.format())
             },
             Type::Option(option_ty) => OptionItem::from_data(data, &option_ty.r#type),
             Type::Or(or_ty) => OrItem::from_data(data, &or_ty.lhs, &or_ty.rhs),
             Type::Pair(pair_ty) => {
-                assert_eq!(2, pair_ty.types.len());
+                check_pair_len(pair_ty.types.len())?;
                 PairItem::from_data(data, &pair_ty.types[0], &pair_ty.types[1])
             },
             Type::List(list_ty) => ListItem::from_data(data, &list_ty.r#type),
@@ -155,7 +164,7 @@ impl StackItem {
             Type::Contract(contract_ty) => ContractItem::from_data(data, &contract_ty.r#type),
             Type::Parameter(param_ty) => StackItem::from_data(data, &param_ty.r#type),
             Type::Storage(storage_ty) => StackItem::from_data(data, &storage_ty.r#type),
-            _ => Err(Error::MichelsonTypeUnsupported { ty: ty.clone() }.into())
+            _ => err_unsupported!(ty.format())
         }
     }
 
@@ -180,10 +189,10 @@ impl StackItem {
             StackItem::List(item) => item.into_data(ty),
             StackItem::Set(item) => item.into_data(ty),
             StackItem::Map(item) => item.into_data(ty),
-            StackItem::BigMap(item) => item.into_data(ty),
+            StackItem::BigMap(item) => item.into_data(),
             StackItem::Lambda(item) => item.into_data(ty),
             StackItem::Contract(item) => item.into_data(ty),
-            _ => Err(Error::MichelsonTypeUnsupported { ty: ty.clone() }.into())
+            _ => err_unsupported!(ty.format())
         }
     }
 
@@ -216,14 +225,20 @@ impl StackItem {
     }
 
     pub fn type_check(&self, ty: &Type) -> Result<()> {
-        match types_equal(ty, &self.get_type()?)? {
+        let item_ty = self.get_type()?;
+        match types_equal(ty, &item_ty)? {
             true => Ok(()),
-            false => err_type!(ty, self) 
+            false => err_mismatch!(ty.format(), item_ty.format()) 
         }
     }
 
     pub fn from_micheline(expr: Micheline, ty: &Type) -> Result<Self> {
         Self::from_data(expr.try_into()?, ty)
+    }
+
+    pub fn from_bytes(data: Vec<u8>, ty: &Type) -> Result<Self> {
+        let src = Michelson::unpack(data.as_slice(), Some(ty))?;
+        Self::from_data(src.try_into()?, ty)
     }
 
     pub fn into_micheline(self, ty: &Type) -> Result<Micheline> {

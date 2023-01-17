@@ -1,0 +1,66 @@
+[
+  {
+    "args": [
+      {
+        "prim": "key"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "nat"
+          },
+          {
+            "prim": "nat"
+          }
+        ],
+        "prim": "pair"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "CAR"
+        },
+        {
+          "prim": "HASH_KEY"
+        },
+        {
+          "prim": "VOTING_POWER"
+        },
+        {
+          "args": [
+            [
+              {
+                "prim": "TOTAL_VOTING_POWER"
+              }
+            ]
+          ],
+          "prim": "DIP"
+        },
+        {
+          "prim": "PAIR"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]
