@@ -7,11 +7,8 @@ async fn head() -> impl Responder {
 
 #[actix_web::main] // or #[tokio::main]
 async fn main() -> std::io::Result<()> {
-
-    HttpServer::new(|| {
-        App::new().service(head)
-    })
-    .bind(("127.0.0.1", 8080))?
-    .run()
-    .await
+    HttpServer::new(|| App::new().service(head))
+        .bind(("127.0.0.1", 8080))?
+        .run()
+        .await
 }

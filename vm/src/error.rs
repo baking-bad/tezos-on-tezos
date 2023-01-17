@@ -1,21 +1,18 @@
 use derive_more::{Display, Error};
-use std::{
-    backtrace::Backtrace,
-    fmt::Display
-};
+use std::{backtrace::Backtrace, fmt::Display};
 use tezos_michelson::micheline::Micheline;
 
 #[derive(Debug, Display)]
 pub enum InternalKind {
     Parsing,
-    Typechecking
+    Typechecking,
 }
 
 #[derive(Debug)]
 pub struct InternalError {
     pub kind: InternalKind,
     pub message: String,
-    pub backtrace: Backtrace
+    pub backtrace: Backtrace,
 }
 
 impl InternalError {
@@ -23,12 +20,15 @@ impl InternalError {
         Self {
             kind,
             message,
-            backtrace: Backtrace::capture()
+            backtrace: Backtrace::capture(),
         }
     }
 
     pub fn print(&self) {
-        println!("{} error\n{}\nStacktrace:\n{}", self.kind, self.message, self.backtrace)
+        println!(
+            "{} error\n{}\nStacktrace:\n{}",
+            self.kind, self.message, self.backtrace
+        )
     }
 }
 
@@ -55,23 +55,23 @@ pub enum Error {
     Internal(InternalError),
     #[display(fmt = "ScriptFailed")]
     ScriptFailed {
-        with: Micheline
+        with: Micheline,
     },
     #[display(fmt = "ContractNotFound: {}", address)]
     ContractNotFound {
-        address: String
+        address: String,
     },
     #[display(fmt = "EntrypointNotFound: {}", name)]
     EntrypointNotFound {
-        name: String
+        name: String,
     },
     #[display(fmt = "ConflictingEntrypoints: {}", address)]
     ConflictingEntrypoints {
-        address: String
+        address: String,
     },
     #[display(fmt = "BadStack at: {}", location)]
     BadStack {
-        location: usize
+        location: usize,
     },
     #[display(fmt = "BadReturn")]
     BadReturn,
@@ -81,7 +81,7 @@ pub enum Error {
     },
     #[display(fmt = "BigMapNotAllocated: {}", ptr)]
     BigMapNotAllocated {
-        ptr: i64
+        ptr: i64,
     },
     #[display(fmt = "MutezOverflow")]
     MutezOverflow,
@@ -108,7 +108,12 @@ macro_rules! internal_error {
 #[macro_export]
 macro_rules! err_mismatch {
     ($expected: expr, $found: expr) => {
-        Err($crate::internal_error!(Typechecking, "Expected: {}\nFound: {}", $expected, $found))
+        Err($crate::internal_error!(
+            Typechecking,
+            "Expected: {}\nFound: {}",
+            $expected,
+            $found
+        ))
     };
 }
 
@@ -123,9 +128,14 @@ macro_rules! impl_parsing_error {
     ($inner_err_ty: ty) => {
         impl From<$inner_err_ty> for Error {
             fn from(error: $inner_err_ty) -> Self {
-                $crate::internal_error!(Parsing, "{} (caused by {})", error.to_string(), stringify!($inner_err_ty))
+                $crate::internal_error!(
+                    Parsing,
+                    "{} (caused by {})",
+                    error.to_string(),
+                    stringify!($inner_err_ty)
+                )
             }
-        }        
+        }
     };
 }
 
@@ -148,10 +158,10 @@ impl Error {
             Self::ScriptFailed { with } => {
                 let msg = match serde_json_wasm::to_string(with) {
                     Ok(res) => res,
-                    Err(err) => err.to_string()
+                    Err(err) => err.to_string(),
                 };
                 println!("Script failed\nWith: {}", msg);
-            },
+            }
             err => println!("{:#?}", err),
         }
     }

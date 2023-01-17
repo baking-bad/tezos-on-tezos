@@ -1,25 +1,26 @@
-use std::fmt::Display;
-use std::ops::{Add, Div, Mul, Neg, Sub, BitAnd, Not};
-use ibig::{IBig, UBig};
 use ibig::ops::{Abs, UnsignedAbs};
+use ibig::{IBig, UBig};
+use std::fmt::Display;
+use std::ops::{Add, BitAnd, Div, Mul, Neg, Not, Sub};
 use tezos_michelson::michelson::{
     data::Data,
-    types::{Type, ComparableType, int, nat, pair}
+    types::{int, nat, pair, ComparableType, Type},
 };
 
 use crate::{
-    Result,
-    types::{IntItem, NatItem, StackItem, OptionItem, PairItem},
+    comparable_type_cast, err_mismatch,
     formatter::Formatter,
-    err_mismatch,
-    comparable_type_cast
+    types::{IntItem, NatItem, OptionItem, PairItem, StackItem},
+    Result,
 };
 
 impl IntItem {
     pub fn from_data(data: Data) -> Result<StackItem> {
         match data {
-            Data::Int(val) => Ok(StackItem::Int(IBig::from_str_radix(val.to_str(), 10)?.into())),
-            _ => err_mismatch!("Int", data.format())
+            Data::Int(val) => Ok(StackItem::Int(
+                IBig::from_str_radix(val.to_str(), 10)?.into(),
+            )),
+            _ => err_mismatch!("Int", data.format()),
         }
     }
 
@@ -98,10 +99,13 @@ impl Div<IntItem> for IntItem {
                 r += rhs.0.abs();
                 q += 1
             }
-            OptionItem::some(PairItem::new(
-                IntItem(q).into(), 
-                NatItem(UBig::try_from(r).expect("positive remainder")).into()
-            ).into())
+            OptionItem::some(
+                PairItem::new(
+                    IntItem(q).into(),
+                    NatItem(UBig::try_from(r).expect("positive remainder")).into(),
+                )
+                .into(),
+            )
         }
     }
 }
@@ -126,7 +130,7 @@ impl BitAnd<NatItem> for IntItem {
     type Output = Result<NatItem>;
 
     fn bitand(self, rhs: NatItem) -> Self::Output {
-        let a: i128 = self.0.try_into()?;  // FIXME: find generic solution
+        let a: i128 = self.0.try_into()?; // FIXME: find generic solution
         Ok(NatItem(a & rhs.0))
     }
 }

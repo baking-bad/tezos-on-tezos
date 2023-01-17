@@ -1,15 +1,15 @@
 use tezos_michelson::michelson::{
-    data::instructions::{Unit, Car, Cdr, Pair, Unpair, None, Some, Left, Right},
-    data::Nat
+    data::instructions::{Car, Cdr, Left, None, Pair, Right, Some, Unit, Unpair},
+    data::Nat,
 };
 
 use crate::{
-    Result,
-    interpreter::{PureInterpreter},
-    types::{StackItem, PairItem, OptionItem, OrItem},
-    stack::Stack,
+    err_mismatch,
+    interpreter::PureInterpreter,
     pop_cast,
-    err_mismatch
+    stack::Stack,
+    types::{OptionItem, OrItem, PairItem, StackItem},
+    Result,
 };
 
 impl PureInterpreter for Unit {
@@ -37,10 +37,10 @@ impl PureInterpreter for Cdr {
 fn parse_arity(n: &Option<Nat>) -> Result<usize> {
     let n: usize = match n {
         Some(n) => n.to_integer()?,
-        None => 2
+        None => 2,
     };
     if n < 2 {
-        return err_mismatch!(">=2 args", n)
+        return err_mismatch!(">=2 args", n);
     }
     Ok(n)
 }

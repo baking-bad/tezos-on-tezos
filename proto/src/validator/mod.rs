@@ -1,7 +1,7 @@
-mod operation;
 mod batch;
+mod operation;
 
 pub use crate::validator::{
+    batch::validate_batch,
     operation::{validate_operation, ManagerOperation},
-    batch::{validate_batch}
 };

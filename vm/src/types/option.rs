@@ -1,26 +1,20 @@
-
 use std::fmt::Display;
-use tezos_michelson::michelson::{
-    data::Data,
-    data,
-    types::Type,
-    types
-};
+use tezos_michelson::michelson::{data, data::Data, types, types::Type};
 
 use crate::{
-    Result,
-    types::{OptionItem, StackItem},
-    typechecker::{check_types_equal},
-    formatter::Formatter,
     err_mismatch,
-    type_cast
+    formatter::Formatter,
+    type_cast,
+    typechecker::check_types_equal,
+    types::{OptionItem, StackItem},
+    Result,
 };
 
 impl OptionItem {
     pub fn some(item: StackItem) -> Self {
         Self::Some(Box::new(item))
     }
-    
+
     pub fn none(ty: &Type) -> Self {
         Self::None(ty.clone())
     }
@@ -31,8 +25,8 @@ impl OptionItem {
             Data::Some(val) => {
                 let inner = StackItem::from_data(*val.value, val_type)?;
                 Ok(Self::Some(Box::new(inner)).into())
-            },
-            _ => err_mismatch!("None or Some", data.format())
+            }
+            _ => err_mismatch!("None or Some", data.format()),
         }
     }
 
@@ -42,7 +36,7 @@ impl OptionItem {
             Self::None(inner_ty) => {
                 check_types_equal(&ty.r#type, &inner_ty)?;
                 Ok(Data::None(data::none()))
-            },
+            }
             Self::Some(val) => {
                 let inner = (*val).into_data(&ty.r#type)?;
                 Ok(Data::Some(data::some(inner)))
@@ -53,22 +47,22 @@ impl OptionItem {
     pub fn is_none(&self) -> bool {
         match self {
             Self::None(_) => true,
-            Self::Some(_) => false
+            Self::Some(_) => false,
         }
     }
 
     pub fn unwrap(self) -> Option<StackItem> {
         match self {
             Self::Some(value) => Some(*value),
-            Self::None(_) => None
+            Self::None(_) => None,
         }
     }
 
     pub fn get_type(&self) -> Result<Type> {
         match self {
             Self::None(ty) => Ok(types::option(ty.clone())),
-            Self::Some(inner) => Ok(types::option(inner.get_type()?))
-        }        
+            Self::Some(inner) => Ok(types::option(inner.get_type()?)),
+        }
     }
 }
 
@@ -76,7 +70,7 @@ impl Display for OptionItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Some(val) => f.write_fmt(format_args!("{}?", &val)),
-            Self::None(_) => f.write_fmt(format_args!("None"))
+            Self::None(_) => f.write_fmt(format_args!("None")),
         }
     }
 }
@@ -88,7 +82,7 @@ impl PartialEq for OptionItem {
         match (self, rhs) {
             (Self::None(_), Self::None(_)) => true,
             (Self::Some(lval), Self::Some(rval)) => lval == rval,
-            _ => false
+            _ => false,
         }
     }
 }
@@ -99,7 +93,7 @@ impl Ord for OptionItem {
             (Self::None(_), Self::Some(_)) => std::cmp::Ordering::Less,
             (Self::Some(_), Self::None(_)) => std::cmp::Ordering::Greater,
             (Self::None(_), Self::None(_)) => std::cmp::Ordering::Equal,
-            (Self::Some(lval), Self::Some(rval)) => lval.cmp(&rval)
+            (Self::Some(lval), Self::Some(rval)) => lval.cmp(&rval),
         }
     }
 }

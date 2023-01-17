@@ -1,19 +1,21 @@
-use std::ops::Deref;
-use serde_json_wasm;
 use derive_more::{From, TryInto};
+use serde_json_wasm;
+use std::ops::Deref;
 
 use tezos_core::types::{
-    encoded::{Encoded, PublicKey, Address, ImplicitAddress, BlockHash, OperationHash, ContractAddress},
+    encoded::{
+        Address, BlockHash, ContractAddress, Encoded, ImplicitAddress, OperationHash, PublicKey,
+    },
     mutez::Mutez,
-    number::Nat
+    number::Nat,
 };
 use tezos_michelson::micheline::Micheline;
 use tezos_rpc::models::operation::Operation as OperationReceipt;
 
 use crate::{
-    context::{head::Head, checksum::Checksum},
+    context::{checksum::Checksum, head::Head},
     producer::types::BatchReceipt,
-    Result
+    Result,
 };
 
 #[derive(Debug, Clone, From, TryInto)]
@@ -27,7 +29,7 @@ pub enum ContextNode {
     Head(Head),
     OperationReceipt(OperationReceipt),
     BatchReceipt(BatchReceipt),
-    Micheline(Micheline)
+    Micheline(Micheline),
 }
 
 impl ContextNode {
@@ -47,7 +49,7 @@ impl ContextNode {
     }
 }
 
-pub trait ContextNodeType : Clone {
+pub trait ContextNodeType: Clone {
     fn encode(&self) -> Result<Vec<u8>>;
     fn decode(bytes: &[u8]) -> Result<ContextNode>;
     fn unwrap(node: ContextNode) -> Self;
@@ -61,19 +63,19 @@ macro_rules! context_node_type_core {
             fn decode(bytes: &[u8]) -> Result<ContextNode> {
                 match Self::from_bytes(bytes) {
                     Ok(value) => Ok(value.into()),
-                    Err(error) => Err(error.into())
+                    Err(error) => Err(error.into()),
                 }
             }
 
             fn encode(&self) -> Result<Vec<u8>> {
                 self.to_bytes().map_err(|e| e.into())
             }
-        
+
             fn unwrap(node: ContextNode) -> Self {
                 node.try_into().unwrap()
             }
-        
-            fn wrap(self) -> ContextNode { 
+
+            fn wrap(self) -> ContextNode {
                 self.into()
             }
 
@@ -99,19 +101,19 @@ macro_rules! context_node_type_rpc {
             fn decode(bytes: &[u8]) -> Result<ContextNode> {
                 match serde_json_wasm::from_slice::<$ty>(bytes) {
                     Ok(value) => Ok(value.into()),
-                    Err(error) => Err(error.into())
+                    Err(error) => Err(error.into()),
                 }
             }
 
             fn encode(&self) -> Result<Vec<u8>> {
                 serde_json_wasm::to_vec(self).map_err(|e| e.into())
             }
-        
+
             fn unwrap(node: ContextNode) -> Self {
                 node.try_into().unwrap()
             }
-        
-            fn wrap(self) -> ContextNode { 
+
+            fn wrap(self) -> ContextNode {
                 self.into()
             }
 

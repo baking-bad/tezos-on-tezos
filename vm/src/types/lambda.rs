@@ -1,16 +1,16 @@
 use std::fmt::Display;
 use tezos_michelson::michelson::{
-    types::Type,
-    types,
     data::{Data, Instruction},
+    types,
+    types::Type,
 };
 
 use crate::{
-    Result,
-    types::{LambdaItem, StackItem},
-    formatter::Formatter,
     err_mismatch,
-    type_cast
+    formatter::Formatter,
+    type_cast,
+    types::{LambdaItem, StackItem},
+    Result,
 };
 
 fn parse_instruction(data: Data) -> Result<Instruction> {
@@ -23,14 +23,17 @@ fn parse_instruction(data: Data) -> Result<Instruction> {
                 instructions.push(parse_instruction(value)?);
             }
             Ok(Instruction::Sequence(instructions.into()))
-        },
-        _ => err_mismatch!("Instruction or Sequence", data.format())
+        }
+        _ => err_mismatch!("Instruction or Sequence", data.format()),
     }
 }
 
 impl LambdaItem {
     pub fn new(param_type: Type, return_type: Type, body: Instruction) -> Self {
-        Self { outer_value: body, inner_type: (param_type, return_type) }
+        Self {
+            outer_value: body,
+            inner_type: (param_type, return_type),
+        }
     }
 
     pub fn from_data(data: Data, parameter_type: &Type, return_type: &Type) -> Result<StackItem> {
@@ -42,10 +45,13 @@ impl LambdaItem {
     pub fn into_data(self, ty: &Type) -> Result<Data> {
         type_cast!(ty, Lambda);
         Ok(Data::Instruction(self.outer_value))
-    } 
+    }
 
     pub fn get_type(&self) -> Result<Type> {
-        Ok(types::lambda(self.inner_type.0.clone(), self.inner_type.1.clone()))
+        Ok(types::lambda(
+            self.inner_type.0.clone(),
+            self.inner_type.1.clone(),
+        ))
     }
 
     pub fn unwrap(self) -> (Instruction, (Type, Type)) {

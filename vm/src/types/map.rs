@@ -1,25 +1,28 @@
 use std::fmt::Display;
 use tezos_michelson::michelson::{
+    data,
     data::{Data, Sequence},
-    types::Type,
     types,
-    data
+    types::Type,
 };
 
 use crate::{
-    Result,
-    types::{MapItem, StackItem, PairItem, OptionItem},
-    typechecker::check_types_equal,
-    formatter::Formatter,
     err_mismatch,
-    type_cast
+    formatter::Formatter,
+    type_cast,
+    typechecker::check_types_equal,
+    types::{MapItem, OptionItem, PairItem, StackItem},
+    Result,
 };
 
 impl MapItem {
     pub fn new(items: Vec<(StackItem, StackItem)>, key_type: Type, val_type: Type) -> Self {
         let mut items = items;
         items.sort_unstable_by(|(k1, _), (k2, _)| k1.cmp(&k2));
-        Self { outer_value: items, inner_type: (key_type, val_type) }
+        Self {
+            outer_value: items,
+            inner_type: (key_type, val_type),
+        }
     }
 
     pub fn from_sequence(sequence: Sequence, key_type: Type, val_type: Type) -> Result<Self> {
@@ -31,10 +34,13 @@ impl MapItem {
                 let val = StackItem::from_data(*elt.value, &val_type)?;
                 items.push((key, val));
             } else {
-                return err_mismatch!(format!("Elt {} => {}", key_type.format(), val_type.format()), element.format());
+                return err_mismatch!(
+                    format!("Elt {} => {}", key_type.format(), val_type.format()),
+                    element.format()
+                );
             }
         }
-        return Ok(Self::new(items, key_type, val_type))
+        return Ok(Self::new(items, key_type, val_type));
     }
 
     pub fn from_elt_map(map: data::Map, key_type: Type, val_type: Type) -> Result<Self> {
@@ -45,7 +51,7 @@ impl MapItem {
             let val = StackItem::from_data(*elt.value, &val_type)?;
             items.push((key, val));
         }
-        return Ok(Self::new(items, key_type, val_type))
+        return Ok(Self::new(items, key_type, val_type));
     }
 
     pub fn from_data(data: Data, key_type: &Type, val_type: &Type) -> Result<StackItem> {
@@ -53,17 +59,17 @@ impl MapItem {
             Data::Sequence(sequence) => {
                 let item = Self::from_sequence(sequence, key_type.clone(), val_type.clone())?;
                 Ok(item.into())
-            },
+            }
             Data::Map(elt_map) => {
                 let item = Self::from_elt_map(elt_map, key_type.clone(), val_type.clone())?;
                 Ok(item.into())
             }
-            _ => err_mismatch!("Sequence or Map", data.format())
+            _ => err_mismatch!("Sequence or Map", data.format()),
         }
     }
 
     pub fn into_data(self, ty: &Type) -> Result<Data> {
-        let ty = type_cast!(ty, Map);        
+        let ty = type_cast!(ty, Map);
         if self.outer_value.is_empty() {
             check_types_equal(&ty.key_type, &self.inner_type.0)?;
             check_types_equal(&ty.value_type, &self.inner_type.1)?;
@@ -104,7 +110,7 @@ impl MapItem {
         key.type_check(&self.inner_type.0)?;
         match self.outer_value.iter().find(|(k, _)| k == key) {
             Some((_, val)) => Ok(OptionItem::Some(Box::new(val.clone()))),
-            None => Ok(OptionItem::None(self.inner_type.0.clone()))
+            None => Ok(OptionItem::None(self.inner_type.0.clone())),
         }
     }
 
@@ -117,7 +123,7 @@ impl MapItem {
                     self.outer_value.insert(pos, (key, val));
                 }
                 Ok(OptionItem::some(v))
-            },
+            }
             Err(pos) => {
                 if let Some(val) = val {
                     self.outer_value.insert(pos, (key, val));
@@ -154,7 +160,11 @@ impl Display for MapItem {
             f.write_fmt(format_args!("{} => {}", key, val))?;
         }
         if self.len() == 0 {
-            f.write_fmt(format_args!(" /* {} => {} */ ", self.inner_type.0.format(), self.inner_type.1.format()))?;
+            f.write_fmt(format_args!(
+                " /* {} => {} */ ",
+                self.inner_type.0.format(),
+                self.inner_type.1.format()
+            ))?;
         }
         f.write_str(" }")
     }

@@ -1,7 +1,7 @@
 mod runner;
 
-use vm::Result;
 use runner::tzt::TZT;
+use vm::Result;
 
 #[test]
 fn tzt_sub_timestamp_int_00() -> Result<()> {

@@ -1,6 +1,6 @@
-use tezos_core::types::encoded::{ContextHash, Encoded};
-use tezos_core::internal::crypto::blake2b;
 use crate::Result;
+use tezos_core::internal::crypto::blake2b;
+use tezos_core::types::encoded::{ContextHash, Encoded};
 
 const ZERO_32: &[u8; 32] = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
 
@@ -10,13 +10,15 @@ pub struct Checksum([u8; 32]);
 impl Checksum {
     pub fn default() -> Self {
         Self {
-            0: ZERO_32.to_owned()
+            0: ZERO_32.to_owned(),
         }
     }
 
     pub fn from_bytes(data: &[u8]) -> Result<Self> {
         Ok(Self {
-            0: data.try_into().map_err(|_| tezos_core::Error::InvalidBytes)?
+            0: data
+                .try_into()
+                .map_err(|_| tezos_core::Error::InvalidBytes)?,
         })
     }
 
@@ -26,7 +28,10 @@ impl Checksum {
 
     pub fn update(&mut self, value: &Vec<u8>) -> Result<()> {
         let digest = blake2b(value, 32)?;
-        self.0.iter_mut().zip(digest.iter()).for_each(|(a, b)| *a ^= *b);
+        self.0
+            .iter_mut()
+            .zip(digest.iter())
+            .for_each(|(a, b)| *a ^= *b);
         Ok(())
     }
 

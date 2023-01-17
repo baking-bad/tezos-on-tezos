@@ -1,18 +1,16 @@
-use std::fmt::Display;
-use std::ops::{Add, Div, Shl, Shr, Mul, Neg, Sub, BitOr, BitXor, BitAnd, Not};
 use ibig::{IBig, UBig};
+use std::fmt::Display;
+use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Not, Shl, Shr, Sub};
 use tezos_michelson::michelson::{
     data::Data,
-    types::{Type, ComparableType, nat, pair}
+    types::{nat, pair, ComparableType, Type},
 };
 
 use crate::{
-    Result,
-    Error,
-    types::{IntItem, NatItem, StackItem, OptionItem, PairItem},
+    comparable_type_cast, err_mismatch,
     formatter::Formatter,
-    err_mismatch,
-    comparable_type_cast
+    types::{IntItem, NatItem, OptionItem, PairItem, StackItem},
+    Error, Result,
 };
 
 impl NatItem {
@@ -20,7 +18,7 @@ impl NatItem {
         let val = match data {
             Data::Int(val) => UBig::from_str_radix(val.to_str(), 10)?,
             Data::Nat(val) => UBig::from_str_radix(val.to_str(), 10)?,
-            _ => return err_mismatch!("Int or Nat", data.format())
+            _ => return err_mismatch!("Int or Nat", data.format()),
         };
         Ok(StackItem::Nat(val.into()))
     }
@@ -95,7 +93,6 @@ impl Div<NatItem> for NatItem {
         }
     }
 }
-
 
 impl Shl<NatItem> for NatItem {
     type Output = Result<NatItem>;

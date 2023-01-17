@@ -1,10 +1,10 @@
-pub mod error;
 pub mod context;
-pub mod validator;
+pub mod error;
 pub mod executor;
 pub mod producer;
+pub mod validator;
 
-pub use error::{Result, Error};
+pub use error::{Error, Result};
 
 pub mod constants {
     pub const CHAIN_ID: &str = "NetXP2FfcNxFANL";

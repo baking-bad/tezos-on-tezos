@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
 use crate::context::{
+    types::{ContextNode, ContextNodeType},
     Context,
-    types::{ContextNode, ContextNodeType}
 };
 use crate::Result;
 
 pub struct EphemeralContext {
     state: HashMap<String, ContextNode>,
     pending_state: HashMap<String, ContextNode>,
-    modified_keys: Vec<String>
+    modified_keys: Vec<String>,
 }
 
 impl EphemeralContext {
@@ -17,7 +17,7 @@ impl EphemeralContext {
         Self {
             state: HashMap::new(),
             pending_state: HashMap::new(),
-            modified_keys: Vec::new()
+            modified_keys: Vec::new(),
         }
     }
 }
@@ -30,7 +30,7 @@ impl Context for EphemeralContext {
     fn has(&self, key: String) -> Result<bool> {
         match self.pending_state.contains_key(&key) {
             true => Ok(true),
-            false => Ok(self.state.contains_key(&key))
+            false => Ok(self.state.contains_key(&key)),
         }
     }
 
@@ -41,9 +41,9 @@ impl Context for EphemeralContext {
                 Some(value) => {
                     self.pending_state.insert(key, value.to_owned());
                     Ok(Some(V::unwrap(value.to_owned())))
-                },
-                None => Ok(None)
-            }
+                }
+                None => Ok(None),
+            },
         }
     }
 
@@ -53,7 +53,12 @@ impl Context for EphemeralContext {
         Ok(())
     }
 
-    fn persist<V: ContextNodeType>(&mut self, key: String, val: V, _level: Option<i32>) -> Result<()> {
+    fn persist<V: ContextNodeType>(
+        &mut self,
+        key: String,
+        val: V,
+        _level: Option<i32>,
+    ) -> Result<()> {
         self.pending_state.insert(key.clone(), val.clone().wrap());
         self.state.insert(key, val.wrap());
         Ok(())
@@ -92,11 +97,7 @@ impl Context for EphemeralContext {
 
 #[cfg(test)]
 mod test {
-    use crate::{
-        Result,
-        context::Context,
-        context::ephemeral::EphemeralContext
-    };
+    use crate::{context::ephemeral::EphemeralContext, context::Context, Result};
 
     #[test]
     fn store_balance() -> Result<()> {
@@ -105,14 +106,19 @@ mod test {
         let address = "tz1Mj7RzPmMAqDUNFBn5t5VbXmWW4cSUAdtT";
         let balance = 1000u32.into();
 
-        assert!(context.get_balance(&address)?.is_none());  // both host and cache accessed
+        assert!(context.get_balance(&address)?.is_none()); // both host and cache accessed
 
-        context.set_balance(&address, &balance)?;  // cached
-        context.commit()?;  // sent to the host
-        context.clear();  // cache cleared
+        context.set_balance(&address, &balance)?; // cached
+        context.commit()?; // sent to the host
+        context.clear(); // cache cleared
 
-        assert!(context.get_balance(&address)?.is_some());  // cached
-        assert_eq!(context.get_balance(&address)?.expect("Balance must not be null"), balance);  // served from the cache
+        assert!(context.get_balance(&address)?.is_some()); // cached
+        assert_eq!(
+            context
+                .get_balance(&address)?
+                .expect("Balance must not be null"),
+            balance
+        ); // served from the cache
 
         Ok(())
     }

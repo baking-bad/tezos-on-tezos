@@ -1,40 +1,36 @@
+use ibig::ops::Abs;
+use ibig::{IBig, UBig};
 use std::fmt::Display;
 use std::ops::{Add, Div, Mul, Sub};
-use ibig::{IBig, UBig};
-use ibig::ops::Abs;
+use tezos_core::types::mutez::Mutez;
 use tezos_michelson::michelson::{
     data::Data,
-    types::{Type, ComparableType},
-    types
+    types,
+    types::{ComparableType, Type},
 };
-use tezos_core::types::mutez::Mutez;
 
 use crate::{
-    Result,
-    Error,
-    types::{NatItem, MutezItem, StackItem, OptionItem, PairItem},
+    comparable_type_cast, err_mismatch,
     formatter::Formatter,
-    err_mismatch,
-    comparable_type_cast
+    types::{MutezItem, NatItem, OptionItem, PairItem, StackItem},
+    Error, Result,
 };
 
 impl MutezItem {
     pub fn new(value: i64) -> Result<Self> {
         if value < 0 {
-            return Err(Error::MutezUnderflow.into())
+            return Err(Error::MutezUnderflow.into());
         }
         Ok(Self(value)) // TODO: check overflow
     }
 
     pub fn from_data(data: Data) -> Result<StackItem> {
         match data {
-            Data::Int(val) => {
-                match val.to_integer::<i64>() {
-                    Ok(val) => Ok(Self::new(val)?.into()),
-                    Err(_) => Err(Error::MutezOverflow.into())
-                }                
+            Data::Int(val) => match val.to_integer::<i64>() {
+                Ok(val) => Ok(Self::new(val)?.into()),
+                Err(_) => Err(Error::MutezOverflow.into()),
             },
-            _ => err_mismatch!("Int", data.format())
+            _ => err_mismatch!("Int", data.format()),
         }
     }
 
@@ -56,7 +52,7 @@ impl TryFrom<IBig> for MutezItem {
     fn try_from(value: IBig) -> Result<Self> {
         match value.try_into() {
             Ok(val) => MutezItem::new(val),
-            Err(_) => Err(Error::MutezOverflow.into())
+            Err(_) => Err(Error::MutezOverflow.into()),
         }
     }
 }
@@ -67,7 +63,7 @@ impl TryFrom<UBig> for MutezItem {
     fn try_from(value: UBig) -> Result<Self> {
         match value.try_into() {
             Ok(val) => MutezItem::new(val),
-            Err(_) => Err(Error::MutezOverflow.into())
+            Err(_) => Err(Error::MutezOverflow.into()),
         }
     }
 }
@@ -95,8 +91,8 @@ impl Add<MutezItem> for MutezItem {
     fn add(self, rhs: MutezItem) -> Self::Output {
         match self.0.checked_add(rhs.0) {
             Some(res) => MutezItem::new(res),
-            None => Err(Error::MutezOverflow.into())
-        } 
+            None => Err(Error::MutezOverflow.into()),
+        }
     }
 }
 
@@ -121,7 +117,10 @@ impl Div<NatItem> for MutezItem {
 
     fn div(self, rhs: NatItem) -> Self::Output {
         if rhs.0 == 0u8.into() {
-            Ok(OptionItem::None(types::pair(vec![types::mutez(), types::mutez()])))
+            Ok(OptionItem::None(types::pair(vec![
+                types::mutez(),
+                types::mutez(),
+            ])))
         } else {
             let (a, b) = (IBig::from(self.0), IBig::from(rhs.0));
             let (mut q, mut r) = (&a / &b, &a % &b);
@@ -129,7 +128,10 @@ impl Div<NatItem> for MutezItem {
                 r += b.abs();
                 q += 1
             }
-            let res = PairItem::new(MutezItem::try_from(q)?.into(), MutezItem::try_from(r)?.into());
+            let res = PairItem::new(
+                MutezItem::try_from(q)?.into(),
+                MutezItem::try_from(r)?.into(),
+            );
             Ok(OptionItem::some(res.into()))
         }
     }
@@ -140,7 +142,10 @@ impl Div<MutezItem> for MutezItem {
 
     fn div(self, rhs: MutezItem) -> Self::Output {
         if rhs.0 == 0u8.into() {
-            Ok(OptionItem::None(types::pair(vec![types::nat(), types::mutez()])))
+            Ok(OptionItem::None(types::pair(vec![
+                types::nat(),
+                types::mutez(),
+            ])))
         } else {
             let (a, b) = (self.0, rhs.0);
             let (mut q, mut r) = (a / b, a % b);

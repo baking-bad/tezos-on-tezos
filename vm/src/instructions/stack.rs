@@ -1,11 +1,7 @@
-use tezos_michelson::michelson::data::instructions::{Push, Drop, Dup, Dig, Dug, Swap};
+use tezos_michelson::michelson::data::instructions::{Dig, Drop, Dug, Dup, Push, Swap};
 
 use crate::{
-    Result,
-    interpreter::PureInterpreter,
-    types::StackItem,
-    stack::Stack,
-    err_unsupported
+    err_unsupported, interpreter::PureInterpreter, stack::Stack, types::StackItem, Result,
 };
 
 impl PureInterpreter for Push {
@@ -20,7 +16,7 @@ impl PureInterpreter for Drop {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let count: usize = match &self.n {
             Some(n) => n.to_integer()?,
-            None => 1
+            None => 1,
         };
         for _ in 0..count {
             stack.pop()?;
@@ -33,10 +29,10 @@ impl PureInterpreter for Dup {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let n: usize = match &self.n {
             Some(n) => n.to_integer()?,
-            None => 1
+            None => 1,
         };
         if n == 0 {
-            return err_unsupported!("DUP 0")
+            return err_unsupported!("DUP 0");
         }
         // TODO: check if copyable
         let res = stack.dup_at(n - 1)?;

@@ -1,13 +1,16 @@
+use hex;
 use host::runtime::Runtime;
 use proto::{
-    producer::{apply_batch, types::{OperationHash, SignedOperation}},
-    context::Context
+    context::Context,
+    producer::{
+        apply_batch,
+        types::{OperationHash, SignedOperation},
+    },
 };
-use hex;
 
 use crate::{
     context::PVMContext,
-    inbox::{InboxMessage, read_inbox}
+    inbox::{read_inbox, InboxMessage},
 };
 
 pub fn kernel_run<Host: Runtime>(context: &mut PVMContext<Host>) {
@@ -19,41 +22,41 @@ pub fn kernel_run<Host: Runtime>(context: &mut PVMContext<Host>) {
         match read_inbox(context.as_mut()) {
             Ok(InboxMessage::BeginBlock(_level)) => {
                 // TODO: validate head against inbox_level - origination_level (revealed metadata)
-            },
+            }
             Ok(InboxMessage::L2Operation { hash, opg }) => {
                 context.log(format!("Operation pending: {:?}", &hash));
                 batch_payload.push((hash, opg));
-            },
+            }
             Ok(InboxMessage::LevelInfo(info)) => {
                 context.log(format!("Info message: {}", hex::encode(info)));
-                head.timestamp += 1;  // TODO: validate and adjust timestamp if necessary
-            },
+                head.timestamp += 1; // TODO: validate and adjust timestamp if necessary
+            }
             Ok(InboxMessage::EndBlock(_level)) => {
                 match apply_batch(context, head.clone(), batch_payload) {
                     Ok(new_head) => {
                         head = new_head;
                         context.log(format!("Batch applied: {:?}", head));
-                        break Ok(())
-                    },
-                    Err(err) => break Err(err.into())
+                        break Ok(());
+                    }
+                    Err(err) => break Err(err.into()),
                 }
-            },
+            }
             Ok(InboxMessage::Unknown(id)) => context.log(format!("Unknown message #{}", id)),
             Ok(InboxMessage::NoMoreData) => break Ok(()),
-            Err(err) => break Err(err)
+            Err(err) => break Err(err),
         }
     };
-    
+
     match res {
         Ok(_) => {
             context.clear();
             context.log(format!("Kernel yields"));
-        },
+        }
         Err(err) => {
             context.log(format!("Unrecoverable error: {:?}", err));
             // TODO: rewind state
         }
-    }    
+    }
 }
 
 #[cfg(test)]
@@ -61,11 +64,11 @@ mod test {
     use super::*;
     use crate::context::PVMContext;
 
+    use hex;
+    use host::rollup_core::Input;
+    use mock_runtime::host::MockHost;
     use proto::context::Context;
     use proto::Result;
-    use mock_runtime::host::MockHost;
-    use host::rollup_core::Input;
-    use hex;
 
     #[test]
     fn send_tez() -> Result<()> {
@@ -76,25 +79,26 @@ mod test {
             79e8306c1bedd08f12dc863f32888600b2014573fd63d27895841ea6ca9d45e23e1e3b836298801b5e390b3b0a0b412003af89\
             c08e63b6d8cf6847300e627c4ce0882ce4e2b842295309de3a0bd6260f").unwrap();
         let level = 10;
-        context
-            .as_mut()
-            .as_mut()
-            .set_ready_for_input(level);
-        context
-            .as_mut()
-            .as_mut()
-            .add_next_inputs(level, vec![
+        context.as_mut().as_mut().set_ready_for_input(level);
+        context.as_mut().as_mut().add_next_inputs(
+            level,
+            vec![
                 (Input::MessageData, b"\x00\x01".to_vec()),
                 (Input::MessageData, input),
-                (Input::MessageData, b"\x00\x02".to_vec())
-            ].iter());
+                (Input::MessageData, b"\x00\x02".to_vec()),
+            ]
+            .iter(),
+        );
 
         kernel_run(&mut context);
 
         let opg_receipt = context.get_operation_receipt(0i32, 0i32)?;
         // println!("Receipt: {:#?}", receipt);
         assert!(opg_receipt.is_some(), "Expected operation receipt");
-        assert!(opg_receipt.unwrap().hash.is_some(), "Expected operation hash");
+        assert!(
+            opg_receipt.unwrap().hash.is_some(),
+            "Expected operation hash"
+        );
 
         let batch_receipt = context.get_batch_receipt(0i32)?;
         assert!(batch_receipt.is_some(), "Expected batch receipt");

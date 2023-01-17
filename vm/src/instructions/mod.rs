@@ -1,10 +1,10 @@
-mod stack;
-mod control;
-mod lambda;
-mod math;
-mod generic;
 mod algebraic;
 mod collections;
 mod contract;
-mod scope;
+mod control;
 mod crypto;
+mod generic;
+mod lambda;
+mod math;
+mod scope;
+mod stack;

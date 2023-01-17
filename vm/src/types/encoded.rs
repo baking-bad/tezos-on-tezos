@@ -1,19 +1,18 @@
 use std::fmt::Display;
 use tezos_core::types::encoded::{
-    Address, PublicKey, ImplicitAddress, Signature, ChainId, Encoded,
+    Address, ChainId, Encoded, ImplicitAddress, PublicKey, Signature,
 };
 use tezos_michelson::michelson::{
-    types::{Type, ComparableType},
-    data::Data,
     data,
+    data::Data,
+    types::{ComparableType, Type},
 };
 
 use crate::{
-    Result,
-    types::{AddressItem, KeyItem, KeyHashItem, SignatureItem, ChainIdItem, StackItem},
+    comparable_type_cast, err_mismatch,
     formatter::Formatter,
-    err_mismatch,
-    comparable_type_cast
+    types::{AddressItem, ChainIdItem, KeyHashItem, KeyItem, SignatureItem, StackItem},
+    Result,
 };
 
 macro_rules! impl_for_encoded {
@@ -28,15 +27,17 @@ macro_rules! impl_for_encoded {
                     Data::String(val) => Ok($item_ty(<$impl_ty>::new(val.into_string())?).into()),
                     Data::Bytes(val) => {
                         let bytes: Vec<u8> = (&val).into();
-                        Ok($item_ty(<$impl_ty>::from_bytes(bytes.as_slice())?).into())   
-                    },
-                    _ => err_mismatch!("String or Bytes", data.format())
+                        Ok($item_ty(<$impl_ty>::from_bytes(bytes.as_slice())?).into())
+                    }
+                    _ => err_mismatch!("String or Bytes", data.format()),
                 }
             }
-                
+
             pub fn into_data(self, ty: &Type) -> Result<Data> {
                 comparable_type_cast!(ty, $cmp_ty);
-                Ok(Data::String(data::String::from_string(self.0.into_string())?))
+                Ok(Data::String(data::String::from_string(
+                    self.0.into_string(),
+                )?))
             }
 
             pub fn unwrap(self) -> $impl_ty {
@@ -88,8 +89,10 @@ impl Ord for KeyItem {
         let res = l.0.cmp(&r.0);
         if res == std::cmp::Ordering::Equal {
             match (self.0.to_bytes().ok(), other.0.to_bytes().ok()) {
-                (Some(self_data), Some(other_data)) => return self_data[l.1..].cmp(&other_data[r.1..]),
-                _ => unreachable!("Invalid keys")
+                (Some(self_data), Some(other_data)) => {
+                    return self_data[l.1..].cmp(&other_data[r.1..])
+                }
+                _ => unreachable!("Invalid keys"),
             }
         }
         res

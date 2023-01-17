@@ -39,19 +39,20 @@ Also in the scope of our developing tools and indexing stack we want to better u
 ## Limitations
 
 Current design is intentionally simplified to speed up development while having a minimal necessary functional to operate.
-
 * Fix-priced operations, just general gas/storage limits
 * No money burning
 * Non-sequential account counters
 * Only 3 manager operations supported: transaction, reveal, origination (wip)
 * Branch is not validated (infinite TTL)
+* BigMaps cannot be copied/removed, but can be moved (Rust-like semantics)
+* No temporary BigMap allocations
 * (To be continued)
 
 Non-supported Michelson features (at least in the first iteration):
 * Views
 * Events
-* Big map runtime allocation & copy/removal
 * Sapling
+* Some hash functions (SHA3, Keccak)
 * Tickets
 * Internal originations
 * Global constants
@@ -105,13 +106,30 @@ You can also run container in interactive mode:
 make operator-shell
 ```
 
+### Aliases
+
+In order to run a whole setup on latest Mondaynet do:
+```
+make monday
+```
+
+For the Dailynet:
+```
+make daily
+```
+
 ## How to test
 
-### Unit tests
+### Unit & integration tests
 
-Run all unit tests:
+Make sure you have nextest installed:
 ```
-make test
+cargo install cargo-nextest --locked
+```
+
+Run all tests:
+```
+make nextest
 ```
 
 ### Wasm REPL

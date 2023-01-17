@@ -1,13 +1,13 @@
-use tezos_operation::operations::{SignedOperation, OperationContent};
 use tezos_core::types::{
     encoded::{Encoded, ImplicitAddress, OperationHash},
     mutez::Mutez,
-    number::Nat
+    number::Nat,
 };
+use tezos_operation::operations::{OperationContent, SignedOperation};
 
 use crate::{
     context::Context,
-    error::{Error, Result, RpcErrors}
+    error::{Error, Result, RpcErrors},
 };
 
 pub struct ManagerOperation {
@@ -16,19 +16,23 @@ pub struct ManagerOperation {
     pub source: ImplicitAddress,
     pub total_fees: Mutez,
     pub total_spent: Mutez,
-    pub last_counter: Nat
+    pub last_counter: Nat,
 }
 
 macro_rules! err {
     ($hash: expr, $err: expr) => {
         Err(Error::ValidationError {
             hash: $hash,
-            inner: $err
+            inner: $err,
         })
     };
 }
 
-pub fn validate_operation(context: &mut impl Context, opg: SignedOperation, hash: OperationHash) -> Result<ManagerOperation> {  
+pub fn validate_operation(
+    context: &mut impl Context,
+    opg: SignedOperation,
+    hash: OperationHash,
+) -> Result<ManagerOperation> {
     let mut source = None;
     let mut total_fees: Mutez = 0u32.into();
     let mut total_spent: Mutez = 0u32.into();
@@ -41,9 +45,11 @@ pub fn validate_operation(context: &mut impl Context, opg: SignedOperation, hash
     for content in opg.contents.iter() {
         let (address, amount) = match content {
             OperationContent::Reveal(reveal) => (&reveal.source, None),
-            OperationContent::Transaction(transaction) => (&transaction.source, Some(transaction.amount)),
+            OperationContent::Transaction(transaction) => {
+                (&transaction.source, Some(transaction.amount))
+            }
             OperationContent::Origination(origination) => (&origination.source, None),
-            _ => return Err(Error::OperationKindUnsupported)
+            _ => return Err(Error::OperationKindUnsupported),
         };
 
         if source.is_none() {
@@ -66,12 +72,14 @@ pub fn validate_operation(context: &mut impl Context, opg: SignedOperation, hash
     let public_key = match context.get_public_key(&source)? {
         Some(value) => value,
         None => {
-            let revealed_key = opg.contents.iter().filter_map(|content| {
-                match content {
+            let revealed_key = opg
+                .contents
+                .iter()
+                .filter_map(|content| match content {
                     OperationContent::Reveal(reveal) => Some(reveal.public_key.clone()),
-                    _ => None
-                }
-            }).next();
+                    _ => None,
+                })
+                .next();
 
             if revealed_key.is_some() {
                 revealed_key.unwrap()
@@ -84,22 +92,24 @@ pub fn validate_operation(context: &mut impl Context, opg: SignedOperation, hash
     match opg.verify(&public_key) {
         Ok(true) => (),
         Ok(false) => return err!(hash, RpcErrors::invalid_signature()),
-        Err(err) => return Err(err.into())
+        Err(err) => return Err(err.into()),
     };
-
 
     let balance = match context.get_balance(&source.value())? {
         Some(value) => value,
-        None => return err!(hash, RpcErrors::empty_implicit_contract(&source))
+        None => return err!(hash, RpcErrors::empty_implicit_contract(&source)),
     };
 
     if balance < total_spent {
-        return err!(hash, RpcErrors::contract_balance_too_low(&total_spent, &balance, &source));
+        return err!(
+            hash,
+            RpcErrors::contract_balance_too_low(&total_spent, &balance, &source)
+        );
     }
 
     let mut counter = match context.get_counter(&source)? {
         Some(value) => value.to_integer()?,
-        None => 0u64
+        None => 0u64,
     };
 
     for content in opg.contents.iter() {
@@ -107,10 +117,14 @@ pub fn validate_operation(context: &mut impl Context, opg: SignedOperation, hash
             OperationContent::Reveal(reveal) => &reveal.counter,
             OperationContent::Transaction(transaction) => &transaction.counter,
             OperationContent::Origination(origination) => &origination.counter,
-            _ => return Err(Error::OperationKindUnsupported)
-        }.to_integer()?;
+            _ => return Err(Error::OperationKindUnsupported),
+        }
+        .to_integer()?;
         if next_counter <= counter {
-            return err!(hash, RpcErrors::counter_in_the_past(&source, counter + 1, next_counter));
+            return err!(
+                hash,
+                RpcErrors::counter_in_the_past(&source, counter + 1, next_counter)
+            );
         }
         counter = next_counter;
     }
@@ -121,22 +135,20 @@ pub fn validate_operation(context: &mut impl Context, opg: SignedOperation, hash
         source: source.clone(),
         total_fees,
         total_spent,
-        last_counter: counter.into()
+        last_counter: counter.into(),
     })
 }
 
 #[cfg(test)]
 mod test {
-    use crate::context::{Context, ephemeral::EphemeralContext};
+    use crate::context::{ephemeral::EphemeralContext, Context};
     use crate::Result;
-    use tezos_operation::{
-        operations::{SignedOperation, Transaction, Reveal}
-    };
     use tezos_core::types::{
-        encoded::{ImplicitAddress, PublicKey, Encoded},
+        encoded::{Encoded, ImplicitAddress, PublicKey},
         mutez::Mutez,
-        number::Nat
+        number::Nat,
     };
+    use tezos_operation::operations::{Reveal, SignedOperation, Transaction};
 
     use super::validate_operation;
 
@@ -147,7 +159,10 @@ mod test {
         let address = ImplicitAddress::try_from("tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU").unwrap();
         context.set_balance(&address.value(), &Mutez::from(1000000000u32))?;
         context.set_counter(&address, &Nat::try_from("100000").unwrap())?;
-        context.set_public_key(&address, &PublicKey::try_from("edpktipCJ3SkjvtdcrwELhvupnyYJSmqoXu3kdzK1vL6fT5cY8FTEa").unwrap())?;
+        context.set_public_key(
+            &address,
+            &PublicKey::try_from("edpktipCJ3SkjvtdcrwELhvupnyYJSmqoXu3kdzK1vL6fT5cY8FTEa").unwrap(),
+        )?;
         context.commit()?;
 
         let opg = SignedOperation::new(

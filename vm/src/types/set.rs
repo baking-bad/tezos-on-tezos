@@ -1,34 +1,33 @@
 use std::fmt::Display;
-use tezos_michelson::michelson::{
-    data::Data,
-    types::Type,
-    types
-};
+use tezos_michelson::michelson::{data::Data, types, types::Type};
 
 use crate::{
-    Result,
-    types::{SetItem, StackItem},
-    types::list::{seq_into_item_vec, item_vec_into_seq},
-    formatter::Formatter,
     err_mismatch,
-    type_cast
+    formatter::Formatter,
+    type_cast,
+    types::list::{item_vec_into_seq, seq_into_item_vec},
+    types::{SetItem, StackItem},
+    Result,
 };
 
 impl SetItem {
     pub fn new(items: Vec<StackItem>, val_type: Type) -> Self {
         let mut items = items;
         items.sort_unstable();
-        Self { outer_value: items, inner_type: val_type }
+        Self {
+            outer_value: items,
+            inner_type: val_type,
+        }
     }
 
-    pub fn from_data(data: Data, val_type: &Type) -> Result<StackItem> {        
+    pub fn from_data(data: Data, val_type: &Type) -> Result<StackItem> {
         match data {
             Data::Sequence(seq) => {
                 let items = seq_into_item_vec(seq, val_type)?;
                 // TODO: ensure no duplicates
                 Ok(StackItem::Set(Self::new(items, val_type.clone())))
-            },
-            _ => err_mismatch!("Sequence", data.format())
+            }
+            _ => err_mismatch!("Sequence", data.format()),
         }
     }
 
@@ -44,7 +43,7 @@ impl SetItem {
     pub fn get_type(&self) -> Result<Type> {
         match &self.inner_type {
             Type::Comparable(ty) => Ok(types::set(ty.clone().into())),
-            ty => err_mismatch!("ComparableType", ty.format())
+            ty => err_mismatch!("ComparableType", ty.format()),
         }
     }
 
@@ -56,11 +55,15 @@ impl SetItem {
     pub fn update(&mut self, key: StackItem, val: bool) -> Result<()> {
         key.type_check(&self.inner_type)?;
         match self.outer_value.binary_search(&key) {
-            Ok(pos) => if !val {
-                self.outer_value.remove(pos);
-            },
-            Err(pos) => if val {
-                self.outer_value.insert(pos, key);
+            Ok(pos) => {
+                if !val {
+                    self.outer_value.remove(pos);
+                }
+            }
+            Err(pos) => {
+                if val {
+                    self.outer_value.insert(pos, key);
+                }
             }
         }
         Ok(())

@@ -1,18 +1,13 @@
 use std::collections::HashMap;
-use tezos_michelson::micheline::{
-    Micheline,
-    primitive_application,
-};
-use tezos_michelson::michelson::types::unit;
 use tezos_core::types::{
+    encoded::{self, Encoded},
     mutez::Mutez,
-    encoded::{self, Encoded}
 };
+use tezos_michelson::micheline::{primitive_application, Micheline};
+use tezos_michelson::michelson::types::unit;
 use vm::{
-    Result,
-    Error,
-    interpreter::{OperationScope, InterpreterContext},
-    trace_log
+    interpreter::{InterpreterContext, OperationScope},
+    trace_log, Error, Result,
 };
 
 pub const CHAIN_ID: &str = "NetXP2FfcNxFANL";
@@ -57,7 +52,10 @@ impl MockContext {
 
 impl MockContext {
     pub fn get_elements_count(&self, ptr: i64) -> usize {
-        self.big_map_values.iter().filter(|((id, _), _)| id == &ptr).count()
+        self.big_map_values
+            .iter()
+            .filter(|((id, _), _)| id == &ptr)
+            .count()
     }
 
     pub fn init_big_map(&mut self, ptr: i64, owner: encoded::ContractAddress) {
@@ -68,7 +66,11 @@ impl MockContext {
 }
 
 impl InterpreterContext for MockContext {
-    fn set_contract_type(&mut self, address: encoded::ContractAddress, value: Micheline) -> Result<()> {
+    fn set_contract_type(
+        &mut self,
+        address: encoded::ContractAddress,
+        value: Micheline,
+    ) -> Result<()> {
         let key = address.into_string();
         self.contracts.insert(key, value);
         Ok(())
@@ -78,7 +80,7 @@ impl InterpreterContext for MockContext {
         let key = address.into_string();
         match self.contracts.get(&key) {
             Some(ty) => Ok(Some(ty.clone())),
-            None => Ok(None)
+            None => Ok(None),
         }
     }
 
@@ -93,26 +95,40 @@ impl InterpreterContext for MockContext {
     fn get_big_map_owner(&self, ptr: i64) -> Result<encoded::ContractAddress> {
         match self.big_maps.get(&ptr) {
             Some(owner) => Ok(owner.clone()),
-            None => Err(Error::BigMapNotAllocated { ptr })
+            None => Err(Error::BigMapNotAllocated { ptr }),
         }
     }
 
     fn has_big_map_value(&self, ptr: i64, key_hash: &encoded::ScriptExprHash) -> Result<bool> {
         trace_log!("Has", key_hash.value());
-        Ok(self.big_map_values.contains_key(&(ptr, key_hash.into_string())))
+        Ok(self
+            .big_map_values
+            .contains_key(&(ptr, key_hash.into_string())))
     }
 
-    fn get_big_map_value(&self, ptr: i64, key_hash: &encoded::ScriptExprHash) -> Result<Option<Micheline>> {
+    fn get_big_map_value(
+        &self,
+        ptr: i64,
+        key_hash: &encoded::ScriptExprHash,
+    ) -> Result<Option<Micheline>> {
         trace_log!("Get", key_hash.value());
-        Ok(self.big_map_values.get(&(ptr, key_hash.into_string())).map(|v| v.clone()))
+        Ok(self
+            .big_map_values
+            .get(&(ptr, key_hash.into_string()))
+            .map(|v| v.clone()))
     }
 
-    fn set_big_map_value(&mut self, ptr: i64, key_hash: encoded::ScriptExprHash, value: Option<Micheline>) -> Result<Option<Micheline>> {
+    fn set_big_map_value(
+        &mut self,
+        ptr: i64,
+        key_hash: encoded::ScriptExprHash,
+        value: Option<Micheline>,
+    ) -> Result<Option<Micheline>> {
         trace_log!("Update", key_hash.value());
         let k = (ptr, key_hash.into_string());
         match value {
             Some(v) => Ok(self.big_map_values.insert(k, v)),
-            None => Ok(self.big_map_values.remove(&k))
+            None => Ok(self.big_map_values.remove(&k)),
         }
     }
 }

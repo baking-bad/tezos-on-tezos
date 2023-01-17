@@ -1,30 +1,23 @@
 use tezos_michelson::micheline::{
-    Micheline,
-    sequence::Sequence,
-    primitive_application::PrimitiveApplication,
+    primitive_application::PrimitiveApplication, sequence::Sequence, Micheline,
 };
-use vm::{
-    Result,
-    Error,
-    script::MichelsonScript,
-    interpreter::{OperationScope},
-};
+use vm::{interpreter::OperationScope, script::MichelsonScript, Error, Result};
 
 use crate::runner::{
+    micheline::{parse_literal, read_from_file},
     mock::{default_scope, MockContext},
-    micheline::{read_from_file, parse_literal}
 };
 
 pub enum Expectation {
     Storage(Micheline),
-    Error(Error)
+    Error(Error),
 }
 
 pub struct E2E {
     script: MichelsonScript,
     parameter: Micheline,
     storage: Micheline,
-    expected: Expectation
+    expected: Expectation,
 }
 
 impl E2E {
@@ -50,10 +43,10 @@ impl E2E {
         match self.expected {
             Expectation::Storage(ref expected) => {
                 assert_eq!(*expected, ret.storage);
-            },
+            }
             _ => {}
         }
-        
+
         Ok(())
     }
 
@@ -71,15 +64,17 @@ impl E2E {
             match prim.prim() {
                 "parameter" => parameter = Some(prim.into_args().unwrap().remove(0)),
                 "storage" => storage = Some(prim.into_args().unwrap().remove(0)),
-                "result" => expected = {
-                    let result = prim.into_args().unwrap().remove(0);
-                    Some(Expectation::Storage(result.normalized()))  // VM output is always normalized 
-                },
+                "result" => {
+                    expected = {
+                        let result = prim.into_args().unwrap().remove(0);
+                        Some(Expectation::Storage(result.normalized())) // VM output is always normalized
+                    }
+                }
                 "script" => {
                     let filename: String = parse_literal(prim);
                     script = Some(read_from_file("scripts", filename.as_str())?);
-                },
-                prim => panic!("Unexpected section {}", prim)
+                }
+                prim => panic!("Unexpected section {}", prim),
             }
         }
 
@@ -87,7 +82,7 @@ impl E2E {
             script: script.expect("Script section is missing").try_into()?,
             parameter: parameter.expect("Parameter section is missing"),
             storage: storage.expect("Storage section is missing"),
-            expected: expected.expect("Both result and error sections are missing")
+            expected: expected.expect("Both result and error sections are missing"),
         })
     }
 }

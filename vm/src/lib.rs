@@ -1,17 +1,17 @@
-pub mod typechecker;
-pub mod interpreter;
-pub mod formatter;
-pub mod stack;
-pub mod types;
-pub mod instructions;
-pub mod script;
-pub mod tracer;
 pub mod error;
+pub mod formatter;
+pub mod instructions;
+pub mod interpreter;
+pub mod script;
+pub mod stack;
+pub mod tracer;
+pub mod typechecker;
+pub mod types;
 
 pub use error::{Error, Result};
 
 #[cfg(feature = "trace")]
-pub use tracer::{trace_init, trace_into, trace_stack, trace_err, trace_ret, trace_log};
+pub use tracer::{trace_err, trace_init, trace_into, trace_log, trace_ret, trace_stack};
 
 #[macro_export]
 macro_rules! trace_log {
@@ -41,7 +41,7 @@ macro_rules! trace_stack {
 macro_rules! trace_enter {
     () => {
         #[cfg(feature = "trace")]
-        $crate::trace_init();  
+        $crate::trace_init();
     };
     ($msg: literal) => {
         #[cfg(feature = "trace")]

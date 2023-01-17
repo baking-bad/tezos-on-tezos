@@ -1,11 +1,11 @@
-pub use tezos_rpc::models::error::RpcError;
 use tezos_core::types::mutez::Mutez;
+pub use tezos_rpc::models::error::RpcError;
 
 use crate::context::types::TezosAddress;
 
 #[derive(Clone, Debug)]
 pub struct RpcErrors {
-    errors: Vec<RpcError>
+    errors: Vec<RpcError>,
 }
 
 const DEFAULT_ERROR: RpcError = RpcError {
@@ -15,7 +15,7 @@ const DEFAULT_ERROR: RpcError = RpcError {
     id: String::new(),
     kind: String::new(),
     message: None,
-    msg: None
+    msg: None,
 };
 
 impl RpcErrors {
@@ -69,7 +69,11 @@ impl RpcErrors {
         }
     }
 
-    pub fn contract_balance_too_low(amount: &Mutez, balance: &Mutez, contract: &impl TezosAddress) -> RpcError {
+    pub fn contract_balance_too_low(
+        amount: &Mutez,
+        balance: &Mutez,
+        contract: &impl TezosAddress,
+    ) -> RpcError {
         RpcError {
             kind: "temporary".into(),
             id: "contract.balance_too_low".into(),
@@ -80,7 +84,11 @@ impl RpcErrors {
         }
     }
 
-    pub fn counter_in_the_past(contract: &impl TezosAddress, expected: u64, found: u64) -> RpcError {
+    pub fn counter_in_the_past(
+        contract: &impl TezosAddress,
+        expected: u64,
+        found: u64,
+    ) -> RpcError {
         RpcError {
             kind: "temporary".into(),
             id: "contract.counter_in_the_past".into(),
@@ -134,8 +142,14 @@ impl RpcErrors {
         })
     }
 
-    pub fn balance_too_low(&mut self, amount: &Mutez, balance: &Mutez, contract: &impl TezosAddress) {
-        self.errors.push(Self::contract_balance_too_low(amount, balance, contract));
+    pub fn balance_too_low(
+        &mut self,
+        amount: &Mutez,
+        balance: &Mutez,
+        contract: &impl TezosAddress,
+    ) {
+        self.errors
+            .push(Self::contract_balance_too_low(amount, balance, contract));
     }
 
     pub fn previously_revealed_key(&mut self, contract: &impl TezosAddress) {

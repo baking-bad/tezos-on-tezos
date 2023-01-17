@@ -1,20 +1,14 @@
 use once_cell::sync::Lazy;
-use tezos_michelson::michelson::{
-    data::Instruction,
-};
+use tezos_michelson::michelson::data::Instruction;
 
-use crate::{
-    Error,
-    types::StackItem,
-    formatter::Formatter
-};
+use crate::{formatter::Formatter, types::StackItem, Error};
 
 const OUTER: &str = "│ ";
 const INNER: &str = "├ ";
-const RET: &str   = "└ ";
+const RET: &str = "└ ";
 
 pub struct Tracer {
-    depth: usize
+    depth: usize,
 }
 
 impl Tracer {
@@ -45,10 +39,13 @@ impl Tracer {
                     self.write(INNER, format!("\x1b[{}m{}", 92 + self.depth, msg).as_str());
                     self.depth += 1;
                 }
-            },
-            Some(Instruction::Sequence(_)) => {},
+            }
+            Some(Instruction::Sequence(_)) => {}
             Some(instr) => {
-                self.write(INNER, format!("\x1b[1m\x1b[{}m{}", 92 + self.depth, instr.format()).as_str());
+                self.write(
+                    INNER,
+                    format!("\x1b[1m\x1b[{}m{}", 92 + self.depth, instr.format()).as_str(),
+                );
                 self.depth += 1;
             }
         }
@@ -56,8 +53,14 @@ impl Tracer {
 
     pub fn step_out(&mut self, err: Option<&Error>, msg: Option<&str>) {
         match err {
-            Some(err) => self.write(RET, format!("\x1b[{}mErr {}\x1b[0m", 91 + self.depth, err.to_string()).as_str()),
-            None => self.write(RET, format!("\x1b[{}m{}\x1b[0m", 91 + self.depth, msg.unwrap_or("Ok")).as_str())
+            Some(err) => self.write(
+                RET,
+                format!("\x1b[{}mErr {}\x1b[0m", 91 + self.depth, err.to_string()).as_str(),
+            ),
+            None => self.write(
+                RET,
+                format!("\x1b[{}m{}\x1b[0m", 91 + self.depth, msg.unwrap_or("Ok")).as_str(),
+            ),
         }
         if self.depth > 0 {
             self.depth -= 1;
@@ -66,8 +69,11 @@ impl Tracer {
 
     pub fn step_over(&self, cmd: &str, item: &StackItem, arg: Option<&usize>) {
         match arg {
-            Some(arg) => self.write(INNER, format!("\x1b[1m{}@{}\x1b[0m {}", cmd, arg, item).as_str()),
-            None => self.write(INNER, format!("\x1b[1m{}\x1b[0m {}", cmd, item).as_str())
+            Some(arg) => self.write(
+                INNER,
+                format!("\x1b[1m{}@{}\x1b[0m {}", cmd, arg, item).as_str(),
+            ),
+            None => self.write(INNER, format!("\x1b[1m{}\x1b[0m {}", cmd, item).as_str()),
         }
     }
 }
@@ -93,9 +99,7 @@ pub fn trace_stack(cmd: &str, item: &StackItem, arg: Option<&usize>) {
 }
 
 pub fn trace_err(err: &Error) {
-    unsafe {
-        TRACER.log(format!("Warn {}", err))
-    }
+    unsafe { TRACER.log(format!("Warn {}", err)) }
 }
 
 pub fn trace_ret(err: Option<&Error>, msg: Option<&str>) {
@@ -105,7 +109,5 @@ pub fn trace_ret(err: Option<&Error>, msg: Option<&str>) {
 }
 
 pub fn trace_log(msg: String) {
-    unsafe {
-        TRACER.log(msg)
-    }
+    unsafe { TRACER.log(msg) }
 }

@@ -1,44 +1,59 @@
-use std::collections::{HashMap, HashSet};
 use host::{
     path::RefPath,
-    runtime::{Runtime, ValueType}
+    runtime::{Runtime, ValueType},
 };
 use proto::{
-    context::{Context, types::{ContextNode, ContextNodeType}},
+    context::{
+        types::{ContextNode, ContextNodeType},
+        Context,
+    },
     Result,
 };
+use std::collections::{HashMap, HashSet};
 
 use crate::store::store_move_write;
 
 fn err_into(e: impl std::fmt::Debug) -> proto::error::Error {
     proto::error::Error::ExternalError {
-        message: format!("PVM context error: {:?}", e)
+        message: format!("PVM context error: {:?}", e),
     }
 }
 
-pub struct PVMContext<Host> where Host: Runtime {
+pub struct PVMContext<Host>
+where
+    Host: Runtime,
+{
     host: Host,
     state: HashMap<String, ContextNode>,
-    modified_keys: HashSet<String>
+    modified_keys: HashSet<String>,
 }
 
-impl<Host> AsMut<Host> for PVMContext<Host> where Host: Runtime {
+impl<Host> AsMut<Host> for PVMContext<Host>
+where
+    Host: Runtime,
+{
     fn as_mut(&mut self) -> &mut Host {
         &mut self.host
     }
 }
 
-impl<Host> PVMContext<Host> where Host: Runtime {
+impl<Host> PVMContext<Host>
+where
+    Host: Runtime,
+{
     pub fn new(host: Host) -> Self {
         PVMContext {
             host,
             state: HashMap::new(),
-            modified_keys: HashSet::new()
+            modified_keys: HashSet::new(),
         }
     }
 }
 
-impl<Host> Context for PVMContext<Host> where Host: Runtime {
+impl<Host> Context for PVMContext<Host>
+where
+    Host: Runtime,
+{
     fn log(&self, msg: String) {
         self.host.write_debug(msg.as_str())
     }
@@ -51,7 +66,7 @@ impl<Host> Context for PVMContext<Host> where Host: Runtime {
                 match self.host.store_has(&path) {
                     Ok(Some(ValueType::Value)) => Ok(true),
                     Err(err) => Err(err_into(err)),
-                    _ => Ok(false)
+                    _ => Ok(false),
                 }
             }
         }
@@ -65,17 +80,18 @@ impl<Host> Context for PVMContext<Host> where Host: Runtime {
                 match self.host.store_has(&path) {
                     Ok(Some(ValueType::Value)) => {
                         // TODO: read loop for values > 2048
-                        let stored_value = self.host
+                        let stored_value = self
+                            .host
                             .store_read(&path, 0, V::max_bytes())
                             .map_err(err_into)?;
                         let value = V::decode(&stored_value)?;
                         let inner_value = V::unwrap(value.to_owned());
                         self.state.insert(key, value);
                         Ok(Some(inner_value))
-                    },
+                    }
                     Ok(Some(node_type)) => Err(err_into(node_type)),
                     Ok(None) => Ok(None),
-                    Err(err) => Err(err_into(err))
+                    Err(err) => Err(err_into(err)),
                 }
             }
         }
@@ -87,15 +103,22 @@ impl<Host> Context for PVMContext<Host> where Host: Runtime {
         Ok(())
     }
 
-    fn persist<V: ContextNodeType>(&mut self, key: String, val: V, rew_lvl: Option<i32>) -> Result<()> {
+    fn persist<V: ContextNodeType>(
+        &mut self,
+        key: String,
+        val: V,
+        rew_lvl: Option<i32>,
+    ) -> Result<()> {
         let raw_val = val.encode()?;
         let path = RefPath::assert_from(key.as_bytes());
         if let Some(level) = rew_lvl {
             store_move_write(&mut self.host, &path, &raw_val, level).map_err(err_into)?;
         } else {
-            self.host.store_write(&path, raw_val.as_slice(), 0).map_err(err_into)?;
+            self.host
+                .store_write(&path, raw_val.as_slice(), 0)
+                .map_err(err_into)?;
         }
-        self.state.remove(&key);  // ensure not cached
+        self.state.remove(&key); // ensure not cached
         Ok(())
     }
 
@@ -110,10 +133,11 @@ impl<Host> Context for PVMContext<Host> where Host: Runtime {
         for key in self.modified_keys.iter() {
             let raw_value = match self.state.get(key) {
                 Some(val) => val.to_vec()?,
-                None => return Err(err_into("Failed to find modified value"))
+                None => return Err(err_into("Failed to find modified value")),
             };
             let path = RefPath::assert_from(key.as_bytes());
-            store_move_write(&mut self.host, &path, raw_value.as_slice(), head.level).map_err(err_into)?;
+            store_move_write(&mut self.host, &path, raw_value.as_slice(), head.level)
+                .map_err(err_into)?;
             checksum.update(&raw_value)?;
         }
 
@@ -137,10 +161,10 @@ impl<Host> Context for PVMContext<Host> where Host: Runtime {
 
 #[cfg(test)]
 mod test {
+    use crate::context::PVMContext;
     use mock_runtime::host::MockHost;
     use proto::context::Context;
     use proto::Result;
-    use crate::context::PVMContext;
 
     #[test]
     fn store_balance() -> Result<()> {
@@ -149,14 +173,19 @@ mod test {
         let address = "tz1Mj7RzPmMAqDUNFBn5t5VbXmWW4cSUAdtT";
         let balance = 1000u32.into();
 
-        assert!(context.get_balance(&address)?.is_none());  // both host and cache accessed
+        assert!(context.get_balance(&address)?.is_none()); // both host and cache accessed
 
-        context.set_balance(&address, &balance)?;  // cached
-        context.commit()?;  // sent to the host
-        context.clear();  // cache cleared
+        context.set_balance(&address, &balance)?; // cached
+        context.commit()?; // sent to the host
+        context.clear(); // cache cleared
 
-        assert!(context.get_balance(&address)?.is_some());  // cached
-        assert_eq!(context.get_balance(&address)?.expect("Balance must not be null"), balance);  // served from the cache
+        assert!(context.get_balance(&address)?.is_some()); // cached
+        assert_eq!(
+            context
+                .get_balance(&address)?
+                .expect("Balance must not be null"),
+            balance
+        ); // served from the cache
 
         Ok(())
     }

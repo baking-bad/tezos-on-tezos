@@ -1,23 +1,21 @@
-use tezos_michelson::michelson::data::instructions::{
-    Address, Contract, ImplicitAccount, TransferTokens, Self_
-};
-use tezos_michelson::michelson::{
-    types::Type,
-    types,
-    annotations::{Annotation}
-};
 use tezos_core::types::{encoded, encoded::Encoded};
+use tezos_michelson::michelson::data::instructions::{
+    Address, Contract, ImplicitAccount, Self_, TransferTokens,
+};
+use tezos_michelson::michelson::{annotations::Annotation, types, types::Type};
 
 use crate::{
-    Result,
-    Error,
-    interpreter::{LazyStorage, PureInterpreter, InterpreterContext, ScopedInterpreter, ContextInterpreter, Interpreter, OperationScope},
-    types::{AddressItem, StackItem, OptionItem, ContractItem, InternalContent, OperationItem},
-    stack::Stack,
-    typechecker::check_types_equal,
-    trace_log,
+    err_mismatch,
+    interpreter::{
+        ContextInterpreter, Interpreter, InterpreterContext, LazyStorage, OperationScope,
+        PureInterpreter, ScopedInterpreter,
+    },
     pop_cast,
-    err_mismatch
+    stack::Stack,
+    trace_log,
+    typechecker::check_types_equal,
+    types::{AddressItem, ContractItem, InternalContent, OperationItem, OptionItem, StackItem},
+    Error, Result,
 };
 
 impl PureInterpreter for Address {
@@ -41,21 +39,23 @@ fn search_entrypoint(ty: Type, entrypoint: Option<&str>, depth: usize) -> Result
     let entrypoint = entrypoint.unwrap_or("default");
     if let Some(annot) = ty.metadata().field_name() {
         if annot.value_without_prefix() == entrypoint {
-            return Ok(ty)
+            return Ok(ty);
         }
     }
     if let Type::Or(or) = ty.clone() {
         if let Ok(ty) = search_entrypoint(*or.lhs, Some(entrypoint), depth + 1) {
-            return Ok(ty)
+            return Ok(ty);
         }
         if let Ok(ty) = search_entrypoint(*or.rhs, Some(entrypoint), depth + 1) {
-            return Ok(ty)
+            return Ok(ty);
         }
     }
     if depth == 0 && entrypoint == "default" {
-        return Ok(ty)
+        return Ok(ty);
     }
-    Err(Error::EntrypointNotFound { name: entrypoint.into() })
+    Err(Error::EntrypointNotFound {
+        name: entrypoint.into(),
+    })
 }
 
 fn make_contract(address: &str, entrypoint: Option<&str>) -> Result<encoded::Address> {
@@ -79,13 +79,17 @@ fn get_contract(
         encoded::Address::Implicit(_) => {
             check_types_equal(expected_type, &types::unit())?;
             Ok(address)
-        },
+        }
         encoded::Address::Originated(kt) => {
             let entrypoint = match (field_name, kt.entrypoint()) {
                 (None, None) => None,
                 (Some(annot), None) => Some(annot.value_without_prefix()),
                 (None, Some(entrypoint)) => Some(entrypoint),
-                (Some(_), Some(_)) => return Err(Error::ConflictingEntrypoints { address: kt.clone().into_string() })
+                (Some(_), Some(_)) => {
+                    return Err(Error::ConflictingEntrypoints {
+                        address: kt.clone().into_string(),
+                    })
+                }
             };
 
             match context.get_contract_type(&kt)? {
@@ -93,8 +97,10 @@ fn get_contract(
                     let ty = search_entrypoint(expr.try_into()?, entrypoint, 0)?;
                     check_types_equal(expected_type, &ty)?;
                     make_contract(kt.contract_hash(), entrypoint)
-                },
-                None => Err(Error::ContractNotFound { address: kt.clone().into_string() })
+                }
+                None => Err(Error::ContractNotFound {
+                    address: kt.clone().into_string(),
+                }),
             }
         }
     }
@@ -103,17 +109,17 @@ fn get_contract(
 impl ContextInterpreter for Contract {
     fn execute(&self, stack: &mut Stack, context: &mut impl InterpreterContext) -> Result<()> {
         let address = pop_cast!(stack, Address);
-        
+
         let item = match get_contract(
-            address.unwrap(), 
-            self.metadata().field_name(), 
-            &self.r#type, 
-            context
+            address.unwrap(),
+            self.metadata().field_name(),
+            &self.r#type,
+            context,
         ) {
             Ok(contract) => {
                 let item = ContractItem::new(contract, self.r#type.clone());
                 OptionItem::some(item.into())
-            },
+            }
             Err(_err) => {
                 trace_log!(&_err);
                 OptionItem::None(types::contract(self.r#type.clone()))
@@ -127,18 +133,27 @@ impl ContextInterpreter for Contract {
 impl ScopedInterpreter for Self_ {
     fn execute(&self, stack: &mut Stack, scope: &OperationScope) -> Result<()> {
         let contract_hash = scope.self_address.contract_hash();
-        let entrypoint = self.metadata().field_name().as_ref().map(|annot| annot.value_without_prefix());
+        let entrypoint = self
+            .metadata()
+            .field_name()
+            .as_ref()
+            .map(|annot| annot.value_without_prefix());
         let contract_type: Type = scope.self_type.clone().try_into()?;
         let self_ = ContractItem::new(
             make_contract(contract_hash, entrypoint)?,
-            search_entrypoint(contract_type, entrypoint, 0)?
+            search_entrypoint(contract_type, entrypoint, 0)?,
         );
         stack.push(self_.into())
     }
 }
 
 impl Interpreter for TransferTokens {
-    fn execute(&self, stack: &mut Stack, _scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
+    fn execute(
+        &self,
+        stack: &mut Stack,
+        _scope: &OperationScope,
+        context: &mut impl InterpreterContext,
+    ) -> Result<()> {
         let mut param = stack.pop()?;
         let amount = pop_cast!(stack, Mutez);
         let destination = pop_cast!(stack, Contract);
@@ -153,7 +168,7 @@ impl Interpreter for TransferTokens {
         let content = InternalContent::Transaction {
             destination,
             parameter: param.into_micheline(&param_type)?,
-            amount: amount.try_into()?
+            amount: amount.try_into()?,
         };
 
         let res = OperationItem::new(content);

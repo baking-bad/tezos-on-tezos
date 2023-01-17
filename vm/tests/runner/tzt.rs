@@ -1,33 +1,28 @@
 use hex;
+use tezos_core::{
+    internal::crypto::blake2b,
+    types::encoded::{self, Encoded, ScriptExprHash},
+};
 use tezos_michelson::micheline::{
-    Micheline,
-    sequence::Sequence,
-    primitive_application::PrimitiveApplication,
-    literals::Literal
+    literals::Literal, primitive_application::PrimitiveApplication, sequence::Sequence, Micheline,
 };
 use tezos_michelson::michelson::{
+    data::Instruction,
     types::{Code, Type},
-    data::Instruction
-};
-use tezos_core::{
-    types::encoded::{self, ScriptExprHash, Encoded},
-    internal::crypto::blake2b
 };
 use vm::typechecker::check_pair_len;
 use vm::{
-    Result,
-    Error,
+    interpreter::{Interpreter, InterpreterContext, LazyStorage, OperationScope},
     stack::Stack,
-    types::{StackItem, BigMapItem, MapItem, BigMapDiff},
+    trace_enter, trace_exit,
     types::big_map::get_key_hash,
-    interpreter::{Interpreter, LazyStorage, OperationScope, InterpreterContext},
-    trace_enter,
-    trace_exit
+    types::{BigMapDiff, BigMapItem, MapItem, StackItem},
+    Error, Result,
 };
 
 use crate::runner::{
+    micheline::read_from_file,
     mock::{default_scope, MockContext},
-    micheline::read_from_file
 };
 
 pub struct TZT {
@@ -39,12 +34,12 @@ pub struct TZT {
 pub struct Input {
     pub items: Vec<StackItem>,
     pub scope: OperationScope,
-    pub context: MockContext
+    pub context: MockContext,
 }
 
 pub struct Output {
     pub items: Vec<StackItem>,
-    pub error: Option<Error>
+    pub error: Option<Error>,
 }
 
 fn compare_big_maps(lhs: MapItem, rhs: BigMapDiff, context: &MockContext) -> Result<()> {
@@ -53,7 +48,9 @@ fn compare_big_maps(lhs: MapItem, rhs: BigMapDiff, context: &MockContext) -> Res
     let count = elements.len();
     for (key, act) in elements {
         let key_hash = get_key_hash(&key, &kty)?;
-        let exp = context.get_big_map_value(ptr, &key_hash)?.expect("Value is missing");
+        let exp = context
+            .get_big_map_value(ptr, &key_hash)?
+            .expect("Value is missing");
         assert_eq!(exp, act.into_micheline(&vty)?);
     }
     assert_eq!(count, context.get_elements_count(ptr));
@@ -69,7 +66,10 @@ impl TZT {
             stack.push(input.clone())?;
         }
 
-        match self.code.execute(&mut stack, &self.input.scope, &mut self.input.context) {
+        match self
+            .code
+            .execute(&mut stack, &self.input.scope, &mut self.input.context)
+        {
             Ok(()) => {
                 for output in self.output.items.iter() {
                     let mut actual = stack.pop()?;
@@ -77,14 +77,17 @@ impl TZT {
 
                     let expected = output.clone();
                     match (expected, actual) {
-                        (StackItem::BigMap(BigMapItem::Map(lhs)), StackItem::BigMap(BigMapItem::Diff(rhs))) => {
+                        (
+                            StackItem::BigMap(BigMapItem::Map(lhs)),
+                            StackItem::BigMap(BigMapItem::Diff(rhs)),
+                        ) => {
                             compare_big_maps(lhs, rhs, &self.input.context)?;
-                        },
-                        (lhs, rhs) => assert_eq!(lhs, rhs)
+                        }
+                        (lhs, rhs) => assert_eq!(lhs, rhs),
                     }
                 }
                 trace_exit!();
-            },
+            }
             Err(err) => {
                 let expected = self.output.error.as_ref().expect("Error undefined");
                 assert_eq!(*expected, err);
@@ -95,7 +98,7 @@ impl TZT {
         Ok(())
     }
 
-    pub fn load(filename: &str) -> Result<Self> {        
+    pub fn load(filename: &str) -> Result<Self> {
         let src = read_from_file("tzt", filename)?;
         Self::try_from(src)
     }
@@ -111,8 +114,8 @@ fn parse_elements(sequence: Sequence) -> Result<Vec<StackItem>> {
                 let ty: Type = prim.nth_arg(0).expect("type").clone().try_into()?;
                 let data = prim.nth_arg(1).expect("data").clone();
                 items.push(StackItem::from_micheline(data, &ty)?);
-            },
-            _ => panic!("Expected `Stack_elt`")
+            }
+            _ => panic!("Expected `Stack_elt`"),
         }
     }
     Ok(items)
@@ -129,13 +132,13 @@ fn parse_output(section: PrimitiveApplication) -> Result<Output> {
                 "GeneralOverflow" => error = Some(Error::GeneralOverflow),
                 "Failed" => {
                     error = Some(Error::ScriptFailed {
-                        with: arg.first_arg().expect("Expected `with` arg").clone()
+                        with: arg.first_arg().expect("Expected `with` arg").clone(),
                     })
-                },
-                _ => panic!("Unknown primitive in output args")
+                }
+                _ => panic!("Unknown primitive in output args"),
             },
             Micheline::Sequence(seq) => items = parse_elements(seq)?,
-            _ => panic!("Unexpected output arg")
+            _ => panic!("Unexpected output arg"),
         }
     }
     Ok(Output { items, error })
@@ -147,15 +150,15 @@ fn parse_literal(outer: PrimitiveApplication) -> String {
         Micheline::Literal(Literal::Int(int)) => int.to_string(),
         Micheline::Literal(Literal::String(string)) => string.into_string(),
         Micheline::Literal(Literal::Bytes(bytes)) => bytes.value()[2..].to_string(),
-        _ => panic!("Expected literal")
+        _ => panic!("Expected literal"),
     }
 }
 
 fn parse_input(section: PrimitiveApplication) -> Result<Vec<StackItem>> {
-    for arg in section.into_args().expect("Expected single arg") { 
+    for arg in section.into_args().expect("Expected single arg") {
         match arg {
             Micheline::Sequence(seq) => return parse_elements(seq),
-            _ => panic!("Expected input sequence")
+            _ => panic!("Expected input sequence"),
         }
     }
     panic!("Input section is empty")
@@ -168,24 +171,27 @@ fn parse_contracts(sequence: Sequence, context: &mut MockContext) -> Result<()> 
             "Contract" => {
                 let mut args = prim.into_args().expect("Contract args missing");
                 assert_eq!(2, args.len());
-                let key = args.remove(0)
-                    .into_literal().expect("Expected literal")
-                    .into_micheline_string().expect("Expected string")
+                let key = args
+                    .remove(0)
+                    .into_literal()
+                    .expect("Expected literal")
+                    .into_micheline_string()
+                    .expect("Expected string")
                     .into_string()
                     .try_into()?;
                 context.set_contract_type(key, args.remove(0))?;
-            },
-            _ => panic!("Expected `Contract`")
+            }
+            _ => panic!("Expected `Contract`"),
         }
     }
     Ok(())
 }
 
 fn parse_other(section: PrimitiveApplication, context: &mut MockContext) -> Result<()> {
-    for arg in section.into_args().expect("Expected single arg") { 
+    for arg in section.into_args().expect("Expected single arg") {
         match arg {
             Micheline::Sequence(seq) => return parse_contracts(seq, context),
-            _ => panic!("Expected other sequence")
+            _ => panic!("Expected other sequence"),
         }
     }
     panic!("Other section is empty")
@@ -198,23 +204,33 @@ pub fn script_expr_hash(data: Micheline, schema: &Micheline) -> Result<ScriptExp
     Ok(res)
 }
 
-fn parse_big_map_values(sequence: Sequence, scope: &OperationScope, context: &mut MockContext) -> Result<()> {
+fn parse_big_map_values(
+    sequence: Sequence,
+    scope: &OperationScope,
+    context: &mut MockContext,
+) -> Result<()> {
     for item in sequence.into_values() {
         let prim = PrimitiveApplication::try_from(item)?;
         match prim.prim() {
             "Big_map" => {
                 let mut args = prim.into_args().expect("Contract args missing");
                 assert_eq!(4, args.len());
-                let ptr: i64 = args.remove(0)
-                    .into_literal().expect("Expected literal")
-                    .into_micheline_int().expect("Expected int")
+                let ptr: i64 = args
+                    .remove(0)
+                    .into_literal()
+                    .expect("Expected literal")
+                    .into_micheline_int()
+                    .expect("Expected int")
                     .to_integer()?;
                 context.init_big_map(ptr, scope.self_address.clone());
                 let schema = args.remove(0);
-                let elts: Vec<PrimitiveApplication> = args.remove(1)
-                    .into_sequence().expect("Expected sequence")
+                let elts: Vec<PrimitiveApplication> = args
+                    .remove(1)
+                    .into_sequence()
+                    .expect("Expected sequence")
                     .into_values()
-                    .into_iter().map(|elt| elt.into_primitive_application().expect("Expected `Elt`"))
+                    .into_iter()
+                    .map(|elt| elt.into_primitive_application().expect("Expected `Elt`"))
                     .collect();
                 for elt in elts {
                     let mut args = elt.into_args().expect("Elt args missing");
@@ -224,18 +240,22 @@ fn parse_big_map_values(sequence: Sequence, scope: &OperationScope, context: &mu
                     let key_hash = script_expr_hash(key, &schema)?;
                     context.set_big_map_value(ptr, key_hash, Some(value))?;
                 }
-            },
-            _ => panic!("Expected `Big_map`")
+            }
+            _ => panic!("Expected `Big_map`"),
         }
     }
     Ok(())
 }
 
-fn parse_big_maps(section: PrimitiveApplication, scope: &OperationScope, context: &mut MockContext) -> Result<()> {
-    for arg in section.into_args().expect("Expected single arg") { 
+fn parse_big_maps(
+    section: PrimitiveApplication,
+    scope: &OperationScope,
+    context: &mut MockContext,
+) -> Result<()> {
+    for arg in section.into_args().expect("Expected single arg") {
         match arg {
             Micheline::Sequence(seq) => return parse_big_map_values(seq, scope, context),
-            _ => panic!("Expected other sequence")
+            _ => panic!("Expected other sequence"),
         }
     }
     panic!("Bigmaps section is empty")
@@ -261,24 +281,30 @@ impl TryFrom<Micheline> for TZT {
                 "amount" => scope.amount = parse_literal(prim).try_into()?,
                 "balance" => scope.balance = parse_literal(prim).try_into()?,
                 "sender" => scope.sender = parse_literal(prim).try_into()?,
-                "source" => scope.source = parse_literal(prim).try_into()?,                
-                "now" => scope.now = i64::from_str_radix(parse_literal(prim).as_str(), 10).expect("ts"),
+                "source" => scope.source = parse_literal(prim).try_into()?,
+                "now" => {
+                    scope.now = i64::from_str_radix(parse_literal(prim).as_str(), 10).expect("ts")
+                }
                 "self" => scope.self_address = parse_literal(prim).try_into()?,
                 "parameter" => scope.self_type = prim.into(),
                 "chain_id" => {
                     let bytes = hex::decode(parse_literal(prim)).expect("Chain ID");
                     scope.chain_id = encoded::ChainId::from_bytes(bytes.as_slice())?;
-                },
+                }
                 "other_contracts" => parse_other(prim, &mut context)?,
                 "big_maps" => parse_big_maps(prim, &scope, &mut context)?,
-                prim => panic!("Unexpected section {}", prim)
+                prim => panic!("Unexpected section {}", prim),
             }
         }
 
         Ok(Self {
             code: code.expect("Failed to parse code"),
             output: output.expect("Failed to parse output"),
-            input: Input { items, scope, context },
+            input: Input {
+                items,
+                scope,
+                context,
+            },
         })
     }
 }

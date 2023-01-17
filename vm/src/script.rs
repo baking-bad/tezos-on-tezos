@@ -1,36 +1,31 @@
-use tezos_michelson::michelson::{
-    types::{Parameter, Storage, Type, Code},
-    data::Instruction
-};
 use tezos_michelson::micheline::{
+    primitive_application, primitive_application::PrimitiveApplication, sequence::Sequence,
     Micheline,
-    sequence::Sequence,
-    primitive_application::PrimitiveApplication,
-    primitive_application
+};
+use tezos_michelson::michelson::{
+    data::Instruction,
+    types::{Code, Parameter, Storage, Type},
 };
 
 use crate::{
-    Result,
-    Error,
+    err_mismatch, err_unsupported, internal_error,
+    interpreter::{Interpreter, InterpreterContext, LazyStorage, OperationScope},
     stack::Stack,
-    types::{StackItem, PairItem, InternalContent, BigMapDiff},
-    interpreter::{Interpreter, InterpreterContext, OperationScope, LazyStorage},
-    err_mismatch,
-    internal_error,
-    trace_enter,
-    trace_exit, err_unsupported
+    trace_enter, trace_exit,
+    types::{BigMapDiff, InternalContent, PairItem, StackItem},
+    Error, Result,
 };
 
 pub struct MichelsonScript {
     parameter_type: Type,
     storage_type: Type,
-    code: Instruction
+    code: Instruction,
 }
 
 pub struct ScriptReturn {
     pub storage: Micheline,
     pub operations: Vec<InternalContent>,
-    pub big_map_diff: Vec<BigMapDiff>
+    pub big_map_diff: Vec<BigMapDiff>,
 }
 
 // Initial mask value: 0b1 <-- terminating 1
@@ -40,34 +35,44 @@ pub struct ScriptReturn {
 fn get_entrypoint_mask(entrypoint: &str, ty: &Type, mask: i32) -> Result<i32> {
     if let Some(annot) = ty.metadata().field_name() {
         if annot.value_without_prefix() == entrypoint {
-            return Ok(mask)
+            return Ok(mask);
         }
     }
     if let Type::Or(or) = ty.clone() {
         if let Ok(res) = get_entrypoint_mask(entrypoint, &or.lhs, mask << 1) {
-            return Ok(res)
+            return Ok(res);
         }
         if let Ok(res) = get_entrypoint_mask(entrypoint, &or.rhs, (mask << 1) | 1) {
-            return Ok(res)
+            return Ok(res);
         }
-     }
-     if mask == 1 && entrypoint == "default" {
-         return Ok(mask)
-     }
-     Err(Error::EntrypointNotFound { name: entrypoint.into() })
+    }
+    if mask == 1 && entrypoint == "default" {
+        return Ok(mask);
+    }
+    Err(Error::EntrypointNotFound {
+        name: entrypoint.into(),
+    })
 }
 
-fn normalize_parameter(parameter: Micheline, entrypoint: &str, param_ty: &Type) -> Result<Micheline> {
+fn normalize_parameter(
+    parameter: Micheline,
+    entrypoint: &str,
+    param_ty: &Type,
+) -> Result<Micheline> {
     let mut parameter = parameter.normalized();
     let mut mask = get_entrypoint_mask(entrypoint, param_ty, 1)?;
     assert!(mask > 0);
-   
-    while mask > 1  {
-        let prim: String = if mask & 1 == 0 { "Left".into() } else { "Right".into() };
+
+    while mask > 1 {
+        let prim: String = if mask & 1 == 0 {
+            "Left".into()
+        } else {
+            "Right".into()
+        };
         parameter = PrimitiveApplication::new(prim, Some(vec![parameter]), None).into();
         mask >>= 1;
     }
-    
+
     Ok(parameter)
 }
 
@@ -97,7 +102,12 @@ impl MichelsonScript {
         stack.push(input.into())
     }
 
-    pub fn call_end(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<ScriptReturn> {
+    pub fn call_end(
+        &self,
+        stack: &mut Stack,
+        scope: &OperationScope,
+        context: &mut impl InterpreterContext,
+    ) -> Result<ScriptReturn> {
         if stack.len() != 1 {
             return Err(Error::BadReturn);
         }
@@ -105,9 +115,11 @@ impl MichelsonScript {
         let (op_list, mut storage) = match stack.pop()? {
             StackItem::Pair(pair) => match pair.unpair() {
                 (StackItem::List(op_list), storage) => (op_list, storage),
-                (f, s) => return err_mismatch!("(ListItem * StackItem)", format!("({} * {})", f, s))
+                (f, s) => {
+                    return err_mismatch!("(ListItem * StackItem)", format!("({} * {})", f, s))
+                }
             },
-            item => return err_mismatch!("PairItem", item)
+            item => return err_mismatch!("PairItem", item),
         };
 
         let mut big_map_diff: Vec<BigMapDiff> = Vec::new();
@@ -121,10 +133,10 @@ impl MichelsonScript {
                 StackItem::Operation(mut op) => {
                     op.aggregate_diff(&mut big_map_diff);
                     operations.push(op.into_content())
-                },
-                item => return err_mismatch!("OperationItem", item)
-            }                        
-        }                    
+                }
+                item => return err_mismatch!("OperationItem", item),
+            }
+        }
 
         let ret = ScriptReturn {
             big_map_diff,
@@ -134,7 +146,11 @@ impl MichelsonScript {
         Ok(ret)
     }
 
-    pub fn call(&self, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<ScriptReturn> {
+    pub fn call(
+        &self,
+        scope: &OperationScope,
+        context: &mut impl InterpreterContext,
+    ) -> Result<ScriptReturn> {
         let mut stack = Stack::new();
 
         if let Err(err) = self.call_begin(&mut stack, scope) {
@@ -156,7 +172,11 @@ impl MichelsonScript {
         }
     }
 
-    pub fn originate(&self, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<ScriptReturn> {
+    pub fn originate(
+        &self,
+        scope: &OperationScope,
+        context: &mut impl InterpreterContext,
+    ) -> Result<ScriptReturn> {
         let expr = scope.storage.clone().normalized();
         let mut storage = StackItem::from_micheline(expr, &self.storage_type)?;
 
@@ -165,16 +185,21 @@ impl MichelsonScript {
         storage.try_aggregate(&mut big_map_diff, &self.storage_type)?;
 
         let ret = ScriptReturn {
-            big_map_diff, 
+            big_map_diff,
             storage: storage.into_micheline(&self.storage_type)?,
-            operations: vec![]
+            operations: vec![],
         };
         Ok(ret)
     }
 }
 
 impl Interpreter for MichelsonScript {
-    fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
+    fn execute(
+        &self,
+        stack: &mut Stack,
+        scope: &OperationScope,
+        context: &mut impl InterpreterContext,
+    ) -> Result<()> {
         self.code.execute(stack, scope, context)
     }
 }
@@ -198,13 +223,15 @@ impl TryFrom<Micheline> for MichelsonScript {
             }
         }
 
-        // TODO: 
+        // TODO:
         // - check if all types in storage are storable
         // - check if all types in parameter are passable
         Ok(Self {
-            parameter_type: param_ty.ok_or(internal_error!(Parsing, "Missing section:\tparameter"))?,
-            storage_type: storage_ty.ok_or(internal_error!(Parsing, "Missing section:\tstorage"))?,
-            code: code_ty.ok_or(internal_error!(Parsing, "Missing section:\tcode"))?
+            parameter_type: param_ty
+                .ok_or(internal_error!(Parsing, "Missing section:\tparameter"))?,
+            storage_type: storage_ty
+                .ok_or(internal_error!(Parsing, "Missing section:\tstorage"))?,
+            code: code_ty.ok_or(internal_error!(Parsing, "Missing section:\tcode"))?,
         })
     }
 }

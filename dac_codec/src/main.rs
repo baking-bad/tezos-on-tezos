@@ -1,11 +1,11 @@
 use clap::Parser;
-use std::path::PathBuf;
-use std::fs::{File, create_dir_all};
-use std::io::{Read, Write};
 use once_cell::sync::Lazy;
+use std::fs::{create_dir_all, File};
+use std::io::{Read, Write};
+use std::path::PathBuf;
+use tezos_core::internal::crypto::Crypto;
 use tezos_encoding::enc::BinWriter;
 use tezos_rollup_encoding::dac::{Page, V0ContentPage, V0HashPage, MAX_PAGE_SIZE};
-use tezos_core::internal::crypto::Crypto;
 // use tezos_core::types::encoded::{ScRollupRevealHash, Encoded};
 
 const ROOT_HASH_FILE: &'static str = "root_hash.bin";
@@ -15,7 +15,9 @@ const MAX_FILE_SIZE: u64 = 10_048_576;
 const CRYPTO: Lazy<Crypto> = Lazy::new(|| Crypto::new(None, None, None));
 
 fn hash_digest(preimage: &[u8]) -> [u8; PREIMAGE_HASH_SIZE] {
-    let digest_256 = CRYPTO.blake2b(preimage, 32).expect("Failed to calculate hash");
+    let digest_256 = CRYPTO
+        .blake2b(preimage, 32)
+        .expect("Failed to calculate hash");
     let mut hash_with_prefix = [0; PREIMAGE_HASH_SIZE];
     hash_with_prefix[1..].copy_from_slice(&digest_256);
     hash_with_prefix
@@ -28,14 +30,17 @@ fn get_filename(payload: &[u8]) -> String {
 
 fn write_page(page: &Page, output_path: &PathBuf) -> [u8; PREIMAGE_HASH_SIZE] {
     let mut data = Vec::with_capacity(MAX_PAGE_SIZE);
-    page.bin_write(&mut data).expect("Failed to serialize content page");
+    page.bin_write(&mut data)
+        .expect("Failed to serialize content page");
 
     let hash = hash_digest(data.as_slice());
     let filename = get_filename(&hash);
     let path = output_path.join(filename);
 
     let mut output_file = File::create(path).expect("Failed to open file for writing");
-    output_file.write(data.as_slice()).expect("Failed to write file");
+    output_file
+        .write(data.as_slice())
+        .expect("Failed to write file");
     hash
 }
 
@@ -57,13 +62,15 @@ fn ensure_dir_exists(output_path: &PathBuf) {
 }
 
 fn read_source_file(source_path: &PathBuf) -> Vec<u8> {
-    let file_size = std::fs::metadata(source_path).expect("Failed to find source").len();
+    let file_size = std::fs::metadata(source_path)
+        .expect("Failed to find source")
+        .len();
     if file_size > MAX_FILE_SIZE {
         panic!("Source file is too large");
     }
 
     let mut source_file = File::open(source_path).expect("Failed to open source file for reading");
-    let mut buffer: Vec<u8> = Vec::with_capacity(file_size.try_into().unwrap());    
+    let mut buffer: Vec<u8> = Vec::with_capacity(file_size.try_into().unwrap());
 
     if let Err(error) = source_file.read_to_end(&mut buffer) {
         panic!("Failed to read source file: {:?}", error);
@@ -72,33 +79,39 @@ fn read_source_file(source_path: &PathBuf) -> Vec<u8> {
     buffer
 }
 
-fn hash_loop(level: usize, pages: &Vec<Page>, hashes: &mut Vec<[u8; PREIMAGE_HASH_SIZE]>, output_path: &PathBuf) -> String {
+fn hash_loop(
+    level: usize,
+    pages: &Vec<Page>,
+    hashes: &mut Vec<[u8; PREIMAGE_HASH_SIZE]>,
+    output_path: &PathBuf,
+) -> String {
     if level >= MAX_DAC_LEVELS {
         panic!("DAC preimage tree contains too many levels: {}", level);
     }
 
     hashes.clear();
-    
+
     for page in pages {
         let hash = write_page(&page, &output_path);
         hashes.push(hash);
     }
 
     if hashes.len() == 1 {
-        write_root(&hashes[0], output_path)   
+        write_root(&hashes[0], output_path)
     } else {
         let hashes_pages: Vec<Page> = V0HashPage::new_pages(hashes.as_slice())
             .map(|c| Page::V0HashPage(c))
             .collect();
-        hash_loop(level + 1, &hashes_pages, hashes, output_path) 
+        hash_loop(level + 1, &hashes_pages, hashes, output_path)
     }
 }
 
 fn generate_pages_v0(source_path: &PathBuf, output_path: &PathBuf) -> String {
     ensure_dir_exists(output_path);
 
-    let input = read_source_file(source_path);    
-    let mut hashes: Vec<[u8; PREIMAGE_HASH_SIZE]> = Vec::with_capacity(input.len() / V0ContentPage::MAX_CONTENT_SIZE + 1);
+    let input = read_source_file(source_path);
+    let mut hashes: Vec<[u8; PREIMAGE_HASH_SIZE]> =
+        Vec::with_capacity(input.len() / V0ContentPage::MAX_CONTENT_SIZE + 1);
     let pages: Vec<_> = V0ContentPage::new_pages(input.as_slice())
         .map(|p| Page::V0ContentPage(p))
         .collect();
@@ -108,19 +121,19 @@ fn generate_pages_v0(source_path: &PathBuf, output_path: &PathBuf) -> String {
 
 #[derive(Parser, Debug)]
 struct Args {
-   /// Path to the file that is to be DAC encoded
-   source_file: PathBuf,
+    /// Path to the file that is to be DAC encoded
+    source_file: PathBuf,
 
-   /// Output directory to save hash/content pages
-   #[arg(short, long)]
-   output_dir: Option<PathBuf>,
+    /// Output directory to save hash/content pages
+    #[arg(short, long)]
+    output_dir: Option<PathBuf>,
 }
 
 fn main() {
-   let args = Args::parse();
+    let args = Args::parse();
 
-   let output_path = args.output_dir.unwrap_or(PathBuf::from("."));
-   let root_hash = generate_pages_v0(&args.source_file, &output_path);
+    let output_path = args.output_dir.unwrap_or(PathBuf::from("."));
+    let root_hash = generate_pages_v0(&args.source_file, &output_path);
 
-   print!("{}", root_hash);
+    print!("{}", root_hash);
 }

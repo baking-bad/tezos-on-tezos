@@ -1,18 +1,17 @@
-use tezos_michelson::michelson::{data::Instruction, types::Type};
-use tezos_michelson::micheline::Micheline;
 use tezos_core::types::{
-    encoded::{ContractAddress, ScriptExprHash, ChainId, ImplicitAddress, Address},
-    mutez::Mutez
+    encoded::{Address, ChainId, ContractAddress, ImplicitAddress, ScriptExprHash},
+    mutez::Mutez,
 };
+use tezos_michelson::micheline::Micheline;
+use tezos_michelson::michelson::{data::Instruction, types::Type};
 
 use crate::{
-    Result,
-    stack::Stack,
+    err_unsupported,
     formatter::Formatter,
-    types::{StackItem, BigMapDiff},
-    trace_enter,
-    trace_exit,
-    err_unsupported
+    stack::Stack,
+    trace_enter, trace_exit,
+    types::{BigMapDiff, StackItem},
+    Result,
 };
 
 pub trait InterpreterContext {
@@ -23,7 +22,12 @@ pub trait InterpreterContext {
     // TODO: set_big_map_owner
     fn has_big_map_value(&self, ptr: i64, key_hash: &ScriptExprHash) -> Result<bool>;
     fn get_big_map_value(&self, ptr: i64, key_hash: &ScriptExprHash) -> Result<Option<Micheline>>;
-    fn set_big_map_value(&mut self, ptr: i64, key_hash: ScriptExprHash, value: Option<Micheline>) -> Result<Option<Micheline>>;
+    fn set_big_map_value(
+        &mut self,
+        ptr: i64,
+        key_hash: ScriptExprHash,
+        value: Option<Micheline>,
+    ) -> Result<Option<Micheline>>;
 }
 
 pub struct OperationScope {
@@ -41,7 +45,12 @@ pub struct OperationScope {
 }
 
 pub trait Interpreter {
-    fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()>;
+    fn execute(
+        &self,
+        stack: &mut Stack,
+        scope: &OperationScope,
+        context: &mut impl InterpreterContext,
+    ) -> Result<()>;
 }
 
 pub trait PureInterpreter {
@@ -57,12 +66,21 @@ pub trait ContextInterpreter {
 }
 
 pub trait LazyStorage {
-    fn try_acquire(&mut self, owner: &ContractAddress, context: &mut impl InterpreterContext) -> Result<()>;
+    fn try_acquire(
+        &mut self,
+        owner: &ContractAddress,
+        context: &mut impl InterpreterContext,
+    ) -> Result<()>;
     fn try_aggregate(&mut self, output: &mut Vec<BigMapDiff>, ty: &Type) -> Result<()>;
 }
 
 impl Interpreter for Instruction {
-    fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
+    fn execute(
+        &self,
+        stack: &mut Stack,
+        scope: &OperationScope,
+        context: &mut impl InterpreterContext,
+    ) -> Result<()> {
         trace_enter!(self);
         let res = match self {
             Instruction::Sequence(seq) => return seq.execute(stack, scope, context),
@@ -148,7 +166,7 @@ impl Interpreter for Instruction {
             Instruction::Blake2B(instr) => instr.execute(stack),
             Instruction::HashKey(instr) => instr.execute(stack),
             Instruction::CheckSignature(instr) => instr.execute(stack),
-            _ => err_unsupported!(self.format())
+            _ => err_unsupported!(self.format()),
         };
         trace_exit!(res.as_ref().err(), format!("Len {}", &stack.len()).as_str());
         res
@@ -156,7 +174,11 @@ impl Interpreter for Instruction {
 }
 
 impl LazyStorage for StackItem {
-    fn try_acquire(&mut self, owner: &ContractAddress, context: &mut impl InterpreterContext) -> Result<()> {
+    fn try_acquire(
+        &mut self,
+        owner: &ContractAddress,
+        context: &mut impl InterpreterContext,
+    ) -> Result<()> {
         match self {
             StackItem::BigMap(item) => item.try_acquire(owner, context),
             StackItem::Option(item) => item.try_acquire(owner, context),
@@ -164,10 +186,10 @@ impl LazyStorage for StackItem {
             StackItem::Pair(item) => item.try_acquire(owner, context),
             StackItem::List(item) => item.try_acquire(owner, context),
             StackItem::Map(item) => item.try_acquire(owner, context),
-            _ => Ok(())
+            _ => Ok(()),
         }
     }
-    
+
     fn try_aggregate(&mut self, output: &mut Vec<BigMapDiff>, ty: &Type) -> Result<()> {
         match self {
             StackItem::BigMap(item) => item.try_aggregate(output, ty),
@@ -176,7 +198,7 @@ impl LazyStorage for StackItem {
             StackItem::Pair(item) => item.try_aggregate(output, ty),
             StackItem::List(item) => item.try_aggregate(output, ty),
             StackItem::Map(item) => item.try_aggregate(output, ty),
-            _ => Ok(())
+            _ => Ok(()),
         }
     }
 }

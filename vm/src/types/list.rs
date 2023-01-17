@@ -1,19 +1,13 @@
 use std::fmt::Display;
-use tezos_michelson::michelson::{
-    data::Data,
-    types::Type,
-    types,
-    data
-};
+use tezos_michelson::michelson::{data, data::Data, types, types::Type};
 
 use crate::{
-    Result,
-    Error,
-    types::{ListItem, StackItem},
-    typechecker::check_types_equal,
-    formatter::Formatter,
     err_mismatch,
-    type_cast
+    formatter::Formatter,
+    type_cast,
+    typechecker::check_types_equal,
+    types::{ListItem, StackItem},
+    Error, Result,
 };
 
 pub fn seq_into_item_vec(sequence: data::Sequence, val_type: &Type) -> Result<Vec<StackItem>> {
@@ -25,7 +19,11 @@ pub fn seq_into_item_vec(sequence: data::Sequence, val_type: &Type) -> Result<Ve
     Ok(items)
 }
 
-pub fn item_vec_into_seq(items: Vec<StackItem>, inner_type: &Type, val_type: &Type) -> Result<Data> {
+pub fn item_vec_into_seq(
+    items: Vec<StackItem>,
+    inner_type: &Type,
+    val_type: &Type,
+) -> Result<Data> {
     if items.is_empty() {
         check_types_equal(val_type, inner_type)?;
         Ok(Data::Sequence(data::sequence(vec![])))
@@ -40,7 +38,10 @@ pub fn item_vec_into_seq(items: Vec<StackItem>, inner_type: &Type, val_type: &Ty
 
 impl ListItem {
     pub fn new(items: Vec<StackItem>, val_type: Type) -> Self {
-        Self { outer_value: items, inner_type: val_type }
+        Self {
+            outer_value: items,
+            inner_type: val_type,
+        }
     }
 
     pub fn from_data(data: Data, val_type: &Type) -> Result<StackItem> {
@@ -48,8 +49,8 @@ impl ListItem {
             Data::Sequence(seq) => {
                 let items = seq_into_item_vec(seq, &val_type)?;
                 Ok(StackItem::List(Self::new(items, val_type.to_owned())))
-            },
-            _ => err_mismatch!("Sequence", data.format())
+            }
+            _ => err_mismatch!("Sequence", data.format()),
         }
     }
 

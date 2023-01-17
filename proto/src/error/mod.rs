@@ -1,21 +1,21 @@
 mod rpc;
 
 use core::result;
-use derive_more::{From, Display, Error};
-use tezos_core::types::encoded::{OperationHash};
+use derive_more::{Display, Error, From};
+use tezos_core::types::encoded::OperationHash;
 
-pub use tezos_rpc::Error as TezosRpcError;
-pub use tezos_core::Error as TezosCoreError;
-pub use tezos_operation::Error as TezosOperationError;
-pub use tezos_michelson::Error as TezosMichelsonError;
-pub use serde_json_wasm::ser::Error as SerializationError;
-pub use serde_json_wasm::de::Error as DeserializationError;
-pub use ibig::error::ParseError as BigIntParsingError;
-pub use ibig::error::OutOfBoundsError as BigIntOutOfBoundsError;
 pub use chrono::ParseError as TimestampParsingError;
+pub use ibig::error::OutOfBoundsError as BigIntOutOfBoundsError;
+pub use ibig::error::ParseError as BigIntParsingError;
+pub use serde_json_wasm::de::Error as DeserializationError;
+pub use serde_json_wasm::ser::Error as SerializationError;
+pub use tezos_core::Error as TezosCoreError;
+pub use tezos_michelson::Error as TezosMichelsonError;
+pub use tezos_operation::Error as TezosOperationError;
+pub use tezos_rpc::Error as TezosRpcError;
 pub use vm::Error as InterpreterError;
 
-pub use rpc::{RpcErrors, RpcError};
+pub use rpc::{RpcError, RpcErrors};
 
 #[derive(Debug, From, Display, Error)]
 pub enum Error {
@@ -30,13 +30,13 @@ pub enum Error {
     TimestampParsingError(TimestampParsingError),
     ContextUnstagedError,
     ExternalError {
-        message: String
+        message: String,
     },
     OperationKindUnsupported,
     #[display(fmt = "operation {:?}, caused by {:?}", hash, inner)]
     ValidationError {
         hash: OperationHash,
-        inner: RpcError
+        inner: RpcError,
     },
     InterpreterError(InterpreterError),
 }

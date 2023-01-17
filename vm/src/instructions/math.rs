@@ -1,21 +1,23 @@
 use tezos_michelson::michelson::data::instructions::{
-    Abs, Add, Ediv, Lsl, Lsr, Mul, Neg, Sub, SubMutez, Int, IsNat, Or, Xor, And, Not, 
+    Abs, Add, And, Ediv, Int, IsNat, Lsl, Lsr, Mul, Neg, Not, Or, Sub, SubMutez, Xor,
 };
 use tezos_michelson::michelson::types;
 
 use crate::{
-    Result,
-    Error,
-    interpreter::{PureInterpreter},
-    types::{StackItem, OptionItem},
-    stack::Stack,
+    err_mismatch,
+    interpreter::PureInterpreter,
     pop_cast,
-    err_mismatch
+    stack::Stack,
+    types::{OptionItem, StackItem},
+    Error, Result,
 };
 
 macro_rules! invalid_operands {
     ($opcode: literal, $l: expr, $r: expr) => {
-        err_mismatch!(format!("{}-supported operands", $opcode), format!("{} * {}", $l, $r))
+        err_mismatch!(
+            format!("{}-supported operands", $opcode),
+            format!("{} * {}", $l, $r)
+        )
     };
 }
 
@@ -38,7 +40,7 @@ impl PureInterpreter for Add {
             (StackItem::Timestamp(a), StackItem::Int(b)) => (a + b)?.into(),
             (StackItem::Int(a), StackItem::Timestamp(b)) => (b + a)?.into(),
             (StackItem::Mutez(a), StackItem::Mutez(b)) => (a + b)?.into(),
-            (l, r) => return invalid_operands!("ADD", l, r)
+            (l, r) => return invalid_operands!("ADD", l, r),
         };
         stack.push(res)
     }
@@ -55,7 +57,7 @@ impl PureInterpreter for Ediv {
             (StackItem::Int(a), StackItem::Int(b)) => (a / b).into(),
             (StackItem::Mutez(a), StackItem::Nat(b)) => (a / b)?.into(),
             (StackItem::Mutez(a), StackItem::Mutez(b)) => (a / b)?.into(),
-            (l, r) => return invalid_operands!("EDIV", l, r)
+            (l, r) => return invalid_operands!("EDIV", l, r),
         };
         stack.push(res)
     }
@@ -90,7 +92,7 @@ impl PureInterpreter for Mul {
             (StackItem::Int(a), StackItem::Int(b)) => (a * b).into(),
             (StackItem::Mutez(a), StackItem::Nat(b)) => (a * b)?.into(),
             (StackItem::Nat(a), StackItem::Mutez(b)) => (b * a)?.into(),
-            (l, r) => return invalid_operands!("MUL", l, r)
+            (l, r) => return invalid_operands!("MUL", l, r),
         };
         stack.push(res)
     }
@@ -101,7 +103,7 @@ impl PureInterpreter for Neg {
         let res: StackItem = match stack.pop()? {
             StackItem::Nat(a) => (-a).into(),
             StackItem::Int(a) => (-a).into(),
-            items => return err_mismatch!("NatItem or IntItem", items)
+            items => return err_mismatch!("NatItem or IntItem", items),
         };
         stack.push(res)
     }
@@ -119,7 +121,7 @@ impl PureInterpreter for Sub {
             (StackItem::Timestamp(a), StackItem::Int(b)) => (a - b)?.into(),
             (StackItem::Timestamp(a), StackItem::Timestamp(b)) => (a - b).into(),
             (StackItem::Mutez(a), StackItem::Mutez(b)) => (a - b)?.into(),
-            (l, r) => return invalid_operands!("SUB", l, r)
+            (l, r) => return invalid_operands!("SUB", l, r),
         };
         stack.push(res)
     }
@@ -132,7 +134,7 @@ impl PureInterpreter for SubMutez {
         let res = match a - b {
             Ok(res) => OptionItem::some(res.into()),
             Err(Error::MutezUnderflow) => OptionItem::none(&types::mutez()),
-            Err(err) => return Err(err)
+            Err(err) => return Err(err),
         };
         stack.push(res.into())
     }
@@ -159,7 +161,7 @@ impl PureInterpreter for Or {
         let res: StackItem = match (a, b) {
             (StackItem::Bool(a), StackItem::Bool(b)) => (a | b).into(),
             (StackItem::Nat(a), StackItem::Nat(b)) => (a | b).into(),
-            (l, r) => return invalid_operands!("OR", l, r)
+            (l, r) => return invalid_operands!("OR", l, r),
         };
         stack.push(res)
     }
@@ -172,7 +174,7 @@ impl PureInterpreter for Xor {
         let res: StackItem = match (a, b) {
             (StackItem::Bool(a), StackItem::Bool(b)) => (a ^ b).into(),
             (StackItem::Nat(a), StackItem::Nat(b)) => (a ^ b).into(),
-            (l, r) => return invalid_operands!("XOR", l, r)
+            (l, r) => return invalid_operands!("XOR", l, r),
         };
         stack.push(res)
     }
@@ -186,7 +188,7 @@ impl PureInterpreter for And {
             (StackItem::Bool(a), StackItem::Bool(b)) => (a & b).into(),
             (StackItem::Nat(a), StackItem::Nat(b)) => (a & b).into(),
             (StackItem::Int(a), StackItem::Nat(b)) => (a & b)?.into(),
-            (l, r) => return invalid_operands!("AND", l, r)
+            (l, r) => return invalid_operands!("AND", l, r),
         };
         stack.push(res)
     }
@@ -198,7 +200,7 @@ impl PureInterpreter for Not {
             StackItem::Bool(a) => (!a).into(),
             StackItem::Nat(a) => (!a).into(),
             StackItem::Int(a) => (!a).into(),
-            item => return err_mismatch!("NOT-supported operand", item)
+            item => return err_mismatch!("NOT-supported operand", item),
         };
         stack.push(res)
     }

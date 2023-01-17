@@ -1,5 +1,5 @@
-use derive_more::{From, Display, Error};
-use proto::error::{TezosCoreError, TezosRpcError, TezosOperationError, Error as TezosProtoError};
+use derive_more::{Display, Error, From};
+use proto::error::{Error as TezosProtoError, TezosCoreError, TezosOperationError, TezosRpcError};
 
 #[derive(Debug, From, Display, Error)]
 pub enum Error {
@@ -8,14 +8,14 @@ pub enum Error {
     TezosCoreError(TezosCoreError),
     TezosRpcError(TezosRpcError),
     #[display(fmt = "{:?}", internal)]
-    WasmHostError{
-        internal: host::runtime::RuntimeError
+    WasmHostError {
+        internal: host::runtime::RuntimeError,
     },
     #[display(fmt = "{:?}", internal)]
-    HostPathError{
-        internal: host::path::PathError
+    HostPathError {
+        internal: host::path::PathError,
     },
-    OperationParsingError
+    OperationParsingError,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

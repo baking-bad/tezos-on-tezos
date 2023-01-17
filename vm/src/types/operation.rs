@@ -1,10 +1,13 @@
 use std::fmt::Display;
 
-use crate::types::{OperationItem, InternalContent, BigMapDiff};
+use crate::types::{BigMapDiff, InternalContent, OperationItem};
 
 impl OperationItem {
     pub fn new(content: InternalContent) -> Self {
-        Self { content, big_map_diff: Vec::new() }
+        Self {
+            content,
+            big_map_diff: Vec::new(),
+        }
     }
 
     pub fn into_content(self) -> InternalContent {

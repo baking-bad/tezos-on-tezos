@@ -1,44 +1,28 @@
 pub use tezos_core::types::{
     encoded::{
-        OperationHash,
-        OperationListListHash,
-        BlockPayloadHash,
-        BlockHash,
-        Signature,
-        ChainId,
-        ProtocolHash,
-        ContextHash,
-        ImplicitAddress,
-        Encoded
+        BlockHash, BlockPayloadHash, ChainId, ContextHash, Encoded, ImplicitAddress, OperationHash,
+        OperationListListHash, ProtocolHash, Signature,
     },
-    hex_string::HexString
+    hex_string::HexString,
 };
 pub use tezos_operation::{
     block_header,
-    operations::{SignedOperation, UnsignedOperation}
+    operations::{SignedOperation, UnsignedOperation},
 };
 pub use tezos_rpc::models::{
+    balance_update,
+    balance_update::BalanceUpdate,
     block::{
-        Metadata,
-        Header,
-        FullHeader,
-        Block,
-        TestChainStatus,
-        TestChainStatusName,
-        LevelInfo,
-        OperationListLength,
-        LiquidityBakingToggleVote
+        Block, FullHeader, Header, LevelInfo, LiquidityBakingToggleVote, Metadata,
+        OperationListLength, TestChainStatus, TestChainStatusName,
     },
     operation::Operation as OperationReceipt,
-    balance_update::BalanceUpdate,
-    balance_update
 };
 
 use chrono::NaiveDateTime;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::{constants::*, Result};
-
 
 #[macro_export]
 macro_rules! ts2dt {
@@ -87,10 +71,10 @@ impl From<BatchHeader> for block_header::BlockHeader {
             payload_hash: header.payload_hash,
             payload_round: 0,
             predecessor: header.predecessor,
-            proof_of_work_nonce: POW_NONCE.try_into().unwrap(),  // TODO: repo commit hash
+            proof_of_work_nonce: POW_NONCE.try_into().unwrap(), // TODO: repo commit hash
             proto: 0,
             seed_nonce_hash: None,
-            signature: ZERO_SIGNATURE.try_into().unwrap(),  // TODO: sign with revealed preimage key
+            signature: ZERO_SIGNATURE.try_into().unwrap(), // TODO: sign with revealed preimage key
             timestamp: ts2dt!(header.timestamp),
             validation_pass: 4,
         }
@@ -115,7 +99,7 @@ impl From<BatchHeader> for Header {
             seed_nonce_hash: None,
             signature: None,
             timestamp: ts2dt!(header.timestamp),
-            validation_pass: 4
+            validation_pass: 4,
         }
     }
 }
@@ -123,7 +107,7 @@ impl From<BatchHeader> for Header {
 impl From<BatchReceipt> for Metadata {
     fn from(receipt: BatchReceipt) -> Self {
         Self {
-            baker: None,  // TODO: + signature
+            baker: None, // TODO: + signature
             balance_updates: receipt.balance_updates,
             // derived
             protocol: receipt.protocol.to_owned(),
@@ -133,19 +117,28 @@ impl From<BatchReceipt> for Metadata {
                 level_position: receipt.header.level - 1,
                 cycle: receipt.header.level / CYCLE_BLOCKS,
                 cycle_position: receipt.header.level % CYCLE_BLOCKS,
-                expected_commitment: false
+                expected_commitment: false,
             }),
             // default
             max_operations_ttl: MAX_OPERATIONS_TTL,
             max_operation_data_length: MAX_OPERATION_DATA_LENGTH,
             max_operation_list_length: vec![
-                OperationListLength { max_size: 0, max_op: None },
-                OperationListLength { max_size: 0, max_op: None },
-                OperationListLength { max_size: 0, max_op: None },
+                OperationListLength {
+                    max_size: 0,
+                    max_op: None,
+                },
+                OperationListLength {
+                    max_size: 0,
+                    max_op: None,
+                },
+                OperationListLength {
+                    max_size: 0,
+                    max_op: None,
+                },
                 OperationListLength {
                     max_size: MAX_OPERATION_LIST_LENGTH,
-                    max_op: Some(MAX_TOTAL_OPERATION_DATA_LENGTH)
-                }
+                    max_op: Some(MAX_TOTAL_OPERATION_DATA_LENGTH),
+                },
             ],
             max_block_header_length: MAX_BLOCK_HEADER_LENGTH,
             // null
@@ -160,12 +153,12 @@ impl From<BatchReceipt> for Metadata {
                 chain_id: None,
                 genesis: None,
                 protocol: None,
-                expiration: None
+                expiration: None,
             },
             proposer: None,
-            nonce_hash: None,        
+            nonce_hash: None,
             liquidity_baking_toggle_ema: None,
-            liquidity_baking_escape_ema: None
+            liquidity_baking_escape_ema: None,
         }
     }
 }
@@ -190,7 +183,7 @@ impl From<BatchReceipt> for FullHeader {
             seed_nonce_hash: None,
             signature: None,
             timestamp: ts2dt!(receipt.header.timestamp),
-            validation_pass: 4,    
+            validation_pass: 4,
         }
     }
 }

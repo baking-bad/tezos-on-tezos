@@ -1,14 +1,13 @@
-use tezos_michelson::michelson::{
-    types::{Type, ComparableType},
-    data::{Data, Instruction},
-    annotations::{Annotation}
-};
 use tezos_core::types::number::Nat;
+use tezos_michelson::michelson::{
+    annotations::Annotation,
+    data::{Data, Instruction},
+    types::{ComparableType, Type},
+};
 
 pub trait Formatter {
     fn format(&self) -> String;
 }
-
 
 fn format_instr_n(opcode: &str, arg: Option<&Nat>) -> String {
     match arg {
@@ -20,7 +19,7 @@ fn format_instr_n(opcode: &str, arg: Option<&Nat>) -> String {
 fn format_instr_annot(opcode: &str, field_name: &Option<Annotation>) -> String {
     match field_name {
         Some(annot) => format!("{} {}", opcode, annot.value()),
-        None => opcode.to_string()
+        None => opcode.to_string(),
     }
 }
 
@@ -101,14 +100,16 @@ impl Formatter for Instruction {
             Instruction::SelfAddress(_) => "SelfAddress".into(),
             Instruction::Balance(_) => "Balance".into(),
             Instruction::Address(_) => "Address".into(),
-            Instruction::Contract(instr) => format_instr_annot("Contract", instr.metadata().field_name()),
+            Instruction::Contract(instr) => {
+                format_instr_annot("Contract", instr.metadata().field_name())
+            }
             Instruction::Self_(instr) => format_instr_annot("Self", instr.metadata().field_name()),
             Instruction::ImplicitAccount(_) => "ImplicitAccount".into(),
             Instruction::TransferTokens(_) => "TransferTokens".into(),
             Instruction::Blake2B(_) => "Blake2B".into(),
             Instruction::HashKey(_) => "HashKey".into(),
             Instruction::CheckSignature(_) => "CheckSignature".into(),
-            _ => format!("{:?}", self)
+            _ => format!("{:?}", self),
         }
     }
 }
@@ -129,8 +130,8 @@ impl Formatter for ComparableType {
             ComparableType::String(_) => "string".into(),
             ComparableType::Timestamp(_) => "timestamp".into(),
             ComparableType::Unit(_) => "unit".into(),
-            ty => format!("{:?}", ty)
-        }        
+            ty => format!("{:?}", ty),
+        }
     }
 }
 
@@ -143,18 +144,26 @@ impl Formatter for Type {
             Type::Pair(ty) => {
                 let args: Vec<String> = ty.types.iter().map(|x| x.format()).collect();
                 format!("(pair {})", args.join(" "))
-            },
+            }
             Type::List(ty) => format!("(list {})", ty.r#type.format()),
             Type::Set(ty) => format!("(set {})", ty.r#type.format()),
             Type::Map(ty) => format!("(map {} {})", ty.key_type.format(), ty.value_type.format()),
-            Type::BigMap(ty) => format!("(big_map {} {})", ty.key_type.format(), ty.value_type.format()),
-            Type::Lambda(ty) => format!("(lambda {} {})", ty.parameter_type.format(), ty.return_type.format()),
+            Type::BigMap(ty) => format!(
+                "(big_map {} {})",
+                ty.key_type.format(),
+                ty.value_type.format()
+            ),
+            Type::Lambda(ty) => format!(
+                "(lambda {} {})",
+                ty.parameter_type.format(),
+                ty.return_type.format()
+            ),
             Type::Contract(ty) => format!("(contract {})", ty.r#type.format()),
             Type::Operation(_) => "operation".into(),
             Type::Parameter(ty) => format!("(parameter {})", ty.r#type.format()),
             Type::Storage(ty) => format!("(storage {})", ty.r#type.format()),
-            ty => format!("{:?}", ty)
-        }        
+            ty => format!("{:?}", ty),
+        }
     }
 }
 
@@ -175,17 +184,21 @@ impl Formatter for Data {
             Data::Pair(val) => {
                 let args: Vec<String> = val.values.iter().map(|x| x.format()).collect();
                 format!("(Pair {})", args.join(" "))
-            },
+            }
             Data::Sequence(val) => {
                 let args: Vec<String> = val.values().iter().map(|x| x.format()).collect();
                 format!("{{{}}}", args.join(" "))
-            },
+            }
             Data::Elt(val) => format!("Elt {} {}", val.key.format(), val.value.format()),
             Data::Map(val) => {
-                let args: Vec<String> = val.values().iter().map(|x| Data::Elt(x.clone()).format()).collect();
+                let args: Vec<String> = val
+                    .values()
+                    .iter()
+                    .map(|x| Data::Elt(x.clone()).format())
+                    .collect();
                 format!("{{ {} }}", args.join("; "))
-            },
+            }
             Data::Instruction(val) => val.format(), // TODO: uppercase?
-        }        
+        }
     }
 }

@@ -1,37 +1,36 @@
+pub mod balance_update;
+pub mod origination;
 pub mod reveal;
 pub mod transaction;
-pub mod origination;
-pub mod balance_update;
 
 use tezos_core::types::{
+    encoded::{ChainId, Encoded, ProtocolHash},
     mutez::Mutez,
-    encoded::{ProtocolHash, ChainId, Encoded}
 };
 use tezos_operation::operations::OperationContent;
 use tezos_rpc::models::operation::{
-    Operation as OperationReceipt,
+    operation_result::OperationResultStatus, Operation as OperationReceipt,
     OperationContent as OperationContentReceipt,
-    operation_result::OperationResultStatus
 };
 
 use crate::{
     assert_no_pending_changes,
-    error::{Error, Result},
+    constants::{CHAIN_ID, PROTOCOL},
     context::Context,
+    error::{Error, Result},
     executor::{
-        reveal::{execute_reveal, skip_reveal}, 
+        origination::{execute_origination, skip_origination},
+        reveal::{execute_reveal, skip_reveal},
         transaction::{execute_transaction, skip_transaction},
-        origination::{execute_origination, skip_origination}
     },
     validator::ManagerOperation,
-    constants::{CHAIN_ID, PROTOCOL}
 };
 
 macro_rules! set_status {
     ($receipt: expr, $status: expr) => {
         if let Some(metadata) = $receipt.metadata.as_mut() {
             metadata.operation_result.status = $status;
-            return Ok(())
+            return Ok(());
         }
     };
 }
@@ -44,12 +43,15 @@ macro_rules! get_status {
     };
 }
 
-fn update_status(receipt: &mut OperationContentReceipt, status: OperationResultStatus) -> Result<()> {
+fn update_status(
+    receipt: &mut OperationContentReceipt,
+    status: OperationResultStatus,
+) -> Result<()> {
     match receipt {
         OperationContentReceipt::Reveal(reveal) => set_status!(reveal, status),
         OperationContentReceipt::Transaction(transaction) => set_status!(transaction, status),
         OperationContentReceipt::Origination(origination) => set_status!(origination, status),
-        _ => return Err(Error::OperationKindUnsupported)
+        _ => return Err(Error::OperationKindUnsupported),
     };
     panic!("Operation metadata is missing: {:?}", receipt)
 }
@@ -59,15 +61,20 @@ fn get_status(receipt: &OperationContentReceipt) -> Result<OperationResultStatus
         OperationContentReceipt::Reveal(reveal) => get_status!(reveal),
         OperationContentReceipt::Transaction(transaction) => get_status!(transaction),
         OperationContentReceipt::Origination(origination) => get_status!(origination),
-        _ => return Err(Error::OperationKindUnsupported)
+        _ => return Err(Error::OperationKindUnsupported),
     }
     panic!("Operation metadata is missing: {:?}", receipt)
 }
 
-pub fn execute_operation(context: &mut impl Context, opg: &ManagerOperation) -> Result<OperationReceipt> {
+pub fn execute_operation(
+    context: &mut impl Context,
+    opg: &ManagerOperation,
+) -> Result<OperationReceipt> {
     assert_no_pending_changes!(context);
 
-    let initial_balance = context.get_balance(&opg.source)?.expect("Balance not initialized");
+    let initial_balance = context
+        .get_balance(&opg.source)?
+        .expect("Balance not initialized");
     let mut contents = Vec::new();
     let mut failed_idx: Option<usize> = None;
     let mut origination_index: i32 = 0;
@@ -84,7 +91,7 @@ pub fn execute_operation(context: &mut impl Context, opg: &ManagerOperation) -> 
                     skip_reveal(reveal.clone())
                 };
                 OperationContentReceipt::Reveal(reveal_receipt)
-            },
+            }
             OperationContent::Transaction(transaction) => {
                 let transaction_receipt = if failed_idx.is_none() {
                     execute_transaction(context, transaction)?
@@ -92,7 +99,7 @@ pub fn execute_operation(context: &mut impl Context, opg: &ManagerOperation) -> 
                     skip_transaction(transaction.clone())
                 };
                 OperationContentReceipt::Transaction(transaction_receipt)
-            },
+            }
             OperationContent::Origination(origination) => {
                 let origination_receipt = if failed_idx.is_none() {
                     execute_origination(context, origination, &opg.hash, &mut origination_index)?
@@ -101,7 +108,7 @@ pub fn execute_operation(context: &mut impl Context, opg: &ManagerOperation) -> 
                 };
                 OperationContentReceipt::Origination(origination_receipt)
             }
-            _ => return Err(Error::OperationKindUnsupported)
+            _ => return Err(Error::OperationKindUnsupported),
         };
 
         if get_status(&receipt)? == OperationResultStatus::Failed {
@@ -131,26 +138,22 @@ pub fn execute_operation(context: &mut impl Context, opg: &ManagerOperation) -> 
         hash: Some(opg.hash.to_owned()),
         branch: opg.origin.branch.clone(),
         signature: Some(opg.origin.signature.clone()),
-        contents
+        contents,
     })
 }
 
 #[cfg(test)]
 mod test {
-    use crate::context::{Context, ephemeral::EphemeralContext};
-    use crate::Result;
+    use crate::context::{ephemeral::EphemeralContext, Context};
     use crate::validator::ManagerOperation;
-    use tezos_operation::{
-        operations::{SignedOperation, Transaction}
-    };
+    use crate::Result;
     use tezos_core::types::{
-        encoded::{ImplicitAddress, Address},
+        encoded::{Address, ImplicitAddress},
         mutez::Mutez,
-        number::Nat
+        number::Nat,
     };
-    use tezos_rpc::models::operation::{
-        operation_result::OperationResultStatus
-    };
+    use tezos_operation::operations::{SignedOperation, Transaction};
+    use tezos_rpc::models::operation::operation_result::OperationResultStatus;
 
     use super::{execute_operation, get_status};
 
@@ -175,7 +178,7 @@ mod test {
                     storage_limit: 0u32.into(),
                     amount: 1000u32.into(),
                     destination: destination.clone(),
-                    parameters: None
+                    parameters: None,
                 }
             };
         }
@@ -184,7 +187,7 @@ mod test {
             hash: "ooKsoMe48CCt1ERrk5DgnSovFazhm53yfAYbwxNQmjWVtbNzLME".try_into().unwrap(),
             origin: SignedOperation::new(
                 "BMNvSHmWUkdonkG2oFwwQKxHUdrYQhUXqxLaSRX9wjMGfLddURC".try_into().unwrap(),
-                vec![make_tx!(2u32).into(), make_tx!(3u32).into(), make_tx!(4u32).into()], 
+                vec![make_tx!(2u32).into(), make_tx!(3u32).into(), make_tx!(4u32).into()],
                 "sigw1WNdYweqz1c7zKcvZFHQ18swSv4HBWje5quRmixxitPk7z8jtY63qXgKLPVfTM6XGxExPatBWJP44Bknyu3hDHDKJZgY".try_into().unwrap()
             ),
             last_counter: 4u32.into(),
@@ -195,10 +198,19 @@ mod test {
 
         let receipt = execute_operation(&mut context, &opg)?;
         // println!("{:#?}", receipt);
-        assert_eq!(get_status(&receipt.contents[0]).expect("Backtracked"), OperationResultStatus::Backtracked);
-        assert_eq!(get_status(&receipt.contents[1]).expect("Failed"), OperationResultStatus::Failed);
-        assert_eq!(get_status(&receipt.contents[2]).expect("Skipped"), OperationResultStatus::Skipped);
-        
+        assert_eq!(
+            get_status(&receipt.contents[0]).expect("Backtracked"),
+            OperationResultStatus::Backtracked
+        );
+        assert_eq!(
+            get_status(&receipt.contents[1]).expect("Failed"),
+            OperationResultStatus::Failed
+        );
+        assert_eq!(
+            get_status(&receipt.contents[2]).expect("Skipped"),
+            OperationResultStatus::Skipped
+        );
+
         Ok(())
     }
 }

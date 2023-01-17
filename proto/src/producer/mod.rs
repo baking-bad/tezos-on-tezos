@@ -1,36 +1,34 @@
 pub mod types;
 
 use crate::{
+    constants::*,
+    context::{head::Head, migrations::run_migrations, Context},
     error::{Error, Result},
-    context::{Context, head::Head, migrations::run_migrations},
-    validator::{ManagerOperation, validate_batch},
     executor::execute_operation,
     producer::types::{
-        SignedOperation,
-        BatchHeader,
-        BatchReceipt,
-        OperationReceipt,
-        OperationHash,
-        OperationListListHash,
-        BlockPayloadHash
+        BatchHeader, BatchReceipt, BlockPayloadHash, OperationHash, OperationListListHash,
+        OperationReceipt, SignedOperation,
     },
-    constants::*
+    validator::{validate_batch, ManagerOperation},
 };
 
-fn naive_header(context: &mut impl Context, head: Head, operations: &Vec<ManagerOperation>) -> Result<BatchHeader> {
+fn naive_header(
+    context: &mut impl Context,
+    head: Head,
+    operations: &Vec<ManagerOperation>,
+) -> Result<BatchHeader> {
     let operation_hashes: Vec<OperationHash> = operations.iter().map(|o| o.hash.clone()).collect();
     Ok(BatchHeader {
         level: head.level + 1,
         predecessor: head.hash.to_owned(),
-        payload_hash: BlockPayloadHash::from_parts(
-            head.hash, 
-            0, 
-            operation_hashes.to_owned()
-        )?,
-        operations_hash: OperationListListHash::try_from(
-            vec![vec![], vec![], vec![], operation_hashes]
-        )?,
-        context: context.get_checksum()?.hash()?,  // IMPORTANT: after all operations are executed and state is committed
+        payload_hash: BlockPayloadHash::from_parts(head.hash, 0, operation_hashes.to_owned())?,
+        operations_hash: OperationListListHash::try_from(vec![
+            vec![],
+            vec![],
+            vec![],
+            operation_hashes,
+        ])?,
+        context: context.get_checksum()?.hash()?, // IMPORTANT: after all operations are executed and state is committed
         timestamp: head.timestamp + BLOCK_TIME,
     })
 }
@@ -38,7 +36,7 @@ fn naive_header(context: &mut impl Context, head: Head, operations: &Vec<Manager
 pub fn apply_batch(
     context: &mut impl Context,
     head: Head,
-    batch_payload: Vec<(OperationHash, SignedOperation)>
+    batch_payload: Vec<(OperationHash, SignedOperation)>,
 ) -> Result<Head> {
     if context.has_pending_changes() {
         return Err(Error::ContextUnstagedError);
@@ -62,7 +60,7 @@ pub fn apply_batch(
         protocol: PROTOCOL.try_into().unwrap(),
         hash,
         header,
-        balance_updates
+        balance_updates,
     };
 
     for (index, opg_receipt) in operation_receipts.into_iter().enumerate() {

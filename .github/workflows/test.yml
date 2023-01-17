@@ -35,6 +35,9 @@ jobs:
         with:
           junit_files: "target/nextest/default/*.xml"
 
+      - name: Check formatting
+        run: cargo fmt --check
+
       - name: Install WASM tools
         run: make install
 

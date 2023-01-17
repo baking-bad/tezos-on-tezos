@@ -1,32 +1,29 @@
-pub mod core;
-pub mod mutez;
-pub mod timestamp;
-pub mod nat;
-pub mod int;
-pub mod encoded;
-pub mod pair;
-pub mod list;
-pub mod set;
-pub mod map;
 pub mod big_map;
+pub mod contract;
+pub mod core;
+pub mod encoded;
+pub mod int;
+pub mod lambda;
+pub mod list;
+pub mod map;
+pub mod mutez;
+pub mod nat;
+pub mod operation;
 pub mod option;
 pub mod or;
-pub mod lambda;
-pub mod operation;
-pub mod contract;
+pub mod pair;
+pub mod set;
+pub mod timestamp;
 
-use std::collections::BTreeMap;
+use derive_more::{Display, From, TryInto};
 use ibig::{IBig, UBig};
+use std::collections::BTreeMap;
 use tezos_core::types::{
-    encoded::{Address, PublicKey, ImplicitAddress, Signature, ChainId},
-    mutez::Mutez
-};
-use tezos_michelson::michelson::{
-    data::Instruction,
-    types::Type,
+    encoded::{Address, ChainId, ImplicitAddress, PublicKey, Signature},
+    mutez::Mutez,
 };
 use tezos_michelson::micheline::Micheline;
-use derive_more::{From, TryInto, Display};
+use tezos_michelson::michelson::{data::Instruction, types::Type};
 
 #[macro_export]
 macro_rules! not_comparable {
@@ -66,30 +63,30 @@ macro_rules! define_item_rec {
         #[derive(Debug, Clone)]
         pub struct $name {
             outer_value: $val,
-            inner_type: $typ
+            inner_type: $typ,
         }
     };
 }
 
 define_item_ord!(UnitItem, ()); // algebraic
-define_item_ord!(BoolItem, bool);  // core
-define_item_ord!(BytesItem, Vec<u8>);  // core
-define_item_ord!(StringItem, String);  // core
-define_item_ord!(IntItem, IBig);  // numeric
-define_item_ord!(NatItem, UBig);  // numeric
-define_item_ord!(MutezItem, i64);  // numeric
-define_item_ord!(TimestampItem, i64);  // numeric
+define_item_ord!(BoolItem, bool); // core
+define_item_ord!(BytesItem, Vec<u8>); // core
+define_item_ord!(StringItem, String); // core
+define_item_ord!(IntItem, IBig); // numeric
+define_item_ord!(NatItem, UBig); // numeric
+define_item_ord!(MutezItem, i64); // numeric
+define_item_ord!(TimestampItem, i64); // numeric
 
-define_item!(AddressItem, Address);  // domain
-define_item!(KeyItem, PublicKey);  // domain
-define_item!(KeyHashItem, ImplicitAddress);  // domain
-define_item!(SignatureItem, Signature);  // domain
-define_item!(ChainIdItem, ChainId);  // domain
+define_item!(AddressItem, Address); // domain
+define_item!(KeyItem, PublicKey); // domain
+define_item!(KeyHashItem, ImplicitAddress); // domain
+define_item!(SignatureItem, Signature); // domain
+define_item!(ChainIdItem, ChainId); // domain
 
-define_item_rec!(ListItem, Vec<StackItem>, Type);  // collections
-define_item_rec!(SetItem, Vec<StackItem>, Type);  // collections
-define_item_rec!(MapItem, Vec<(StackItem, StackItem)>, (Type, Type));  // collections
-define_item_rec!(LambdaItem, Instruction, (Type, Type));  // domain
+define_item_rec!(ListItem, Vec<StackItem>, Type); // collections
+define_item_rec!(SetItem, Vec<StackItem>, Type); // collections
+define_item_rec!(MapItem, Vec<(StackItem, StackItem)>, (Type, Type)); // collections
+define_item_rec!(LambdaItem, Instruction, (Type, Type)); // domain
 define_item_rec!(ContractItem, Address, Type); // domain
 
 not_comparable!(ListItem);
@@ -106,34 +103,37 @@ pub enum InternalContent {
         destination: Address,
         parameter: Micheline,
         amount: Mutez,
-    }
+    },
 }
 
 #[derive(Debug, Clone)]
-pub struct OperationItem { // domain
+pub struct OperationItem {
+    // domain
     content: InternalContent,
-    big_map_diff: Vec<BigMapDiff>
+    big_map_diff: Vec<BigMapDiff>,
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
-pub struct PairItem(Box<(StackItem, StackItem)>);  // algebraic
+pub struct PairItem(Box<(StackItem, StackItem)>); // algebraic
 
 #[derive(Debug, Clone)]
-pub enum OptionItem {  // algebraic
+pub enum OptionItem {
+    // algebraic
     None(Type),
-    Some(Box<StackItem>)
+    Some(Box<StackItem>),
 }
 
 #[derive(Debug, Clone)]
 pub struct OrVariant {
     value: Box<StackItem>,
-    other_type: Type
+    other_type: Type,
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
-pub enum OrItem {  // algebraic
+pub enum OrItem {
+    // algebraic
     Left(OrVariant),
-    Right(OrVariant)
+    Right(OrVariant),
 }
 
 #[derive(Debug, Clone)]
@@ -141,14 +141,15 @@ pub struct BigMapDiff {
     pub id: i64,
     pub inner_type: (Type, Type),
     pub updates: BTreeMap<String, (Micheline, Option<Micheline>)>,
-    pub alloc: bool
+    pub alloc: bool,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum BigMapItem {  // collections
+pub enum BigMapItem {
+    // collections
     Diff(BigMapDiff),
     Map(MapItem),
-    Ptr(i64)
+    Ptr(i64),
 }
 
 #[derive(Debug, Display, Clone, From, TryInto, PartialEq, PartialOrd, Eq, Ord)]

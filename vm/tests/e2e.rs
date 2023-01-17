@@ -1,7 +1,7 @@
 mod runner;
 
-use vm::Result;
 use runner::e2e::E2E;
+use vm::Result;
 
 #[test]
 fn e2e_cons_00() -> Result<()> {

@@ -1,11 +1,9 @@
-use host::{
-    input::Input,
-    rollup_core::MAX_INPUT_MESSAGE_SIZE,
-    runtime::Runtime
+use host::{input::Input, rollup_core::MAX_INPUT_MESSAGE_SIZE, runtime::Runtime};
+use proto::producer::types::{
+    Encoded, OperationHash, Signature, SignedOperation, UnsignedOperation,
 };
-use proto::producer::types::{SignedOperation, OperationHash, UnsignedOperation, Signature, Encoded};
 
-use crate::error::{Result, Error};
+use crate::error::{Error, Result};
 
 const SIGNATURE_SIZE: usize = 64;
 
@@ -15,22 +13,23 @@ pub enum InboxMessage {
     LevelInfo(Vec<u8>),
     L2Operation {
         hash: OperationHash,
-        opg: SignedOperation
+        opg: SignedOperation,
     },
     NoMoreData,
-    Unknown(i32)
+    Unknown(i32),
 }
 
 pub fn parse_l2_operation<'a>(payload: &'a [u8]) -> Result<InboxMessage> {
     if payload.len() <= SIGNATURE_SIZE {
-        return Err(Error::OperationParsingError)
+        return Err(Error::OperationParsingError);
     }
-    let unsigned_op = UnsignedOperation::from_forged_bytes(&payload[..payload.len() - SIGNATURE_SIZE])?;  
+    let unsigned_op =
+        UnsignedOperation::from_forged_bytes(&payload[..payload.len() - SIGNATURE_SIZE])?;
     let signature = Signature::from_bytes(&payload[payload.len() - SIGNATURE_SIZE..])?;
     let hash = SignedOperation::operation_hash(payload)?;
     Ok(InboxMessage::L2Operation {
         hash,
-        opg: SignedOperation::from(unsigned_op, signature)
+        opg: SignedOperation::from(unsigned_op, signature),
     })
 }
 
@@ -41,12 +40,12 @@ pub fn read_inbox(host: &mut impl Runtime) -> Result<InboxMessage> {
                 b"\x00\x01" => Ok(InboxMessage::BeginBlock(message.level)),
                 b"\x00\x02" => Ok(InboxMessage::EndBlock(message.level)),
                 [b'\x00', info @ ..] => Ok(InboxMessage::LevelInfo(info.to_vec())),
-                [b'\x01', payload @ ..] => parse_l2_operation(payload),  // TODO: add chain_id prefix
-                _ => Ok(InboxMessage::Unknown(message.id))
+                [b'\x01', payload @ ..] => parse_l2_operation(payload), // TODO: add chain_id prefix
+                _ => Ok(InboxMessage::Unknown(message.id)),
             }
-        },
+        }
         Ok(Some(Input::Slot(_message))) => todo!("handle slot message"),
         Ok(None) => Ok(InboxMessage::NoMoreData),
-        Err(err) => Err(err.into())
+        Err(err) => Err(err.into()),
     }
 }

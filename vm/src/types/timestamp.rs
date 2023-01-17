@@ -1,18 +1,18 @@
+use chrono::{DateTime, NaiveDateTime, SecondsFormat, Utc};
+use ibig::IBig;
 use std::fmt::Display;
 use std::ops::{Add, Sub};
-use ibig::IBig;
-use chrono::{DateTime, NaiveDateTime, Utc, SecondsFormat};
 use tezos_michelson::michelson::{
-    data::Data, data,
-    types::{Type, ComparableType}
+    data,
+    data::Data,
+    types::{ComparableType, Type},
 };
 
 use crate::{
-    Result,
-    types::{IntItem, TimestampItem, StackItem},
+    comparable_type_cast, err_mismatch,
     formatter::Formatter,
-    err_mismatch,
-    comparable_type_cast
+    types::{IntItem, StackItem, TimestampItem},
+    Result,
 };
 
 impl TimestampItem {
@@ -24,7 +24,7 @@ impl TimestampItem {
         let timestamp = match data {
             Data::String(val) => DateTime::parse_from_rfc3339(val.to_str())?.timestamp(),
             Data::Int(val) => val.to_integer()?,
-            _ => return err_mismatch!("String or Int", data.format())
+            _ => return err_mismatch!("String or Int", data.format()),
         };
         Ok(StackItem::Timestamp(Self::new(timestamp)?))
     }
@@ -33,7 +33,7 @@ impl TimestampItem {
         comparable_type_cast!(ty, Timestamp);
         let dt = match NaiveDateTime::from_timestamp_opt(self.0, 0) {
             Some(dt) => DateTime::<Utc>::from_utc(dt, Utc),
-            None => return Ok(Data::Int(self.0.into()))
+            None => return Ok(Data::Int(self.0.into())),
         };
         let string = dt.to_rfc3339_opts(SecondsFormat::Secs, true);
         Ok(Data::String(data::String::from_string(string)?))
@@ -43,9 +43,10 @@ impl TimestampItem {
 impl Display for TimestampItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = match NaiveDateTime::from_timestamp_opt(self.0, 0) {
-            Some(dt) => DateTime::<Utc>::from_utc(dt, Utc)
-                .to_rfc3339_opts(SecondsFormat::Secs, true),
-            None => format!("{}Z", self.0)
+            Some(dt) => {
+                DateTime::<Utc>::from_utc(dt, Utc).to_rfc3339_opts(SecondsFormat::Secs, true)
+            }
+            None => format!("{}Z", self.0),
         };
         f.write_str(str.as_str())
     }

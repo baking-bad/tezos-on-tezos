@@ -46,10 +46,7 @@ pub mod host {
             max_bytes: usize,
         ) -> i32;
 
-        pub fn write_debug(
-            src: *const u8, 
-            num_bytes: usize
-        );
+        pub fn write_debug(src: *const u8, num_bytes: usize);
     }
 }
 
@@ -59,21 +56,20 @@ macro_rules! debug_str {
         unsafe {
             crate::installer::host::write_debug(($msg as &str).as_ptr(), ($msg as &str).len());
         }
-    }
+    };
 }
 
-fn fetch_page<'a>(hash: &[u8; PREIMAGE_HASH_SIZE], buffer: &'a mut [u8]) -> (u8, &'a mut [u8], &'a mut [u8]) {
+fn fetch_page<'a>(
+    hash: &[u8; PREIMAGE_HASH_SIZE],
+    buffer: &'a mut [u8],
+) -> (u8, &'a mut [u8], &'a mut [u8]) {
     let page_size = unsafe {
-        host::reveal_preimage(
-            hash.as_ptr(), 
-            hash.len(),
-            buffer.as_mut_ptr(),
-            buffer.len()
-        )
+        host::reveal_preimage(hash.as_ptr(), hash.len(), buffer.as_mut_ptr(), buffer.len())
     };
     if page_size < 0 {
         panic!("Fetch page: failed to reveal preimage {}", page_size);
-    } else if page_size < 5 {  // tag + prefix
+    } else if page_size < 5 {
+        // tag + prefix
         panic!("Fetch page: too small {}", page_size);
     }
 
@@ -85,8 +81,9 @@ fn fetch_page<'a>(hash: &[u8; PREIMAGE_HASH_SIZE], buffer: &'a mut [u8]) -> (u8,
     let data_size = u32::from_be_bytes([page[1], page[2], page[3], page[4]]) as usize;
     let end_offset = 5 + data_size;
 
-    if page_size < end_offset.try_into().unwrap() 
-        || (page[0] == 1 && data_size % PREIMAGE_HASH_SIZE != 0) {
+    if page_size < end_offset.try_into().unwrap()
+        || (page[0] == 1 && data_size % PREIMAGE_HASH_SIZE != 0)
+    {
         panic!("Fetch page: invalid size prefix");
     }
     (page[0], &mut page[5..end_offset], rest)
@@ -100,7 +97,7 @@ fn write_content(kernel_size: &mut usize, content: &[u8]) {
             PREPARE_KERNEL_PATH.len(),
             *kernel_size,
             content.as_ptr(),
-            content.len() 
+            content.len(),
         )
     };
     if size < 0 {
@@ -123,13 +120,18 @@ fn reveal_loop(
             for chunk in content.chunks(MAX_FILE_CHUNK_SIZE).into_iter() {
                 write_content(kernel_size, chunk)
             }
-        },
+        }
         (1, hashes, rest) => {
             for hash in hashes.chunks_exact(PREIMAGE_HASH_SIZE).into_iter() {
-                reveal_loop(level + 1, hash.try_into().expect("Invalid preimage hash"), rest, kernel_size);
+                reveal_loop(
+                    level + 1,
+                    hash.try_into().expect("Invalid preimage hash"),
+                    rest,
+                    kernel_size,
+                );
             }
         }
-        _ => panic!("Reveal loop: unexpected data")
+        _ => panic!("Reveal loop: unexpected data"),
     }
 }
 
@@ -137,13 +139,13 @@ pub fn install_kernel(root_hash: &[u8; PREIMAGE_HASH_SIZE]) {
     let mut buffer = [0; MAX_PAGE_SIZE * MAX_DAC_LEVELS];
     let mut kernel_size = 0;
     reveal_loop(0, root_hash, buffer.as_mut_slice(), &mut kernel_size);
-    
+
     let size = unsafe {
-         host::store_move(
-            PREPARE_KERNEL_PATH.as_ptr(), 
-            PREPARE_KERNEL_PATH.len(), 
-            KERNEL_PATH.as_ptr(), 
-            KERNEL_PATH.len()
+        host::store_move(
+            PREPARE_KERNEL_PATH.as_ptr(),
+            PREPARE_KERNEL_PATH.len(),
+            KERNEL_PATH.as_ptr(),
+            KERNEL_PATH.len(),
         )
     };
     if size < 0 {
@@ -153,11 +155,11 @@ pub fn install_kernel(root_hash: &[u8; PREIMAGE_HASH_SIZE]) {
     debug_str!("Kernel successfully installed, rebooting");
     unsafe {
         host::store_write(
-            REBOOT_PATH.as_ptr(), 
-            REBOOT_PATH.len(), 
-            0, 
-            [0_u8].as_ptr(), 
-            1
+            REBOOT_PATH.as_ptr(),
+            REBOOT_PATH.len(),
+            0,
+            [0_u8].as_ptr(),
+            1,
         );
     }
 }
@@ -165,9 +167,9 @@ pub fn install_kernel(root_hash: &[u8; PREIMAGE_HASH_SIZE]) {
 #[cfg(test)]
 pub mod host {
     use super::PREIMAGE_HASH_SIZE;
-    use once_cell::sync::Lazy;
     use core::slice::{from_raw_parts, from_raw_parts_mut};
     use mock_runtime::host::MockHost;
+    use once_cell::sync::Lazy;
     pub static mut HOST: Lazy<MockHost> = Lazy::new(|| MockHost::default());
 
     pub unsafe fn store_write(
@@ -217,10 +219,7 @@ pub mod host {
         bytes.len().try_into().unwrap()
     }
 
-    pub unsafe fn write_debug(
-        src: *const u8, 
-        num_bytes: usize
-    ) {
+    pub unsafe fn write_debug(src: *const u8, num_bytes: usize) {
         let msg = from_raw_parts(src, num_bytes).to_vec();
         eprintln!("[DEBUG] {}", String::from_utf8(msg).unwrap());
     }
@@ -234,10 +233,7 @@ mod tests {
     use tezos_encoding::enc::BinWriter;
     use tezos_rollup_encoding::dac::{Page, V0ContentPage, V0HashPage, MAX_PAGE_SIZE};
 
-    fn prepare_preimages(
-        state: &mut HostState,
-        input: &[u8],
-    ) -> [u8; PREIMAGE_HASH_SIZE] {
+    fn prepare_preimages(state: &mut HostState, input: &[u8]) -> [u8; PREIMAGE_HASH_SIZE] {
         let content_pages = V0ContentPage::new_pages(input)
             .map(Page::V0ContentPage)
             .map(|page| {
@@ -246,8 +242,7 @@ mod tests {
                 buffer
             });
 
-        let mut hashes =
-            Vec::with_capacity(input.len() / V0ContentPage::MAX_CONTENT_SIZE + 1);
+        let mut hashes = Vec::with_capacity(input.len() / V0ContentPage::MAX_CONTENT_SIZE + 1);
 
         for page in content_pages {
             assert!(page.len() <= 4096);
@@ -290,7 +285,11 @@ mod tests {
                 .store
                 .get_value("/durable/kernel/boot.wasm")
         };
-        assert_eq!(installed_kernel.len(), kernel.len(), "Expected same kernel size.");
+        assert_eq!(
+            installed_kernel.len(),
+            kernel.len(),
+            "Expected same kernel size."
+        );
         assert_eq!(installed_kernel, kernel, "Expected kernel to be installed.");
     }
 }

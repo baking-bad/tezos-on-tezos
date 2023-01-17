@@ -1,28 +1,29 @@
 use std::fmt::Display;
-use tezos_michelson::michelson::{
-    data::Data,
-    data,
-    types::Type,
-    types
-};
+use tezos_michelson::michelson::{data, data::Data, types, types::Type};
 
 use crate::{
-    Result,
-    types::{OrItem, StackItem, OrVariant},
-    typechecker::{check_types_equal},
-    formatter::Formatter,
     err_mismatch,
-    type_cast
+    formatter::Formatter,
+    type_cast,
+    typechecker::check_types_equal,
+    types::{OrItem, OrVariant, StackItem},
+    Result,
 };
 
 impl OrItem {
     pub fn left(left_val: StackItem, right_type: Type) -> Self {
-        let var = OrVariant { value: Box::new(left_val), other_type: right_type };
+        let var = OrVariant {
+            value: Box::new(left_val),
+            other_type: right_type,
+        };
         Self::Left(var)
     }
 
     pub fn right(right_val: StackItem, left_type: Type) -> Self {
-        let var = OrVariant { value: Box::new(right_val), other_type: left_type };
+        let var = OrVariant {
+            value: Box::new(right_val),
+            other_type: left_type,
+        };
         Self::Right(var)
     }
 
@@ -31,15 +32,15 @@ impl OrItem {
             Data::Left(left) => {
                 let inner = StackItem::from_data(*left.value, left_type)?;
                 Ok(StackItem::Or(Self::left(inner, right_type.clone())))
-            },
+            }
             Data::Right(right) => {
                 let inner = StackItem::from_data(*right.value, right_type)?;
                 Ok(StackItem::Or(Self::right(inner, left_type.clone())))
-            },
-            _ => err_mismatch!("Left or Right", data.format())
+            }
+            _ => err_mismatch!("Left or Right", data.format()),
         }
     }
-    
+
     pub fn into_data(self, ty: &Type) -> Result<Data> {
         let ty = type_cast!(ty, Or);
         match self {
@@ -47,7 +48,7 @@ impl OrItem {
                 check_types_equal(&ty.rhs, &var.other_type)?;
                 let inner = var.value.into_data(&ty.lhs)?;
                 Ok(Data::Left(data::left(inner)))
-            },
+            }
             Self::Right(var) => {
                 check_types_equal(&ty.lhs, &var.other_type)?;
                 let inner = var.value.into_data(&ty.rhs)?;
@@ -59,21 +60,21 @@ impl OrItem {
     pub fn is_left(&self) -> bool {
         match self {
             Self::Left(_) => true,
-            Self::Right(_) => false
+            Self::Right(_) => false,
         }
     }
 
     pub fn unwrap(self) -> StackItem {
         match self {
             Self::Left(var) => *var.value,
-            Self::Right(var) => *var.value
+            Self::Right(var) => *var.value,
         }
     }
 
     pub fn get_type(&self) -> Result<Type> {
         let (lhs, rhs) = match self {
             Self::Left(var) => (var.value.get_type()?, var.other_type.clone()),
-            Self::Right(var) => (var.other_type.clone(), var.value.get_type()?)
+            Self::Right(var) => (var.other_type.clone(), var.value.get_type()?),
         };
         Ok(types::or(lhs, rhs))
     }
@@ -83,7 +84,7 @@ impl Display for OrItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Left(var) => f.write_fmt(format_args!("({} + _)", var.value)),
-            Self::Right(var) => f.write_fmt(format_args!("(_ + {})", var.value))
+            Self::Right(var) => f.write_fmt(format_args!("(_ + {})", var.value)),
         }
     }
 }

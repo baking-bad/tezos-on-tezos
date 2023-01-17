@@ -1,21 +1,24 @@
 use tezos_michelson::michelson::data::instructions::{
-    Dip, Sequence, FailWith, If, IfCons, IfLeft, IfNone, Loop, LoopLeft, Map, Iter, Cast
+    Cast, Dip, FailWith, If, IfCons, IfLeft, IfNone, Iter, Loop, LoopLeft, Map, Sequence,
 };
 
 use crate::{
-    Result,
-    Error,
-    interpreter::{Interpreter, OperationScope, PureInterpreter, InterpreterContext},
-    types::{StackItem, ListItem, MapItem},
-    stack::Stack,
-    pop_cast,
     err_mismatch,
-    trace_enter,
-    trace_exit
+    interpreter::{Interpreter, InterpreterContext, OperationScope, PureInterpreter},
+    pop_cast,
+    stack::Stack,
+    trace_enter, trace_exit,
+    types::{ListItem, MapItem, StackItem},
+    Error, Result,
 };
 
 impl Interpreter for Sequence {
-    fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
+    fn execute(
+        &self,
+        stack: &mut Stack,
+        scope: &OperationScope,
+        context: &mut impl InterpreterContext,
+    ) -> Result<()> {
         for instr in self.instructions() {
             instr.execute(stack, scope, context)?;
         }
@@ -24,10 +27,15 @@ impl Interpreter for Sequence {
 }
 
 impl Interpreter for Dip {
-    fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
+    fn execute(
+        &self,
+        stack: &mut Stack,
+        scope: &OperationScope,
+        context: &mut impl InterpreterContext,
+    ) -> Result<()> {
         let count: usize = match &self.n {
             Some(n) => n.to_integer()?,
-            None => 1
+            None => 1,
         };
         stack.protect(count)?;
         self.instruction.execute(stack, scope, context)?;
@@ -39,12 +47,19 @@ impl PureInterpreter for FailWith {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let with = stack.pop()?;
         let ty = with.get_type()?;
-        Err(Error::ScriptFailed { with: with.into_micheline(&ty)? })
+        Err(Error::ScriptFailed {
+            with: with.into_micheline(&ty)?,
+        })
     }
 }
 
 impl Interpreter for If {
-    fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
+    fn execute(
+        &self,
+        stack: &mut Stack,
+        scope: &OperationScope,
+        context: &mut impl InterpreterContext,
+    ) -> Result<()> {
         let cond = pop_cast!(stack, Bool);
         let branch = if cond.is_true() {
             trace_exit!("Yes");
@@ -52,13 +67,18 @@ impl Interpreter for If {
         } else {
             trace_exit!("Else");
             &self.else_branch
-        };        
+        };
         branch.execute(stack, scope, context)
     }
 }
 
 impl Interpreter for IfCons {
-    fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
+    fn execute(
+        &self,
+        stack: &mut Stack,
+        scope: &OperationScope,
+        context: &mut impl InterpreterContext,
+    ) -> Result<()> {
         let list = pop_cast!(stack, List);
         let branch = if list.len() > 0 {
             let (head, tail) = list.split_head()?;
@@ -75,7 +95,12 @@ impl Interpreter for IfCons {
 }
 
 impl Interpreter for IfLeft {
-    fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
+    fn execute(
+        &self,
+        stack: &mut Stack,
+        scope: &OperationScope,
+        context: &mut impl InterpreterContext,
+    ) -> Result<()> {
         let or = pop_cast!(stack, Or);
         let cond = or.is_left();
         stack.push(or.unwrap())?;
@@ -91,13 +116,18 @@ impl Interpreter for IfLeft {
 }
 
 impl Interpreter for IfNone {
-    fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
+    fn execute(
+        &self,
+        stack: &mut Stack,
+        scope: &OperationScope,
+        context: &mut impl InterpreterContext,
+    ) -> Result<()> {
         let option = pop_cast!(stack, Option);
         let branch = match option.unwrap() {
             None => {
                 trace_exit!("Yes");
                 &self.if_branch
-            },
+            }
             Some(item) => {
                 stack.push(item)?;
                 trace_exit!("Else");
@@ -109,7 +139,12 @@ impl Interpreter for IfNone {
 }
 
 impl Interpreter for Loop {
-    fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
+    fn execute(
+        &self,
+        stack: &mut Stack,
+        scope: &OperationScope,
+        context: &mut impl InterpreterContext,
+    ) -> Result<()> {
         loop {
             let cond = pop_cast!(stack, Bool);
             if cond.is_true() {
@@ -118,14 +153,19 @@ impl Interpreter for Loop {
                 trace_exit!(res.as_ref().err());
                 res?
             } else {
-                break Ok(())
+                break Ok(());
             }
         }
     }
 }
 
 impl Interpreter for LoopLeft {
-    fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
+    fn execute(
+        &self,
+        stack: &mut Stack,
+        scope: &OperationScope,
+        context: &mut impl InterpreterContext,
+    ) -> Result<()> {
         loop {
             let or = pop_cast!(stack, Or);
             let cond = or.is_left();
@@ -136,14 +176,19 @@ impl Interpreter for LoopLeft {
                 trace_exit!(res.as_ref().err());
                 res?
             } else {
-                break Ok(())
+                break Ok(());
             }
         }
     }
 }
 
 impl Interpreter for Map {
-    fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
+    fn execute(
+        &self,
+        stack: &mut Stack,
+        scope: &OperationScope,
+        context: &mut impl InterpreterContext,
+    ) -> Result<()> {
         let src = stack.pop()?;
 
         let mut process = |input: Vec<StackItem>| -> Result<Vec<StackItem>> {
@@ -170,7 +215,7 @@ impl Interpreter for Map {
                     values
                 };
                 ListItem::new(output, val_type).into()
-            },
+            }
             StackItem::Map(map) => {
                 let keys = map.get_keys();
                 let (input, (key_type, mut val_type)) = map.into_pairs();
@@ -182,20 +227,25 @@ impl Interpreter for Map {
                     keys.into_iter().zip(values.into_iter()).collect()
                 };
                 MapItem::new(output, key_type, val_type).into()
-            },
-            item => return err_mismatch!("ListItem or MapItem", item)
+            }
+            item => return err_mismatch!("ListItem or MapItem", item),
         };
         stack.push(res)
     }
 }
 
 impl Interpreter for Iter {
-    fn execute(&self, stack: &mut Stack, scope: &OperationScope, context: &mut impl InterpreterContext) -> Result<()> {
+    fn execute(
+        &self,
+        stack: &mut Stack,
+        scope: &OperationScope,
+        context: &mut impl InterpreterContext,
+    ) -> Result<()> {
         let input = match stack.pop()? {
             StackItem::Set(set) => set.into_elements().0,
             StackItem::List(list) => list.into_elements().0,
             StackItem::Map(map) => map.into_pairs().0,
-            item => return err_mismatch!("SetItem, ListItem, or MapItem", item)
+            item => return err_mismatch!("SetItem, ListItem, or MapItem", item),
         };
         for item in input {
             stack.push(item)?;

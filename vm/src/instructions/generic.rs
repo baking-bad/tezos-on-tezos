@@ -1,21 +1,21 @@
 use ibig::{IBig, UBig};
-use tezos_michelson::michelson::Michelson;
 use tezos_michelson::micheline::Micheline;
 use tezos_michelson::michelson::data::instructions::{
-    Compare, Eq, Ge, Gt, Le, Lt, Neq, Concat, Slice, Size, Pack, Unpack
+    Compare, Concat, Eq, Ge, Gt, Le, Lt, Neq, Pack, Size, Slice, Unpack,
 };
-use tezos_michelson::michelson::types::{Type, ComparableType};
+use tezos_michelson::michelson::types::{ComparableType, Type};
+use tezos_michelson::michelson::Michelson;
 
 use crate::{
-    Result,
-    interpreter::{PureInterpreter},
-    types::{StackItem, OptionItem, IntItem},
-    typechecker::{check_type_comparable, check_types_equal},
-    formatter::Formatter,
-    stack::Stack,
-    pop_cast,
     err_mismatch,
-    trace_log
+    formatter::Formatter,
+    interpreter::PureInterpreter,
+    pop_cast,
+    stack::Stack,
+    trace_log,
+    typechecker::{check_type_comparable, check_types_equal},
+    types::{IntItem, OptionItem, StackItem},
+    Result,
 };
 
 impl PureInterpreter for Compare {
@@ -37,7 +37,7 @@ macro_rules! impl_interpreter_for_op {
     ($instr: ty, $op: tt) => {
         impl PureInterpreter for $instr {
             fn execute(&self, stack: &mut Stack) -> Result<()> {
-                let a = pop_cast!(stack, Int);        
+                let a = pop_cast!(stack, Int);
                 let res = a $op IntItem::from(0);
                 stack.push(StackItem::Bool(res.into()))
             }
@@ -60,7 +60,9 @@ impl PureInterpreter for Size {
             StackItem::List(item) => item.len(),
             StackItem::Set(item) => item.len(),
             StackItem::Map(item) => item.len(),
-            item => return err_mismatch!("StringItem, BytesItem, ListItem, SetItem, or MapItem", item)
+            item => {
+                return err_mismatch!("StringItem, BytesItem, ListItem, SetItem, or MapItem", item)
+            }
         };
         stack.push(StackItem::Nat(UBig::from(size).into()))
     }
@@ -77,7 +79,7 @@ impl PureInterpreter for Slice {
         let res = match stack.pop()? {
             StackItem::String(item) => item.slice(offset, offset + length),
             StackItem::Bytes(item) => item.slice(offset, offset + length),
-            item => return err_mismatch!("StringItem or BytesItem", item)
+            item => return err_mismatch!("StringItem or BytesItem", item),
         };
         stack.push(res.into())
     }
@@ -94,33 +96,38 @@ impl PureInterpreter for Concat {
                         for item in items {
                             match item {
                                 StackItem::String(item) => output.push(item.unwrap()),
-                                _ => return err_mismatch!("StringItem", item)
+                                _ => return err_mismatch!("StringItem", item),
                             }
                         }
                         StackItem::String(output.concat().into())
-                    },
+                    }
                     Type::Comparable(ComparableType::Bytes(_)) => {
                         let mut output: Vec<u8> = Vec::new();
                         for item in items {
                             match item {
                                 StackItem::Bytes(item) => output.append(item.unwrap().as_mut()),
-                                _ => return err_mismatch!("BytesItem", item)
+                                _ => return err_mismatch!("BytesItem", item),
                             }
                         }
                         StackItem::Bytes(output.into())
-                    },
-                    ty => return err_mismatch!("list(string || bytes)", ty.format())
+                    }
+                    ty => return err_mismatch!("list(string || bytes)", ty.format()),
                 }
-            },
+            }
             StackItem::String(a) => {
                 let b = pop_cast!(stack, String);
                 (a + b).into()
-            },
+            }
             StackItem::Bytes(a) => {
                 let b = pop_cast!(stack, Bytes);
                 (a + b).into()
-            },
-            item => return err_mismatch!("ListItem<StringItem or BytesItem>, SringItem, or BytesItem", item)
+            }
+            item => {
+                return err_mismatch!(
+                    "ListItem<StringItem or BytesItem>, SringItem, or BytesItem",
+                    item
+                )
+            }
         };
         stack.push(res)
     }
@@ -142,9 +149,7 @@ impl PureInterpreter for Unpack {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let item = pop_cast!(stack, Bytes);
         let res = match StackItem::from_bytes(item.unwrap(), &self.r#type) {
-            Ok(item) => {
-                OptionItem::some(item)
-            },
+            Ok(item) => OptionItem::some(item),
             Err(_err) => {
                 // _err.print();
                 trace_log!(&_err.into());

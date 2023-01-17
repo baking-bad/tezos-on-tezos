@@ -1,31 +1,28 @@
 use std::collections::VecDeque;
 
-use crate::{
-    Result,
-    Error,
-    types::StackItem,
-    trace_stack,
-    trace_log
-};
+use crate::{trace_log, trace_stack, types::StackItem, Error, Result};
 
 #[macro_export]
 macro_rules! pop_cast {
     ($stack: expr, $var: ident) => {
         match $stack.pop()? {
             StackItem::$var(item) => item,
-            item => return err_mismatch!(stringify!($var), item)
+            item => return err_mismatch!(stringify!($var), item),
         }
     };
 }
 
 pub struct Stack {
     items: VecDeque<StackItem>,
-    protected: usize
+    protected: usize,
 }
 
 impl Stack {
     pub fn new() -> Self {
-        Self { items: VecDeque::new(), protected: 0 }
+        Self {
+            items: VecDeque::new(),
+            protected: 0,
+        }
     }
 
     pub fn len(&self) -> usize {
@@ -43,7 +40,7 @@ impl Stack {
 
     pub fn protect(&mut self, count: usize) -> Result<()> {
         if self.items.len() < count + self.protected {
-            return Err(Error::BadStack { location: count }.into())
+            return Err(Error::BadStack { location: count }.into());
         }
         self.protected += count;
         Ok(())
@@ -51,7 +48,7 @@ impl Stack {
 
     pub fn restore(&mut self, count: usize) -> Result<()> {
         if self.protected < count {
-            return Err(Error::BadStack { location: count }.into())
+            return Err(Error::BadStack { location: count }.into());
         }
         self.protected -= count;
         Ok(())
@@ -61,7 +58,7 @@ impl Stack {
         let depth = depth + self.protected;
         trace_stack!("Insert", &item, Some(&depth));
         if self.items.len() < depth {
-            return Err(Error::BadStack { location: depth }.into())
+            return Err(Error::BadStack { location: depth }.into());
         }
         self.items.insert(depth, item);
         Ok(())
@@ -83,8 +80,8 @@ impl Stack {
             Some(item) => {
                 trace_stack!("Remove", &item, Some(&depth));
                 Ok(item)
-            },
-            None => Err(Error::BadStack { location: depth }.into())
+            }
+            None => Err(Error::BadStack { location: depth }.into()),
         }
     }
 
@@ -96,8 +93,8 @@ impl Stack {
                 Some(item) => {
                     trace_stack!("Pop", &item, None);
                     Ok(item)
-                },
-                None => Err(Error::BadStack { location: 0 }.into())
+                }
+                None => Err(Error::BadStack { location: 0 }.into()),
             }
         }
     }
@@ -108,8 +105,8 @@ impl Stack {
             Some(item) => {
                 trace_stack!("Peek", &item, Some(&depth));
                 Ok(item.clone())
-            },
-            None => Err(Error::BadStack { location: depth }.into())
+            }
+            None => Err(Error::BadStack { location: depth }.into()),
         }
     }
 }
