@@ -1,10 +1,12 @@
 use tezos_michelson::micheline::{
     primitive_application, primitive_application::PrimitiveApplication, sequence::Sequence,
+    sequence,
     Micheline,
 };
 use tezos_michelson::michelson::{
     data::Instruction,
     types::{Code, Parameter, Storage, Type},
+    types
 };
 
 use crate::{
@@ -77,8 +79,16 @@ fn normalize_parameter(
 }
 
 impl MichelsonScript {
-    pub fn get_type(&self) -> Type {
-        self.parameter_type.clone()
+    pub fn get_type(&self) -> Micheline {
+        self.parameter_type.clone().into()
+    }
+
+    pub fn get_code(&self) -> Micheline {
+        sequence(vec![
+            types::parameter(self.parameter_type.clone()),
+            types::storage(self.storage_type.clone()),
+            types::code(self.code.clone())
+        ])
     }
 
     pub fn call_begin(&self, stack: &mut Stack, scope: &OperationScope) -> Result<()> {
@@ -204,15 +214,14 @@ impl Interpreter for MichelsonScript {
     }
 }
 
-impl TryFrom<Micheline> for MichelsonScript {
+impl TryFrom<Sequence> for MichelsonScript {
     type Error = Error;
 
-    fn try_from(src: Micheline) -> std::result::Result<Self, Error> {
+    fn try_from(sections: Sequence) -> Result<Self> {
         let mut param_ty: Option<Type> = None;
         let mut storage_ty: Option<Type> = None;
         let mut code_ty: Option<Instruction> = None;
 
-        let sections = Sequence::try_from(src.normalized())?;
         for section in sections.into_values() {
             let prim = PrimitiveApplication::try_from(section)?;
             match prim.prim() {
@@ -233,5 +242,14 @@ impl TryFrom<Micheline> for MichelsonScript {
                 .ok_or(internal_error!(Parsing, "Missing section:\tstorage"))?,
             code: code_ty.ok_or(internal_error!(Parsing, "Missing section:\tcode"))?,
         })
+    }
+}
+
+impl TryFrom<Micheline> for MichelsonScript {
+    type Error = Error;
+
+    fn try_from(value: Micheline) -> Result<Self> {
+        let sections = Sequence::try_from(value.normalized())?;
+        Self::try_from(sections)
     }
 }

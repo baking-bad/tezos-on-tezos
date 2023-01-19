@@ -1,16 +1,42 @@
 use host::{input::Input, rollup_core::MAX_INPUT_MESSAGE_SIZE, runtime::Runtime};
 use proto::producer::types::{
-    Encoded, OperationHash, Signature, SignedOperation, UnsignedOperation,
+    BlockHash, Encoded, OperationHash, Signature, SignedOperation, UnsignedOperation,
 };
 
 use crate::error::{Error, Result};
 
 const SIGNATURE_SIZE: usize = 64;
 
+#[derive(Debug, Clone)]
+pub struct LevelInfo {
+    pub predecessor_timestamp: i64,
+    pub predecessor: BlockHash,
+}
+
+impl TryFrom<&[u8]> for LevelInfo {
+    type Error = Error;
+
+    fn try_from(value: &[u8]) -> Result<Self> {
+        if value.len() != 8 + 32 {
+            return Err(Error::UnexpectedLevelInfoLength {
+                length: value.len(),
+            });
+        }
+        let predecessor_timestamp = i64::from_be_bytes([
+            value[0], value[1], value[2], value[3], value[4], value[5], value[6], value[7],
+        ]);
+        let predecessor = BlockHash::from_bytes(&value[8..])?;
+        Ok(Self {
+            predecessor_timestamp,
+            predecessor,
+        })
+    }
+}
+
 pub enum InboxMessage {
     BeginBlock(i32),
     EndBlock(i32),
-    LevelInfo(Vec<u8>),
+    LevelInfo(LevelInfo),
     L2Operation {
         hash: OperationHash,
         opg: SignedOperation,
@@ -21,7 +47,9 @@ pub enum InboxMessage {
 
 pub fn parse_l2_operation<'a>(payload: &'a [u8]) -> Result<InboxMessage> {
     if payload.len() <= SIGNATURE_SIZE {
-        return Err(Error::OperationParsingError);
+        return Err(Error::UnexpectedL2OperationLength {
+            length: payload.len(),
+        });
     }
     let unsigned_op =
         UnsignedOperation::from_forged_bytes(&payload[..payload.len() - SIGNATURE_SIZE])?;
@@ -39,7 +67,7 @@ pub fn read_inbox(host: &mut impl Runtime) -> Result<InboxMessage> {
             match message.as_ref() {
                 b"\x00\x01" => Ok(InboxMessage::BeginBlock(message.level)),
                 b"\x00\x02" => Ok(InboxMessage::EndBlock(message.level)),
-                [b'\x00', info @ ..] => Ok(InboxMessage::LevelInfo(info.to_vec())),
+                [b'\x00', b'\x03', info @ ..] => Ok(InboxMessage::LevelInfo(info.try_into()?)),
                 [b'\x01', payload @ ..] => parse_l2_operation(payload), // TODO: add chain_id prefix
                 _ => Ok(InboxMessage::Unknown(message.id)),
             }

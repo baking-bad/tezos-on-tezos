@@ -24,8 +24,8 @@ impl InternalError {
         }
     }
 
-    pub fn print(&self) {
-        println!(
+    pub fn format(&self) -> String {
+        format!(
             "{} error\n{}\nStacktrace:\n{}",
             self.kind, self.message, self.backtrace
         )
@@ -152,17 +152,17 @@ impl From<ibig::error::OutOfBoundsError> for Error {
 }
 
 impl Error {
-    pub fn print(&self) {
+    pub fn format(&self) -> String {
         match self {
-            Self::Internal(internal) => internal.print(),
+            Self::Internal(internal) => internal.format(),
             Self::ScriptFailed { with } => {
                 let msg = match serde_json_wasm::to_string(with) {
                     Ok(res) => res,
                     Err(err) => err.to_string(),
                 };
-                println!("Script failed\nWith: {}", msg);
+                format!("Script failed\nWith: {}", msg)
             }
-            err => println!("{:#?}", err),
+            err => format!("{:#?}", err),
         }
     }
 }

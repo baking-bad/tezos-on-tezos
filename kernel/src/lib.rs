@@ -2,9 +2,8 @@ pub mod context;
 pub mod error;
 pub mod inbox;
 pub mod kernel;
-pub mod store;
 
-pub use error::Result;
+pub use error::{Error, Result};
 
 #[cfg(target_arch = "wasm32")]
 #[no_mangle]

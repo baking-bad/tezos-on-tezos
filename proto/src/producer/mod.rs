@@ -1,19 +1,21 @@
 pub mod types;
 
+use vm::interpreter::InterpreterContext;
+
 use crate::{
+    Result,
     constants::*,
-    context::{head::Head, migrations::run_migrations, Context},
-    error::{Error, Result},
-    executor::execute_operation,
+    context::{head::Head, migrations::run_migrations, proto::ProtoContext},
+    executor::operation::execute_operation,
     producer::types::{
         BatchHeader, BatchReceipt, BlockPayloadHash, OperationHash, OperationListListHash,
         OperationReceipt, SignedOperation,
     },
-    validator::{validate_batch, ManagerOperation},
+    validator::{batch::validate_batch, operation::ManagerOperation},
 };
 
 fn naive_header(
-    context: &mut impl Context,
+    context: &mut impl ProtoContext,
     head: Head,
     operations: &Vec<ManagerOperation>,
 ) -> Result<BatchHeader> {
@@ -28,19 +30,17 @@ fn naive_header(
             vec![],
             operation_hashes,
         ])?,
-        context: context.get_checksum()?.hash()?, // IMPORTANT: after all operations are executed and state is committed
+        context: "".try_into()?,  // TODO
         timestamp: head.timestamp + BLOCK_TIME,
     })
 }
 
 pub fn apply_batch(
-    context: &mut impl Context,
+    context: &mut (impl ProtoContext + InterpreterContext),
     head: Head,
     batch_payload: Vec<(OperationHash, SignedOperation)>,
 ) -> Result<Head> {
-    if context.has_pending_changes() {
-        return Err(Error::ContextUnstagedError);
-    }
+    context.check_no_pending_changes()?;
 
     let balance_updates = run_migrations(context, &head)?;
     let operations = validate_batch(context, batch_payload, false)?;

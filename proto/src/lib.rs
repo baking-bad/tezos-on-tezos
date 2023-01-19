@@ -20,5 +20,5 @@ pub mod constants {
     pub const DEFAULT_ORIGINATED_ADDRESS: &str = "KT1BEqzn5Wx8uJrZNvuS9DVHmLvG9td3fDLi";
     pub const DEFAULT_IMPLICIT_ADDRESS: &str = "tz1Ke2h7sDdakHJQh8WX4Z372du1KChsksyU";
     pub const POW_NONCE: &str = "0xdeadbeef";
-    pub const BLOCK_TIME: i64 = 15;
+    pub const BLOCK_TIME: i64 = 8;
 }

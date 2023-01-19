@@ -1,32 +1,31 @@
-use tezos_core::types::encoded::OperationHash;
+use tezos_core::types::encoded::{OperationHash, Encoded};
 use tezos_operation::operations::SignedOperation;
 
 use crate::{
-    assert_no_pending_changes,
-    context::Context,
-    validator::{validate_operation, ManagerOperation},
+    context::proto::ProtoContext,
+    validator::operation::{validate_operation, ManagerOperation},
     Result,
 };
 
 pub fn validate_batch(
-    context: &mut impl Context,
+    context: &mut impl ProtoContext,
     batch_payload: Vec<(OperationHash, SignedOperation)>,
     atomic: bool,
 ) -> Result<Vec<ManagerOperation>> {
-    assert_no_pending_changes!(context);
+    context.check_no_pending_changes()?;
 
     let mut operations: Vec<ManagerOperation> = Vec::with_capacity(batch_payload.len());
 
     for (hash, opg) in batch_payload.into_iter() {
         match validate_operation(context, opg, hash) {
             Ok(op) => {
-                let balance = context.get_balance(&op.source)?.unwrap();
-                context.set_balance(&op.source, &(balance - op.total_spent))?;
-                context.set_counter(&op.source, &op.last_counter)?;
+                let balance = context.get_balance(&op.source.value())?.unwrap();
+                context.set_balance(&op.source.value(), &(balance - op.total_spent))?;
+                context.set_counter(&op.source.value(), &op.last_counter)?;
                 operations.push(op);
             }
             Err(err) => {
-                context.log(err.to_string());
+                context.debug_log(err.format());
                 if atomic {
                     context.rollback();
                     return Err(err);

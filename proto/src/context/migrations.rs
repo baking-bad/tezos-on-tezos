@@ -1,7 +1,7 @@
 use tezos_core::types::mutez::Mutez;
 use tezos_rpc::models::balance_update::{BalanceUpdate, Contract, Kind, Origin};
 
-use crate::{assert_no_pending_changes, context::head::Head, context::Context, Result};
+use crate::{context::head::Head, context::proto::ProtoContext, Result};
 
 const SEED_ACCOUNTS: [&str; 8] = [
     "tz1grSQDByRpnVs7sPtaprNZRp531ZKz6Jmm", // Pytezos built-in key
@@ -15,7 +15,7 @@ const SEED_ACCOUNTS: [&str; 8] = [
 ];
 const SEED_BALANCE: u64 = 40_000_000_000_000u64;
 
-pub fn genesis_migration(context: &mut impl Context) -> Result<Vec<BalanceUpdate>> {
+pub fn genesis_migration(context: &mut impl ProtoContext) -> Result<Vec<BalanceUpdate>> {
     let mut updates: Vec<BalanceUpdate> = Vec::with_capacity(SEED_ACCOUNTS.len());
     let balance = Mutez::try_from(SEED_BALANCE).unwrap();
 
@@ -34,10 +34,10 @@ pub fn genesis_migration(context: &mut impl Context) -> Result<Vec<BalanceUpdate
 }
 
 pub fn run_migrations(
-    context: &mut impl Context,
+    context: &mut impl ProtoContext,
     head: &Head,
 ) -> Result<Option<Vec<BalanceUpdate>>> {
-    assert_no_pending_changes!(context);
+    context.check_no_pending_changes()?;
     match head.level {
         -1 => Ok(Some(genesis_migration(context)?)),
         _ => Ok(None),
@@ -47,7 +47,7 @@ pub fn run_migrations(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{context::ephemeral::EphemeralContext, context::Context, Result};
+    use crate::{context::ephemeral::EphemeralContext, Result};
 
     #[test]
     fn test_seed_acconuts() -> Result<()> {

@@ -28,14 +28,14 @@ impl E2E {
             balance: "4000000000000".try_into()?,
             level: 1,
             chain_id: "NetXdQprcVkpaWU".try_into()?,
-            self_type: self.script.get_type().into(),
+            self_type: self.script.get_type(),
             ..default_scope()
         };
         let mut context = MockContext::default();
         let ret = match self.script.call(&scope, &mut context) {
             Ok(res) => res,
             Err(err) => {
-                err.print();
+                println!("{}", err.format());
                 panic!("{}", err);
             }
         };

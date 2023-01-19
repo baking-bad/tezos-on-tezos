@@ -1,52 +1,39 @@
+use tezos_core::types::encoded::Encoded;
 use tezos_operation::operations::Reveal;
 use tezos_rpc::models::operation::{
-    operation_contents_and_result::reveal::{Reveal as RevealReceipt, RevealMetadata},
     operation_result::{operations::reveal::RevealOperationResult, OperationResultStatus},
 };
 
 use crate::{
-    context::Context,
+    context::proto::ProtoContext,
     error::{Result, RpcErrors},
+    executor::result::ExecutionResult
 };
 
-pub fn skip_reveal(reveal: Reveal) -> RevealReceipt {
-    RevealReceipt {
-        metadata: Some(RevealMetadata {
-            operation_result: RevealOperationResult {
-                status: OperationResultStatus::Skipped,
-                consumed_gas: None,
-                consumed_milligas: None,
-                errors: None,
-            },
-            balance_updates: vec![],
-        }),
-        ..reveal.into()
-    }
-}
-
-pub fn execute_reveal(context: &mut impl Context, reveal: &Reveal) -> Result<RevealReceipt> {
+pub fn execute_reveal(context: &mut impl ProtoContext, reveal: &Reveal, skip: bool) -> Result<ExecutionResult> {
     let mut errors = RpcErrors::new();
 
-    macro_rules! make_receipt {
-        ($a: expr) => {
-            RevealReceipt {
-                metadata: Some(RevealMetadata {
-                    operation_result: RevealOperationResult {
-                        status: $a,
-                        consumed_gas: None,
-                        consumed_milligas: Some("0".into()),
-                        errors: errors.into(),
-                    },
-                    balance_updates: vec![],
-                }),
-                ..reveal.clone().into()
-            }
+    macro_rules! result {
+        ($status: ident) => {
+            Ok(ExecutionResult::Reveal {
+                content: reveal.clone(),
+                result: RevealOperationResult {
+                    status: OperationResultStatus::$status,
+                    consumed_gas: None,
+                    consumed_milligas: Some("0".into()),
+                    errors: errors.into(),
+                },
+            })
         };
     }
 
-    if context.has_public_key(&reveal.source)? {
-        errors.previously_revealed_key(&reveal.source);
-        return Ok(make_receipt!(OperationResultStatus::Failed));
+    if skip {
+        return result!(Skipped)
+    }
+
+    if context.has_public_key(reveal.source.value())? {
+        errors.previously_revealed_key(reveal.source.value());
+        return result!(Failed)
     }
 
     // TODO: check that public key actually matches address {
@@ -54,16 +41,16 @@ pub fn execute_reveal(context: &mut impl Context, reveal: &Reveal) -> Result<Rev
     //     return Ok(make_receipt!(OperationResultStatus::Failed))
     // }
 
-    context.set_public_key(&reveal.source, &reveal.public_key)?;
-    Ok(make_receipt!(OperationResultStatus::Applied))
+    context.set_public_key(reveal.source.value(), &reveal.public_key)?;
+    result!(Applied)
 }
 
 #[cfg(test)]
 mod test {
-    use crate::context::{ephemeral::EphemeralContext, Context};
+    use crate::context::{ephemeral::EphemeralContext, proto::ProtoContext};
     use crate::Result;
     use tezos_core::types::{
-        encoded::{Encoded, ImplicitAddress, PublicKey},
+        encoded::{PublicKey},
         mutez::Mutez,
         number::Nat,
     };
@@ -75,15 +62,15 @@ mod test {
     fn test_reveal_applied() -> Result<()> {
         let mut context = EphemeralContext::new();
 
-        let address = ImplicitAddress::try_from("tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU").unwrap();
+        let address = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
         let public_key =
             PublicKey::try_from("edpktipCJ3SkjvtdcrwELhvupnyYJSmqoXu3kdzK1vL6fT5cY8FTEa").unwrap();
 
-        context.set_balance(&address.value(), &Mutez::from(1000000000u32))?;
-        context.set_counter(&address, &Nat::try_from("100000").unwrap())?;
+        context.set_balance(address, &Mutez::from(1000000000u32))?;
+        context.set_counter(address, &Nat::try_from("100000").unwrap())?;
 
         let reveal = Reveal {
-            source: address.clone(),
+            source: address.try_into()?,
             counter: 200000u32.into(),
             fee: 1000u32.into(),
             gas_limit: 0u32.into(),
@@ -91,19 +78,17 @@ mod test {
             public_key: public_key.clone(),
         };
 
-        let receipt = execute_reveal(&mut context, &reveal);
-        assert!(receipt.is_ok());
-        assert!(receipt.unwrap().metadata.is_some());
+        let res = execute_reveal(&mut context, &reveal, false)?;
 
         assert_eq!(
             context
-                .get_public_key(&address)?
+                .get_public_key(address)?
                 .expect("Public key expected"),
             public_key
         );
         assert_eq!(
             context
-                .get_balance(&address.value())?
+                .get_balance(address)?
                 .expect("Balance expected"),
             Mutez::from(1000000000u32)
         );

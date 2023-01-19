@@ -1,10 +1,9 @@
 use derive_more::{From, TryInto};
 use serde_json_wasm;
-use std::ops::Deref;
 
 use tezos_core::types::{
     encoded::{
-        Address, BlockHash, ContractAddress, Encoded, ImplicitAddress, OperationHash, PublicKey,
+        BlockHash, Encoded, OperationHash, PublicKey,
     },
     mutez::Mutez,
     number::Nat,
@@ -13,20 +12,20 @@ use tezos_michelson::micheline::Micheline;
 use tezos_rpc::models::operation::Operation as OperationReceipt;
 
 use crate::{
-    context::{checksum::Checksum, head::Head},
+    context::{head::Head},
     producer::types::BatchReceipt,
     Result,
+    internal_error
 };
 
 #[derive(Debug, Clone, From, TryInto)]
 pub enum ContextNode {
+    Head(Head),
     Mutez(Mutez),
     Nat(Nat),
     PublicKey(PublicKey),
     BlockHash(BlockHash),
     OperationHash(OperationHash),
-    Checksum(Checksum),
-    Head(Head),
     OperationReceipt(OperationReceipt),
     BatchReceipt(BatchReceipt),
     Micheline(Micheline),
@@ -34,17 +33,32 @@ pub enum ContextNode {
 
 impl ContextNode {
     pub fn to_vec(&self) -> Result<Vec<u8>> {
-        match self {
-            Self::Head(value) => value.encode(),
-            Self::Checksum(value) => value.encode(),
-            Self::Mutez(value) => value.encode(),
-            Self::Nat(value) => value.encode(),
-            Self::PublicKey(value) => value.encode(),
-            Self::BlockHash(value) => value.encode(),
-            Self::OperationHash(value) => value.encode(),
-            Self::OperationReceipt(value) => value.encode(),
-            Self::BatchReceipt(value) => value.encode(),
-            Self::Micheline(value) => value.encode(),
+        let (prefix, payload) = match self {
+            Self::Head(value) => (b'\x01', value.encode()?),
+            Self::Mutez(value) => (b'\x02', value.encode()?),
+            Self::Nat(value) => (b'\x03', value.encode()?),
+            Self::PublicKey(value) => (b'\x04', value.encode()?),
+            Self::BlockHash(value) => (b'\x05', value.encode()?),
+            Self::OperationHash(value) => (b'\x06', value.encode()?),
+            Self::OperationReceipt(value) => (b'\x07', value.encode()?),
+            Self::BatchReceipt(value) => (b'\x08', value.encode()?),
+            Self::Micheline(value) => (b'\x09', value.encode()?),
+        };
+        Ok([vec![prefix], payload].concat())
+    }
+
+    pub fn from_vec(value: Vec<u8>) -> Result<Self> {
+        match value.as_slice() {
+            [b'\x01', bytes @ ..] => Head::decode(bytes),
+            [b'\x02', bytes @ ..] => Mutez::decode(bytes),
+            [b'\x03', bytes @ ..] => Nat::decode(bytes),
+            [b'\x04', bytes @ ..] => PublicKey::decode(bytes),
+            [b'\x05', bytes @ ..] => BlockHash::decode(bytes),
+            [b'\x06', bytes @ ..] => OperationHash::decode(bytes),
+            [b'\x07', bytes @ ..] => OperationReceipt::decode(bytes),
+            [b'\x08', bytes @ ..] => BatchReceipt::decode(bytes),
+            [b'\x09', bytes @ ..] => Micheline::decode(bytes),
+            _ => Err(internal_error!(Encoding, "Invalid context node prefix"))
         }
     }
 }
@@ -52,13 +66,10 @@ impl ContextNode {
 pub trait ContextNodeType: Clone {
     fn encode(&self) -> Result<Vec<u8>>;
     fn decode(bytes: &[u8]) -> Result<ContextNode>;
-    fn unwrap(node: ContextNode) -> Self;
-    fn wrap(self) -> ContextNode;
-    fn max_bytes() -> usize;
 }
 
 macro_rules! context_node_type_core {
-    ($ty: ty, $max_bytes: expr) => {
+    ($ty: ty) => {
         impl ContextNodeType for $ty {
             fn decode(bytes: &[u8]) -> Result<ContextNode> {
                 match Self::from_bytes(bytes) {
@@ -70,30 +81,17 @@ macro_rules! context_node_type_core {
             fn encode(&self) -> Result<Vec<u8>> {
                 self.to_bytes().map_err(|e| e.into())
             }
-
-            fn unwrap(node: ContextNode) -> Self {
-                node.try_into().unwrap()
-            }
-
-            fn wrap(self) -> ContextNode {
-                self.into()
-            }
-
-            fn max_bytes() -> usize {
-                $max_bytes
-            }
         }
     };
 }
 
-context_node_type_core!(Mutez, 8);
-context_node_type_core!(Nat, 32);
-context_node_type_core!(PublicKey, 33);
-context_node_type_core!(BlockHash, 32);
-context_node_type_core!(OperationHash, 32);
-context_node_type_core!(Head, 44);
-context_node_type_core!(Checksum, 32);
-context_node_type_core!(Micheline, 2048);
+context_node_type_core!(Mutez);
+context_node_type_core!(Nat);
+context_node_type_core!(PublicKey);
+context_node_type_core!(BlockHash);
+context_node_type_core!(OperationHash);
+context_node_type_core!(Head);
+context_node_type_core!(Micheline);
 
 macro_rules! context_node_type_rpc {
     ($ty: ty) => {
@@ -108,49 +106,9 @@ macro_rules! context_node_type_rpc {
             fn encode(&self) -> Result<Vec<u8>> {
                 serde_json_wasm::to_vec(self).map_err(|e| e.into())
             }
-
-            fn unwrap(node: ContextNode) -> Self {
-                node.try_into().unwrap()
-            }
-
-            fn wrap(self) -> ContextNode {
-                self.into()
-            }
-
-            fn max_bytes() -> usize {
-                2048
-            }
         }
     };
 }
 
 context_node_type_rpc!(OperationReceipt);
 context_node_type_rpc!(BatchReceipt);
-
-pub trait TezosAddress {
-    fn to_string(&self) -> &str;
-}
-
-impl TezosAddress for ImplicitAddress {
-    fn to_string(&self) -> &str {
-        self.value()
-    }
-}
-
-impl TezosAddress for ContractAddress {
-    fn to_string(&self) -> &str {
-        self.value()
-    }
-}
-
-impl TezosAddress for Address {
-    fn to_string(&self) -> &str {
-        self.value()
-    }
-}
-
-impl TezosAddress for &str {
-    fn to_string(&self) -> &str {
-        self.deref()
-    }
-}

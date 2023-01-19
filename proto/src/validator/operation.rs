@@ -6,7 +6,7 @@ use tezos_core::types::{
 use tezos_operation::operations::{OperationContent, SignedOperation};
 
 use crate::{
-    context::Context,
+    context::proto::ProtoContext,
     error::{Error, Result, RpcErrors},
 };
 
@@ -29,7 +29,7 @@ macro_rules! err {
 }
 
 pub fn validate_operation(
-    context: &mut impl Context,
+    context: &mut impl ProtoContext,
     opg: SignedOperation,
     hash: OperationHash,
 ) -> Result<ManagerOperation> {
@@ -69,7 +69,7 @@ pub fn validate_operation(
     }
 
     let source = source.unwrap().clone();
-    let public_key = match context.get_public_key(&source)? {
+    let public_key = match context.get_public_key(&source.value())? {
         Some(value) => value,
         None => {
             let revealed_key = opg
@@ -84,7 +84,7 @@ pub fn validate_operation(
             if revealed_key.is_some() {
                 revealed_key.unwrap()
             } else {
-                return err!(hash, RpcErrors::unrevealed_key(&source));
+                return err!(hash, RpcErrors::unrevealed_key(&source.value()));
             }
         }
     };
@@ -97,17 +97,17 @@ pub fn validate_operation(
 
     let balance = match context.get_balance(&source.value())? {
         Some(value) => value,
-        None => return err!(hash, RpcErrors::empty_implicit_contract(&source)),
+        None => return err!(hash, RpcErrors::empty_implicit_contract(&source.value())),
     };
 
     if balance < total_spent {
         return err!(
             hash,
-            RpcErrors::contract_balance_too_low(&total_spent, &balance, &source)
+            RpcErrors::contract_balance_too_low(&total_spent, &balance, &source.value())
         );
     }
 
-    let mut counter = match context.get_counter(&source)? {
+    let mut counter = match context.get_counter(&source.value())? {
         Some(value) => value.to_integer()?,
         None => 0u64,
     };
@@ -123,7 +123,7 @@ pub fn validate_operation(
         if next_counter <= counter {
             return err!(
                 hash,
-                RpcErrors::counter_in_the_past(&source, counter + 1, next_counter)
+                RpcErrors::counter_in_the_past(&source.value(), counter + 1, next_counter)
             );
         }
         counter = next_counter;
@@ -141,7 +141,7 @@ pub fn validate_operation(
 
 #[cfg(test)]
 mod test {
-    use crate::context::{ephemeral::EphemeralContext, Context};
+    use crate::context::{ephemeral::EphemeralContext, proto::ProtoContext};
     use crate::Result;
     use tezos_core::types::{
         encoded::{Encoded, ImplicitAddress, PublicKey},
@@ -156,11 +156,11 @@ mod test {
     fn test_valid_tx() -> Result<()> {
         let mut context = EphemeralContext::new();
 
-        let address = ImplicitAddress::try_from("tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU").unwrap();
-        context.set_balance(&address.value(), &Mutez::from(1000000000u32))?;
-        context.set_counter(&address, &Nat::try_from("100000").unwrap())?;
+        let address = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
+        context.set_balance(address, &Mutez::from(1000000000u32))?;
+        context.set_counter(address, &Nat::try_from("100000").unwrap())?;
         context.set_public_key(
-            &address,
+            address,
             &PublicKey::try_from("edpktipCJ3SkjvtdcrwELhvupnyYJSmqoXu3kdzK1vL6fT5cY8FTEa").unwrap(),
         )?;
         context.commit()?;
@@ -169,7 +169,7 @@ mod test {
             "BMNvSHmWUkdonkG2oFwwQKxHUdrYQhUXqxLaSRX9wjMGfLddURC".try_into().unwrap(),
             vec![
                 Transaction::new(
-                    address.clone(),
+                    address.clone().try_into()?,
                     417u32.into(),
                     2336132u32.into(),
                     1527u32.into(),

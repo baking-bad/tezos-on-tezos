@@ -1,8 +1,6 @@
 use tezos_core::types::mutez::Mutez;
 pub use tezos_rpc::models::error::RpcError;
 
-use crate::context::types::TezosAddress;
-
 #[derive(Clone, Debug)]
 pub struct RpcErrors {
     errors: Vec<RpcError>,
@@ -27,7 +25,7 @@ impl RpcErrors {
         self.errors
     }
 
-    pub fn unrevealed_key(contract: &impl TezosAddress) -> RpcError {
+    pub fn unrevealed_key(contract: &str) -> RpcError {
         RpcError {
             kind: "temporary".into(),
             id: "contract.unrevealed_key".into(),
@@ -60,7 +58,7 @@ impl RpcErrors {
         }
     }
 
-    pub fn empty_implicit_contract(contract: &impl TezosAddress) -> RpcError {
+    pub fn empty_implicit_contract(contract: &str) -> RpcError {
         RpcError {
             kind: "temporary".into(),
             id: "implicit.empty_implicit_contract".into(),
@@ -72,7 +70,7 @@ impl RpcErrors {
     pub fn contract_balance_too_low(
         amount: &Mutez,
         balance: &Mutez,
-        contract: &impl TezosAddress,
+        contract: &str,
     ) -> RpcError {
         RpcError {
             kind: "temporary".into(),
@@ -85,7 +83,7 @@ impl RpcErrors {
     }
 
     pub fn counter_in_the_past(
-        contract: &impl TezosAddress,
+        contract: &str,
         expected: u64,
         found: u64,
     ) -> RpcError {
@@ -133,7 +131,7 @@ impl RpcErrors {
         }
     }
 
-    pub fn inconsistent_hash(&mut self, contract: &impl TezosAddress) {
+    pub fn inconsistent_hash(&mut self, contract: &str) {
         self.errors.push(RpcError {
             kind: "temporary".into(),
             id: "contract.manager.inconsistent_hash".into(),
@@ -146,13 +144,13 @@ impl RpcErrors {
         &mut self,
         amount: &Mutez,
         balance: &Mutez,
-        contract: &impl TezosAddress,
+        contract: &str,
     ) {
         self.errors
             .push(Self::contract_balance_too_low(amount, balance, contract));
     }
 
-    pub fn previously_revealed_key(&mut self, contract: &impl TezosAddress) {
+    pub fn previously_revealed_key(&mut self, contract: &str) {
         self.errors.push(RpcError {
             kind: "temporary".into(),
             id: "contract.previously_revealed_key".into(),

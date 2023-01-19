@@ -2,56 +2,25 @@ use tezos_core::{
     internal::crypto::blake2b,
     types::encoded::{ContractAddress, ContractHash, Encoded, OperationHash},
 };
-use tezos_michelson::micheline::Micheline;
 use tezos_operation::operations::Origination;
 use tezos_rpc::models::operation::{
-    operation_contents_and_result::origination::{
-        Origination as OriginationReceipt, OriginationMetadata,
-    },
     operation_result::operations::origination::OriginationOperationResult,
     operation_result::OperationResultStatus,
 };
+use vm::interpreter::InterpreterContext;
 
 use crate::{
-    context::Context,
-    error::{Result, RpcErrors},
-    executor::balance_update::BalanceUpdates,
+    Error,
+    Result,
+    error::RpcErrors,
+    context::proto::ProtoContext,
+    executor::lazy_diff::LazyDiff,
+    executor::result::ExecutionResult,
+    executor::balance_updates::BalanceUpdates,
+    executor::contract::deploy_contract
 };
 
-macro_rules! if_applied {
-    ($status: expr, $val: expr) => {
-        if $status == OperationResultStatus::Applied {
-            Some($val)
-        } else {
-            None
-        }
-    };
-}
-
-const DEFAULT_RESULT: OriginationOperationResult = OriginationOperationResult {
-    status: OperationResultStatus::Skipped,
-    big_map_diff: None,
-    balance_updates: None,
-    originated_contracts: None,
-    consumed_gas: None,
-    consumed_milligas: None,
-    storage_size: None,
-    paid_storage_size_diff: None,
-    lazy_storage_diff: None,
-    errors: None,
-};
-
-pub fn skip_origination(origination: Origination) -> OriginationReceipt {
-    OriginationReceipt {
-        metadata: Some(OriginationMetadata {
-            operation_result: DEFAULT_RESULT,
-            balance_updates: vec![],
-        }),
-        ..origination.into()
-    }
-}
-
-pub fn calculate_address(opg_hash: &OperationHash, index: &i32) -> Result<ContractAddress> {
+pub fn originated_address(opg_hash: &OperationHash, index: &i32) -> Result<ContractAddress> {
     let payload = [opg_hash.to_bytes()?, index.to_be_bytes().to_vec()].concat();
     let digest = blake2b(payload.as_slice(), 20)?;
     let hash = ContractHash::from_bytes(digest.as_slice())?;
@@ -59,71 +28,77 @@ pub fn calculate_address(opg_hash: &OperationHash, index: &i32) -> Result<Contra
 }
 
 pub fn execute_origination(
-    context: &mut impl Context,
+    context: &mut (impl ProtoContext + InterpreterContext),
     origination: &Origination,
     hash: &OperationHash,
     origination_index: &mut i32,
-) -> Result<OriginationReceipt> {
-    let originated_address = calculate_address(hash, origination_index)?;
-    *origination_index += 1;
-
-    let mut src_balance = context
-        .get_balance(&origination.source)?
-        .expect("Source balance has to be checked by validator");
-
+    skip: bool
+) -> Result<ExecutionResult> {
     let mut errors = RpcErrors::new();
     let mut balance_updates = BalanceUpdates::new();
-    let charges = BalanceUpdates::fee(&origination.source, &origination.fee);
+    let mut lazy_diff = LazyDiff::new();
+    let mut originated_contracts: Option<Vec<ContractAddress>> = None;
 
-    macro_rules! make_receipt {
-        ($a: expr) => {
-            OriginationReceipt {
-                metadata: Some(OriginationMetadata {
-                    operation_result: OriginationOperationResult {
-                        status: $a,
-                        originated_contracts: if_applied!($a, vec![originated_address]),
-                        balance_updates: balance_updates.into(),
-                        consumed_milligas: Some("0".into()),
-                        errors: errors.into(),
-                        ..DEFAULT_RESULT
-                    },
-                    balance_updates: charges.unwrap(),
-                }),
-                ..origination.clone().into()
-            }
-        };
+    macro_rules! result {
+        ($status: ident) => {{
+            let applied = OperationResultStatus::$status == OperationResultStatus::Applied;
+            Ok(ExecutionResult::Origination {
+                content: origination.clone(),
+                result: OriginationOperationResult {
+                    status: OperationResultStatus::$status,
+                    consumed_milligas: if applied { Some("0".into()) } else { None },
+                    originated_contracts,
+                    lazy_storage_diff: lazy_diff.into(),
+                    balance_updates: balance_updates.into(),
+                    errors: errors.into(),
+                    big_map_diff: None,
+                    consumed_gas: None,
+                    storage_size: None,
+                    paid_storage_size_diff: None,
+                }
+            })
+        }};
     }
 
-    if src_balance < origination.balance {
-        errors.balance_too_low(&origination.balance, &src_balance, &origination.source);
-        return Ok(make_receipt!(OperationResultStatus::Failed));
-    } else {
-        src_balance -= origination.balance;
-        balance_updates.spend(&origination.source, &origination.balance);
-        balance_updates.topup(&originated_address, &origination.balance);
+    if skip {
+        return result!(Skipped)
     }
 
-    // TODO: check that contract code is valid (all sections present)
-    // TODO: check that contract does not use unsupported primitives
-    // TODO: check storage against its type
+    let self_address = originated_address(hash, origination_index)?;
+    *origination_index += 1;
 
-    context.set_contract_code(
-        &originated_address,
-        Micheline::Sequence(origination.script.code.clone()),
-    )?;
-    context.set_contract_storage(&originated_address, origination.script.storage.clone())?;
+    let balance = match balance_updates.transfer(
+        context,
+        origination.source.value(),
+        self_address.value(),
+        &origination.balance
+    ) {
+        Ok((_, balance)) => balance,
+        Err(Error::BalanceTooLow { balance }) => {
+            errors.balance_too_low(&origination.balance, &balance, origination.source.value());
+            return result!(Failed)
+        },
+        Err(err) => return Err(err)
+    };
 
-    context.set_balance(&origination.source, &src_balance)?;
-    context.set_balance(&originated_address, &origination.balance)?;
-
-    Ok(make_receipt!(OperationResultStatus::Applied))
+    match deploy_contract(context, origination, self_address, balance) {
+        Ok(ret) => {
+            lazy_diff.update(ret.big_map_diff);
+            originated_contracts = Some(vec![self_address]);
+            result!(Applied)
+        },
+        Err(err) => {
+            // TODO: runtime error
+            result!(Failed)
+        }
+    }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::context::{ephemeral::EphemeralContext, Context};
+    use crate::context::{ephemeral::EphemeralContext};
     use crate::Result;
-    use tezos_core::types::{encoded::ImplicitAddress, mutez::Mutez};
+    use tezos_core::types::{mutez::Mutez};
     use tezos_michelson::michelson::{
         data::instructions::failwith,
         data::Unit,
@@ -137,11 +112,11 @@ mod test {
     fn test_origination_applied() -> Result<()> {
         let mut context = EphemeralContext::new();
 
-        let source = ImplicitAddress::try_from("tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU")?;
-        context.set_balance(&source, &Mutez::from(1000000000u32))?;
+        let source = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
+        context.set_balance(source, &Mutez::from(1000000000u32))?;
 
         let origination = Origination {
-            source: source.clone(),
+            source: source.try_into()?,
             counter: 200000u32.into(),
             fee: 1000u32.into(),
             gas_limit: 0u32.into(),
@@ -160,6 +135,7 @@ mod test {
             &origination,
             &OperationHash::new("oneDGhZacw99EEFaYDTtWfz5QEhUW3PPVFsHa7GShnLPuDn7gSd".into())?,
             &mut index,
+            false
         )?;
         let metadata = receipt.metadata.unwrap();
         let originated_contracts = metadata.operation_result.originated_contracts.unwrap();

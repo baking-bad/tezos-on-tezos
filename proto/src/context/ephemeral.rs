@@ -1,11 +1,10 @@
 use std::collections::HashMap;
+use vm::interpreter::InterpreterContext;
 
-use crate::context::{
-    types::{ContextNode, ContextNodeType},
-    Context,
+use crate::{
+    context::{types::{ContextNode}, Context},
+    Result
 };
-use crate::Result;
-
 pub struct EphemeralContext {
     state: HashMap<String, ContextNode>,
     pending_state: HashMap<String, ContextNode>,
@@ -34,33 +33,22 @@ impl Context for EphemeralContext {
         }
     }
 
-    fn get<V: ContextNodeType>(&mut self, key: String) -> Result<Option<V>> {
+    fn get(&mut self, key: String) -> Result<Option<ContextNode>> {
         match self.pending_state.get(&key) {
-            Some(cached_value) => Ok(Some(V::unwrap(cached_value.to_owned()))),
+            Some(cached_value) => Ok(Some(cached_value.to_owned())),
             None => match self.state.get(&key) {
                 Some(value) => {
                     self.pending_state.insert(key, value.to_owned());
-                    Ok(Some(V::unwrap(value.to_owned())))
+                    Ok(Some(value.to_owned()))
                 }
                 None => Ok(None),
             },
         }
     }
 
-    fn set<V: ContextNodeType>(&mut self, key: String, val: V) -> Result<()> {
-        self.pending_state.insert(key.clone(), val.wrap());
+    fn set(&mut self, key: String, val: ContextNode) -> Result<()> {
+        self.pending_state.insert(key.clone(), val);
         self.modified_keys.push(key);
-        Ok(())
-    }
-
-    fn persist<V: ContextNodeType>(
-        &mut self,
-        key: String,
-        val: V,
-        _level: Option<i32>,
-    ) -> Result<()> {
-        self.pending_state.insert(key.clone(), val.clone().wrap());
-        self.state.insert(key, val.wrap());
         Ok(())
     }
 
@@ -68,36 +56,38 @@ impl Context for EphemeralContext {
         !self.modified_keys.is_empty()
     }
 
-    fn commit(&mut self) -> Result<()> {
-        let mut checksum = self.get_checksum()?;
-        let head = self.get_head()?;
-
-        for key in self.modified_keys.iter() {
-            let val = self.pending_state.get(key).expect("Expected value");
-            self.state.insert(key.clone(), val.clone());
-            checksum.update(&val.to_vec()?)?;
+    fn agg_pending_changes(&mut self) -> Vec<(String, Option<ContextNode>)> {
+        let mut changes: Vec<(String, Option<ContextNode>)> = Vec::with_capacity(self.modified_keys.len());
+        while !self.modified_keys.is_empty() {
+            let key = self.modified_keys.remove(0);
+            let val = self.pending_state.remove(&key).expect("Modified key must be in the pending state");
+            changes.push((key, Some(val)));
         }
-        self.commit_checksum(checksum, head.level)?;
-        self.modified_keys.clear();
-        Ok(())
+        changes
+    }
+
+    fn save(&mut self, key: String, val: Option<ContextNode>) -> Result<Option<ContextNode>> {
+        let old = match val {
+            Some(val) => self.state.insert(key, val.clone()),
+            None => self.state.remove(&key)
+        };
+        Ok(old)
     }
 
     fn clear(&mut self) {
         self.pending_state.clear();
         self.modified_keys.clear();
     }
-
-    fn rollback(&mut self) {
-        for key in self.modified_keys.iter() {
-            self.pending_state.remove(key);
-        }
-        self.modified_keys.clear();
-    }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::{context::ephemeral::EphemeralContext, context::Context, Result};
+    use crate::{
+        context::ephemeral::EphemeralContext,
+        context::Context,
+        context::proto::ProtoContext,
+        Result
+    };
 
     #[test]
     fn store_balance() -> Result<()> {
