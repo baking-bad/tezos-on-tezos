@@ -10,14 +10,9 @@ use tezos_rpc::models::operation::{
 use vm::interpreter::InterpreterContext;
 
 use crate::{
-    Error,
-    Result,
-    error::RpcErrors,
-    context::proto::ProtoContext,
-    executor::lazy_diff::LazyDiff,
-    executor::result::ExecutionResult,
-    executor::balance_updates::BalanceUpdates,
-    executor::contract::deploy_contract
+    context::proto::ProtoContext, error::RpcErrors, executor::balance_updates::BalanceUpdates,
+    executor::contract::deploy_contract, executor::lazy_diff::LazyDiff,
+    executor::result::ExecutionResult, Error, Result,
 };
 
 pub fn originated_address(opg_hash: &OperationHash, index: &i32) -> Result<ContractAddress> {
@@ -32,7 +27,7 @@ pub fn execute_origination(
     origination: &Origination,
     hash: &OperationHash,
     origination_index: &mut i32,
-    skip: bool
+    skip: bool,
 ) -> Result<ExecutionResult> {
     let mut errors = RpcErrors::new();
     let mut balance_updates = BalanceUpdates::new();
@@ -55,13 +50,13 @@ pub fn execute_origination(
                     consumed_gas: None,
                     storage_size: None,
                     paid_storage_size_diff: None,
-                }
+                },
             })
         }};
     }
 
     if skip {
-        return result!(Skipped)
+        return result!(Skipped);
     }
 
     let self_address = originated_address(hash, origination_index)?;
@@ -71,22 +66,22 @@ pub fn execute_origination(
         context,
         origination.source.value(),
         self_address.value(),
-        &origination.balance
+        &origination.balance,
     ) {
         Ok((_, balance)) => balance,
         Err(Error::BalanceTooLow { balance }) => {
             errors.balance_too_low(&origination.balance, &balance, origination.source.value());
-            return result!(Failed)
-        },
-        Err(err) => return Err(err)
+            return result!(Failed);
+        }
+        Err(err) => return Err(err),
     };
 
-    match deploy_contract(context, origination, self_address, balance) {
+    match deploy_contract(context, origination, self_address.clone(), balance) {
         Ok(ret) => {
             lazy_diff.update(ret.big_map_diff);
             originated_contracts = Some(vec![self_address]);
             result!(Applied)
-        },
+        }
         Err(err) => {
             // TODO: runtime error
             result!(Failed)
@@ -96,9 +91,9 @@ pub fn execute_origination(
 
 #[cfg(test)]
 mod test {
-    use crate::context::{ephemeral::EphemeralContext};
+    use crate::context::ephemeral::EphemeralContext;
     use crate::Result;
-    use tezos_core::types::{mutez::Mutez};
+    use tezos_core::types::mutez::Mutez;
     use tezos_michelson::michelson::{
         data::instructions::failwith,
         data::Unit,
@@ -130,25 +125,25 @@ mod test {
         };
 
         let mut index = 1i32;
-        let receipt = execute_origination(
+        let result = execute_origination(
             &mut context,
             &origination,
             &OperationHash::new("oneDGhZacw99EEFaYDTtWfz5QEhUW3PPVFsHa7GShnLPuDn7gSd".into())?,
             &mut index,
-            false
+            false,
         )?;
-        let metadata = receipt.metadata.unwrap();
-        let originated_contracts = metadata.operation_result.originated_contracts.unwrap();
-        let address = originated_contracts.first().unwrap();
+        assert!(result.ok());
+        let (_, res): (_, OriginationOperationResult) = result.try_into()?;
+        let originated_contract = res.originated_contracts.unwrap().first().unwrap();
         let dummy_address = ContractAddress::try_from("KT1Mjjcb6tmSsLm7Cb3DSQszePjfchPM4Uxm")?;
-        assert_eq!(dummy_address, *address);
+        assert_eq!(dummy_address, *originated_contract);
 
         assert_eq!(
-            context.get_balance(&source)?.unwrap(),
+            context.get_balance(source)?.unwrap(),
             Mutez::from(1000000000u32 - 500000000u32)
         );
         assert_eq!(
-            context.get_balance(address)?.unwrap(),
+            context.get_balance(originated_contract.value())?.unwrap(),
             Mutez::from(500000000u32)
         );
         Ok(())

@@ -2,10 +2,7 @@ mod rpc;
 
 use derive_more::{Display, Error};
 use std::backtrace::Backtrace;
-use tezos_core::types::{
-    encoded::OperationHash,
-    mutez::Mutez
-};
+use tezos_core::types::{encoded::OperationHash, mutez::Mutez};
 
 pub use chrono::ParseError as TimestampParsingError;
 pub use ibig::error::OutOfBoundsError as BigIntOutOfBoundsError;
@@ -78,14 +75,14 @@ pub enum Error {
     },
     BalanceNotInitialized,
     BalanceTooLow {
-        balance: Mutez
+        balance: Mutez,
     },
     ContractCodeMissing {
-        address: String
+        address: String,
     },
     ContractStorageMissing {
-        address: String
-    }
+        address: String,
+    },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

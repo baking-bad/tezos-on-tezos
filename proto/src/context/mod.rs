@@ -1,14 +1,11 @@
 pub mod ephemeral;
 pub mod head;
-pub mod migrations;
-pub mod types;
 pub mod interpreter;
+pub mod migrations;
 pub mod proto;
+pub mod types;
 
-use crate::{
-    context::types::ContextNode,
-    Result,
-};
+use crate::{context::types::ContextNode, Result};
 
 pub trait Context {
     fn log(&self, msg: String);

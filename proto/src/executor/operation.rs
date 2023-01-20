@@ -1,6 +1,6 @@
 use tezos_core::types::encoded::{ChainId, Encoded, ProtocolHash};
-use tezos_operation::operations::{OperationContent};
-use tezos_rpc::models::operation::{Operation as OperationReceipt};
+use tezos_operation::operations::OperationContent;
+use tezos_rpc::models::operation::Operation as OperationReceipt;
 use vm::interpreter::InterpreterContext;
 
 use crate::{
@@ -8,9 +8,8 @@ use crate::{
     context::proto::ProtoContext,
     error::{Error, Result},
     executor::{
-        reveal::{execute_reveal},
-        origination::{execute_origination},
-        transaction::{execute_transaction},
+        balance_updates::BalanceUpdates, origination::execute_origination, reveal::execute_reveal,
+        transaction::execute_transaction,
     },
     validator::operation::ManagerOperation,
 };
@@ -25,14 +24,22 @@ pub fn execute_operation(
     let mut origination_index: i32 = 0;
     let mut results = Vec::new();
 
-    context.freeze_balance(opg.source.value(), opg.total_fees);
+    BalanceUpdates::reserve(context, opg.source.value(), &opg.total_fees)?;
 
     for (i, content) in opg.origin.contents.iter().enumerate() {
         let skip = failed_idx.is_some();
         let result = match content {
             OperationContent::Reveal(reveal) => execute_reveal(context, reveal, skip)?,
-            OperationContent::Origination(origination) => execute_origination(context, origination, &opg.hash, &mut origination_index, skip)?,
-            OperationContent::Transaction(transaction) => execute_transaction(context, transaction, skip)?,
+            OperationContent::Origination(origination) => execute_origination(
+                context,
+                origination,
+                &opg.hash,
+                &mut origination_index,
+                skip,
+            )?,
+            OperationContent::Transaction(transaction) => {
+                execute_transaction(context, transaction, None, skip)?
+            }
             _ => return Err(Error::OperationKindUnsupported),
         };
 
@@ -44,17 +51,13 @@ pub fn execute_operation(
         results.push(result);
     }
 
-    context.unfreeze_balance(opg.source.value());
-
     if let Some(stop) = failed_idx {
-        for i in 0..stop {
-            results[i].backtrack(context);
-        }
-        results[stop].charge(context);
+        results[0..stop].iter_mut().for_each(|r| r.backtrack());
+
+        let total_fees = opg.origin.contents[0..=stop].iter().map(|c| c.fee()).sum();
+        BalanceUpdates::reserve(context, opg.source.value(), &total_fees)?;
     } else {
-        for result in results.iter_mut() {
-            result.charge(context);
-        }
+        // all applied, no rollbacks
         context.set_counter(opg.source.value(), &opg.last_counter)?;
     }
 
@@ -67,7 +70,7 @@ pub fn execute_operation(
         hash: Some(opg.hash.to_owned()),
         branch: opg.origin.branch.clone(),
         signature: Some(opg.origin.signature.clone()),
-        contents: results.into_contents()
+        contents: results.into_iter().map(|r| r.into()).collect(),
     })
 }
 
@@ -76,10 +79,7 @@ mod test {
     use crate::context::{ephemeral::EphemeralContext, proto::ProtoContext};
     use crate::validator::operation::ManagerOperation;
     use crate::Result;
-    use tezos_core::types::{
-        mutez::Mutez,
-        number::Nat,
-    };
+    use tezos_core::types::{mutez::Mutez, number::Nat};
     use tezos_operation::operations::{SignedOperation, Transaction};
     use tezos_rpc::models::operation::operation_result::OperationResultStatus;
 

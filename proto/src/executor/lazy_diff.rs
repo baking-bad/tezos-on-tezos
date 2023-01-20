@@ -9,7 +9,9 @@ pub struct LazyDiff {
 
 impl LazyDiff {
     pub fn new() -> Self {
-        Self { lazy_diff: Vec::new() }
+        Self {
+            lazy_diff: Vec::new(),
+        }
     }
 
     pub fn update(&mut self, big_map_diff: Vec<BigMapDiff>) {

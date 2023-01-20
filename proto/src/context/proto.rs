@@ -3,13 +3,9 @@ use tezos_michelson::micheline::Micheline;
 use tezos_rpc::models::operation::Operation as OperationReceipt;
 
 use crate::{
-    context::{
-        head::Head,
-        Context
-    },
+    context::{head::Head, Context},
     producer::types::BatchReceipt,
-    Result,
-    Error,
+    Error, Result,
 };
 
 pub trait ProtoContext {
@@ -22,11 +18,8 @@ pub trait ProtoContext {
     fn has_public_key(&self, address: &str) -> Result<bool>;
     fn get_public_key(&mut self, address: &str) -> Result<Option<PublicKey>>;
     fn set_public_key(&mut self, address: &str, public_key: &PublicKey) -> Result<()>;
-    fn get_operation_receipt(
-        &mut self,
-        level: i32,
-        index: i32,
-    ) -> Result<Option<OperationReceipt>>;
+    fn get_operation_receipt(&mut self, level: i32, index: i32)
+        -> Result<Option<OperationReceipt>>;
     fn commit_operation_receipt(
         &mut self,
         level: i32,
@@ -38,11 +31,7 @@ pub trait ProtoContext {
     fn set_contract_code(&mut self, address: &str, code: Micheline) -> Result<()>;
     fn get_contract_code(&mut self, address: &str) -> Result<Option<Micheline>>;
     fn get_contract_storage(&mut self, address: &str) -> Result<Option<Micheline>>;
-    fn set_contract_storage(
-        &mut self,
-        address: &str,
-        storage: Micheline,
-    ) -> Result<()>;
+    fn set_contract_storage(&mut self, address: &str, storage: Micheline) -> Result<()>;
     fn commit(&mut self) -> Result<()>;
     fn rollback(&mut self);
     fn check_no_pending_changes(&self) -> Result<()>;
@@ -106,11 +95,7 @@ impl<T: Context> ProtoContext for T {
         context_get_opt!(self, "/context/contracts/{}/pubkey", address)
     }
 
-    fn set_public_key(
-        &mut self,
-        address: &str,
-        public_key: &PublicKey,
-    ) -> Result<()> {
+    fn set_public_key(&mut self, address: &str, public_key: &PublicKey) -> Result<()> {
         // NOTE: Underscores are not allowed in path (host restriction)
         return self.set(
             format!("/context/contracts/{}/pubkey", address),
@@ -134,7 +119,10 @@ impl<T: Context> ProtoContext for T {
                 Some(hash.clone().into()),
             )?;
         }
-        self.save(format!("/blocks/{}/operations/{}", level, index), Some(receipt.into()))?;
+        self.save(
+            format!("/blocks/{}/operations/{}", level, index),
+            Some(receipt.into()),
+        )?;
         Ok(())
     }
 
@@ -147,7 +135,10 @@ impl<T: Context> ProtoContext for T {
     }
 
     fn commit_batch_receipt(&mut self, level: i32, receipt: BatchReceipt) -> Result<()> {
-        self.save(format!("/blocks/{}/hash", level), Some(receipt.hash.clone().into()))?;
+        self.save(
+            format!("/blocks/{}/hash", level),
+            Some(receipt.hash.clone().into()),
+        )?;
         self.save(format!("/blocks/{}/header", level), Some(receipt.into()))?;
         Ok(())
     }
@@ -162,21 +153,14 @@ impl<T: Context> ProtoContext for T {
 
     fn set_contract_code(&mut self, address: &str, code: Micheline) -> Result<()> {
         // TODO: support splitting into chunks (generic read/write loop)
-        self.set(
-            format!("/context/contracts/{}/code", address),
-            code.into(),
-        )
+        self.set(format!("/context/contracts/{}/code", address), code.into())
     }
 
     fn get_contract_storage(&mut self, address: &str) -> Result<Option<Micheline>> {
         context_get_opt!(self, "/context/contracts/{}/storage", address)
     }
 
-    fn set_contract_storage(
-        &mut self,
-        address: &str,
-        storage: Micheline,
-    ) -> Result<()> {
+    fn set_contract_storage(&mut self, address: &str, storage: Micheline) -> Result<()> {
         self.set(
             format!("/context/contracts/{}/storage", address),
             storage.into(),

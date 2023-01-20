@@ -1,12 +1,11 @@
 use tezos_michelson::micheline::{
-    primitive_application, primitive_application::PrimitiveApplication, sequence::Sequence,
-    sequence,
-    Micheline,
+    primitive_application, primitive_application::PrimitiveApplication, sequence,
+    sequence::Sequence, Micheline,
 };
 use tezos_michelson::michelson::{
     data::Instruction,
+    types,
     types::{Code, Parameter, Storage, Type},
-    types
 };
 
 use crate::{
@@ -87,7 +86,7 @@ impl MichelsonScript {
         sequence(vec![
             types::parameter(self.parameter_type.clone()),
             types::storage(self.storage_type.clone()),
-            types::code(self.code.clone())
+            types::code(self.code.clone()),
         ])
     }
 

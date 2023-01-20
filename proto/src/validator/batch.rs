@@ -1,4 +1,4 @@
-use tezos_core::types::encoded::{OperationHash, Encoded};
+use tezos_core::types::encoded::{Encoded, OperationHash};
 use tezos_operation::operations::SignedOperation;
 
 use crate::{

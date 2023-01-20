@@ -2,21 +2,14 @@ use derive_more::{From, TryInto};
 use serde_json_wasm;
 
 use tezos_core::types::{
-    encoded::{
-        BlockHash, Encoded, OperationHash, PublicKey,
-    },
+    encoded::{BlockHash, Encoded, OperationHash, PublicKey},
     mutez::Mutez,
     number::Nat,
 };
 use tezos_michelson::micheline::Micheline;
 use tezos_rpc::models::operation::Operation as OperationReceipt;
 
-use crate::{
-    context::{head::Head},
-    producer::types::BatchReceipt,
-    Result,
-    internal_error
-};
+use crate::{context::head::Head, internal_error, producer::types::BatchReceipt, Result};
 
 #[derive(Debug, Clone, From, TryInto)]
 pub enum ContextNode {
@@ -58,7 +51,7 @@ impl ContextNode {
             [b'\x07', bytes @ ..] => OperationReceipt::decode(bytes),
             [b'\x08', bytes @ ..] => BatchReceipt::decode(bytes),
             [b'\x09', bytes @ ..] => Micheline::decode(bytes),
-            _ => Err(internal_error!(Encoding, "Invalid context node prefix"))
+            _ => Err(internal_error!(Encoding, "Invalid context node prefix")),
         }
     }
 }

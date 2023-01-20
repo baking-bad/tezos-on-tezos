@@ -151,7 +151,7 @@ impl Interpreter for TransferTokens {
     fn execute(
         &self,
         stack: &mut Stack,
-        _scope: &OperationScope,
+        scope: &OperationScope,
         context: &mut impl InterpreterContext,
     ) -> Result<()> {
         let mut param = stack.pop()?;
@@ -169,6 +169,7 @@ impl Interpreter for TransferTokens {
             destination,
             parameter: param.into_micheline(&param_type)?,
             amount: amount.try_into()?,
+            source: scope.source.clone(),
         };
 
         let res = OperationItem::new(content);

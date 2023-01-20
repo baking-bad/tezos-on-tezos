@@ -3,10 +3,7 @@ use host::{
     runtime::{Runtime, ValueType},
 };
 use proto::{
-    context::{
-        types::{ContextNode},
-        Context,
-    },
+    context::{types::ContextNode, Context},
     Result,
 };
 use std::collections::{HashMap, HashSet};
@@ -78,10 +75,7 @@ where
                 match self.host.store_has(&path) {
                     Ok(Some(ValueType::Value)) => {
                         // TODO: read loop for values > 2048
-                        let stored_value = self
-                            .host
-                            .store_read(&path, 0, 512)
-                            .map_err(err_into)?;
+                        let stored_value = self.host.store_read(&path, 0, 512).map_err(err_into)?;
                         let value = ContextNode::from_vec(stored_value)?;
                         self.state.insert(key, value.clone());
                         Ok(Some(value))

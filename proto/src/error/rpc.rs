@@ -67,11 +67,7 @@ impl RpcErrors {
         }
     }
 
-    pub fn contract_balance_too_low(
-        amount: &Mutez,
-        balance: &Mutez,
-        contract: &str,
-    ) -> RpcError {
+    pub fn contract_balance_too_low(amount: &Mutez, balance: &Mutez, contract: &str) -> RpcError {
         RpcError {
             kind: "temporary".into(),
             id: "contract.balance_too_low".into(),
@@ -82,11 +78,7 @@ impl RpcErrors {
         }
     }
 
-    pub fn counter_in_the_past(
-        contract: &str,
-        expected: u64,
-        found: u64,
-    ) -> RpcError {
+    pub fn counter_in_the_past(contract: &str, expected: u64, found: u64) -> RpcError {
         RpcError {
             kind: "temporary".into(),
             id: "contract.counter_in_the_past".into(),
@@ -140,12 +132,7 @@ impl RpcErrors {
         })
     }
 
-    pub fn balance_too_low(
-        &mut self,
-        amount: &Mutez,
-        balance: &Mutez,
-        contract: &str,
-    ) {
+    pub fn balance_too_low(&mut self, amount: &Mutez, balance: &Mutez, contract: &str) {
         self.errors
             .push(Self::contract_balance_too_low(amount, balance, contract));
     }

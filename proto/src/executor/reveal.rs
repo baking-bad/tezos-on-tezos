@@ -1,16 +1,20 @@
 use tezos_core::types::encoded::Encoded;
 use tezos_operation::operations::Reveal;
-use tezos_rpc::models::operation::{
-    operation_result::{operations::reveal::RevealOperationResult, OperationResultStatus},
+use tezos_rpc::models::operation::operation_result::{
+    operations::reveal::RevealOperationResult, OperationResultStatus,
 };
 
 use crate::{
     context::proto::ProtoContext,
     error::{Result, RpcErrors},
-    executor::result::ExecutionResult
+    executor::result::ExecutionResult,
 };
 
-pub fn execute_reveal(context: &mut impl ProtoContext, reveal: &Reveal, skip: bool) -> Result<ExecutionResult> {
+pub fn execute_reveal(
+    context: &mut impl ProtoContext,
+    reveal: &Reveal,
+    skip: bool,
+) -> Result<ExecutionResult> {
     let mut errors = RpcErrors::new();
 
     macro_rules! result {
@@ -28,12 +32,12 @@ pub fn execute_reveal(context: &mut impl ProtoContext, reveal: &Reveal, skip: bo
     }
 
     if skip {
-        return result!(Skipped)
+        return result!(Skipped);
     }
 
     if context.has_public_key(reveal.source.value())? {
         errors.previously_revealed_key(reveal.source.value());
-        return result!(Failed)
+        return result!(Failed);
     }
 
     // TODO: check that public key actually matches address {
@@ -49,11 +53,7 @@ pub fn execute_reveal(context: &mut impl ProtoContext, reveal: &Reveal, skip: bo
 mod test {
     use crate::context::{ephemeral::EphemeralContext, proto::ProtoContext};
     use crate::Result;
-    use tezos_core::types::{
-        encoded::{PublicKey},
-        mutez::Mutez,
-        number::Nat,
-    };
+    use tezos_core::types::{encoded::PublicKey, mutez::Mutez, number::Nat};
     use tezos_operation::operations::Reveal;
 
     use super::execute_reveal;
@@ -87,9 +87,7 @@ mod test {
             public_key
         );
         assert_eq!(
-            context
-                .get_balance(address)?
-                .expect("Balance expected"),
+            context.get_balance(address)?.expect("Balance expected"),
             Mutez::from(1000000000u32)
         );
 

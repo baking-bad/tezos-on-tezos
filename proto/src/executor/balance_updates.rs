@@ -1,13 +1,7 @@
 use tezos_core::types::mutez::Mutez;
-use tezos_rpc::models::balance_update::{
-    BalanceUpdate, Contract, Kind, Origin,
-};
+use tezos_rpc::models::balance_update::{BalanceUpdate, Contract, Kind, Origin};
 
-use crate::{
-    context::proto::ProtoContext,
-    Result,
-    Error
-};
+use crate::{context::proto::ProtoContext, Error, Result};
 
 #[derive(Clone, Debug)]
 pub struct BalanceUpdates {
@@ -21,36 +15,43 @@ impl BalanceUpdates {
         }
     }
 
-    pub fn fee(contract: &str, amount: &Mutez) -> Self {
-        let mut res = Self::new();
-        res.spend(contract, amount);
-        res
-    }
-
     pub fn unwrap(self) -> Vec<BalanceUpdate> {
         self.balance_updates
     }
 
-    fn push_contract_update(&mut self, contract: String, change: String) {
+    pub fn fee(source: &str, amount: &Mutez) -> Vec<BalanceUpdate> {
+        let mut res = Self::new();
+        res.push_contract_update(source, format!("-{}", amount));
+        // TODO: res.push_contract_update(producer, amount.to_string());
+        res.balance_updates
+    }
+
+    fn push_contract_update(&mut self, contract: &str, change: String) {
         self.balance_updates.push(BalanceUpdate::Contract(Contract {
             kind: Kind::Contract,
             change,
-            contract,
+            contract: contract.to_string(),
             origin: Some(Origin::Block),
         }));
     }
 
-    pub fn transfer(&mut self, context: &mut impl ProtoContext, source: &str, destination: &str, amount: &Mutez) -> Result<(Mutez, Mutez)> {
+    pub fn transfer(
+        &mut self,
+        context: &mut impl ProtoContext,
+        source: &str,
+        destination: &str,
+        amount: &Mutez,
+    ) -> Result<(Mutez, Mutez)> {
         let mut src_balance = context
             .get_balance(source)?
             .ok_or(Error::BalanceNotInitialized)?;
-        
-        let mut dst_balance = context
-            .get_balance(destination)?
-            .unwrap_or(0u32.into());
+
+        let mut dst_balance = context.get_balance(destination)?.unwrap_or(0u32.into());
 
         if src_balance < *amount {
-            return Err(Error::BalanceTooLow { balance: src_balance });
+            return Err(Error::BalanceTooLow {
+                balance: src_balance,
+            });
         }
 
         src_balance -= *amount;
@@ -58,19 +59,29 @@ impl BalanceUpdates {
 
         context.set_balance(source, &src_balance)?;
         context.set_balance(destination, &dst_balance)?;
-        
-        self.push_contract_update(source.to_string().into(), format!("-{}", amount));
-        self.push_contract_update(destination.to_string().into(), amount.to_string());
+
+        self.push_contract_update(source, format!("-{}", amount));
+        self.push_contract_update(destination, amount.to_string());
 
         Ok((src_balance, dst_balance))
     }
 
-    pub fn spend(&mut self, contract: &str, amount: &Mutez) {
-        self.push_contract_update(contract.to_string().into(), format!("-{}", amount))
-    }
+    pub fn reserve(context: &mut impl ProtoContext, source: &str, amount: &Mutez) -> Result<Mutez> {
+        let mut src_balance = context
+            .get_balance(source)?
+            .ok_or(Error::BalanceNotInitialized)?;
 
-    pub fn topup(&mut self, contract: &str, amount: &Mutez) {
-        self.push_contract_update(contract.to_string().into(), amount.to_string())
+        if src_balance < *amount {
+            return Err(Error::BalanceTooLow {
+                balance: src_balance,
+            });
+        }
+
+        src_balance -= *amount;
+
+        context.set_balance(source, &src_balance)?;
+
+        Ok(src_balance)
     }
 }
 

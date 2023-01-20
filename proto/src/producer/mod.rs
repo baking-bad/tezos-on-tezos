@@ -3,7 +3,6 @@ pub mod types;
 use vm::interpreter::InterpreterContext;
 
 use crate::{
-    Result,
     constants::*,
     context::{head::Head, migrations::run_migrations, proto::ProtoContext},
     executor::operation::execute_operation,
@@ -12,6 +11,7 @@ use crate::{
         OperationReceipt, SignedOperation,
     },
     validator::{batch::validate_batch, operation::ManagerOperation},
+    Result,
 };
 
 fn naive_header(
@@ -30,7 +30,7 @@ fn naive_header(
             vec![],
             operation_hashes,
         ])?,
-        context: "".try_into()?,  // TODO
+        context: "".try_into()?, // TODO
         timestamp: head.timestamp + BLOCK_TIME,
     })
 }

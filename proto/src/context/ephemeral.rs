@@ -1,9 +1,8 @@
 use std::collections::HashMap;
-use vm::interpreter::InterpreterContext;
 
 use crate::{
-    context::{types::{ContextNode}, Context},
-    Result
+    context::{types::ContextNode, Context},
+    Result,
 };
 pub struct EphemeralContext {
     state: HashMap<String, ContextNode>,
@@ -57,10 +56,14 @@ impl Context for EphemeralContext {
     }
 
     fn agg_pending_changes(&mut self) -> Vec<(String, Option<ContextNode>)> {
-        let mut changes: Vec<(String, Option<ContextNode>)> = Vec::with_capacity(self.modified_keys.len());
+        let mut changes: Vec<(String, Option<ContextNode>)> =
+            Vec::with_capacity(self.modified_keys.len());
         while !self.modified_keys.is_empty() {
             let key = self.modified_keys.remove(0);
-            let val = self.pending_state.remove(&key).expect("Modified key must be in the pending state");
+            let val = self
+                .pending_state
+                .remove(&key)
+                .expect("Modified key must be in the pending state");
             changes.push((key, Some(val)));
         }
         changes
@@ -69,7 +72,7 @@ impl Context for EphemeralContext {
     fn save(&mut self, key: String, val: Option<ContextNode>) -> Result<Option<ContextNode>> {
         let old = match val {
             Some(val) => self.state.insert(key, val.clone()),
-            None => self.state.remove(&key)
+            None => self.state.remove(&key),
         };
         Ok(old)
     }
@@ -83,10 +86,8 @@ impl Context for EphemeralContext {
 #[cfg(test)]
 mod test {
     use crate::{
-        context::ephemeral::EphemeralContext,
-        context::Context,
-        context::proto::ProtoContext,
-        Result
+        context::ephemeral::EphemeralContext, context::proto::ProtoContext, context::Context,
+        Result,
     };
 
     #[test]
