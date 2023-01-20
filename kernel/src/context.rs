@@ -1,14 +1,14 @@
+use context::{ContextNode, GenericContext, Result};
 use host::{
     path::RefPath,
     runtime::{Runtime, ValueType},
 };
 use std::collections::{HashMap, HashSet};
-use context::{Result, GenericContext, ContextNode};
 
 fn err_into(e: impl std::fmt::Debug) -> context::Error {
     context::Error::Internal(context::error::InternalError::new(
         context::error::InternalKind::Encoding,
-        format!("PVM context error: {:?}", e)
+        format!("PVM context error: {:?}", e),
     ))
 }
 
@@ -98,10 +98,8 @@ where
             Some(val) => {
                 let raw_value = val.to_vec()?;
                 self.host.store_write(&path, raw_value.as_slice(), 0)
-            },
-            None => {
-                self.host.store_delete(&path)
             }
+            None => self.host.store_delete(&path),
         };
         res.map_err(err_into)
     }
@@ -114,7 +112,8 @@ where
         let mut changes: Vec<(String, Option<ContextNode>)> =
             Vec::with_capacity(self.modified_keys.len());
         for key in self.modified_keys.drain().into_iter() {
-            let val = self.state
+            let val = self
+                .state
                 .remove(&key)
                 .expect("Modified key must be in the pending state");
             changes.push((key, val));
@@ -130,8 +129,8 @@ where
 
 #[cfg(test)]
 mod test {
+    use context::{ExecutorContext, GenericContext, Result};
     use mock_runtime::host::MockHost;
-    use context::{GenericContext, ExecutorContext, Result};
 
     use crate::context::PVMContext;
 

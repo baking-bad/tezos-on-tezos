@@ -39,17 +39,21 @@ pub enum ExecutionResult {
 
 impl ExecutionResult {
     pub fn ok(&self) -> bool {
-        match self {
+        let status = match self {
             Self::Transaction {
                 content: _,
                 sender: _,
                 result,
                 internal_results: _,
-            } => result.status == OperationResultStatus::Applied,
-            Self::Origination { content: _, result } => {
-                result.status == OperationResultStatus::Applied
-            }
-            Self::Reveal { content: _, result } => result.status == OperationResultStatus::Applied,
+            } => result.status,
+            Self::Origination { content: _, result } => result.status,
+            Self::Reveal { content: _, result } => result.status,
+        };
+
+        match status {
+            OperationResultStatus::Applied => true,
+            OperationResultStatus::Skipped => true,
+            _ => false,
         }
     }
 

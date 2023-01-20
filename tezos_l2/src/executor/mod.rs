@@ -5,5 +5,5 @@ pub mod operation;
 pub mod origination;
 pub mod result;
 pub mod reveal;
-pub mod transaction;
 pub mod rpc_errors;
+pub mod transaction;

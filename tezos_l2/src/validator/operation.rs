@@ -1,15 +1,12 @@
+use context::ExecutorContext;
 use tezos_core::types::{
     encoded::{Encoded, ImplicitAddress, OperationHash},
     mutez::Mutez,
     number::Nat,
 };
 use tezos_operation::operations::{OperationContent, SignedOperation};
-use context::ExecutorContext;
 
-use crate::{
-    Error,
-    Result
-};
+use crate::{Error, Result};
 
 pub struct ManagerOperation {
     pub hash: OperationHash,
@@ -110,7 +107,10 @@ pub fn validate_operation(
         }
         .to_integer()?;
         if next_counter <= counter {
-            return Err(Error::CounterInThePast { expected: counter + 1, found: next_counter })
+            return Err(Error::CounterInThePast {
+                expected: counter + 1,
+                found: next_counter,
+            });
         }
         counter = next_counter;
     }
@@ -127,7 +127,7 @@ pub fn validate_operation(
 
 #[cfg(test)]
 mod test {
-    use context::{EphemeralContext, ExecutorContext};
+    use context::{EphemeralContext, ExecutorContext, GenericContext};
     use tezos_core::types::{
         encoded::{Encoded, ImplicitAddress, PublicKey},
         mutez::Mutez,
@@ -135,8 +135,8 @@ mod test {
     };
     use tezos_operation::operations::{Reveal, SignedOperation, Transaction};
 
-    use crate::Result;
     use super::*;
+    use crate::Result;
 
     #[test]
     fn test_valid_tx() -> Result<()> {

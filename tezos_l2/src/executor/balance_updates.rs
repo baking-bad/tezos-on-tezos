@@ -1,6 +1,6 @@
+use context::ExecutorContext;
 use tezos_core::types::mutez::Mutez;
 use tezos_rpc::models::balance_update::{BalanceUpdate, Contract, Kind, Origin};
-use context::ExecutorContext;
 
 use crate::{Error, Result};
 
@@ -67,7 +67,11 @@ impl BalanceUpdates {
         Ok((src_balance, dst_balance))
     }
 
-    pub fn reserve(context: &mut impl ExecutorContext, source: &str, amount: &Mutez) -> Result<Mutez> {
+    pub fn reserve(
+        context: &mut impl ExecutorContext,
+        source: &str,
+        amount: &Mutez,
+    ) -> Result<Mutez> {
         let mut src_balance = context
             .get_balance(source)?
             .ok_or(Error::BalanceNotInitialized)?;

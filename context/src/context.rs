@@ -3,23 +3,24 @@ pub mod executor;
 pub mod interpreter;
 pub mod viewer;
 
-use tezos_michelson::micheline::Micheline;
 use tezos_core::types::{
-    encoded::{ContractAddress, ScriptExprHash, OperationHash, BlockHash, PublicKey},
+    encoded::{BlockHash, ContractAddress, OperationHash, PublicKey, ScriptExprHash},
     mutez::Mutez,
     number::Nat,
 };
+use tezos_michelson::micheline::Micheline;
 
-use crate::{ContextNode, Result, Head};
+use crate::{ContextNode, Head, Result};
 
 pub trait GenericContext {
     fn log(&self, msg: String);
     fn has(&self, key: String) -> Result<bool>;
     fn get(&mut self, key: String) -> Result<Option<ContextNode>>;
     fn set(&mut self, key: String, val: Option<ContextNode>) -> Result<()>;
-    fn has_pending_changes(&self) -> bool;
-    fn agg_pending_changes(&mut self) -> Vec<(String, Option<ContextNode>)>;
     fn save(&mut self, key: String, val: Option<ContextNode>) -> Result<()>;
+    fn has_pending_changes(&self) -> bool;
+    fn commit(&mut self) -> Result<()>;
+    fn rollback(&mut self);
     fn clear(&mut self);
 }
 
@@ -48,15 +49,18 @@ pub trait ExecutorContext {
         &mut self,
         level: i32,
         hash: BlockHash,
-        receipt: R
+        receipt: R,
     ) -> Result<()>;
-    fn get_batch_receipt<R: serde::de::DeserializeOwned>(&mut self, level: i32) -> Result<Option<R>>;
-    fn get_operation_receipt<R: serde::de::DeserializeOwned>(&mut self, level: i32, index: i32)
-        -> Result<Option<R>>;
-    fn commit(&mut self) -> Result<()>;
-    fn rollback(&mut self);
+    fn get_batch_receipt<R: serde::de::DeserializeOwned>(
+        &mut self,
+        level: i32,
+    ) -> Result<Option<R>>;
+    fn get_operation_receipt<R: serde::de::DeserializeOwned>(
+        &mut self,
+        level: i32,
+        index: i32,
+    ) -> Result<Option<R>>;
     fn check_no_pending_changes(&self) -> Result<()>;
-    fn debug_log(&self, message: String);
 }
 
 pub trait InterpreterContext {
@@ -66,7 +70,11 @@ pub trait InterpreterContext {
     // TODO: transfer_big_map
     fn get_big_map_owner(&mut self, ptr: i64) -> Result<Option<ContractAddress>>;
     fn has_big_map_value(&mut self, ptr: i64, key_hash: &ScriptExprHash) -> Result<bool>;
-    fn get_big_map_value(&mut self, ptr: i64, key_hash: &ScriptExprHash) -> Result<Option<Micheline>>;
+    fn get_big_map_value(
+        &mut self,
+        ptr: i64,
+        key_hash: &ScriptExprHash,
+    ) -> Result<Option<Micheline>>;
     fn set_big_map_value(
         &mut self,
         ptr: i64,
@@ -75,8 +83,7 @@ pub trait InterpreterContext {
     ) -> Result<()>;
 }
 
-pub trait ViewerContext {
-}
+pub trait ViewerContext {}
 
 #[macro_export]
 macro_rules! context_get_opt {

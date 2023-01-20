@@ -1,3 +1,4 @@
+use context::ExecutorContext;
 use tezos_core::{
     internal::crypto::blake2b,
     types::encoded::{ContractAddress, ContractHash, Encoded, OperationHash},
@@ -8,16 +9,14 @@ use tezos_rpc::models::operation::{
     operation_result::OperationResultStatus,
 };
 use tezos_vm::interpreter::InterpreterContext;
-use context::ExecutorContext;
 
 use crate::{
-    executor::rpc_errors::RpcErrors,
     executor::balance_updates::BalanceUpdates,
     executor::contract::{deploy_contract, ContractOutput},
     executor::lazy_diff::LazyDiff,
     executor::result::ExecutionResult,
-    Error,
-    Result,
+    executor::rpc_errors::RpcErrors,
+    Error, Result,
 };
 
 pub fn originated_address(opg_hash: &OperationHash, index: &i32) -> Result<ContractAddress> {
@@ -86,12 +85,12 @@ pub fn execute_origination(
             lazy_diff.update(ret.big_map_diff)?;
             originated_contracts = Some(vec![self_address]);
             result!(Applied)
-        },
+        }
         Ok(ContractOutput::Error(err)) => {
             // TODO: runtime error
             result!(Failed)
         }
-        Err(err) => Err(err)
+        Err(err) => Err(err),
     }
 }
 
@@ -106,8 +105,8 @@ mod test {
     };
     use tezos_operation::operations::Script;
 
-    use crate::Result;
     use super::*;
+    use crate::Result;
 
     #[test]
     fn test_origination_applied() -> Result<()> {

@@ -1,11 +1,10 @@
 use tezos_michelson::micheline::Micheline;
 use tezos_rpc::models::operation::operation_result::{
     lazy_storage_diff::{
-        LazyStorageDiff,
-        Kind,
         big_map::{BigMap, Diff, Update},
-    }, 
-    DiffAction
+        Kind, LazyStorageDiff,
+    },
+    DiffAction,
 };
 use tezos_vm::types::BigMapDiff;
 
@@ -19,7 +18,7 @@ const DEFAULT_DIFF: Diff = Diff {
     key_hash: None,
     key: None,
     value: None,
-    source: None
+    source: None,
 };
 
 #[derive(Clone, Debug)]
@@ -45,13 +44,14 @@ impl LazyDiff {
     pub fn make_update(update: (String, (Micheline, Option<Micheline>))) -> Result<Update> {
         Ok(Update {
             key_hash: update.0.try_into()?,
-            key: update.1.0,
-            value: update.1.1
+            key: update.1 .0,
+            value: update.1 .1,
         })
     }
 
     pub fn make_diff(diff: BigMapDiff) -> Result<LazyStorageDiff> {
-        let updates: Result<Vec<Update>> = diff.updates
+        let updates: Result<Vec<Update>> = diff
+            .updates
             .into_iter()
             .map(LazyDiff::make_update)
             .collect();
@@ -71,8 +71,8 @@ impl LazyDiff {
                     action: DiffAction::Update,
                     updates: updates?,
                     ..DEFAULT_DIFF
-                }
-            }
+                },
+            },
         }))
     }
 }

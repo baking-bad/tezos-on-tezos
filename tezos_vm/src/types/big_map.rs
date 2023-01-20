@@ -119,7 +119,11 @@ impl BigMapItem {
         }
     }
 
-    pub fn get(&self, key: &StackItem, context: &mut impl InterpreterContext) -> Result<OptionItem> {
+    pub fn get(
+        &self,
+        key: &StackItem,
+        context: &mut impl InterpreterContext,
+    ) -> Result<OptionItem> {
         match self {
             Self::Map(map) => map.get(key),
             Self::Diff(diff) => {

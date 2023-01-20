@@ -1,15 +1,11 @@
+use context::ExecutorContext;
 use tezos_core::types::encoded::Encoded;
 use tezos_operation::operations::Reveal;
 use tezos_rpc::models::operation::operation_result::{
     operations::reveal::RevealOperationResult, OperationResultStatus,
 };
-use context::ExecutorContext;
 
-use crate::{
-    executor::result::ExecutionResult,
-    executor::rpc_errors::RpcErrors,
-    Result
-};
+use crate::{executor::result::ExecutionResult, executor::rpc_errors::RpcErrors, Result};
 
 pub fn execute_reveal(
     context: &mut impl ExecutorContext,
@@ -56,8 +52,8 @@ mod test {
     use tezos_core::types::{encoded::PublicKey, mutez::Mutez, number::Nat};
     use tezos_operation::operations::Reveal;
 
-    use crate::Result;
     use super::*;
+    use crate::Result;
 
     #[test]
     fn test_reveal_applied() -> Result<()> {

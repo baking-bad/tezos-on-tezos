@@ -1,6 +1,6 @@
+use context::{ExecutorContext, GenericContext};
 use tezos_core::types::encoded::{Encoded, OperationHash};
 use tezos_operation::operations::SignedOperation;
-use context::ExecutorContext;
 
 use crate::{
     validator::operation::{validate_operation, ManagerOperation},
@@ -8,7 +8,7 @@ use crate::{
 };
 
 pub fn validate_batch(
-    context: &mut impl ExecutorContext,
+    context: &mut (impl GenericContext + ExecutorContext),
     batch_payload: Vec<(OperationHash, SignedOperation)>,
     atomic: bool,
 ) -> Result<Vec<ManagerOperation>> {
@@ -25,7 +25,11 @@ pub fn validate_batch(
                 operations.push(op);
             }
             Err(err) => {
-                context.debug_log(format!("Invalid operation: {}\n{}", hash.value(), err.format()));
+                context.log(format!(
+                    "Invalid operation: {}\n{}",
+                    hash.value(),
+                    err.format()
+                ));
                 if atomic {
                     context.rollback();
                     return Err(err);

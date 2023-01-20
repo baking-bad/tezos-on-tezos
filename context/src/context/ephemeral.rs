@@ -1,15 +1,11 @@
 use std::collections::HashMap;
 
-use crate::{
-    ContextNode,
-    GenericContext,
-    Result,
-};
+use crate::{ContextNode, GenericContext, Result};
 
 pub struct EphemeralContext {
     state: HashMap<String, ContextNode>,
     pending_state: HashMap<String, Option<ContextNode>>,
-    modified_keys: Vec<String>
+    modified_keys: Vec<String>,
 }
 
 impl EphemeralContext {
@@ -57,18 +53,22 @@ impl GenericContext for EphemeralContext {
         !self.modified_keys.is_empty()
     }
 
-    fn agg_pending_changes(&mut self) -> Vec<(String, Option<ContextNode>)> {
-        let mut changes: Vec<(String, Option<ContextNode>)> =
-            Vec::with_capacity(self.modified_keys.len());
+    fn commit(&mut self) -> Result<()> {
         while !self.modified_keys.is_empty() {
             let key = self.modified_keys.remove(0);
             let val = self
                 .pending_state
-                .remove(&key)
+                .get(&key)
                 .expect("Modified key must be in the pending state");
-            changes.push((key, val));
+            self.save(key, val.clone())?;
         }
-        changes
+        Ok(())
+    }
+
+    fn rollback(&mut self) {
+        for key in self.modified_keys.drain(..) {
+            self.pending_state.remove(&key);
+        }
     }
 
     fn save(&mut self, key: String, val: Option<ContextNode>) -> Result<()> {
@@ -87,12 +87,7 @@ impl GenericContext for EphemeralContext {
 
 #[cfg(test)]
 mod test {
-    use crate::{
-        EphemeralContext, 
-        ExecutorContext,
-        GenericContext,
-        Result,
-    };
+    use crate::{EphemeralContext, ExecutorContext, GenericContext, Result};
 
     #[test]
     fn store_balance() -> Result<()> {

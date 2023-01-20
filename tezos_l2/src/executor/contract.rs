@@ -1,3 +1,4 @@
+use context::{ExecutorContext, InterpreterContext};
 use derive_more::From;
 use tezos_core::types::{
     encoded::{Address, ContractAddress, Encoded},
@@ -7,18 +8,17 @@ use tezos_operation::operations::{
     Entrypoint, OperationContent, Origination, Parameters, Transaction,
 };
 use tezos_vm::{
-    interpreter::{OperationScope},
+    interpreter::OperationScope,
     script::{MichelsonScript, ScriptReturn},
     types::InternalContent,
 };
-use context::{ExecutorContext, InterpreterContext};
 
 use crate::{constants, Error, Result};
 
 #[derive(Debug, From)]
 pub enum ContractOutput {
     Error(tezos_vm::Error),
-    Return(ScriptReturn)
+    Return(ScriptReturn),
 }
 
 pub fn deploy_contract(
@@ -95,7 +95,7 @@ pub fn execute_contract(
 
     match script.call(&scope, context) {
         Ok(ret) => Ok(ret.into()),
-        Err(err) => Ok(err.into())
+        Err(err) => Ok(err.into()),
     }
 }
 

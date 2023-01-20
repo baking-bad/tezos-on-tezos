@@ -1,8 +1,7 @@
+use context::{ExecutorContext, GenericContext, InterpreterContext};
 use tezos_core::types::encoded::{ChainId, Encoded, ProtocolHash};
 use tezos_operation::operations::OperationContent;
 use tezos_rpc::models::operation::Operation as OperationReceipt;
-use tezos_vm::interpreter::InterpreterContext;
-use context::ExecutorContext;
 
 use crate::{
     constants::{CHAIN_ID, PROTOCOL},
@@ -15,7 +14,7 @@ use crate::{
 };
 
 pub fn execute_operation(
-    context: &mut (impl ExecutorContext + InterpreterContext),
+    context: &mut (impl GenericContext + ExecutorContext + InterpreterContext),
     opg: &ManagerOperation,
 ) -> Result<OperationReceipt> {
     context.check_no_pending_changes()?;
@@ -62,7 +61,7 @@ pub fn execute_operation(
     }
 
     context.commit()?;
-    context.debug_log(format!("Operation included: {}", opg.hash.value()));
+    context.log(format!("Operation included: {}", opg.hash.value()));
 
     Ok(OperationReceipt {
         protocol: Some(ProtocolHash::new(PROTOCOL.into())?),
@@ -79,14 +78,11 @@ mod test {
     use context::{EphemeralContext, ExecutorContext};
     use tezos_core::types::{mutez::Mutez, number::Nat};
     use tezos_operation::operations::{SignedOperation, Transaction};
-    use tezos_rpc::models::operation::{
-        OperationContent,
-        operation_result::OperationResultStatus
-    };
+    use tezos_rpc::models::operation::{operation_result::OperationResultStatus, OperationContent};
 
+    use super::*;
     use crate::validator::operation::ManagerOperation;
     use crate::Result;
-    use super::*;
 
     macro_rules! get_status {
         ($receipt: expr) => {
@@ -146,7 +142,7 @@ mod test {
         };
 
         let receipt = execute_operation(&mut context, &opg)?;
-        // println!("{:#?}", receipt);
+        //println!("{:#?}", receipt);
         assert_eq!(
             get_status(&receipt.contents[0]).expect("Backtracked"),
             OperationResultStatus::Backtracked

@@ -1,6 +1,6 @@
 use derive_more::{Display, Error};
-use tezos_l2::error::{Error as TezosProtoError, TezosCoreError, TezosOperationError};
 use std::backtrace::Backtrace;
+use tezos_l2::error::{Error as TezosProtoError, TezosCoreError, TezosOperationError};
 
 #[derive(Debug, Display)]
 pub enum InternalKind {

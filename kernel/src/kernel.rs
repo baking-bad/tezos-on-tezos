@@ -1,5 +1,5 @@
+use context::{ExecutorContext, GenericContext};
 use host::runtime::Runtime;
-use context::{GenericContext, ExecutorContext};
 use tezos_l2::{
     constants,
     producer::{
@@ -86,11 +86,11 @@ mod test {
     use super::*;
     use crate::context::PVMContext;
 
+    use context::{ExecutorContext, Result};
     use hex;
     use host::rollup_core::Input;
     use mock_runtime::host::MockHost;
-    use context::{ExecutorContext, Result};
-    use tezos_l2::producer::types::{OperationReceipt, BatchReceipt};
+    use tezos_l2::producer::types::{BatchReceipt, OperationReceipt};
 
     #[test]
     fn send_tez() -> Result<()> {

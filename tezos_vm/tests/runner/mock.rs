@@ -76,7 +76,10 @@ impl InterpreterContext for MockContext {
         Ok(())
     }
 
-    fn get_contract_type(&mut self, address: &encoded::ContractAddress) -> context::Result<Option<Micheline>> {
+    fn get_contract_type(
+        &mut self,
+        address: &encoded::ContractAddress,
+    ) -> context::Result<Option<Micheline>> {
         let key = address.into_string();
         match self.contracts.get(&key) {
             Some(ty) => Ok(Some(ty.clone())),
@@ -95,11 +98,15 @@ impl InterpreterContext for MockContext {
     fn get_big_map_owner(&mut self, ptr: i64) -> context::Result<Option<encoded::ContractAddress>> {
         match self.big_maps.get(&ptr) {
             Some(owner) => Ok(Some(owner.clone())),
-            None => Ok(None)
+            None => Ok(None),
         }
     }
 
-    fn has_big_map_value(&mut self, ptr: i64, key_hash: &encoded::ScriptExprHash) -> context::Result<bool> {
+    fn has_big_map_value(
+        &mut self,
+        ptr: i64,
+        key_hash: &encoded::ScriptExprHash,
+    ) -> context::Result<bool> {
         trace_log!("Has", key_hash.value());
         Ok(self
             .big_map_values

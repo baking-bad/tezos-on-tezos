@@ -1,8 +1,9 @@
 use derive_more::{Display, Error};
 use std::backtrace::Backtrace;
-use tezos_core::types::{mutez::Mutez};
+use tezos_core::types::mutez::Mutez;
 
 pub use chrono::ParseError as TimestampParsingError;
+pub use context::Error as ContextError;
 pub use ibig::error::OutOfBoundsError as BigIntOutOfBoundsError;
 pub use ibig::error::ParseError as BigIntParsingError;
 pub use serde_json_wasm::de::Error as DeserializationError;
@@ -12,7 +13,6 @@ pub use tezos_michelson::Error as TezosMichelsonError;
 pub use tezos_operation::Error as TezosOperationError;
 pub use tezos_rpc::Error as TezosRpcError;
 pub use tezos_vm::Error as InterpreterError;
-pub use context::Error as ContextError;
 
 #[derive(Debug, Display)]
 pub enum InternalKind {
@@ -80,8 +80,8 @@ pub enum Error {
     #[display(fmt = "expected {}, found {}", expected, found)]
     CounterInThePast {
         expected: u64,
-        found: u64
-    }
+        found: u64,
+    },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

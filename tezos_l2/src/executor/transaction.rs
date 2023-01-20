@@ -1,3 +1,4 @@
+use context::{ExecutorContext, InterpreterContext};
 use tezos_core::types::encoded::{Address, Encoded};
 use tezos_michelson::micheline::Micheline;
 use tezos_operation::operations::{OperationContent, Transaction};
@@ -5,16 +6,14 @@ use tezos_rpc::models::operation::{
     operation_result::operations::transaction::TransactionOperationResult,
     operation_result::OperationResultStatus,
 };
-use context::{ExecutorContext, InterpreterContext};
 
 use crate::{
-    executor::rpc_errors::RpcErrors,
     executor::balance_updates::BalanceUpdates,
     executor::contract::{execute_contract, expand_content, ContractOutput},
     executor::lazy_diff::LazyDiff,
     executor::result::ExecutionResult,
-    Error,
-    Result,
+    executor::rpc_errors::RpcErrors,
+    Error, Result,
 };
 
 pub fn execute_transaction(
@@ -82,12 +81,12 @@ pub fn execute_transaction(
                 storage = Some(ret.storage);
                 lazy_diff.update(ret.big_map_diff)?;
                 ret.operations.into_iter().map(expand_content).collect()
-            },
+            }
             Ok(ContractOutput::Error(err)) => {
                 // TODO: rpc error
                 return result!(Failed);
             }
-            Err(err) => return Err(err)
+            Err(err) => return Err(err),
         };
 
     for operation in internal_operations {
@@ -123,8 +122,8 @@ mod test {
     use tezos_core::types::mutez::Mutez;
     use tezos_operation::operations::Transaction;
 
-    use crate::Result;
     use super::*;
+    use crate::Result;
 
     #[test]
     fn test_transaction_applied() -> Result<()> {

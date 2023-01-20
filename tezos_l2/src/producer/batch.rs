@@ -1,5 +1,6 @@
-use tezos_vm::interpreter::InterpreterContext;
-use context::{Head, ExecutorContext, migrations::run_migrations};
+use context::{
+    migrations::run_migrations, ExecutorContext, GenericContext, Head, InterpreterContext,
+};
 
 use crate::{
     constants::*,
@@ -12,10 +13,7 @@ use crate::{
     Result,
 };
 
-fn naive_header(
-    head: Head,
-    operations: &Vec<ManagerOperation>,
-) -> Result<BatchHeader> {
+fn naive_header(head: Head, operations: &Vec<ManagerOperation>) -> Result<BatchHeader> {
     let operation_hashes: Vec<OperationHash> = operations.iter().map(|o| o.hash.clone()).collect();
     Ok(BatchHeader {
         level: head.level + 1,
@@ -33,7 +31,7 @@ fn naive_header(
 }
 
 pub fn apply_batch(
-    context: &mut (impl ExecutorContext + InterpreterContext),
+    context: &mut (impl GenericContext + ExecutorContext + InterpreterContext),
     head: Head,
     batch_payload: Vec<(OperationHash, SignedOperation)>,
 ) -> Result<Head> {

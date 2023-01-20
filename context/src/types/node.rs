@@ -1,12 +1,12 @@
 use derive_more::{From, TryInto};
-use tezos_michelson::micheline::Micheline;
 use tezos_core::types::{
-    encoded::{BlockHash, Encoded, OperationHash, ContractAddress, PublicKey},
+    encoded::{BlockHash, ContractAddress, Encoded, OperationHash, PublicKey},
     mutez::Mutez,
     number::Nat,
 };
+use tezos_michelson::micheline::Micheline;
 
-use crate::{Head, Result, internal_error};
+use crate::{internal_error, Head, Result};
 
 #[derive(Debug, Clone, From, TryInto)]
 pub enum ContextNode {
@@ -59,7 +59,7 @@ impl ContextNode {
 pub fn decode_i64(bytes: &[u8]) -> Result<ContextNode> {
     if bytes.len() == 8 {
         let value = i64::from_be_bytes([
-            bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7]
+            bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
         ]);
         Ok(value.into())
     } else {
