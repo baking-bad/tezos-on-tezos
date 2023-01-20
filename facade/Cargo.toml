@@ -5,4 +5,4 @@ edition = "2021"
 
 [dependencies]
 actix-web = "4"
-proto = { path = "../proto" }
+tezos_l2 = { path = "../tezos_l2" }

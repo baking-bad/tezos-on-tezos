@@ -2,16 +2,14 @@ use host::{
     path::RefPath,
     runtime::{Runtime, ValueType},
 };
-use proto::{
-    context::{types::ContextNode, Context},
-    Result,
-};
 use std::collections::{HashMap, HashSet};
+use context::{Result, GenericContext, ContextNode};
 
-fn err_into(e: impl std::fmt::Debug) -> proto::error::Error {
-    proto::error::Error::ExternalError {
-        message: format!("PVM context error: {:?}", e),
-    }
+fn err_into(e: impl std::fmt::Debug) -> context::Error {
+    context::Error::Internal(context::error::InternalError::new(
+        context::error::InternalKind::Encoding,
+        format!("PVM context error: {:?}", e)
+    ))
 }
 
 pub struct PVMContext<Host>
@@ -19,7 +17,7 @@ where
     Host: Runtime,
 {
     host: Host,
-    state: HashMap<String, ContextNode>,
+    state: HashMap<String, Option<ContextNode>>,
     modified_keys: HashSet<String>,
 }
 
@@ -45,7 +43,7 @@ where
     }
 }
 
-impl<Host> Context for PVMContext<Host>
+impl<Host> GenericContext for PVMContext<Host>
 where
     Host: Runtime,
 {
@@ -69,7 +67,7 @@ where
 
     fn get(&mut self, key: String) -> Result<Option<ContextNode>> {
         match self.state.get(&key) {
-            Some(cached_value) => Ok(Some(V::unwrap(cached_value.to_owned()))),
+            Some(cached_value) => Ok(cached_value.clone()),
             None => {
                 let path = RefPath::assert_from(key.as_bytes());
                 match self.host.store_has(&path) {
@@ -77,7 +75,7 @@ where
                         // TODO: read loop for values > 2048
                         let stored_value = self.host.store_read(&path, 0, 512).map_err(err_into)?;
                         let value = ContextNode::from_vec(stored_value)?;
-                        self.state.insert(key, value.clone());
+                        self.state.insert(key, Some(value.clone()));
                         Ok(Some(value))
                     }
                     Ok(Some(node_type)) => Err(err_into(node_type)),
@@ -88,51 +86,40 @@ where
         }
     }
 
-    fn set(&mut self, key: String, val: ContextNode) -> Result<()> {
+    fn set(&mut self, key: String, val: Option<ContextNode>) -> Result<()> {
         self.state.insert(key.clone(), val);
         self.modified_keys.insert(key);
         Ok(())
     }
 
-    fn persist(&mut self, key: String, val: ContextNode) -> Result<()> {
-        let raw_value = val.to_vec()?;
+    fn save(&mut self, key: String, val: Option<ContextNode>) -> Result<()> {
         let path = RefPath::assert_from(key.as_bytes());
-        self.host
-            .store_write(&path, raw_value.as_slice(), 0)
-            .map_err(err_into)?;
-        self.state.remove(&key); // ensure not cached
-        Ok(())
+        let res = match val {
+            Some(val) => {
+                let raw_value = val.to_vec()?;
+                self.host.store_write(&path, raw_value.as_slice(), 0)
+            },
+            None => {
+                self.host.store_delete(&path)
+            }
+        };
+        res.map_err(err_into)
     }
 
     fn has_pending_changes(&self) -> bool {
         !self.modified_keys.is_empty()
     }
 
-    fn commit(&mut self) -> Result<()> {
-        let mut checksum = self.get_checksum()?;
-
-        for key in self.modified_keys.iter() {
-            let raw_value = match self.state.get(key) {
-                Some(val) => val.to_vec()?,
-                None => return Err(err_into("Failed to find modified value")),
-            };
-            let path = RefPath::assert_from(key.as_bytes());
-            self.host
-                .store_write(&path, raw_value.as_slice(), 0)
-                .map_err(err_into)?;
-            checksum.update(&raw_value)?;
+    fn agg_pending_changes(&mut self) -> Vec<(String, Option<ContextNode>)> {
+        let mut changes: Vec<(String, Option<ContextNode>)> =
+            Vec::with_capacity(self.modified_keys.len());
+        for key in self.modified_keys.drain().into_iter() {
+            let val = self.state
+                .remove(&key)
+                .expect("Modified key must be in the pending state");
+            changes.push((key, val));
         }
-
-        self.commit_checksum(checksum)?;
-        self.modified_keys.clear();
-        Ok(())
-    }
-
-    fn rollback(&mut self) {
-        for key in self.modified_keys.iter() {
-            self.state.remove(key);
-        }
-        self.modified_keys.clear();
+        changes
     }
 
     fn clear(&mut self) {
@@ -143,10 +130,10 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::context::PVMContext;
     use mock_runtime::host::MockHost;
-    use proto::context::Context;
-    use proto::Result;
+    use context::{GenericContext, ExecutorContext, Result};
+
+    use crate::context::PVMContext;
 
     #[test]
     fn store_balance() -> Result<()> {

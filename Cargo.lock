@@ -462,6 +462,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "context"
+version = "0.1.0"
+dependencies = [
+ "derive_more",
+ "serde",
+ "serde-json-wasm",
+ "tezos-core",
+ "tezos-michelson",
+ "tezos-rpc",
+]
+
+[[package]]
 name = "convert_case"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1463,23 +1475,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "proto"
-version = "0.1.0"
-dependencies = [
- "blake2",
- "chrono",
- "derive_more",
- "ibig",
- "serde",
- "serde-json-wasm",
- "tezos-core",
- "tezos-michelson",
- "tezos-operation",
- "tezos-rpc",
- "vm",
-]
-
-[[package]]
 name = "quote"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1837,18 +1832,19 @@ name = "tez_facade"
 version = "0.1.0"
 dependencies = [
  "actix-web",
- "proto",
+ "tezos_l2",
 ]
 
 [[package]]
 name = "tez_kernel"
 version = "0.1.0"
 dependencies = [
+ "context",
  "derive_more",
  "hex",
  "host",
  "mock_runtime",
- "proto",
+ "tezos_l2",
 ]
 
 [[package]]
@@ -1946,6 +1942,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "tezos_l2"
+version = "0.1.0"
+dependencies = [
+ "blake2",
+ "chrono",
+ "context",
+ "derive_more",
+ "ibig",
+ "serde",
+ "serde-json-wasm",
+ "tezos-core",
+ "tezos-michelson",
+ "tezos-operation",
+ "tezos-rpc",
+ "tezos_vm",
+]
+
+[[package]]
 name = "tezos_rollup_encoding"
 version = "0.1.0"
 source = "git+https://gitlab.com/tezos/kernel#69f69144764dcd59dcc1fd144bf6e8f707f0431e"
@@ -1958,6 +1972,23 @@ dependencies = [
  "tezos_encoding",
  "tezos_encoding_derive",
  "time",
+]
+
+[[package]]
+name = "tezos_vm"
+version = "0.1.0"
+dependencies = [
+ "blake2",
+ "chrono",
+ "context",
+ "derive_more",
+ "hex",
+ "ibig",
+ "once_cell",
+ "serde",
+ "serde-json-wasm",
+ "tezos-core",
+ "tezos-michelson",
 ]
 
 [[package]]
@@ -2136,22 +2167,6 @@ name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
-
-[[package]]
-name = "vm"
-version = "0.1.0"
-dependencies = [
- "blake2",
- "chrono",
- "derive_more",
- "hex",
- "ibig",
- "once_cell",
- "serde",
- "serde-json-wasm",
- "tezos-core",
- "tezos-michelson",
-]
 
 [[package]]
 name = "wasi"

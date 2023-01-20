@@ -1,5 +1,5 @@
 use host::{input::Input, rollup_core::MAX_INPUT_MESSAGE_SIZE, runtime::Runtime};
-use proto::producer::types::{
+use tezos_l2::producer::types::{
     BlockHash, Encoded, OperationHash, Signature, SignedOperation, UnsignedOperation,
 };
 

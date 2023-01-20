@@ -1,9 +1,9 @@
 use host::runtime::Runtime;
-use proto::{
+use context::{GenericContext, ExecutorContext};
+use tezos_l2::{
     constants,
-    context::Context,
     producer::{
-        apply_batch,
+        batch::apply_batch,
         types::{Encoded, OperationHash, SignedOperation},
     },
 };
@@ -89,8 +89,8 @@ mod test {
     use hex;
     use host::rollup_core::Input;
     use mock_runtime::host::MockHost;
-    use proto::context::Context;
-    use proto::Result;
+    use context::{ExecutorContext, Result};
+    use tezos_l2::producer::types::{OperationReceipt, BatchReceipt};
 
     #[test]
     fn send_tez() -> Result<()> {
@@ -114,7 +114,7 @@ mod test {
 
         kernel_run(&mut context);
 
-        let opg_receipt = context.get_operation_receipt(0, 0i32)?;
+        let opg_receipt: Option<OperationReceipt> = context.get_operation_receipt(0, 0i32)?;
         // println!("Receipt: {:#?}", receipt);
         assert!(opg_receipt.is_some(), "Expected operation receipt");
         assert!(
@@ -122,7 +122,7 @@ mod test {
             "Expected operation hash"
         );
 
-        let batch_receipt = context.get_batch_receipt(0)?;
+        let batch_receipt: Option<BatchReceipt> = context.get_batch_receipt(0)?;
         assert!(batch_receipt.is_some(), "Expected batch receipt");
 
         let head = context.get_head()?;

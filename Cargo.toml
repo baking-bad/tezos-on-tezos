@@ -1,11 +1,12 @@
 [workspace]
 members = [
   "kernel",
-  "proto",
-  "facade",
+  "context",
+  "tezos_l2",
+  "tezos_vm",
   "installer",
   "dac_codec",
-  "vm"
+  "facade",
 ]
 
 [profile.release]

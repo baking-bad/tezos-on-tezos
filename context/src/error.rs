@@ -1,12 +1,16 @@
 use derive_more::{Display, Error};
-use tezos_l2::error::{Error as TezosProtoError, TezosCoreError, TezosOperationError};
 use std::backtrace::Backtrace;
+
+pub use serde_json_wasm::de::Error as DeserializationError;
+pub use serde_json_wasm::ser::Error as SerializationError;
+pub use tezos_core::Error as TezosCoreError;
+pub use tezos_michelson::Error as TezosMichelsonError;
+pub use tezos_rpc::Error as TezosRpcError;
 
 #[derive(Debug, Display)]
 pub enum InternalKind {
-    WasmHost,
+    Encoding,
     TezosEncoding,
-    TezosProtocol,
 }
 
 #[derive(Debug)]
@@ -48,24 +52,7 @@ impl std::error::Error for InternalError {
 #[derive(Debug, Display, Error)]
 pub enum Error {
     Internal(InternalError),
-    #[display(fmt = "UnexpectedL2OperationLength")]
-    UnexpectedL2OperationLength {
-        length: usize,
-    },
-    #[display(fmt = "UnexpectedLevelInfoLength")]
-    UnexpectedLevelInfoLength {
-        length: usize,
-    },
-    #[display(fmt = "InconsistentHeadLevel")]
-    InconsistentHeadLevel {
-        expected: i32,
-        found: i32,
-    },
-    #[display(fmt = "InconsistentHeadTimestamp")]
-    InconsistentHeadTimestamp {
-        upper_bound: i64,
-        found: i64,
-    },
+    ContextUnstagedError,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -86,22 +73,17 @@ macro_rules! impl_from_error {
     ($inner_err_ty: ty, $kind: ident) => {
         impl From<$inner_err_ty> for Error {
             fn from(error: $inner_err_ty) -> Self {
-                $crate::internal_error!($kind, "Caused by: {:?}", error)
+                $crate::internal_error!($kind, "{:?}", error)
             }
         }
     };
 }
 
 impl_from_error!(TezosCoreError, TezosEncoding);
-impl_from_error!(TezosOperationError, TezosEncoding);
-impl_from_error!(host::runtime::RuntimeError, WasmHost);
-impl_from_error!(host::path::PathError, WasmHost);
-
-impl From<TezosProtoError> for Error {
-    fn from(error: TezosProtoError) -> Self {
-        internal_error!(TezosProtocol, "Caused by: {}", error)
-    }
-}
+impl_from_error!(TezosMichelsonError, TezosEncoding);
+impl_from_error!(SerializationError, Encoding);
+impl_from_error!(DeserializationError, Encoding);
+impl_from_error!(&str, Encoding);
 
 impl Error {
     pub fn format(&self) -> String {

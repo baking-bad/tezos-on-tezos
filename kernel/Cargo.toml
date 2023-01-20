@@ -7,7 +7,8 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-proto = { path = "../proto" }
+context = { path = "../context" }
+tezos_l2 = { path = "../tezos_l2" }
 host = { git = "https://gitlab.com/tezos/kernel" }
 derive_more = "0.99"
 hex = "*"
