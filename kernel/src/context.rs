@@ -39,6 +39,19 @@ where
     }
 }
 
+impl<Host: RawRollupCore> PVMContext<Host> {
+    pub fn persist(&mut self) -> Result<()> {
+        for (key, exists) in self.saved_state.drain() {
+            if exists {
+                store_move(&mut self.host, [TMP_PREFIX, &key].concat().as_str(), &key)?;
+            } else {
+                store_delete(&mut self.host, &key)?;
+            }
+        }
+        Ok(())
+    }
+}
+
 impl<Host> GenericContext for PVMContext<Host>
 where
     Host: RawRollupCore,
@@ -125,17 +138,6 @@ where
         for key in self.modified_keys.drain().into_iter() {
             self.state.remove(&key);
         }
-    }
-
-    fn persist(&mut self) -> Result<()> {
-        for (key, exists) in self.saved_state.drain() {
-            if exists {
-                store_move(&mut self.host, [TMP_PREFIX, &key].concat().as_str(), &key)?;
-            } else {
-                store_delete(&mut self.host, &key)?;
-            }
-        }
-        Ok(())
     }
 
     fn clear(&mut self) {

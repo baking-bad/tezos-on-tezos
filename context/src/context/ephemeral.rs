@@ -79,10 +79,6 @@ impl GenericContext for EphemeralContext {
         Ok(())
     }
 
-    fn persist(&mut self) -> Result<()> {
-        Ok(())
-    }
-
     fn clear(&mut self) {
         self.pending_state.clear();
         self.modified_keys.clear();
