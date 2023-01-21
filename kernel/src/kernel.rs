@@ -1,8 +1,5 @@
 use context::{ExecutorContext, GenericContext};
-use host::{
-    rollup_core::RawRollupCore,
-    runtime::Runtime
-};
+use host::{rollup_core::RawRollupCore, runtime::Runtime};
 use tezos_l2::{
     constants,
     producer::{
@@ -18,10 +15,8 @@ use crate::{
 };
 
 pub fn kernel_run<Host: RawRollupCore>(context: &mut PVMContext<Host>) {
-    let metadata = Runtime::reveal_metadata(context.as_mut())
-        .expect("Failed to reveal metadata");
-    let mut head = context.get_head()
-        .expect("Failed to get head");
+    let metadata = Runtime::reveal_metadata(context.as_mut()).expect("Failed to reveal metadata");
+    let mut head = context.get_head().expect("Failed to get head");
 
     context.log(format!("Kernel invoked, prev head: {}", head));
 

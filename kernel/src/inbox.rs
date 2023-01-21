@@ -1,7 +1,7 @@
 use host::{
-    input::Input, 
-    rollup_core::{MAX_INPUT_MESSAGE_SIZE, RawRollupCore},
-    runtime::Runtime
+    input::Input,
+    rollup_core::{RawRollupCore, MAX_INPUT_MESSAGE_SIZE},
+    runtime::Runtime,
 };
 use tezos_l2::producer::types::{
     BlockHash, Encoded, OperationHash, Signature, SignedOperation, UnsignedOperation,

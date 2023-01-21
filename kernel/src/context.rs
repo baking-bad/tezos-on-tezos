@@ -1,13 +1,8 @@
 use context::{ContextNode, GenericContext, Result};
-use host::{
-    rollup_core::RawRollupCore,
-    runtime::Runtime
-};
+use host::{rollup_core::RawRollupCore, runtime::Runtime};
 use std::collections::{HashMap, HashSet};
 
-use crate::{
-    store::{store_has, store_read, store_write, store_delete, store_move}
-};
+use crate::store::{store_delete, store_has, store_move, store_read, store_write};
 
 const TMP_PREFIX: &str = "/tmp";
 
@@ -66,21 +61,21 @@ where
 
     fn get(&mut self, key: String) -> Result<Option<ContextNode>> {
         if let Some(val) = self.state.get(&key) {
-            return Ok(val.clone())
+            return Ok(val.clone());
         }
-        
+
         let store_key = match self.saved_state.get(&key) {
             Some(false) => return Ok(None),
             Some(true) => [TMP_PREFIX, &key].concat(),
-            None => key.clone()
+            None => key.clone(),
         };
-        
+
         match store_read(&self.host, &store_key) {
             Ok(Some(bytes)) => {
                 let val = ContextNode::from_vec(bytes)?;
                 self.state.insert(key, Some(val.clone()));
                 Ok(Some(val))
-            },
+            }
             Ok(None) => Ok(None),
             Err(err) => Err(err),
         }
@@ -96,12 +91,16 @@ where
         match val {
             Some(val) => {
                 let raw_value = val.to_vec()?;
-                store_write(&mut self.host, [TMP_PREFIX, &key].concat().as_str(), raw_value)?;
+                store_write(
+                    &mut self.host,
+                    [TMP_PREFIX, &key].concat().as_str(),
+                    raw_value,
+                )?;
                 self.saved_state.insert(key, true);
             }
             None => {
                 self.saved_state.insert(key, false);
-            },
+            }
         };
         Ok(())
     }
