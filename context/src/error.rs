@@ -9,6 +9,7 @@ pub use tezos_rpc::Error as TezosRpcError;
 
 #[derive(Debug, Display)]
 pub enum InternalKind {
+    Store,
     Encoding,
     TezosEncoding,
 }

@@ -1,12 +1,20 @@
 use serde_json_wasm;
 use tezos_core::types::{
-    encoded::{BlockHash, OperationHash, PublicKey},
+    encoded::{PublicKey, OperationHash, BlockHash},
     mutez::Mutez,
-    number::Nat,
+    number::Nat
 };
 use tezos_michelson::micheline::Micheline;
 
-use crate::{context_get, context_get_opt, Error, ExecutorContext, GenericContext, Head, Result};
+use crate::{
+    GenericContext,
+    ExecutorContext,
+    Head,
+    Error,
+    Result,
+    context_get,
+    context_get_opt
+};
 
 impl<T: GenericContext> ExecutorContext for T {
     fn get_head(&mut self) -> Result<Head> {
@@ -68,7 +76,7 @@ impl<T: GenericContext> ExecutorContext for T {
             format!("/blocks/{}/ophashes/{}", level, index),
             Some(hash.into()),
         )?;
-        let receipt = serde_json_wasm::to_vec(&receipt)?;
+        let receipt = serde_json_wasm::to_vec(&receipt)?; 
         self.save(
             format!("/blocks/{}/operations/{}", level, index),
             Some(receipt.into()),
@@ -76,46 +84,40 @@ impl<T: GenericContext> ExecutorContext for T {
         Ok(())
     }
 
-    fn get_operation_receipt<R: serde::de::DeserializeOwned>(
-        &mut self,
-        level: i32,
-        index: i32,
-    ) -> Result<Option<R>> {
+    fn get_operation_receipt<R: serde::de::DeserializeOwned>(&mut self, level: i32, index: i32)
+            -> Result<Option<R>> {
         match self.get(format!("/blocks/{}/operations/{}", level, index)) {
             Ok(Some(bytes)) => {
                 let data: Vec<u8> = bytes.try_into()?;
                 let res: R = serde_json_wasm::from_slice(data.as_slice())?;
                 Ok(Some(res))
-            }
+            },
             Ok(None) => Ok(None),
-            Err(err) => Err(err),
+            Err(err) => Err(err)
         }
     }
 
-    fn commit_batch<R: serde::Serialize>(
-        &mut self,
-        level: i32,
-        hash: BlockHash,
-        receipt: R,
-    ) -> Result<()> {
-        self.save(format!("/blocks/{}/hash", level), Some(hash.into()))?;
-        let receipt = serde_json_wasm::to_vec(&receipt)?;
-        self.save(format!("/blocks/{}/header", level), Some(receipt.into()))?;
+    fn commit_batch<R: serde::Serialize>(&mut self, level: i32, hash: BlockHash, receipt: R) -> Result<()> {
+        self.save(
+            format!("/blocks/{}/hash", level),
+            Some(hash.into()),
+        )?;
+        let receipt = serde_json_wasm::to_vec(&receipt)?; 
+        self.save(
+            format!("/blocks/{}/header", level),
+            Some(receipt.into()))?;
         Ok(())
     }
 
-    fn get_batch_receipt<R: serde::de::DeserializeOwned>(
-        &mut self,
-        level: i32,
-    ) -> Result<Option<R>> {
+    fn get_batch_receipt<R: serde::de::DeserializeOwned>(&mut self, level: i32) -> Result<Option<R>> {
         match self.get(format!("/blocks/{}/header", level)) {
             Ok(Some(bytes)) => {
                 let data: Vec<u8> = bytes.try_into()?;
                 let res: R = serde_json_wasm::from_slice(data.as_slice())?;
                 Ok(Some(res))
-            }
+            },
             Ok(None) => Ok(None),
-            Err(err) => Err(err),
+            Err(err) => Err(err)
         }
     }
 
@@ -125,10 +127,7 @@ impl<T: GenericContext> ExecutorContext for T {
 
     fn set_contract_code(&mut self, address: &str, code: Micheline) -> Result<()> {
         // TODO: support splitting into chunks (generic read/write loop)
-        self.set(
-            format!("/context/contracts/{}/code", address),
-            Some(code.into()),
-        )
+        self.set(format!("/context/contracts/{}/code", address), Some(code.into()))
     }
 
     fn get_contract_storage(&mut self, address: &str) -> Result<Option<Micheline>> {

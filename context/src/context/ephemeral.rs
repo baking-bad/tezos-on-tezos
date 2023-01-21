@@ -79,6 +79,10 @@ impl GenericContext for EphemeralContext {
         Ok(())
     }
 
+    fn persist(&mut self) -> Result<()> {
+        Ok(())
+    }
+
     fn clear(&mut self) {
         self.pending_state.clear();
         self.modified_keys.clear();
@@ -99,7 +103,7 @@ mod test {
         assert!(context.get_balance(&address)?.is_none()); // both host and cache accessed
 
         context.set_balance(&address, &balance)?; // cached
-        context.commit()?; // sent to the host
+        context.commit()?; // save
         context.clear(); // cache cleared
 
         assert!(context.get_balance(&address)?.is_some()); // cached

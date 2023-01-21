@@ -1,5 +1,8 @@
 use context::{ExecutorContext, GenericContext};
-use host::runtime::Runtime;
+use host::{
+    rollup_core::RawRollupCore,
+    runtime::Runtime
+};
 use tezos_l2::{
     constants,
     producer::{
@@ -14,14 +17,13 @@ use crate::{
     Error, Result,
 };
 
-pub fn kernel_run<Host: Runtime>(context: &mut PVMContext<Host>) {
-    let metadata = context
-        .as_mut()
-        .reveal_metadata()
+pub fn kernel_run<Host: RawRollupCore>(context: &mut PVMContext<Host>) {
+    let metadata = Runtime::reveal_metadata(context.as_mut())
         .expect("Failed to reveal metadata");
+    let mut head = context.get_head()
+        .expect("Failed to get head");
 
-    let mut head = context.get_head().expect("Failed to get head");
-    context.log(format!("Kernel invoked: {}", head));
+    context.log(format!("Kernel invoked, prev head: {}", head));
 
     let mut batch_payload: Vec<(OperationHash, SignedOperation)> = Vec::new();
     let res: Result<()> = loop {
@@ -73,10 +75,12 @@ pub fn kernel_run<Host: Runtime>(context: &mut PVMContext<Host>) {
 
     match res {
         Ok(_) => {
+            context.persist().expect("Failed to persist changes");
             context.log(format!("Kernel yields"));
         }
         Err(err) => {
             context.log(err.format());
+            context.clear();
         }
     }
 }

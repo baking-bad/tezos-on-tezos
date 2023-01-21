@@ -1,29 +1,29 @@
 use context::{ContextNode, GenericContext, Result};
 use host::{
-    path::RefPath,
-    runtime::{Runtime, ValueType},
+    rollup_core::RawRollupCore,
+    runtime::Runtime
 };
 use std::collections::{HashMap, HashSet};
 
-fn err_into(e: impl std::fmt::Debug) -> context::Error {
-    context::Error::Internal(context::error::InternalError::new(
-        context::error::InternalKind::Encoding,
-        format!("PVM context error: {:?}", e),
-    ))
-}
+use crate::{
+    store::{store_has, store_read, store_write, store_delete, store_move}
+};
+
+const TMP_PREFIX: &str = "/tmp";
 
 pub struct PVMContext<Host>
 where
-    Host: Runtime,
+    Host: RawRollupCore,
 {
     host: Host,
     state: HashMap<String, Option<ContextNode>>,
     modified_keys: HashSet<String>,
+    saved_state: HashMap<String, bool>,
 }
 
 impl<Host> AsMut<Host> for PVMContext<Host>
 where
-    Host: Runtime,
+    Host: RawRollupCore,
 {
     fn as_mut(&mut self) -> &mut Host {
         &mut self.host
@@ -32,12 +32,13 @@ where
 
 impl<Host> PVMContext<Host>
 where
-    Host: Runtime,
+    Host: RawRollupCore,
 {
     pub fn new(host: Host) -> Self {
         PVMContext {
             host,
             state: HashMap::new(),
+            saved_state: HashMap::new(),
             modified_keys: HashSet::new(),
         }
     }
@@ -45,44 +46,43 @@ where
 
 impl<Host> GenericContext for PVMContext<Host>
 where
-    Host: Runtime,
+    Host: RawRollupCore,
 {
     fn log(&self, msg: String) {
         self.host.write_debug(msg.as_str())
     }
 
     fn has(&self, key: String) -> Result<bool> {
-        match self.state.contains_key(&key) {
-            true => Ok(true),
-            false => {
-                let path = RefPath::assert_from(key.as_bytes());
-                match self.host.store_has(&path) {
-                    Ok(Some(ValueType::Value)) => Ok(true),
-                    Err(err) => Err(err_into(err)),
-                    _ => Ok(false),
-                }
-            }
+        if self.state.contains_key(&key) {
+            return Ok(true);
         }
+
+        if let Some(has) = self.saved_state.get(&key) {
+            return Ok(*has);
+        }
+
+        store_has(&self.host, &key)
     }
 
     fn get(&mut self, key: String) -> Result<Option<ContextNode>> {
-        match self.state.get(&key) {
-            Some(cached_value) => Ok(cached_value.clone()),
-            None => {
-                let path = RefPath::assert_from(key.as_bytes());
-                match self.host.store_has(&path) {
-                    Ok(Some(ValueType::Value)) => {
-                        // TODO: read loop for values > 2048
-                        let stored_value = self.host.store_read(&path, 0, 512).map_err(err_into)?;
-                        let value = ContextNode::from_vec(stored_value)?;
-                        self.state.insert(key, Some(value.clone()));
-                        Ok(Some(value))
-                    }
-                    Ok(Some(node_type)) => Err(err_into(node_type)),
-                    Ok(None) => Ok(None),
-                    Err(err) => Err(err_into(err)),
-                }
-            }
+        if let Some(val) = self.state.get(&key) {
+            return Ok(val.clone())
+        }
+        
+        let store_key = match self.saved_state.get(&key) {
+            Some(false) => return Ok(None),
+            Some(true) => [TMP_PREFIX, &key].concat(),
+            None => key.clone()
+        };
+        
+        match store_read(&self.host, &store_key) {
+            Ok(Some(bytes)) => {
+                let val = ContextNode::from_vec(bytes)?;
+                self.state.insert(key, Some(val.clone()));
+                Ok(Some(val))
+            },
+            Ok(None) => Ok(None),
+            Err(err) => Err(err),
         }
     }
 
@@ -93,37 +93,57 @@ where
     }
 
     fn save(&mut self, key: String, val: Option<ContextNode>) -> Result<()> {
-        let path = RefPath::assert_from(key.as_bytes());
-        let res = match val {
+        match val {
             Some(val) => {
                 let raw_value = val.to_vec()?;
-                self.host.store_write(&path, raw_value.as_slice(), 0)
+                store_write(&mut self.host, [TMP_PREFIX, &key].concat().as_str(), raw_value)?;
+                self.saved_state.insert(key, true);
             }
-            None => self.host.store_delete(&path),
+            None => {
+                self.saved_state.insert(key, false);
+            },
         };
-        res.map_err(err_into)
+        Ok(())
     }
 
     fn has_pending_changes(&self) -> bool {
         !self.modified_keys.is_empty()
     }
 
-    fn agg_pending_changes(&mut self) -> Vec<(String, Option<ContextNode>)> {
-        let mut changes: Vec<(String, Option<ContextNode>)> =
-            Vec::with_capacity(self.modified_keys.len());
-        for key in self.modified_keys.drain().into_iter() {
+    fn commit(&mut self) -> Result<()> {
+        let modified_keys: Vec<String> = self.modified_keys.drain().collect();
+        for key in modified_keys {
             let val = self
                 .state
                 .remove(&key)
                 .expect("Modified key must be in the pending state");
-            changes.push((key, val));
+            self.save(key, val)?;
         }
-        changes
+        Ok(())
+    }
+
+    fn rollback(&mut self) {
+        for key in self.modified_keys.drain().into_iter() {
+            self.state.remove(&key);
+        }
+    }
+
+    fn persist(&mut self) -> Result<()> {
+        for (key, exists) in self.saved_state.drain() {
+            if exists {
+                store_move(&mut self.host, [TMP_PREFIX, &key].concat().as_str(), &key)?;
+            } else {
+                store_delete(&mut self.host, &key)?;
+            }
+        }
+        Ok(())
     }
 
     fn clear(&mut self) {
         self.state.clear();
+        self.saved_state.clear();
         self.modified_keys.clear();
+        store_delete(&mut self.host, TMP_PREFIX).expect("Failed to remove tmp files")
     }
 }
 
@@ -144,10 +164,11 @@ mod test {
         assert!(context.get_balance(&address)?.is_none()); // both host and cache accessed
 
         context.set_balance(&address, &balance)?; // cached
-        context.commit()?; // sent to the host
-        context.clear(); // cache cleared
+        context.commit()?; // write to tmp folder
+        context.persist()?; // move/delete permanently
+        context.clear(); // clean up
 
-        assert!(context.get_balance(&address)?.is_some()); // cached
+        assert!(context.get_balance(&address)?.is_some()); // cached again
         assert_eq!(
             context
                 .get_balance(&address)?

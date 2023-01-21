@@ -1,4 +1,8 @@
-use host::{input::Input, rollup_core::MAX_INPUT_MESSAGE_SIZE, runtime::Runtime};
+use host::{
+    input::Input, 
+    rollup_core::{MAX_INPUT_MESSAGE_SIZE, RawRollupCore},
+    runtime::Runtime
+};
 use tezos_l2::producer::types::{
     BlockHash, Encoded, OperationHash, Signature, SignedOperation, UnsignedOperation,
 };
@@ -61,7 +65,7 @@ pub fn parse_l2_operation<'a>(payload: &'a [u8]) -> Result<InboxMessage> {
     })
 }
 
-pub fn read_inbox(host: &mut impl Runtime) -> Result<InboxMessage> {
+pub fn read_inbox(host: &mut impl RawRollupCore) -> Result<InboxMessage> {
     match host.read_input(MAX_INPUT_MESSAGE_SIZE) {
         Ok(Some(Input::Message(message))) => {
             match message.as_ref() {

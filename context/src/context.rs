@@ -20,6 +20,7 @@ pub trait GenericContext {
     fn save(&mut self, key: String, val: Option<ContextNode>) -> Result<()>;
     fn has_pending_changes(&self) -> bool;
     fn commit(&mut self) -> Result<()>;
+    fn persist(&mut self) -> Result<()>;
     fn rollback(&mut self);
     fn clear(&mut self);
 }
