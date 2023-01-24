@@ -110,6 +110,7 @@ pub fn types_equal(lhs: &Type, rhs: &Type) -> Result<bool> {
             types_equal(&lty.parameter_type, &rty.parameter_type)?;
             types_equal(&lty.return_type, &rty.return_type)
         }
+        (Type::Operation(_), Type::Operation(_)) => Ok(true),
         (Type::Contract(lty), Type::Contract(rty)) => types_equal(&lty.r#type, &rty.r#type),
         (Type::Parameter(lty), Type::Parameter(rty)) => types_equal(&lty.r#type, &rty.r#type),
         (Type::Storage(lty), Type::Storage(rty)) => types_equal(&lty.r#type, &rty.r#type),

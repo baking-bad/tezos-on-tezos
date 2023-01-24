@@ -13,8 +13,8 @@ impl<T: GenericContext> ExecutorContext for T {
         context_get!(self, Head::default(), "/head")
     }
 
-    fn commit_head(&mut self, head: Head) -> Result<()> {
-        self.save("/head".into(), Some(head.into()))?;
+    fn set_head(&mut self, head: Head) -> Result<()> {
+        self.set("/head".into(), Some(head.into()))?;
         Ok(())
     }
 
@@ -57,19 +57,19 @@ impl<T: GenericContext> ExecutorContext for T {
         return self.has(format!("/context/contracts/{}/pubkey", address));
     }
 
-    fn commit_operation<R: serde::Serialize>(
+    fn set_operation<R: serde::Serialize>(
         &mut self,
         level: i32,
         index: i32,
         hash: OperationHash,
         receipt: R,
     ) -> Result<()> {
-        self.save(
+        self.set(
             format!("/blocks/{}/ophashes/{}", level, index),
             Some(hash.into()),
         )?;
         let receipt = serde_json_wasm::to_vec(&receipt)?;
-        self.save(
+        self.set(
             format!("/blocks/{}/operations/{}", level, index),
             Some(receipt.into()),
         )?;
@@ -92,15 +92,15 @@ impl<T: GenericContext> ExecutorContext for T {
         }
     }
 
-    fn commit_batch<R: serde::Serialize>(
+    fn set_batch<R: serde::Serialize>(
         &mut self,
         level: i32,
         hash: BlockHash,
         receipt: R,
     ) -> Result<()> {
-        self.save(format!("/blocks/{}/hash", level), Some(hash.into()))?;
+        self.set(format!("/blocks/{}/hash", level), Some(hash.into()))?;
         let receipt = serde_json_wasm::to_vec(&receipt)?;
-        self.save(format!("/blocks/{}/header", level), Some(receipt.into()))?;
+        self.set(format!("/blocks/{}/header", level), Some(receipt.into()))?;
         Ok(())
     }
 

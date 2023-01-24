@@ -34,7 +34,11 @@ impl InternalError {
 
 impl Display for InternalError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("{} error", self.kind))
+        f.write_fmt(format_args!(
+            "{} error, {}",
+            self.kind,
+            self.message.replace("\n", " ")
+        ))
     }
 }
 

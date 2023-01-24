@@ -83,7 +83,7 @@ pub fn execute_transaction(
                 ret.operations.into_iter().map(expand_content).collect()
             }
             Ok(ContractOutput::Error(err)) => {
-                errors.runtime_error(transaction.destination.value(), err.to_string());
+                errors.runtime_error(transaction.destination.value(), err.format());
                 return result!(Failed);
             }
             Err(err) => return Err(err),

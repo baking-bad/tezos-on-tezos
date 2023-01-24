@@ -45,6 +45,7 @@ pub fn execute_operation(
         if !skip && !result.ok() {
             failed_idx = Some(i);
             context.rollback();
+            context.log(result.errors().join("\n"))
         }
 
         results.push(result);
@@ -61,14 +62,7 @@ pub fn execute_operation(
     }
 
     context.commit()?;
-
-    context.log(
-        format!(
-            "Operation included: {} ({})",
-            opg.hash.value(),
-            if failed_idx.is_none() { "applied" } else { "failed" }
-        )
-    );
+    context.log(format!("Operation included: {}", opg.hash.value()));
 
     Ok(OperationReceipt {
         protocol: Some(ProtocolHash::new(PROTOCOL.into())?),

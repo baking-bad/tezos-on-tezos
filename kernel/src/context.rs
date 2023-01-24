@@ -100,24 +100,6 @@ where
         Ok(())
     }
 
-    fn save(&mut self, key: String, val: Option<ContextNode>) -> Result<()> {
-        match val {
-            Some(val) => {
-                let raw_value = val.to_vec()?;
-                store_write(
-                    &mut self.host,
-                    [TMP_PREFIX, &key].concat().as_str(),
-                    raw_value,
-                )?;
-                self.saved_state.insert(key, true);
-            }
-            None => {
-                self.saved_state.insert(key, false);
-            }
-        };
-        Ok(())
-    }
-
     fn has_pending_changes(&self) -> bool {
         !self.modified_keys.is_empty()
     }
@@ -129,7 +111,19 @@ where
                 .state
                 .remove(&key)
                 .expect("Modified key must be in the pending state");
-            self.save(key, val)?;
+
+            let exists = match val {
+                Some(val) => {
+                    store_write(
+                        &mut self.host,
+                        [TMP_PREFIX, &key].concat().as_str(),
+                        val.to_vec()?,
+                    )?;
+                    true
+                }
+                None => false,
+            };
+            self.saved_state.insert(key, exists);
         }
         Ok(())
     }

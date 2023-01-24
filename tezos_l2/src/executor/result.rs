@@ -52,6 +52,23 @@ impl ExecutionResult {
         status == OperationResultStatus::Applied
     }
 
+    pub fn errors(&self) -> Vec<String> {
+        let errors = match self {
+            Self::Transaction {
+                content: _,
+                sender: _,
+                result,
+                internal_results: _,
+            } => &result.errors,
+            Self::Origination { content: _, result } => &result.errors,
+            Self::Reveal { content: _, result } => &result.errors,
+        };
+        match errors {
+            Some(errors) => errors.iter().map(|e| e.to_string()).collect(),
+            None => vec![],
+        }
+    }
+
     pub fn backtrack(&mut self) {
         match self {
             Self::Transaction {

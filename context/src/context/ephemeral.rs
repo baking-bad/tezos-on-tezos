@@ -60,7 +60,11 @@ impl GenericContext for EphemeralContext {
                 .pending_state
                 .get(&key)
                 .expect("Modified key must be in the pending state");
-            self.save(key, val.clone())?;
+
+            match val {
+                Some(val) => self.state.insert(key, val.clone()),
+                None => self.state.remove(&key),
+            };
         }
         Ok(())
     }
@@ -69,14 +73,6 @@ impl GenericContext for EphemeralContext {
         for key in self.modified_keys.drain(..) {
             self.pending_state.remove(&key);
         }
-    }
-
-    fn save(&mut self, key: String, val: Option<ContextNode>) -> Result<()> {
-        match val {
-            Some(val) => self.state.insert(key, val.clone()),
-            None => self.state.remove(&key),
-        };
-        Ok(())
     }
 
     fn clear(&mut self) {

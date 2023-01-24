@@ -97,7 +97,7 @@ pub fn execute_contract(
         Ok(ret) => {
             context.set_contract_storage(self_address, ret.storage.clone())?;
             Ok(ret.into())
-        },
+        }
         Err(err) => Ok(err.into()),
     }
 }

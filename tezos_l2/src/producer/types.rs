@@ -1,22 +1,16 @@
-pub use tezos_core::types::{
-    encoded::{
-        BlockHash, BlockPayloadHash, ChainId, ContextHash, Encoded, ImplicitAddress, OperationHash,
-        OperationListListHash, ProtocolHash, Signature,
-    },
-    hex_string::HexString,
+use tezos_core::internal::{coder::Encoder, crypto::blake2b};
+use tezos_core::types::encoded::{
+    BlockHash, BlockPayloadHash, ChainId, ContextHash, Encoded, OperationListListHash, ProtocolHash,
 };
-pub use tezos_operation::{
-    block_header,
-    operations::{SignedOperation, UnsignedOperation},
+use tezos_operation::{
+    block_header, internal::coder::operation_content_bytes_coder::OperationContentBytesCoder,
 };
-pub use tezos_rpc::models::{
-    balance_update,
+use tezos_rpc::models::{
     balance_update::BalanceUpdate,
     block::{
-        Block, FullHeader, Header, LevelInfo, LiquidityBakingToggleVote, Metadata,
-        OperationListLength, TestChainStatus, TestChainStatusName,
+        FullHeader, Header, LevelInfo, LiquidityBakingToggleVote, Metadata, OperationListLength,
+        TestChainStatus, TestChainStatusName,
     },
-    operation::Operation as OperationReceipt,
 };
 
 use chrono::NaiveDateTime;
@@ -54,9 +48,10 @@ pub struct BatchReceipt {
 
 impl BatchHeader {
     pub fn hash(&self) -> Result<BlockHash> {
-        let _header = block_header::BlockHeader::from(self.to_owned());
-        // TODO: use BlockHeader::hash() once it in the SDK
-        Ok(ZERO_BLOCK_HASH.try_into().unwrap())
+        let header = block_header::BlockHeader::from(self.to_owned());
+        let payload = OperationContentBytesCoder::encode(&header)?;
+        let hash = blake2b(payload.as_slice(), 32)?;
+        Ok(BlockHash::from_bytes(&hash)?)
     }
 }
 
@@ -71,10 +66,12 @@ impl From<BatchHeader> for block_header::BlockHeader {
             payload_hash: header.payload_hash,
             payload_round: 0,
             predecessor: header.predecessor,
-            proof_of_work_nonce: POW_NONCE.try_into().unwrap(), // TODO: repo commit hash
+            proof_of_work_nonce: POW_NONCE.try_into().expect("Failed to convert pow nonce"), // TODO: repo commit hash
             proto: 0,
             seed_nonce_hash: None,
-            signature: ZERO_SIGNATURE.try_into().unwrap(), // TODO: sign with revealed preimage key
+            signature: ZERO_SIGNATURE
+                .try_into()
+                .expect("Failed to convert signature"), // TODO: sign with builtin key?
             timestamp: ts2dt!(header.timestamp),
             validation_pass: 4,
         }

@@ -17,7 +17,6 @@ pub trait GenericContext {
     fn has(&self, key: String) -> Result<bool>;
     fn get(&mut self, key: String) -> Result<Option<ContextNode>>;
     fn set(&mut self, key: String, val: Option<ContextNode>) -> Result<()>;
-    fn save(&mut self, key: String, val: Option<ContextNode>) -> Result<()>;
     fn has_pending_changes(&self) -> bool;
     fn commit(&mut self) -> Result<()>;
     fn rollback(&mut self);
@@ -26,7 +25,7 @@ pub trait GenericContext {
 
 pub trait ExecutorContext {
     fn get_head(&mut self) -> Result<Head>;
-    fn commit_head(&mut self, head: Head) -> Result<()>;
+    fn set_head(&mut self, head: Head) -> Result<()>;
     fn get_balance(&mut self, address: &str) -> Result<Option<Mutez>>;
     fn set_balance(&mut self, address: &str, balance: &Mutez) -> Result<()>;
     fn get_counter(&mut self, address: &str) -> Result<Option<Nat>>;
@@ -38,14 +37,14 @@ pub trait ExecutorContext {
     fn get_contract_code(&mut self, address: &str) -> Result<Option<Micheline>>;
     fn get_contract_storage(&mut self, address: &str) -> Result<Option<Micheline>>;
     fn set_contract_storage(&mut self, address: &str, storage: Micheline) -> Result<()>;
-    fn commit_operation<R: serde::Serialize>(
+    fn set_operation<R: serde::Serialize>(
         &mut self,
         level: i32,
         index: i32,
         hash: OperationHash,
         receipt: R,
     ) -> Result<()>;
-    fn commit_batch<R: serde::Serialize>(
+    fn set_batch<R: serde::Serialize>(
         &mut self,
         level: i32,
         hash: BlockHash,

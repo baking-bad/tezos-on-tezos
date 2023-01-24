@@ -1,12 +1,8 @@
 use context::{ExecutorContext, GenericContext};
 use host::{rollup_core::RawRollupCore, runtime::Runtime};
-use tezos_l2::{
-    constants,
-    producer::{
-        batch::apply_batch,
-        types::{Encoded, OperationHash, SignedOperation},
-    },
-};
+use tezos_core::types::encoded::{Encoded, OperationHash};
+use tezos_l2::{constants, producer::batch::apply_batch};
+use tezos_operation::operations::SignedOperation;
 
 use crate::{
     context::PVMContext,
@@ -89,7 +85,8 @@ mod test {
     use hex;
     use host::rollup_core::Input;
     use mock_runtime::host::MockHost;
-    use tezos_l2::producer::types::{BatchReceipt, OperationReceipt};
+    use tezos_l2::producer::types::BatchReceipt;
+    use tezos_rpc::models::operation::Operation as OperationReceipt;
 
     #[test]
     fn send_tez() -> Result<()> {

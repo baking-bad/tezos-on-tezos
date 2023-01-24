@@ -3,9 +3,8 @@ use host::{
     rollup_core::{RawRollupCore, MAX_INPUT_MESSAGE_SIZE},
     runtime::Runtime,
 };
-use tezos_l2::producer::types::{
-    BlockHash, Encoded, OperationHash, Signature, SignedOperation, UnsignedOperation,
-};
+use tezos_core::types::encoded::{BlockHash, Encoded, OperationHash, Signature};
+use tezos_operation::operations::{SignedOperation, UnsignedOperation};
 
 use crate::error::{Error, Result};
 
