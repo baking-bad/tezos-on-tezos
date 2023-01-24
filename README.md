@@ -32,9 +32,9 @@ Also in the scope of our developing tools and indexing stack we want to better u
 - [x] Support origination operation kind
 - [x] Implement a minimal viable Michelson interpreter
 - [x] Interact with the kernel via inbox and access rollup state via RPC
-- [ ] Support contract calls and internal transactions
+- [x] Support contract calls and internal transactions
 - [ ] Tezos RPC facade node
-- [ ] Rollup node RPC plugin
+- [ ] More tests
 
 ## Limitations
 

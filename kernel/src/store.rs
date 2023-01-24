@@ -1,70 +1,55 @@
-use crate::Result;
 use host::{
-    path::{concat, RefPath},
-    runtime::{Runtime, RuntimeError},
+    path::RefPath,
+    rollup_core::RawRollupCore,
+    runtime::{load_value_sized, save_value_sized, Runtime, RuntimeError, ValueType},
 };
 
-macro_rules! rew_prefix {
-    ($lvl: expr) => {
-        RefPath::assert_from(format!("/rewind/{}", $lvl).as_bytes())
+fn err_into(e: impl std::fmt::Debug) -> context::Error {
+    context::Error::Internal(context::error::InternalError::new(
+        context::error::InternalKind::Store,
+        format!("PVM context error: {:?}", e),
+    ))
+}
+
+macro_rules! str_to_path {
+    ($key: expr) => {
+        RefPath::assert_from($key.as_bytes())
     };
 }
 
-pub fn store_move_write(
-    host: &mut impl Runtime,
-    path: &RefPath,
-    value: &[u8],
-    level: i32,
-) -> Result<()> {
-    if level >= 0 {
-        // NOTE: keep the original version (can be both value and subtree in case of removal)
-        let rew_path = concat(&rew_prefix!(level), path)?;
-        if None == host.store_has(&rew_path)? {
-            match host.store_move(path, &rew_path) {
-                Ok(_) => (),
-                Err(RuntimeError::PathNotFound) => {
-                    host.store_write(&rew_path, b"", 0)?;
-                }
-                Err(err) => return Err(err.into()),
-            }
-        }
+pub fn store_has(host: &impl RawRollupCore, key: &str) -> context::Result<bool> {
+    match Runtime::store_has(host, &str_to_path!(key)) {
+        Ok(Some(ValueType::Value)) => Ok(true),
+        Err(err) => Err(err_into(err)),
+        _ => Ok(false),
     }
-    host.store_write(path, value, 0)?; // FIXME: possible trailing garbage
+}
+
+pub fn store_read(host: &impl RawRollupCore, key: &str) -> context::Result<Option<Vec<u8>>> {
+    match load_value_sized(host, &str_to_path!(key)) {
+        Ok(val) => Ok(Some(val)),
+        Err(RuntimeError::PathNotFound) => Ok(None),
+        Err(err) => Err(err_into(err)),
+    }
+}
+
+pub fn store_write(host: &mut impl RawRollupCore, key: &str, val: Vec<u8>) -> context::Result<()> {
+    save_value_sized(host, &str_to_path!(key), val.as_slice()); // TODO(kernel): expose error instead of panic?
     Ok(())
 }
 
-pub fn store_prune(host: &mut impl Runtime, level: i32) -> Result<bool> {
-    match host.store_delete(&rew_prefix!(level)) {
-        Ok(_) => Ok(true),
-        Err(RuntimeError::PathNotFound) => Ok(false),
-        Err(err) => Err(err.into()),
+pub fn store_delete(host: &mut impl RawRollupCore, key: &str) -> context::Result<()> {
+    match Runtime::store_delete(host, &str_to_path!(key)) {
+        Ok(()) => Ok(()),
+        Err(RuntimeError::PathNotFound) => Ok(()),
+        Err(err) => Err(err_into(err)),
     }
 }
 
-pub fn store_rewind(_host: &mut impl Runtime, _level: i32) {
-    todo!("Unroll terminating leaves, delete null subtrees, and remove level")
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use crate::Result;
-    use host::runtime::Runtime;
-    use mock_runtime::host::MockHost;
-
-    #[test]
-    fn test_rewind() -> Result<()> {
-        let mut host = MockHost::default();
-        let path = RefPath::assert_from(b"/test");
-
-        host.store_write(&path, b"hello", 0)?;
-
-        store_move_write(&mut host, &path, b"hi", 0)?;
-
-        let rew_path = concat(&rew_prefix!(0), &path)?;
-        let res = host.store_has(&rew_path)?;
-
-        assert!(res.is_some());
-        Ok(())
-    }
+pub fn store_move(
+    host: &mut impl RawRollupCore,
+    from_key: &str,
+    to_key: &str,
+) -> context::Result<()> {
+    Runtime::store_move(host, &str_to_path!(from_key), &str_to_path!(to_key)).map_err(err_into)
 }

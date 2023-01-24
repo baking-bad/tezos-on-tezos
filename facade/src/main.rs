@@ -1,4 +1,4 @@
-use actix_web::{get, web, App, HttpServer, Responder};
+use actix_web::{get, App, HttpServer, Responder};
 
 #[get("/chains/main/blocks/head")]
 async fn head() -> impl Responder {

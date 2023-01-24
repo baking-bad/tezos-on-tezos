@@ -1,0 +1,24 @@
+[package]
+name = "tezos_vm"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+context = { path = "../context" }
+tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "fix/block-header-encoder", package = "tezos-core", default-features = false, features = ["ed25519"] }
+tezos_michelson = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "fix/block-header-encoder", package = "tezos-michelson", default-features = false }
+serde-json-wasm = "*"
+serde = { version = "1.0", features = ["derive"] }
+derive_more = "0.99"
+blake2 = "0.10"
+chrono = { version = "0.4", default-features = false }
+hex = "*"
+ibig = { version = "0.3", features = ["std", "num-traits"], default-features = false }
+once_cell = "*"
+
+[features]
+default = []
+trace = []
