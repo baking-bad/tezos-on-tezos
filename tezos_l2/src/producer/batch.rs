@@ -34,11 +34,12 @@ pub fn apply_batch(
     context: &mut (impl GenericContext + ExecutorContext + InterpreterContext),
     head: Head,
     batch_payload: Vec<(OperationHash, SignedOperation)>,
+    atomic: bool
 ) -> Result<Head> {
     context.check_no_pending_changes()?;
 
     let balance_updates = run_migrations(context, &head)?;
-    let operations = validate_batch(context, batch_payload, false)?;
+    let operations = validate_batch(context, batch_payload, atomic)?;
 
     let mut operation_receipts: Vec<OperationReceipt> = Vec::with_capacity(operations.len());
     for opg in operations.iter() {

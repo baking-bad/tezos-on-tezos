@@ -151,6 +151,16 @@ impl RpcErrors {
             ..DEFAULT_ERROR
         })
     }
+
+    pub fn runtime_error(&mut self, contract: &str, message: String) {
+        self.errors.push(RpcError {
+            kind: "temporary".into(),
+            id: "michelson_v1.runtime_error".into(),
+            contract: Some(contract.into()),
+            message: Some(message),
+            ..DEFAULT_ERROR
+        })
+    }
 }
 
 impl Into<Option<Vec<RpcError>>> for RpcErrors {

@@ -19,3 +19,8 @@ derive_more = "0.99"
 blake2 = "0.10"
 chrono = { version = "0.4", default-features = false }
 ibig = { version = "0.3", features = ["std", "num-traits"], default-features = false }
+
+[dev-dependencies]
+ed25519-dalek = { version = "1.0.1" }
+rand = "*"
+serde_json = "*"

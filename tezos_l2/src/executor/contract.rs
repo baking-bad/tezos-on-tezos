@@ -94,7 +94,10 @@ pub fn execute_contract(
     };
 
     match script.call(&scope, context) {
-        Ok(ret) => Ok(ret.into()),
+        Ok(ret) => {
+            context.set_contract_storage(self_address, ret.storage.clone())?;
+            Ok(ret.into())
+        },
         Err(err) => Ok(err.into()),
     }
 }

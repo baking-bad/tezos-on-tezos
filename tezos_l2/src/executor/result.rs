@@ -49,12 +49,7 @@ impl ExecutionResult {
             Self::Origination { content: _, result } => result.status,
             Self::Reveal { content: _, result } => result.status,
         };
-
-        match status {
-            OperationResultStatus::Applied => true,
-            OperationResultStatus::Skipped => true,
-            _ => false,
-        }
+        status == OperationResultStatus::Applied
     }
 
     pub fn backtrack(&mut self) {

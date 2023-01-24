@@ -76,6 +76,7 @@ mod test {
         };
 
         let res = execute_reveal(&mut context, &reveal, false)?;
+        assert!(res.ok());
 
         assert_eq!(
             context

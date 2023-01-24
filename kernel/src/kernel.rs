@@ -53,7 +53,7 @@ pub fn kernel_run<Host: RawRollupCore>(context: &mut PVMContext<Host>) {
                 batch_payload.push((hash, opg));
             }
             Ok(InboxMessage::EndBlock(_)) => {
-                match apply_batch(context, head.clone(), batch_payload) {
+                match apply_batch(context, head.clone(), batch_payload, false) {
                     Ok(new_head) => {
                         head = new_head;
                         context.log(format!("Batch applied: {}", head));

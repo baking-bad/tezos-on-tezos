@@ -19,7 +19,7 @@ use crate::{
     Error, Result,
 };
 
-pub fn originated_address(opg_hash: &OperationHash, index: &i32) -> Result<ContractAddress> {
+pub fn originated_address(opg_hash: &OperationHash, index: i32) -> Result<ContractAddress> {
     let payload = [opg_hash.to_bytes()?, index.to_be_bytes().to_vec()].concat();
     let digest = blake2b(payload.as_slice(), 20)?;
     let hash = ContractHash::from_bytes(digest.as_slice())?;
@@ -63,7 +63,7 @@ pub fn execute_origination(
         return result!(Skipped);
     }
 
-    let self_address = originated_address(hash, origination_index)?;
+    let self_address = originated_address(hash, *origination_index)?;
     *origination_index += 1;
 
     let balance = match balance_updates.transfer(
@@ -87,7 +87,7 @@ pub fn execute_origination(
             result!(Applied)
         }
         Ok(ContractOutput::Error(err)) => {
-            // TODO: runtime error
+            errors.runtime_error(self_address.value(), err.to_string());
             result!(Failed)
         }
         Err(err) => Err(err),

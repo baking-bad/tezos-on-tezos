@@ -42,7 +42,7 @@ pub fn execute_operation(
             _ => return Err(Error::OperationKindUnsupported),
         };
 
-        if !result.ok() {
+        if !skip && !result.ok() {
             failed_idx = Some(i);
             context.rollback();
         }
@@ -61,7 +61,14 @@ pub fn execute_operation(
     }
 
     context.commit()?;
-    context.log(format!("Operation included: {}", opg.hash.value()));
+
+    context.log(
+        format!(
+            "Operation included: {} ({})",
+            opg.hash.value(),
+            if failed_idx.is_none() { "applied" } else { "failed" }
+        )
+    );
 
     Ok(OperationReceipt {
         protocol: Some(ProtocolHash::new(PROTOCOL.into())?),
