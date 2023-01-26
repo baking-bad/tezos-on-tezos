@@ -19,8 +19,6 @@ use tezos_rpc::models::operation::Operation;
 
 use tezos_l2::producer::batch::apply_batch;
 
-use rand::rngs::OsRng;
-
 pub struct Wallet {
     pub counter: u32,
     pub secret_key: SecretKey,
@@ -56,13 +54,6 @@ impl Wallet {
         let bytes = [sk.to_bytes(), pk.to_bytes()].concat();
         let keypair = ed25519_dalek::Keypair::from_bytes(bytes.as_slice())
             .expect("Failed to reconstruct key pair");
-
-        Self::from_keypair(keypair)
-    }
-
-    pub fn new() -> Self {
-        let mut csprng = OsRng {};
-        let keypair = ed25519_dalek::Keypair::generate(&mut csprng);
 
         Self::from_keypair(keypair)
     }
@@ -110,11 +101,6 @@ impl<Context: GenericContext + ExecutorContext + InterpreterContext> Client<Cont
             alias.into(),
             Wallet::from(Ed25519Seed::new(sk.into()).expect("Failed to decode secret key")),
         );
-    }
-
-    pub fn new_wallet(&mut self, alias: &'static str) -> &mut Self {
-        self.wallets.insert(alias.into(), Wallet::new());
-        self.use_wallet(alias)
     }
 
     pub fn get_contract_balance(&mut self, address: &str) -> u32 {

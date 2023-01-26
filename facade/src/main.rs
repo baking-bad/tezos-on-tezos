@@ -1,14 +1,25 @@
-use actix_web::{get, App, HttpServer, Responder};
+// pub mod context;
+pub mod provider;
+pub mod rollup;
+pub mod error;
+pub mod facade;
 
-#[get("/chains/main/blocks/head")]
-async fn head() -> impl Responder {
-    format!("todo")
-}
+use actix_web::{App, HttpServer};
+
+use crate::{
+    facade::{block_hash},
+    rollup::RollupRpcClient,
+};
+pub use error::{Error, Result};
 
 #[actix_web::main] // or #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| App::new().service(head))
-        .bind(("127.0.0.1", 8080))?
+    let server = HttpServer::new(|| App::new()
+        .app_data(RollupRpcClient::default())
+        .service(block_hash)
+    );
+    server
+        .bind(("127.0.0.1", 8732))?
         .run()
         .await
 }

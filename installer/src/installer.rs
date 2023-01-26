@@ -152,6 +152,9 @@ pub fn install_kernel(root_hash: &[u8; PREIMAGE_HASH_SIZE]) {
         panic!("Install kernel: failed to swap {}", size);
     }
 
+    // TODO: root_hash is protocol hash
+    // TODO: rollup address is chain id
+
     debug_str!("Kernel successfully installed, rebooting");
     unsafe {
         host::store_write(

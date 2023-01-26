@@ -22,5 +22,4 @@ ibig = { version = "0.3", features = ["std", "num-traits"], default-features = f
 
 [dev-dependencies]
 ed25519-dalek = { version = "1.0.1" }
-rand = "*"
 serde_json = "*"
