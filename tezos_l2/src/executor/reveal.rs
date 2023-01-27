@@ -42,7 +42,7 @@ pub fn execute_reveal(
     //     return Ok(make_receipt!(OperationResultStatus::Failed))
     // }
 
-    context.set_public_key(reveal.source.value(), &reveal.public_key)?;
+    context.set_public_key(reveal.source.value(), reveal.public_key.clone())?;
     result!(Applied)
 }
 
@@ -63,8 +63,8 @@ mod test {
         let public_key =
             PublicKey::try_from("edpktipCJ3SkjvtdcrwELhvupnyYJSmqoXu3kdzK1vL6fT5cY8FTEa").unwrap();
 
-        context.set_balance(address, &Mutez::from(1000000000u32))?;
-        context.set_counter(address, &Nat::try_from("100000").unwrap())?;
+        context.set_balance(address, Mutez::from(1000000000u32))?;
+        context.set_counter(address, Nat::try_from("100000").unwrap())?;
 
         let reveal = Reveal {
             source: address.try_into()?,

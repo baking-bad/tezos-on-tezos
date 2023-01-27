@@ -20,8 +20,8 @@ pub fn validate_batch(
         match validate_operation(context, opg, hash.clone()) {
             Ok(op) => {
                 let balance = context.get_balance(&op.source.value())?.unwrap();
-                context.set_balance(&op.source.value(), &(balance - op.total_spent))?;
-                context.set_counter(&op.source.value(), &op.last_counter)?;
+                context.set_balance(&op.source.value(), balance - op.total_spent)?;
+                context.set_counter(&op.source.value(), op.last_counter.clone())?;
                 operations.push(op);
             }
             Err(err) => {

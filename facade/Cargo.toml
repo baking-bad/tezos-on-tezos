@@ -4,11 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+serde = "*"
 actix-web = "4"
-reqwest = "0.11.14"
+reqwest = { version = "0.11.14", features = ["json"] }
 log = "0.4.17"
-env_logger = "0.10.0"
-async-trait = "0.1.63"
+lru = "*"
+hex = "*"
 derive_more = "0.99"
 serde_json = "*"
 context = { path = "../context" }

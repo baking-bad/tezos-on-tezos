@@ -113,7 +113,7 @@ mod test {
         let mut context = EphemeralContext::new();
 
         let source = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
-        context.set_balance(source, &Mutez::from(1000000000u32))?;
+        context.set_balance(source, Mutez::from(1000000000u32))?;
 
         let origination = Origination {
             source: source.try_into()?,

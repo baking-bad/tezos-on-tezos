@@ -58,7 +58,7 @@ pub fn execute_operation(
         BalanceUpdates::reserve(context, opg.source.value(), &total_fees)?;
     } else {
         // all applied, no rollbacks
-        context.set_counter(opg.source.value(), &opg.last_counter)?;
+        context.set_counter(opg.source.value(), opg.last_counter.clone())?;
     }
 
     context.commit()?;
@@ -110,8 +110,8 @@ mod test {
         let source = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
         let destination = "tz1NEgotHhj4fkm8AcwquQqQBrQsAMRUg86c";
 
-        context.set_balance(source, &Mutez::from(4000u32))?;
-        context.set_counter(source, &Nat::try_from("1").unwrap())?;
+        context.set_balance(source, Mutez::from(4000u32))?;
+        context.set_counter(source, Nat::try_from("1").unwrap())?;
         context.commit()?;
 
         macro_rules! make_tx {

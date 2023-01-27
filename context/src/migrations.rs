@@ -22,7 +22,7 @@ pub fn genesis_migration(
     let balance = Mutez::try_from(SEED_BALANCE).unwrap();
 
     for account in SEED_ACCOUNTS.into_iter() {
-        context.set_balance(&account, &balance)?;
+        context.set_balance(&account, balance)?;
         updates.push(BalanceUpdate::Contract(Contract {
             kind: Kind::Contract,
             change: SEED_BALANCE.to_string(),

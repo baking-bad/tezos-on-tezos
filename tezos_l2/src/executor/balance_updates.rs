@@ -58,8 +58,8 @@ impl BalanceUpdates {
         src_balance -= *amount;
         dst_balance += *amount;
 
-        context.set_balance(source, &src_balance)?;
-        context.set_balance(destination, &dst_balance)?;
+        context.set_balance(source, src_balance.clone())?;
+        context.set_balance(destination, dst_balance.clone())?;
 
         self.push_contract_update(source, format!("-{}", amount));
         self.push_contract_update(destination, amount.to_string());
@@ -84,7 +84,7 @@ impl BalanceUpdates {
 
         src_balance -= *amount;
 
-        context.set_balance(source, &src_balance)?;
+        context.set_balance(source, src_balance.clone())?;
 
         Ok(src_balance)
     }

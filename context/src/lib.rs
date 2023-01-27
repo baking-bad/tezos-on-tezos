@@ -11,4 +11,6 @@ pub use crate::{
     error::{Error, Result},
     types::head::Head,
     types::node::ContextNode,
+    types::batch::{BatchReceipt, BatchHeader},
+    types::config::Config
 };

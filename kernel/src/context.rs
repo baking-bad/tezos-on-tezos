@@ -145,6 +145,7 @@ where
 #[cfg(test)]
 mod test {
     use context::{ExecutorContext, GenericContext, Result};
+    use tezos_core::types::mutez::Mutez;
     use mock_runtime::host::MockHost;
 
     use crate::context::PVMContext;
@@ -154,11 +155,11 @@ mod test {
         let mut context = PVMContext::new(MockHost::default());
 
         let address = "tz1Mj7RzPmMAqDUNFBn5t5VbXmWW4cSUAdtT";
-        let balance = 1000u32.into();
+        let balance: Mutez = 1000u32.into();
 
         assert!(context.get_balance(&address)?.is_none()); // both host and cache accessed
 
-        context.set_balance(&address, &balance)?; // cached
+        context.set_balance(&address, balance.clone())?; // cached
         context.commit()?; // write to tmp folder
         context.persist()?; // move/delete permanently
         context.clear(); // clean up

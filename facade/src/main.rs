@@ -1,21 +1,20 @@
-// pub mod context;
-pub mod provider;
-pub mod rollup;
 pub mod error;
+pub mod routes;
+pub mod client;
 pub mod facade;
 
-use actix_web::{App, HttpServer};
+use actix_web::{App, HttpServer, web::Data};
 
 use crate::{
-    facade::{block_hash},
-    rollup::RollupRpcClient,
+    routes::{block_hash},
+    client::RollupClient,
 };
 pub use error::{Error, Result};
 
-#[actix_web::main] // or #[tokio::main]
+#[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let server = HttpServer::new(|| App::new()
-        .app_data(RollupRpcClient::default())
+        .app_data(Data::new(RollupClient::default()))
         .service(block_hash)
     );
     server

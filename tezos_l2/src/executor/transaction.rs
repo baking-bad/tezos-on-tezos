@@ -132,7 +132,7 @@ mod test {
         let source = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
         let destination = "tz1NEgotHhj4fkm8AcwquQqQBrQsAMRUg86c";
 
-        context.set_balance(source, &Mutez::from(1000000000u32))?;
+        context.set_balance(source, Mutez::from(1000000000u32))?;
 
         let transaction = Transaction {
             source: source.try_into()?,

@@ -1,12 +1,12 @@
-use serde_json_wasm;
 use tezos_core::types::{
-    encoded::{BlockHash, OperationHash, PublicKey},
+    encoded::PublicKey,
     mutez::Mutez,
     number::Nat,
 };
+use tezos_rpc::models::operation::Operation;
 use tezos_michelson::micheline::Micheline;
 
-use crate::{context_get, context_get_opt, Error, ExecutorContext, GenericContext, Head, Result};
+use crate::{context_get, context_get_opt, context_unwrap, Error, ExecutorContext, GenericContext, Head, Result, BatchReceipt};
 
 impl<T: GenericContext> ExecutorContext for T {
     fn get_head(&mut self) -> Result<Head> {
@@ -22,10 +22,10 @@ impl<T: GenericContext> ExecutorContext for T {
         context_get_opt!(self, "/context/contracts/{}/balance", address)
     }
 
-    fn set_balance(&mut self, address: &str, balance: &Mutez) -> Result<()> {
+    fn set_balance(&mut self, address: &str, balance: Mutez) -> Result<()> {
         return self.set(
             format!("/context/contracts/{}/balance", address),
-            Some(balance.to_owned().into()),
+            Some(balance.into()),
         );
     }
 
@@ -34,10 +34,10 @@ impl<T: GenericContext> ExecutorContext for T {
         context_get_opt!(self, "/context/contracts/{}/counter", address)
     }
 
-    fn set_counter(&mut self, address: &str, counter: &Nat) -> Result<()> {
+    fn set_counter(&mut self, address: &str, counter: Nat) -> Result<()> {
         return self.set(
             format!("/context/contracts/{}/counter", address),
-            Some(counter.to_owned().into()),
+            Some(counter.into()),
         );
     }
 
@@ -45,11 +45,11 @@ impl<T: GenericContext> ExecutorContext for T {
         context_get_opt!(self, "/context/contracts/{}/pubkey", address)
     }
 
-    fn set_public_key(&mut self, address: &str, public_key: &PublicKey) -> Result<()> {
+    fn set_public_key(&mut self, address: &str, public_key: PublicKey) -> Result<()> {
         // NOTE: Underscores are not allowed in path (host restriction)
         return self.set(
             format!("/context/contracts/{}/pubkey", address),
-            Some(public_key.to_owned().into()),
+            Some(public_key.into()),
         );
     }
 
@@ -57,66 +57,34 @@ impl<T: GenericContext> ExecutorContext for T {
         return self.has(format!("/context/contracts/{}/pubkey", address));
     }
 
-    fn set_operation<R: serde::Serialize>(
+    fn set_batch_receipt(&mut self, receipt: BatchReceipt) -> Result<()> {
+        self.set("/batch".into(), Some(receipt.into()))
+    }
+
+    fn get_batch_receipt(&mut self) -> Result<BatchReceipt> {
+        context_unwrap!(self, "/batch")
+    }
+
+    fn set_operation_receipt(
         &mut self,
-        level: i32,
         index: i32,
-        hash: OperationHash,
-        receipt: R,
+        receipt: Operation,
     ) -> Result<()> {
         self.set(
-            format!("/blocks/{}/ophashes/{}", level, index),
-            Some(hash.into()),
+            format!("/ophashes/{}", index),
+            Some(receipt.hash.clone().unwrap().into()),
         )?;
-        let receipt = serde_json_wasm::to_vec(&receipt)?;
         self.set(
-            format!("/blocks/{}/operations/{}", level, index),
+            format!("/operations/{}", index),
             Some(receipt.into()),
-        )?;
-        Ok(())
+        )
     }
 
-    fn get_operation_receipt<R: serde::de::DeserializeOwned>(
+    fn get_operation_receipt(
         &mut self,
-        level: i32,
         index: i32,
-    ) -> Result<Option<R>> {
-        match self.get(format!("/blocks/{}/operations/{}", level, index)) {
-            Ok(Some(bytes)) => {
-                let data: Vec<u8> = bytes.try_into()?;
-                let res: R = serde_json_wasm::from_slice(data.as_slice())?;
-                Ok(Some(res))
-            }
-            Ok(None) => Ok(None),
-            Err(err) => Err(err),
-        }
-    }
-
-    fn set_batch<R: serde::Serialize>(
-        &mut self,
-        level: i32,
-        hash: BlockHash,
-        receipt: R,
-    ) -> Result<()> {
-        self.set(format!("/blocks/{}/hash", level), Some(hash.into()))?;
-        let receipt = serde_json_wasm::to_vec(&receipt)?;
-        self.set(format!("/blocks/{}/header", level), Some(receipt.into()))?;
-        Ok(())
-    }
-
-    fn get_batch_receipt<R: serde::de::DeserializeOwned>(
-        &mut self,
-        level: i32,
-    ) -> Result<Option<R>> {
-        match self.get(format!("/blocks/{}/header", level)) {
-            Ok(Some(bytes)) => {
-                let data: Vec<u8> = bytes.try_into()?;
-                let res: R = serde_json_wasm::from_slice(data.as_slice())?;
-                Ok(Some(res))
-            }
-            Ok(None) => Ok(None),
-            Err(err) => Err(err),
-        }
+    ) -> Result<Operation> {
+        context_unwrap!(self, "/operations/{}", index)
     }
 
     fn get_contract_code(&mut self, address: &str) -> Result<Option<Micheline>> {

@@ -4,13 +4,14 @@ pub mod interpreter;
 pub mod viewer;
 
 use tezos_core::types::{
-    encoded::{BlockHash, ContractAddress, OperationHash, PublicKey, ScriptExprHash},
+    encoded::{ContractAddress, PublicKey, ScriptExprHash},
     mutez::Mutez,
     number::Nat,
 };
+use tezos_rpc::models::operation::Operation;
 use tezos_michelson::micheline::Micheline;
 
-use crate::{ContextNode, Head, Result};
+use crate::{ContextNode, Head, Result, BatchReceipt};
 
 pub trait GenericContext {
     fn log(&self, msg: String);
@@ -27,38 +28,20 @@ pub trait ExecutorContext {
     fn get_head(&mut self) -> Result<Head>;
     fn set_head(&mut self, head: Head) -> Result<()>;
     fn get_balance(&mut self, address: &str) -> Result<Option<Mutez>>;
-    fn set_balance(&mut self, address: &str, balance: &Mutez) -> Result<()>;
+    fn set_balance(&mut self, address: &str, balance: Mutez) -> Result<()>;
     fn get_counter(&mut self, address: &str) -> Result<Option<Nat>>;
-    fn set_counter(&mut self, address: &str, counter: &Nat) -> Result<()>;
+    fn set_counter(&mut self, address: &str, counter: Nat) -> Result<()>;
     fn has_public_key(&self, address: &str) -> Result<bool>;
     fn get_public_key(&mut self, address: &str) -> Result<Option<PublicKey>>;
-    fn set_public_key(&mut self, address: &str, public_key: &PublicKey) -> Result<()>;
+    fn set_public_key(&mut self, address: &str, public_key: PublicKey) -> Result<()>;
     fn set_contract_code(&mut self, address: &str, code: Micheline) -> Result<()>;
     fn get_contract_code(&mut self, address: &str) -> Result<Option<Micheline>>;
     fn get_contract_storage(&mut self, address: &str) -> Result<Option<Micheline>>;
     fn set_contract_storage(&mut self, address: &str, storage: Micheline) -> Result<()>;
-    fn set_operation<R: serde::Serialize>(
-        &mut self,
-        level: i32,
-        index: i32,
-        hash: OperationHash,
-        receipt: R,
-    ) -> Result<()>;
-    fn set_batch<R: serde::Serialize>(
-        &mut self,
-        level: i32,
-        hash: BlockHash,
-        receipt: R,
-    ) -> Result<()>;
-    fn get_batch_receipt<R: serde::de::DeserializeOwned>(
-        &mut self,
-        level: i32,
-    ) -> Result<Option<R>>;
-    fn get_operation_receipt<R: serde::de::DeserializeOwned>(
-        &mut self,
-        level: i32,
-        index: i32,
-    ) -> Result<Option<R>>;
+    fn set_batch_receipt(&mut self, receipt: BatchReceipt) -> Result<()>;
+    fn get_batch_receipt(&mut self) -> Result<BatchReceipt>;
+    fn set_operation_receipt(&mut self, index: i32, receipt: Operation) -> Result<()>;
+    fn get_operation_receipt(&mut self, index: i32) -> Result<Operation>;
     fn check_no_pending_changes(&self) -> Result<()>;
 }
 
@@ -101,6 +84,17 @@ macro_rules! context_get {
         match $context.get(format!($($arg)*)) {
             Ok(Some(value)) => Ok(value.try_into()?),
             Ok(None) => Ok($default),
+            Err(err) => Err(err)
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! context_unwrap {
+    ($context: expr, $($arg:tt)*) => {
+        match $context.get(format!($($arg)*)) {
+            Ok(Some(value)) => Ok(value.try_into()?),
+            Ok(None) => Err($crate::internal_error!(Store, $($arg)*)),
             Err(err) => Err(err)
         }
     };

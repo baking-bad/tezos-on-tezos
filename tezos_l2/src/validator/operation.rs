@@ -143,11 +143,11 @@ mod test {
         let mut context = EphemeralContext::new();
 
         let address = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
-        context.set_balance(address, &Mutez::from(1000000000u32))?;
-        context.set_counter(address, &Nat::try_from("100000").unwrap())?;
+        context.set_balance(address, Mutez::from(1000000000u32))?;
+        context.set_counter(address, Nat::try_from("100000").unwrap())?;
         context.set_public_key(
             address,
-            &PublicKey::try_from("edpktipCJ3SkjvtdcrwELhvupnyYJSmqoXu3kdzK1vL6fT5cY8FTEa").unwrap(),
+            PublicKey::try_from("edpktipCJ3SkjvtdcrwELhvupnyYJSmqoXu3kdzK1vL6fT5cY8FTEa").unwrap(),
         )?;
         context.commit()?;
 
@@ -181,7 +181,7 @@ mod test {
         let mut context = EphemeralContext::new();
 
         let address = ImplicitAddress::try_from("tz1Ng3bkhPwf6byrSWzBeBRTuaiKCQXzyRUK").unwrap();
-        context.set_balance(&address.value(), &Mutez::from(1000000000u32))?;
+        context.set_balance(&address.value(), Mutez::from(1000000000u32))?;
         context.commit()?;
 
         let opg = SignedOperation::new(

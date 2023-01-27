@@ -1,17 +1,31 @@
 use context::{
-    migrations::run_migrations, ExecutorContext, GenericContext, Head, InterpreterContext,
+    migrations::run_migrations, ExecutorContext, GenericContext, Head, InterpreterContext, BatchHeader, BatchReceipt
 };
-use tezos_core::types::encoded::{BlockPayloadHash, OperationHash, OperationListListHash};
-use tezos_operation::operations::SignedOperation;
+use tezos_core::{
+    internal::crypto::blake2b,
+    internal::coder::Encoder,
+    types::encoded::{BlockPayloadHash, OperationHash, BlockHash, OperationListListHash, Encoded}
+};
+use tezos_operation::{
+    block_header,
+    internal::coder::operation_content_bytes_coder::OperationContentBytesCoder,
+    operations::SignedOperation,
+};
 use tezos_rpc::models::operation::Operation as OperationReceipt;
 
 use crate::{
     constants::*,
     executor::operation::execute_operation,
-    producer::types::{BatchHeader, BatchReceipt},
     validator::{batch::validate_batch, operation::ManagerOperation},
     Result,
 };
+
+pub fn block_hash(header: BatchHeader) -> Result<BlockHash> {
+    let header = block_header::BlockHeader::from(header);
+    let payload = OperationContentBytesCoder::encode(&header)?;
+    let hash = blake2b(payload.as_slice(), 32)?;
+    Ok(BlockHash::from_bytes(&hash)?)
+}
 
 fn naive_header(prev_head: Head, operations: &Vec<ManagerOperation>) -> Result<BatchHeader> {
     let operation_hashes: Vec<OperationHash> = operations.iter().map(|o| o.hash.clone()).collect();
@@ -49,7 +63,7 @@ pub fn apply_batch(
     // TODO: fees to batch producer (balance updates + update balance)
 
     let header = naive_header(prev_head, &operations)?;
-    let hash = header.hash()?;
+    let hash = block_hash(header.clone())?;
     let head = Head::new(header.level, hash.clone(), header.timestamp);
 
     let receipt = BatchReceipt {
@@ -61,11 +75,10 @@ pub fn apply_batch(
     };
 
     for (index, opg_receipt) in operation_receipts.into_iter().enumerate() {
-        let hash = opg_receipt.hash.clone().unwrap();
-        context.set_operation(head.level, index as i32, hash, opg_receipt)?;
+        context.set_operation_receipt(index as i32, opg_receipt)?;
     }
 
-    context.set_batch(receipt.header.level, receipt.hash.clone(), receipt)?;
+    context.set_batch_receipt(receipt)?;
     context.set_head(head.clone())?;
     context.commit()?;
 

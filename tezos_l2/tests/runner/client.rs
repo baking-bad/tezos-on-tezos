@@ -17,7 +17,7 @@ use tezos_operation::operations::{
 };
 use tezos_rpc::models::operation::Operation;
 
-use tezos_l2::producer::batch::apply_batch;
+use tezos_l2::batcher::apply_batch;
 
 pub struct Wallet {
     pub counter: u32,
@@ -137,26 +137,12 @@ impl<Context: GenericContext + ExecutorContext + InterpreterContext> Client<Cont
     }
 
     pub fn get_recent_operation(&mut self) -> String {
-        let head = self.context.get_head().expect("Failed to get head");
-
         let receipt: Operation = self
             .context
-            .get_operation_receipt(head.level, 0)
-            .unwrap()
+            .get_operation_receipt(0)
             .expect("Failed to get operation receipt");
 
         serde_json::to_string(&receipt).unwrap()
-    }
-
-    pub fn topup(&mut self, balance: u32) {
-        let wallet = self
-            .wallets
-            .get_mut(self.alias.expect("Active wallet not selected"))
-            .expect("Wallet not defined");
-
-        self.context
-            .set_balance(wallet.address.value(), &balance.into())
-            .unwrap();
     }
 
     pub fn reveal(&mut self) -> &mut Self {

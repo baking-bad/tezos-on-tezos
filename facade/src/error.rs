@@ -4,8 +4,15 @@ use tezos_l2::error::{TezosCoreError};
 
 #[derive(Debug, Display)]
 pub enum InternalKind {
-    Parsing,
-    Fetching
+    Context,
+    TezosCore,
+    SerdeJson,
+    Reqwest,
+    Ureq,
+    StdNum,
+    StdIO,
+    Hex,
+    Misc
 }
 
 #[derive(Debug)]
@@ -47,6 +54,13 @@ impl std::error::Error for InternalError {
 #[derive(Debug, Display, Error)]
 pub enum Error {
     Internal(InternalError),
+    KeyNotFound,
+    DurableStorageError {
+        message: String
+    },
+    RollupClientError {
+        status: u16
+    }
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -67,14 +81,31 @@ macro_rules! impl_from_error {
     ($inner_err_ty: ty, $kind: ident) => {
         impl From<$inner_err_ty> for Error {
             fn from(error: $inner_err_ty) -> Self {
-                $crate::internal_error!($kind, "Caused by: {:?}", error)
+                $crate::internal_error!($kind, "Caused by: {}", error.to_string())
             }
         }
     };
 }
 
-impl_from_error!(TezosCoreError, Parsing);
-impl_from_error!(std::num::ParseIntError, Parsing);
-impl_from_error!(context::Error, Parsing);
-impl_from_error!(serde_json::Error, Parsing);
-impl_from_error!(reqwest::Error, Fetching);
+impl_from_error!(TezosCoreError, TezosCore);
+impl_from_error!(std::num::ParseIntError, StdNum);
+impl_from_error!(serde_json::Error, SerdeJson);
+impl_from_error!(&str, Misc);
+impl_from_error!(std::io::Error, StdIO);
+impl_from_error!(hex::FromHexError, Hex);
+impl_from_error!(reqwest::Error, Reqwest);
+
+impl From<context::Error> for Error {
+    fn from(error: context::Error) -> Self {
+        internal_error!(Context, "Caused by: {}", error.format())
+    }
+}
+
+impl Error {
+    pub fn format(&self) -> String {
+        match self {
+            Self::Internal(internal) => internal.format(),
+            err => format!("{:#?}", err),
+        }
+    }
+}

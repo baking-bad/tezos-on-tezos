@@ -1,7 +1,7 @@
-pub mod error;
-pub mod executor;
-pub mod producer;
 pub mod validator;
+pub mod executor;
+pub mod batcher;
+pub mod error;
 
 pub use error::{Error, Result};
 

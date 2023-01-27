@@ -1,7 +1,7 @@
 use context::{ExecutorContext, GenericContext};
 use host::{rollup_core::RawRollupCore, runtime::Runtime};
 use tezos_core::types::encoded::{Encoded, OperationHash};
-use tezos_l2::{constants, producer::batch::apply_batch};
+use tezos_l2::{constants, batcher::apply_batch};
 use tezos_operation::operations::SignedOperation;
 
 use crate::{
@@ -85,11 +85,9 @@ mod test {
     use crate::context::PVMContext;
 
     use context::{ExecutorContext, Result};
-    use hex;
     use host::rollup_core::Input;
     use mock_runtime::host::MockHost;
-    use tezos_l2::producer::types::BatchReceipt;
-    use tezos_rpc::models::operation::Operation as OperationReceipt;
+    use hex;
 
     #[test]
     fn send_tez() -> Result<()> {
@@ -113,19 +111,18 @@ mod test {
 
         kernel_run(&mut context);
 
-        let opg_receipt: Option<OperationReceipt> = context.get_operation_receipt(0, 0i32)?;
+        let opg_receipt = context.get_operation_receipt(0i32)?;
         // println!("Receipt: {:#?}", receipt);
-        assert!(opg_receipt.is_some(), "Expected operation receipt");
         assert!(
-            opg_receipt.unwrap().hash.is_some(),
+            opg_receipt.hash.is_some(),
             "Expected operation hash"
         );
 
-        let batch_receipt: Option<BatchReceipt> = context.get_batch_receipt(0)?;
-        assert!(batch_receipt.is_some(), "Expected batch receipt");
-
         let head = context.get_head()?;
         assert_eq!(0, head.level);
+
+        let batch_receipt = context.get_batch_receipt()?;
+        assert_eq!(batch_receipt.hash, head.hash);
 
         Ok(())
     }

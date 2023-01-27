@@ -84,17 +84,18 @@ impl GenericContext for EphemeralContext {
 #[cfg(test)]
 mod test {
     use crate::{EphemeralContext, ExecutorContext, GenericContext, Result};
+    use tezos_core::types::mutez::Mutez;
 
     #[test]
     fn store_balance() -> Result<()> {
         let mut context = EphemeralContext::new();
 
         let address = "tz1Mj7RzPmMAqDUNFBn5t5VbXmWW4cSUAdtT";
-        let balance = 1000u32.into();
+        let balance: Mutez = 1000u32.into();
 
         assert!(context.get_balance(&address)?.is_none()); // both host and cache accessed
 
-        context.set_balance(&address, &balance)?; // cached
+        context.set_balance(&address, balance.clone())?; // cached
         context.commit()?; // save
         context.clear(); // cache cleared
 
