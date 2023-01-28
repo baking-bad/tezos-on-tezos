@@ -1,17 +1,19 @@
 use derive_more::{Display, Error};
 use std::backtrace::Backtrace;
-use tezos_l2::error::{TezosCoreError};
+use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
 
 #[derive(Debug, Display)]
 pub enum InternalKind {
     Context,
+    Interpreter,
     TezosCore,
+    TezosMichelson,
     SerdeJson,
     Reqwest,
-    Ureq,
     StdNum,
     StdIO,
     Hex,
+    IBig,
     Misc
 }
 
@@ -54,7 +56,9 @@ impl std::error::Error for InternalError {
 #[derive(Debug, Display, Error)]
 pub enum Error {
     Internal(InternalError),
-    KeyNotFound,
+    KeyNotFound {
+        key: String
+    },
     DurableStorageError {
         message: String
     },
@@ -87,16 +91,24 @@ macro_rules! impl_from_error {
     };
 }
 
-impl_from_error!(TezosCoreError, TezosCore);
+impl_from_error!(tezos_core::Error, TezosCore);
+impl_from_error!(tezos_michelson::Error, TezosMichelson);
 impl_from_error!(std::num::ParseIntError, StdNum);
 impl_from_error!(serde_json::Error, SerdeJson);
 impl_from_error!(&str, Misc);
 impl_from_error!(std::io::Error, StdIO);
 impl_from_error!(hex::FromHexError, Hex);
 impl_from_error!(reqwest::Error, Reqwest);
+impl_from_error!(ibig::error::ParseError, IBig);
 
 impl From<context::Error> for Error {
     fn from(error: context::Error) -> Self {
+        internal_error!(Context, "Caused by: {}", error.format())
+    }
+}
+
+impl From<tezos_vm::Error> for Error {
+    fn from(error: tezos_vm::Error) -> Self {
         internal_error!(Context, "Caused by: {}", error.format())
     }
 }
@@ -107,5 +119,17 @@ impl Error {
             Self::Internal(internal) => internal.format(),
             err => format!("{:#?}", err),
         }
+    }
+}
+
+impl ResponseError for Error {
+    fn status_code(&self) -> StatusCode {
+        match self {
+            Error::KeyNotFound { key: _ } => StatusCode::NOT_FOUND,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+    fn error_response(&self) -> HttpResponse {
+        HttpResponse::build(self.status_code()).body(self.format())
     }
 }

@@ -2145,6 +2145,7 @@ dependencies = [
  "tezos-michelson",
  "tezos-rpc",
  "tezos_l2",
+ "tezos_vm",
 ]
 
 [[package]]

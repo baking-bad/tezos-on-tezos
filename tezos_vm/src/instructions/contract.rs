@@ -15,6 +15,7 @@ use crate::{
     trace_log,
     typechecker::check_types_equal,
     types::{AddressItem, ContractItem, InternalContent, OperationItem, OptionItem, StackItem},
+    entrypoints::search_entrypoint,
     Error, Result,
 };
 
@@ -33,29 +34,6 @@ impl PureInterpreter for ImplicitAccount {
         let item = ContractItem::new(address, types::unit());
         stack.push(item.into())
     }
-}
-
-fn search_entrypoint(ty: Type, entrypoint: Option<&str>, depth: usize) -> Result<Type> {
-    let entrypoint = entrypoint.unwrap_or("default");
-    if let Some(annot) = ty.metadata().field_name() {
-        if annot.value_without_prefix() == entrypoint {
-            return Ok(ty);
-        }
-    }
-    if let Type::Or(or) = ty.clone() {
-        if let Ok(ty) = search_entrypoint(*or.lhs, Some(entrypoint), depth + 1) {
-            return Ok(ty);
-        }
-        if let Ok(ty) = search_entrypoint(*or.rhs, Some(entrypoint), depth + 1) {
-            return Ok(ty);
-        }
-    }
-    if depth == 0 && entrypoint == "default" {
-        return Ok(ty);
-    }
-    Err(Error::EntrypointNotFound {
-        name: entrypoint.into(),
-    })
 }
 
 fn make_contract(address: &str, entrypoint: Option<&str>) -> Result<encoded::Address> {

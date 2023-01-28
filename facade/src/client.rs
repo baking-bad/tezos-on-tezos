@@ -64,6 +64,7 @@ impl std::fmt::Display for StateError {
 }
 
 #[derive(Deserialize)]
+#[serde(untagged)]
 pub enum StateResponse {
     Value(String),
     Errors(Vec<StateError>)
@@ -99,7 +100,7 @@ impl RollupClient {
                     let message = errors.first().unwrap().to_string();
                     Err(Error::DurableStorageError { message })
                 },
-                None => Err(Error::KeyNotFound)
+                None => Err(Error::KeyNotFound { key })
             }
         } else {
             Err(Error::RollupClientError { status: res.status().as_u16() })

@@ -14,6 +14,7 @@ use crate::{
     stack::Stack,
     trace_enter, trace_exit,
     types::{BigMapDiff, InternalContent, PairItem, StackItem},
+    entrypoints::{normalize_parameter},
     Error, Result,
 };
 
@@ -29,54 +30,6 @@ pub struct ScriptReturn {
     pub storage: Micheline,
     pub operations: Vec<InternalContent>,
     pub big_map_diff: Vec<BigMapDiff>,
-}
-
-// Initial mask value: 0b1 <-- terminating 1
-// Resulting mask value (example): 0b10001010010
-// Least significant bit indicates the entrypoint node
-// In order to wrap parameter with "Left"s and "Right"s one need to go in reverse order
-fn get_entrypoint_mask(entrypoint: &str, ty: &Type, mask: i32) -> Result<i32> {
-    if let Some(annot) = ty.metadata().field_name() {
-        if annot.value_without_prefix() == entrypoint {
-            return Ok(mask);
-        }
-    }
-    if let Type::Or(or) = ty.clone() {
-        if let Ok(res) = get_entrypoint_mask(entrypoint, &or.lhs, mask << 1) {
-            return Ok(res);
-        }
-        if let Ok(res) = get_entrypoint_mask(entrypoint, &or.rhs, (mask << 1) | 1) {
-            return Ok(res);
-        }
-    }
-    if mask == 1 && entrypoint == "default" {
-        return Ok(mask);
-    }
-    Err(Error::EntrypointNotFound {
-        name: entrypoint.into(),
-    })
-}
-
-fn normalize_parameter(
-    parameter: Micheline,
-    entrypoint: &str,
-    param_ty: &Type,
-) -> Result<Micheline> {
-    let mut parameter = parameter.normalized();
-    let mut mask = get_entrypoint_mask(entrypoint, param_ty, 1)?;
-    assert!(mask > 0);
-
-    while mask > 1 {
-        let prim: String = if mask & 1 == 0 {
-            "Left".into()
-        } else {
-            "Right".into()
-        };
-        parameter = PrimitiveApplication::new(prim, Some(vec![parameter]), None).into();
-        mask >>= 1;
-    }
-
-    Ok(parameter)
 }
 
 impl MichelsonScript {

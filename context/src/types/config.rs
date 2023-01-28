@@ -1,5 +1,6 @@
-// use tezos_rpc::models::constants::Constants;
+use serde::{Serialize, Deserialize};
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Config {
     pub blocks_per_cycle: i32,
     pub max_operations_time_to_live: i32,

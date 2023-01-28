@@ -7,6 +7,7 @@ pub mod stack;
 pub mod tracer;
 pub mod typechecker;
 pub mod types;
+pub mod entrypoints;
 
 pub use error::{Error, Result};
 
