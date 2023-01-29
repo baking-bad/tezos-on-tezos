@@ -64,21 +64,22 @@ pub fn apply_batch(
 
     let header = naive_header(prev_head, &operations)?;
     let hash = block_hash(header.clone())?;
-    let head = Head::new(header.level, hash.clone(), header.timestamp);
-
     let receipt = BatchReceipt {
         chain_id: CHAIN_ID.try_into().unwrap(),
         protocol: PROTOCOL.try_into().unwrap(),
-        hash,
-        header,
+        hash: hash.clone(),
+        header: header.clone(),
         balance_updates,
     };
+    context.set_batch_receipt(receipt)?;
 
-    for (index, opg_receipt) in operation_receipts.into_iter().enumerate() {
-        context.set_operation_receipt(index as i32, opg_receipt)?;
+    let mut opg_hashes: Vec<OperationHash> = Vec::with_capacity(operation_receipts.len());
+    for opg_receipt in operation_receipts {
+        opg_hashes.push(opg_receipt.hash.clone().unwrap());
+        context.set_operation_receipt(opg_receipt)?;
     }
 
-    context.set_batch_receipt(receipt)?;
+    let head = Head::new(header.level, hash.clone(), header.timestamp, opg_hashes);
     context.set_head(head.clone())?;
     context.commit()?;
 

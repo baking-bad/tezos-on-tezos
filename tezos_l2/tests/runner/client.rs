@@ -136,10 +136,10 @@ impl<Context: GenericContext + ExecutorContext + InterpreterContext> Client<Cont
         serde_json::to_string(&storage).unwrap()
     }
 
-    pub fn get_recent_operation(&mut self) -> String {
+    pub fn get_operation(&mut self, hash: &str) -> String {
         let receipt: Operation = self
             .context
-            .get_operation_receipt(0)
+            .get_operation_receipt(hash)
             .expect("Failed to get operation receipt");
 
         serde_json::to_string(&receipt).unwrap()

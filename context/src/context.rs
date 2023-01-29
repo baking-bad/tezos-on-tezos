@@ -39,9 +39,9 @@ pub trait ExecutorContext {
     fn get_contract_storage(&mut self, address: &str) -> Result<Option<Micheline>>;
     fn set_contract_storage(&mut self, address: &str, storage: Micheline) -> Result<()>;
     fn set_batch_receipt(&mut self, receipt: BatchReceipt) -> Result<()>;
-    fn get_batch_receipt(&mut self) -> Result<BatchReceipt>;
-    fn set_operation_receipt(&mut self, index: i32, receipt: Operation) -> Result<()>;
-    fn get_operation_receipt(&mut self, index: i32) -> Result<Operation>;
+    fn get_batch_receipt(&mut self, hash: &str) -> Result<BatchReceipt>;
+    fn set_operation_receipt(&mut self, receipt: Operation) -> Result<()>;
+    fn get_operation_receipt(&mut self, hash: &str) -> Result<Operation>;
     fn check_no_pending_changes(&self) -> Result<()>;
 }
 

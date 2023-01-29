@@ -64,6 +64,9 @@ pub enum Error {
     },
     RollupClientError {
         status: u16
+    },
+    InvalidArguments {
+        message: String
     }
 }
 
@@ -94,6 +97,7 @@ macro_rules! impl_from_error {
 impl_from_error!(tezos_core::Error, TezosCore);
 impl_from_error!(tezos_michelson::Error, TezosMichelson);
 impl_from_error!(std::num::ParseIntError, StdNum);
+impl_from_error!(std::num::TryFromIntError, StdNum);
 impl_from_error!(serde_json::Error, SerdeJson);
 impl_from_error!(&str, Misc);
 impl_from_error!(std::io::Error, StdIO);
@@ -126,6 +130,7 @@ impl ResponseError for Error {
     fn status_code(&self) -> StatusCode {
         match self {
             Error::KeyNotFound { key: _ } => StatusCode::NOT_FOUND,
+            Error::InvalidArguments { message: _ } => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

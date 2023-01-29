@@ -1,12 +1,15 @@
 use tezos_core::types::{
-    encoded::PublicKey,
+    encoded::{PublicKey, Encoded},
     mutez::Mutez,
     number::Nat,
 };
 use tezos_rpc::models::operation::Operation;
 use tezos_michelson::micheline::Micheline;
 
-use crate::{context_get, context_get_opt, context_unwrap, Error, ExecutorContext, GenericContext, Head, Result, BatchReceipt};
+use crate::{
+    context_get, context_get_opt, context_unwrap,
+    Error, ExecutorContext, GenericContext, Head, Result, BatchReceipt
+};
 
 impl<T: GenericContext> ExecutorContext for T {
     fn get_head(&mut self) -> Result<Head> {
@@ -58,33 +61,25 @@ impl<T: GenericContext> ExecutorContext for T {
     }
 
     fn set_batch_receipt(&mut self, receipt: BatchReceipt) -> Result<()> {
-        self.set("/batch".into(), Some(receipt.into()))
+        self.set(format!(
+            "/batches/{}", receipt.hash.value()).into(),
+            Some(receipt.into())
+        )
     }
 
-    fn get_batch_receipt(&mut self) -> Result<BatchReceipt> {
-        context_unwrap!(self, "/batch")
+    fn get_batch_receipt(&mut self, hash: &str) -> Result<BatchReceipt> {
+        context_unwrap!(self, "/batches/{}", hash)
     }
 
-    fn set_operation_receipt(
-        &mut self,
-        index: i32,
-        receipt: Operation,
-    ) -> Result<()> {
+    fn set_operation_receipt(&mut self, receipt: Operation) -> Result<()> {
         self.set(
-            format!("/ophashes/{}", index),
-            Some(receipt.hash.clone().unwrap().into()),
-        )?;
-        self.set(
-            format!("/operations/{}", index),
+            format!("/operations/{}", receipt.hash.as_ref().expect("Operation hash").value()),
             Some(receipt.into()),
         )
     }
 
-    fn get_operation_receipt(
-        &mut self,
-        index: i32,
-    ) -> Result<Operation> {
-        context_unwrap!(self, "/operations/{}", index)
+    fn get_operation_receipt(&mut self, hash: &str) -> Result<Operation> {
+        context_unwrap!(self, "/operations/{}", hash)
     }
 
     fn get_contract_code(&mut self, address: &str) -> Result<Option<Micheline>> {

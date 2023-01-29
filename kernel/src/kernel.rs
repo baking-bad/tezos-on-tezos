@@ -111,18 +111,20 @@ mod test {
 
         kernel_run(&mut context);
 
-        let opg_receipt = context.get_operation_receipt(0i32)?;
-        // println!("Receipt: {:#?}", receipt);
-        assert!(
-            opg_receipt.hash.is_some(),
-            "Expected operation hash"
-        );
-
         let head = context.get_head()?;
         assert_eq!(0, head.level);
 
-        let batch_receipt = context.get_batch_receipt()?;
+        let batch_receipt = context.get_batch_receipt(head.hash.value())?;
         assert_eq!(batch_receipt.hash, head.hash);
+
+        for opg_hash in head.operations.iter() {
+            let opg_receipt = context.get_operation_receipt(opg_hash.value())?;
+            // println!("Receipt: {:#?}", receipt);
+            assert!(
+                opg_receipt.hash.is_some(),
+                "Expected operation hash"
+            );
+        }        
 
         Ok(())
     }
