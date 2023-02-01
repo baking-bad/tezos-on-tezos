@@ -5,6 +5,7 @@ use tezos_michelson::michelson::data::instructions::{
 use tezos_michelson::michelson::{annotations::Annotation, types, types::Type};
 
 use crate::{
+    entrypoints::search_entrypoint,
     err_mismatch,
     interpreter::{
         ContextInterpreter, Interpreter, InterpreterContext, LazyStorage, OperationScope,
@@ -15,7 +16,6 @@ use crate::{
     trace_log,
     typechecker::check_types_equal,
     types::{AddressItem, ContractItem, InternalContent, OperationItem, OptionItem, StackItem},
-    entrypoints::search_entrypoint,
     Error, Result,
 };
 

@@ -1,14 +1,14 @@
 use tezos_core::types::{
-    encoded::{PublicKey, Encoded},
+    encoded::{Encoded, PublicKey},
     mutez::Mutez,
     number::Nat,
 };
-use tezos_rpc::models::operation::Operation;
 use tezos_michelson::micheline::Micheline;
+use tezos_rpc::models::operation::Operation;
 
 use crate::{
-    context_get, context_get_opt, context_unwrap,
-    Error, ExecutorContext, GenericContext, Head, Result, BatchReceipt
+    context_get, context_get_opt, context_unwrap, BatchReceipt, Error, ExecutorContext,
+    GenericContext, Head, Result,
 };
 
 impl<T: GenericContext> ExecutorContext for T {
@@ -61,9 +61,9 @@ impl<T: GenericContext> ExecutorContext for T {
     }
 
     fn set_batch_receipt(&mut self, receipt: BatchReceipt) -> Result<()> {
-        self.set(format!(
-            "/batches/{}", receipt.hash.value()).into(),
-            Some(receipt.into())
+        self.set(
+            format!("/batches/{}", receipt.hash.value()).into(),
+            Some(receipt.into()),
         )
     }
 
@@ -73,7 +73,10 @@ impl<T: GenericContext> ExecutorContext for T {
 
     fn set_operation_receipt(&mut self, receipt: Operation) -> Result<()> {
         self.set(
-            format!("/operations/{}", receipt.hash.as_ref().expect("Operation hash").value()),
+            format!(
+                "/operations/{}",
+                receipt.hash.as_ref().expect("Operation hash").value()
+            ),
             Some(receipt.into()),
         )
     }

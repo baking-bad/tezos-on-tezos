@@ -145,8 +145,8 @@ where
 #[cfg(test)]
 mod test {
     use context::{ExecutorContext, GenericContext, Result};
-    use tezos_core::types::mutez::Mutez;
     use mock_runtime::host::MockHost;
+    use tezos_core::types::mutez::Mutez;
 
     use crate::context::PVMContext;
 

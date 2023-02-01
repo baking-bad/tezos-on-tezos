@@ -17,7 +17,7 @@ pub fn validate_batch(
     let mut operations: Vec<ManagerOperation> = Vec::with_capacity(batch_payload.len());
 
     for (hash, opg) in batch_payload.into_iter() {
-        match validate_operation(context, opg, hash.clone()) {
+        match validate_operation(context, opg, hash.clone(), false) {
             Ok(op) => {
                 let balance = context.get_balance(&op.source.value())?.unwrap();
                 context.set_balance(&op.source.value(), balance - op.total_spent)?;

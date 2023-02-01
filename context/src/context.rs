@@ -8,10 +8,10 @@ use tezos_core::types::{
     mutez::Mutez,
     number::Nat,
 };
-use tezos_rpc::models::operation::Operation;
 use tezos_michelson::micheline::Micheline;
+use tezos_rpc::models::operation::Operation;
 
-use crate::{ContextNode, Head, Result, BatchReceipt};
+use crate::{BatchReceipt, ContextNode, Head, Result};
 
 pub trait GenericContext {
     fn log(&self, msg: String);

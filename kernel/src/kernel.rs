@@ -1,7 +1,7 @@
 use context::{ExecutorContext, GenericContext};
 use host::{rollup_core::RawRollupCore, runtime::Runtime};
 use tezos_core::types::encoded::{Encoded, OperationHash};
-use tezos_l2::{constants, batcher::apply_batch};
+use tezos_l2::{batcher::apply_batch, constants};
 use tezos_operation::operations::SignedOperation;
 
 use crate::{
@@ -11,11 +11,9 @@ use crate::{
 };
 
 pub fn kernel_run<Host: RawRollupCore>(context: &mut PVMContext<Host>) {
-    let metadata = Runtime::reveal_metadata(context.as_mut())
-        .expect("Failed to reveal metadata");
+    let metadata = Runtime::reveal_metadata(context.as_mut()).expect("Failed to reveal metadata");
 
-    let mut head = context.get_head()
-        .expect("Failed to get head");
+    let mut head = context.get_head().expect("Failed to get head");
 
     context.log(format!("Kernel invoked, prev head: {}", head));
 
@@ -85,9 +83,9 @@ mod test {
     use crate::context::PVMContext;
 
     use context::{ExecutorContext, Result};
+    use hex;
     use host::rollup_core::Input;
     use mock_runtime::host::MockHost;
-    use hex;
 
     #[test]
     fn send_tez() -> Result<()> {
@@ -120,11 +118,8 @@ mod test {
         for opg_hash in head.operations.iter() {
             let opg_receipt = context.get_operation_receipt(opg_hash.value())?;
             // println!("Receipt: {:#?}", receipt);
-            assert!(
-                opg_receipt.hash.is_some(),
-                "Expected operation hash"
-            );
-        }        
+            assert!(opg_receipt.hash.is_some(), "Expected operation hash");
+        }
 
         Ok(())
     }

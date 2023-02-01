@@ -10,13 +10,13 @@ crate-type = ["cdylib", "rlib"]
 context = { path = "../context" }
 tezos_l2 = { path = "../tezos_l2" }
 host = { git = "https://gitlab.com/tezos/kernel" }
-tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "fix/block-header-encoder", package = "tezos-core", default-features = false }
-tezos_operation = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "fix/block-header-encoder", package = "tezos-operation", default-features = false }
+tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "develop", package = "tezos-core", default-features = false }
+tezos_operation = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "develop", package = "tezos-operation", default-features = false }
 
 derive_more = "0.99"
 hex = "*"
 
 [dev-dependencies]
-tezos_rpc = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "fix/block-header-encoder", package = "tezos-rpc", default-features = false }
+tezos_rpc = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "develop", package = "tezos-rpc", default-features = false }
 mock_runtime = { git = "https://gitlab.com/tezos/kernel" }
 hex = "*"

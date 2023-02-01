@@ -21,6 +21,7 @@ pub fn validate_operation(
     context: &mut impl ExecutorContext,
     opg: SignedOperation,
     hash: OperationHash,
+    dry_run: bool,
 ) -> Result<ManagerOperation> {
     let mut source = None;
     let mut total_fees: Mutez = 0u32.into();
@@ -78,11 +79,13 @@ pub fn validate_operation(
         }
     };
 
-    match opg.verify(&public_key) {
-        Ok(true) => (),
-        Ok(false) => return Err(Error::InvalidSignature),
-        Err(err) => return Err(err.into()),
-    };
+    if !dry_run {
+        match opg.verify(&public_key) {
+            Ok(true) => (),
+            Ok(false) => return Err(Error::InvalidSignature),
+            Err(err) => return Err(err.into()),
+        };
+    }
 
     let balance = match context.get_balance(&source.value())? {
         Some(value) => value,
@@ -169,7 +172,7 @@ mod test {
         );
 
         let hash = opg.hash()?;
-        let op = validate_operation(&mut context, opg, hash)?;
+        let op = validate_operation(&mut context, opg, hash, false)?;
         assert_eq!(op.total_fees, 417u32.into());
         assert_eq!(op.last_counter, 2336132u32.into());
 
@@ -210,7 +213,7 @@ mod test {
         );
 
         let hash = opg.hash()?;
-        let op = validate_operation(&mut context, opg, hash)?;
+        let op = validate_operation(&mut context, opg, hash, false)?;
         assert_eq!(op.total_fees, 1039u32.into());
         assert_eq!(op.last_counter, 85938847u32.into());
 

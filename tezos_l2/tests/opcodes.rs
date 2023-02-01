@@ -1,9 +1,9 @@
 /// Ported from https://gitlab.com/tezos/tezos/-/blob/master/tests_python/tests_016/test_contract_onchain_opcodes.py
 mod runner;
 
-use tezos_core::types::encoded::Encoded;
 use runner::mock::MockClient;
 use serde_json::json;
+use tezos_core::types::encoded::Encoded;
 
 #[test]
 fn test_progress() {

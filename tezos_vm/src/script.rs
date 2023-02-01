@@ -9,12 +9,12 @@ use tezos_michelson::michelson::{
 };
 
 use crate::{
+    entrypoints::normalize_parameter,
     err_mismatch, err_unsupported, internal_error,
     interpreter::{Interpreter, InterpreterContext, LazyStorage, OperationScope},
     stack::Stack,
     trace_enter, trace_exit,
     types::{BigMapDiff, InternalContent, PairItem, StackItem},
-    entrypoints::{normalize_parameter},
     Error, Result,
 };
 

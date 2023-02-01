@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -18,7 +18,7 @@ impl Config {
             max_block_header_length: 2048,
             max_operation_data_length: 86400,
             max_operations_list_length: 1024,
-            pow_nonce: "deadbeef"
+            pow_nonce: "deadbeef",
         }
     }
 }

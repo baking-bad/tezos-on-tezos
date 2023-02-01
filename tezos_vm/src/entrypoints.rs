@@ -1,6 +1,6 @@
+use std::collections::HashMap;
 use tezos_michelson::micheline::{primitive_application::PrimitiveApplication, Micheline};
 use tezos_michelson::michelson::types::Type;
-use std::collections::HashMap;
 
 use crate::{Error, Result};
 
@@ -79,7 +79,7 @@ pub fn collect_entrypoints(ty: Type, res: &mut HashMap<String, Type>, depth: usi
     if let Some(annot) = ty.metadata().field_name() {
         let name = annot.value_without_prefix();
         if res.contains_key(name) {
-            return Err(Error::ConflictingEntrypoints { address: "".into() })
+            return Err(Error::ConflictingEntrypoints { address: "".into() });
         }
         res.insert(name.into(), ty.clone());
     }

@@ -16,6 +16,13 @@ impl EphemeralContext {
             modified_keys: Vec::new(),
         }
     }
+
+    pub fn pending_removed(&self, key: &String) -> bool {
+        match self.pending_state.get(key) {
+            Some(None) => true,
+            _ => false
+        }
+    }
 }
 
 impl GenericContext for EphemeralContext {
@@ -24,9 +31,10 @@ impl GenericContext for EphemeralContext {
     }
 
     fn has(&self, key: String) -> Result<bool> {
-        match self.pending_state.contains_key(&key) {
-            true => Ok(true),
-            false => Ok(self.state.contains_key(&key)),
+        match self.pending_state.get(&key) {
+            Some(Some(_)) => Ok(true),
+            Some(None) => Ok(false),
+            None => Ok(self.state.contains_key(&key)),
         }
     }
 

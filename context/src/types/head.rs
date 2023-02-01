@@ -1,5 +1,5 @@
-use tezos_core::types::encoded::{BlockHash, OperationHash, Encoded};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use tezos_core::types::encoded::{BlockHash, Encoded, OperationHash};
 
 pub const ZERO_BLOCK_HASH: &str = "BKiHLREqU3JkXfzEDYAkmmfX48gBDtYhMrpA98s7Aq4SzbUAB6M";
 
@@ -12,7 +12,12 @@ pub struct Head {
 }
 
 impl Head {
-    pub fn new(level: i32, hash: BlockHash, timestamp: i64, operations: Vec<OperationHash>) -> Self {
+    pub fn new(
+        level: i32,
+        hash: BlockHash,
+        timestamp: i64,
+        operations: Vec<OperationHash>,
+    ) -> Self {
         Self {
             level,
             hash,

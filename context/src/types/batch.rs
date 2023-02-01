@@ -56,7 +56,8 @@ impl From<BatchHeader> for block_header::BlockHeader {
             payload_hash: header.payload_hash,
             payload_round: 0,
             predecessor: header.predecessor,
-            proof_of_work_nonce: config.pow_nonce
+            proof_of_work_nonce: config
+                .pow_nonce
                 .try_into()
                 .expect("Failed to convert pow nonce"),
             proto: 0,
@@ -128,7 +129,9 @@ impl From<BatchReceipt> for Metadata {
                 },
                 OperationListLength {
                     max_size: config.max_operations_list_length,
-                    max_op: Some(config.max_operations_list_length * config.max_operation_data_length),
+                    max_op: Some(
+                        config.max_operations_list_length * config.max_operation_data_length,
+                    ),
                 },
             ],
             max_block_header_length: config.max_block_header_length,

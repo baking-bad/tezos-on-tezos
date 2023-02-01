@@ -1,13 +1,13 @@
 use derive_more::{From, TryInto};
 use tezos_core::types::{
     encoded::{ContractAddress, Encoded, OperationHash, PublicKey},
-    number::Nat,
     mutez::Mutez,
+    number::Nat,
 };
-use tezos_rpc::models::operation::Operation;
 use tezos_michelson::micheline::Micheline;
+use tezos_rpc::models::operation::Operation;
 
-use crate::{internal_error, Head, Result, BatchReceipt};
+use crate::{internal_error, BatchReceipt, Head, Result};
 
 #[derive(Debug, Clone, From, TryInto)]
 pub enum ContextNode {

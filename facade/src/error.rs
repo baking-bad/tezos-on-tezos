@@ -1,20 +1,24 @@
+use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
 use derive_more::{Display, Error};
 use std::backtrace::Backtrace;
-use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
 
 #[derive(Debug, Display)]
 pub enum InternalKind {
     Context,
     Interpreter,
+    TezosRpc,
     TezosCore,
+    TezosOperation,
     TezosMichelson,
+    TezosProtocol,
     SerdeJson,
     Reqwest,
     StdNum,
     StdIO,
     Hex,
     IBig,
-    Misc
+    Actix,
+    Misc,
 }
 
 #[derive(Debug)]
@@ -56,18 +60,10 @@ impl std::error::Error for InternalError {
 #[derive(Debug, Display, Error)]
 pub enum Error {
     Internal(InternalError),
-    KeyNotFound {
-        key: String
-    },
-    DurableStorageError {
-        message: String
-    },
-    RollupClientError {
-        status: u16
-    },
-    InvalidArguments {
-        message: String
-    }
+    KeyNotFound { key: String },
+    DurableStorageError { message: String },
+    RollupClientError { status: u16 },
+    InvalidArguments { message: String },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -94,8 +90,11 @@ macro_rules! impl_from_error {
     };
 }
 
+impl_from_error!(tezos_rpc::Error, TezosRpc);
 impl_from_error!(tezos_core::Error, TezosCore);
+impl_from_error!(tezos_operation::Error, TezosOperation);
 impl_from_error!(tezos_michelson::Error, TezosMichelson);
+impl_from_error!(tezos_l2::Error, TezosProtocol);
 impl_from_error!(std::num::ParseIntError, StdNum);
 impl_from_error!(std::num::TryFromIntError, StdNum);
 impl_from_error!(serde_json::Error, SerdeJson);
@@ -104,6 +103,7 @@ impl_from_error!(std::io::Error, StdIO);
 impl_from_error!(hex::FromHexError, Hex);
 impl_from_error!(reqwest::Error, Reqwest);
 impl_from_error!(ibig::error::ParseError, IBig);
+impl_from_error!(actix_web::rt::task::JoinError, Actix);
 
 impl From<context::Error> for Error {
     fn from(error: context::Error) -> Self {
@@ -131,6 +131,12 @@ impl ResponseError for Error {
         match self {
             Error::KeyNotFound { key: _ } => StatusCode::NOT_FOUND,
             Error::InvalidArguments { message: _ } => StatusCode::BAD_REQUEST,
+            Error::Internal(int) => match int.kind {
+                InternalKind::TezosCore => StatusCode::BAD_REQUEST,
+                InternalKind::TezosOperation => StatusCode::BAD_REQUEST,
+                InternalKind::Hex => StatusCode::BAD_REQUEST,
+                _ => StatusCode::INTERNAL_SERVER_ERROR,
+            },
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

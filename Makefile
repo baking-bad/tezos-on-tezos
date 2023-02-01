@@ -7,8 +7,8 @@ DAILY_TAG=master_7e51d27c_20221220201529
 DAILY_NETWORK=dailynet-2022-12-21
 
 # https://teztnets.xyz/mondaynet-about
-MONDAY_TAG=master_067c787b_20230120183948
-MONDAY_NETWORK=mondaynet-2023-01-23
+MONDAY_TAG=master_68779c31_20230129203845
+MONDAY_NETWORK=mondaynet-2023-01-30
 
 install:
 	cd ~/.cargo/bin \

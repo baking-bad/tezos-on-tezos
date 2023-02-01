@@ -1,14 +1,14 @@
 use context::{
-    migrations::run_migrations, ExecutorContext, GenericContext, Head, InterpreterContext, BatchHeader, BatchReceipt
+    migrations::run_migrations, BatchHeader, BatchReceipt, ExecutorContext, GenericContext, Head,
+    InterpreterContext,
 };
 use tezos_core::{
-    internal::crypto::blake2b,
     internal::coder::Encoder,
-    types::encoded::{BlockPayloadHash, OperationHash, BlockHash, OperationListListHash, Encoded}
+    internal::crypto::blake2b,
+    types::encoded::{BlockHash, BlockPayloadHash, Encoded, OperationHash, OperationListListHash},
 };
 use tezos_operation::{
-    block_header,
-    internal::coder::operation_content_bytes_coder::OperationContentBytesCoder,
+    block_header, internal::coder::operation_content_bytes_coder::OperationContentBytesCoder,
     operations::SignedOperation,
 };
 use tezos_rpc::models::operation::Operation as OperationReceipt;
