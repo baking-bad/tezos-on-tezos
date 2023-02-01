@@ -1,16 +1,14 @@
 use actix_web::{
-    get,
     http::StatusCode,
     web::{Data, Path},
     HttpResponse, Responder, Result,
 };
 use tezos_core::types::encoded::{Address, ContractAddress, ImplicitAddress};
 
-use crate::{rollup::TezosFacade, Client, Error};
+use crate::{rollup::TezosFacade, Error};
 
-#[get("/chains/main/blocks/{block_id}/context/contracts/{contract_id}/balance")]
-async fn contract_balance(
-    client: Data<Client>,
+pub async fn contract_balance<T: TezosFacade>(
+    client: Data<T>,
     path: Path<(String, String)>,
 ) -> Result<impl Responder> {
     let address: Address = path.1.as_str().try_into().map_err(Error::from)?;
@@ -20,9 +18,8 @@ async fn contract_balance(
     Ok(HttpResponse::build(StatusCode::OK).json(value))
 }
 
-#[get("/chains/main/blocks/{block_id}/context/contracts/{contract_id}/counter")]
-async fn contract_counter(
-    client: Data<Client>,
+pub async fn contract_counter<T: TezosFacade>(
+    client: Data<T>,
     path: Path<(String, String)>,
 ) -> Result<impl Responder> {
     let address: ImplicitAddress = path.1.as_str().try_into().map_err(Error::from)?;
@@ -32,9 +29,8 @@ async fn contract_counter(
     Ok(HttpResponse::build(StatusCode::OK).json(value))
 }
 
-#[get("/chains/main/blocks/{block_id}/context/contracts/{contract_id}/manager_key")]
-async fn contract_public_key(
-    client: Data<Client>,
+pub async fn contract_public_key<T: TezosFacade>(
+    client: Data<T>,
     path: Path<(String, String)>,
 ) -> Result<impl Responder> {
     let address: ImplicitAddress = path.1.as_str().try_into().map_err(Error::from)?;
@@ -44,17 +40,15 @@ async fn contract_public_key(
     Ok(HttpResponse::build(StatusCode::OK).json(value))
 }
 
-#[get("/chains/main/blocks/{block_id}/context/contracts/{contract_id}/delegate")]
-async fn contract_delegate(
-    _client: Data<Client>,
+pub async fn contract_delegate<T: TezosFacade>(
+    _client: Data<T>,
     _path: Path<(String, String)>,
 ) -> Result<impl Responder> {
     Ok(HttpResponse::build(StatusCode::NOT_FOUND).finish())
 }
 
-#[get("/chains/main/blocks/{block_id}/context/contracts/{contract_id}/storage")]
-async fn contract_storage(
-    client: Data<Client>,
+pub async fn contract_storage<T: TezosFacade>(
+    client: Data<T>,
     path: Path<(String, String)>,
 ) -> Result<impl Responder> {
     let address: ContractAddress = path.1.as_str().try_into().map_err(Error::from)?;
@@ -64,9 +58,8 @@ async fn contract_storage(
     Ok(HttpResponse::build(StatusCode::OK).json(value))
 }
 
-#[get("/chains/main/blocks/{block_id}/context/contracts/{contract_id}/script")]
-async fn contract_script(
-    client: Data<Client>,
+pub async fn contract_script<T: TezosFacade>(
+    client: Data<T>,
     path: Path<(String, String)>,
 ) -> Result<impl Responder> {
     let address: ContractAddress = path.1.as_str().try_into().map_err(Error::from)?;
@@ -76,9 +69,8 @@ async fn contract_script(
     Ok(HttpResponse::build(StatusCode::OK).json(value))
 }
 
-#[get("/chains/main/blocks/{block_id}/context/contracts/{contract_id}/entrypoints")]
-async fn contract_entrypoints(
-    client: Data<Client>,
+pub async fn contract_entrypoints<T: TezosFacade>(
+    client: Data<T>,
     path: Path<(String, String)>,
 ) -> Result<impl Responder> {
     let address: ContractAddress = path.1.as_str().try_into().map_err(Error::from)?;
@@ -88,8 +80,7 @@ async fn contract_entrypoints(
     Ok(HttpResponse::build(StatusCode::OK).json(value))
 }
 
-#[get("/chains/main/blocks/{block_id}/context/contracts/{contract_id}")]
-async fn contract(client: Data<Client>, path: Path<(String, String)>) -> Result<impl Responder> {
+pub async fn contract<T: TezosFacade>(client: Data<T>, path: Path<(String, String)>) -> Result<impl Responder> {
     let address: Address = path.1.as_str().try_into().map_err(Error::from)?;
     let value = client
         .get_contract(&path.0.as_str().try_into()?, &address)

@@ -44,8 +44,8 @@ pub struct RollupRpcClient {
     origination_level: Option<i32>,
 }
 
-impl RollupRpcClient {
-    pub fn default() -> Self {
+impl Default for RollupRpcClient {
+    fn default() -> Self {
         Self {
             base_url: "http://localhost:8932".into(),
             client: Client::new(),
@@ -53,7 +53,9 @@ impl RollupRpcClient {
             chain_id: None,
         }
     }
+}
 
+impl RollupRpcClient {
     pub async fn initialize(&mut self) -> Result<()> {
         let address = self.get_rollup_address().await?;
         let payload = address.to_bytes()?;

@@ -1,6 +1,5 @@
 use actix_web::{
     http::StatusCode,
-    post,
     web::{Data, Json, Path},
     HttpResponse, Responder, Result,
 };
@@ -11,7 +10,6 @@ use tezos_core::types::encoded::ChainId;
 
 use crate::{
     rollup::TezosHelpers,
-    Client,
     Error,
 };
 
@@ -39,8 +37,7 @@ impl TryInto<SignedOperation> for RunOperationRequest {
     }
 }
 
-#[post("/chains/main/blocks/{block_id}/helpers/scripts/run_operation")]
-async fn run_operation(client: Data<Client>, path: Path<(String,)>, request: Json<RunOperationRequest>) -> Result<impl Responder> {   
+pub async fn run_operation<T: TezosHelpers>(client: Data<T>, path: Path<(String,)>, request: Json<RunOperationRequest>) -> Result<impl Responder> {   
     let value = client.simulate_operation(&path.0.as_str().try_into()?, request.0.try_into()?).await?;
     Ok(HttpResponse::build(StatusCode::OK).json(value))
 }

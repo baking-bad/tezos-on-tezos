@@ -3,7 +3,6 @@ pub mod rpc_context;
 pub mod rpc_helpers;
 pub mod facade;
 pub mod block_id;
-pub mod mock_node;
 
 use async_trait::async_trait;
 use context::{BatchReceipt, ContextNode, Head};

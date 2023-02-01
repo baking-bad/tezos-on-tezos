@@ -19,6 +19,7 @@ pub enum InternalKind {
     IBig,
     Actix,
     Misc,
+    Sync,
 }
 
 #[derive(Debug)]

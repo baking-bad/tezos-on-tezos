@@ -17,6 +17,14 @@ impl EphemeralContext {
         }
     }
 
+    pub fn spawn(&self) -> Self {
+        Self {
+            state: self.state.clone(),
+            pending_state: HashMap::new(),
+            modified_keys: Vec::new(),
+        }
+    }
+
     pub fn pending_removed(&self, key: &String) -> bool {
         match self.pending_state.get(key) {
             Some(None) => true,
