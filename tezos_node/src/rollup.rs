@@ -1,8 +1,8 @@
+pub mod block_id;
+pub mod facade;
 pub mod rpc_client;
 pub mod rpc_context;
 pub mod rpc_helpers;
-pub mod facade;
-pub mod block_id;
 
 use async_trait::async_trait;
 use context::{BatchReceipt, ContextNode, Head};
@@ -133,5 +133,9 @@ pub trait TezosFacade {
 
 #[async_trait]
 pub trait TezosHelpers {
-    async fn simulate_operation(&self, block_id: &BlockId, operation: SignedOperation) -> Result<Operation>;
+    async fn simulate_operation(
+        &self,
+        block_id: &BlockId,
+        operation: SignedOperation,
+    ) -> Result<Operation>;
 }

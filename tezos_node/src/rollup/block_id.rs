@@ -1,6 +1,6 @@
 use tezos_core::types::encoded::{BlockHash, Encoded};
 
-use crate::{Result, Error};
+use crate::{Error, Result};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum BlockId {

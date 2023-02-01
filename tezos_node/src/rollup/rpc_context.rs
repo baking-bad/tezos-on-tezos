@@ -1,8 +1,8 @@
+use context::{ContextNode, EphemeralContext, GenericContext};
 use log::debug;
 use reqwest::blocking::Client;
-use context::{GenericContext, ContextNode, EphemeralContext};
 
-use crate::{Result, Error, rollup::rpc_client::StateResponse};
+use crate::{rollup::rpc_client::StateResponse, Error, Result};
 
 fn err_into(e: impl std::fmt::Debug) -> context::Error {
     context::Error::Internal(context::error::InternalError::new(
@@ -24,7 +24,7 @@ impl RpcContext {
             client: Client::new(),
             tmp_ctx: EphemeralContext::new(),
             base_url,
-            state_level
+            state_level,
         }
     }
 
@@ -48,7 +48,7 @@ impl RpcContext {
                     let message = errors.first().unwrap().to_string();
                     Err(Error::DurableStorageError { message })
                 }
-                None => Ok(None)
+                None => Ok(None),
             }
         } else {
             Err(Error::RollupClientError {
@@ -68,13 +68,13 @@ impl GenericContext for RpcContext {
             true => return Ok(true),
             false => {
                 if self.tmp_ctx.pending_removed(&key) {
-                    return Ok(false)
+                    return Ok(false);
                 }
             }
         };
         match self.get_state_value(key) {
             Ok(val) => Ok(val.is_some()),
-            Err(err) => Err(err_into(err))
+            Err(err) => Err(err_into(err)),
         }
     }
 
@@ -83,7 +83,7 @@ impl GenericContext for RpcContext {
             Some(val) => return Ok(Some(val)),
             None => {
                 if self.tmp_ctx.pending_removed(&key) {
-                    return Ok(None)
+                    return Ok(None);
                 }
             }
         };

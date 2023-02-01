@@ -1,13 +1,11 @@
 use actix_web::{middleware::Logger, App, HttpServer};
-use tezos_node::{
-    rollup::rpc_client::RollupRpcClient,
-    services::config
-};
+use tezos_node::{rollup::rpc_client::RollupRpcClient, services::config};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let mut client = RollupRpcClient::default();
-    client.initialize()
+    client
+        .initialize()
         .await
         .expect("Failed to initialize client");
 

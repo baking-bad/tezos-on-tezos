@@ -15,7 +15,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::Config;
 
-pub const ZERO_SIGNATURE: &str = "sigMzJ4GVAvXEd2RjsKGfG2H9QvqTSKCZsuB2KiHbZRGFz72XgF6KaKADznh674fQgBatxw3xdHqTtMHUZAGRprxy64wg1aq";
+pub const ZERO_SIGNATURE: &str =
+    "sigMzJ4GVAvXEd2RjsKGfG2H9QvqTSKCZsuB2KiHbZRGFz72XgF6KaKADznh674fQgBatxw3xdHqTtMHUZAGRprxy64wg1aq";
 
 macro_rules! ts2dt {
     ($ts: expr) => {

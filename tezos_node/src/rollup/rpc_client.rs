@@ -90,8 +90,7 @@ impl RollupRpcClient {
             .client
             .get(format!(
                 "{}/global/block/{}/state_current_level",
-                self.base_url,
-                block_id
+                self.base_url, block_id
             ))
             .send()
             .await?;
@@ -115,11 +114,9 @@ impl RollupRpcClient {
             BlockId::Head => Ok("head".into()),
             BlockId::Genesis => Ok(origination_level.to_string()),
             BlockId::Level(level) => Ok((level + origination_level).to_string()),
-            BlockId::Hash(hash) => {
-                Err(Error::KeyNotFound {
-                    key: hash.into_string(),
-                })
-            }
+            BlockId::Hash(hash) => Err(Error::KeyNotFound {
+                key: hash.into_string(),
+            }),
         }
     }
 }

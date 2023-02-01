@@ -1,25 +1,23 @@
-use async_trait::async_trait;
 use actix_web::rt::task;
-use tezos_rpc::models::operation::Operation;
+use async_trait::async_trait;
+use tezos_l2::{executor::operation::execute_operation, validator::operation::validate_operation};
 use tezos_operation::operations::SignedOperation;
-use tezos_l2::{
-    validator::operation::validate_operation,
-    executor::operation::execute_operation,
-};
+use tezos_rpc::models::operation::Operation;
 
 use crate::{
-    Result,
     rollup::{
-        rpc_context::RpcContext,
-        rpc_client::RollupRpcClient,
-        block_id::BlockId,
-        TezosHelpers,
-    }
+        block_id::BlockId, rpc_client::RollupRpcClient, rpc_context::RpcContext, TezosHelpers,
+    },
+    Result,
 };
 
 #[async_trait]
 impl TezosHelpers for RollupRpcClient {
-    async fn simulate_operation(&self, block_id: &BlockId, operation: SignedOperation) -> Result<Operation> {
+    async fn simulate_operation(
+        &self,
+        block_id: &BlockId,
+        operation: SignedOperation,
+    ) -> Result<Operation> {
         let state_level = self.get_state_level(block_id).await?;
         let base_url = self.base_url.clone();
 
@@ -29,6 +27,7 @@ impl TezosHelpers for RollupRpcClient {
             let opg = validate_operation(&mut context, operation, hash, true)?;
             let receipt = execute_operation(&mut context, &opg)?;
             Ok(receipt)
-        }).await?
+        })
+        .await?
     }
 }

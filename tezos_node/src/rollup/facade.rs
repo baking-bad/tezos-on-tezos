@@ -2,8 +2,8 @@ use async_trait::async_trait;
 use ibig::IBig;
 use std::collections::HashMap;
 use tezos_core::types::encoded::{
-    Address, BlockHash, ContractAddress, Encoded, ImplicitAddress, 
-    OperationHash, PublicKey, ScriptExprHash, Signature,
+    Address, BlockHash, ContractAddress, Encoded, ImplicitAddress, OperationHash, PublicKey,
+    ScriptExprHash, Signature,
 };
 use tezos_core::types::{mutez::Mutez, number::Nat};
 use tezos_michelson::micheline::Micheline;

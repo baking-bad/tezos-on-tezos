@@ -155,20 +155,23 @@ mod test {
         context.commit()?;
 
         let opg = SignedOperation::new(
-            "BMNvSHmWUkdonkG2oFwwQKxHUdrYQhUXqxLaSRX9wjMGfLddURC".try_into().unwrap(),
-            vec![
-                Transaction::new(
-                    address.clone().try_into()?,
-                    417u32.into(),
-                    2336132u32.into(),
-                    1527u32.into(),
-                    357u32.into(),
-                    498719u32.into(),
-                    "tz1d5Dr3gjsxQo5XNbjAj558mLy3nGGQgMFA".try_into().unwrap(),
-                    None
-                ).into()
-            ],
-            "sigw1WNdYweqz1c7zKcvZFHQ18swSv4HBWje5quRmixxitPk7z8jtY63qXgKLPVfTM6XGxExPatBWJP44Bknyu3hDHDKJZgY".try_into().unwrap()
+            "BMNvSHmWUkdonkG2oFwwQKxHUdrYQhUXqxLaSRX9wjMGfLddURC"
+                .try_into()
+                .unwrap(),
+            vec![Transaction::new(
+                address.clone().try_into()?,
+                417u32.into(),
+                2336132u32.into(),
+                1527u32.into(),
+                357u32.into(),
+                498719u32.into(),
+                "tz1d5Dr3gjsxQo5XNbjAj558mLy3nGGQgMFA".try_into().unwrap(),
+                None,
+            )
+            .into()],
+            "sigw1WNdYweqz1c7zKcvZFHQ18swSv4HBWje5quRmixxitPk7z8jtY63qXgKLPVfTM6XGxExPatBWJP44Bknyu3hDHDKJZgY"
+                .try_into()
+                .unwrap(),
         );
 
         let hash = opg.hash()?;
@@ -188,7 +191,9 @@ mod test {
         context.commit()?;
 
         let opg = SignedOperation::new(
-            "BMY9L2Nq2wTiHbS3UD8zncaKrbjpD3JdUvyf28ViJYadwpDKLBz".try_into().unwrap(),
+            "BMY9L2Nq2wTiHbS3UD8zncaKrbjpD3JdUvyf28ViJYadwpDKLBz"
+                .try_into()
+                .unwrap(),
             vec![
                 Reveal::new(
                     address.clone(),
@@ -196,8 +201,11 @@ mod test {
                     85938846u32.into(),
                     1100u32.into(),
                     0u32.into(),
-                    "edpktvzfDT9BVRGxGmd4XR5qNELdvQD25iviUbKaj1U8ZdNj1GwJRV".try_into().unwrap()
-                ).into(),
+                    "edpktvzfDT9BVRGxGmd4XR5qNELdvQD25iviUbKaj1U8ZdNj1GwJRV"
+                        .try_into()
+                        .unwrap(),
+                )
+                .into(),
                 Transaction::new(
                     address.clone(),
                     665u32.into(),
@@ -206,10 +214,13 @@ mod test {
                     257u32.into(),
                     264282311u32.into(),
                     "tz1i8Z9QpQyejB66futrjwdyaEZMND7kMtTy".try_into().unwrap(),
-                    None
-                ).into()
+                    None,
+                )
+                .into(),
             ],
-            "sigchjxVdGxuHRb4aqhvYBufFz3t1kpfVQJdKEVvM685D5SuXAfu4h7dpCtkF8yNN1emcWF4vyNMxbEK4DFKFxvYtmxC24uo".try_into().unwrap()
+            "sigchjxVdGxuHRb4aqhvYBufFz3t1kpfVQJdKEVvM685D5SuXAfu4h7dpCtkF8yNN1emcWF4vyNMxbEK4DFKFxvYtmxC24uo"
+                .try_into()
+                .unwrap(),
         );
 
         let hash = opg.hash()?;

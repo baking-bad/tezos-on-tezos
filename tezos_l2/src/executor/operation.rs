@@ -130,16 +130,22 @@ mod test {
         }
 
         let opg = ManagerOperation {
-            hash: "ooKsoMe48CCt1ERrk5DgnSovFazhm53yfAYbwxNQmjWVtbNzLME".try_into().unwrap(),
+            hash: "ooKsoMe48CCt1ERrk5DgnSovFazhm53yfAYbwxNQmjWVtbNzLME"
+                .try_into()
+                .unwrap(),
             origin: SignedOperation::new(
-                "BMNvSHmWUkdonkG2oFwwQKxHUdrYQhUXqxLaSRX9wjMGfLddURC".try_into().unwrap(),
+                "BMNvSHmWUkdonkG2oFwwQKxHUdrYQhUXqxLaSRX9wjMGfLddURC"
+                    .try_into()
+                    .unwrap(),
                 vec![make_tx!(2u32).into(), make_tx!(3u32).into(), make_tx!(4u32).into()],
-                "sigw1WNdYweqz1c7zKcvZFHQ18swSv4HBWje5quRmixxitPk7z8jtY63qXgKLPVfTM6XGxExPatBWJP44Bknyu3hDHDKJZgY".try_into().unwrap()
+                "sigw1WNdYweqz1c7zKcvZFHQ18swSv4HBWje5quRmixxitPk7z8jtY63qXgKLPVfTM6XGxExPatBWJP44Bknyu3hDHDKJZgY"
+                    .try_into()
+                    .unwrap(),
             ),
             last_counter: 4u32.into(),
             source: source.try_into()?,
             total_fees: 3000u32.into(),
-            total_spent: 0u32.into()  // <-- not true, fot the sake of the test
+            total_spent: 0u32.into(), // <-- not true, fot the sake of the test
         };
 
         let receipt = execute_operation(&mut context, &opg)?;

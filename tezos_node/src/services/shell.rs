@@ -15,7 +15,10 @@ pub async fn chain_id<T: RollupClient>(client: Data<T>) -> Result<impl Responder
     Ok(HttpResponse::build(StatusCode::OK).json(value))
 }
 
-pub async fn inject_operation<T: TezosFacade>(client: Data<T>, request: Json<String>) -> Result<impl Responder> {
+pub async fn inject_operation<T: TezosFacade>(
+    client: Data<T>,
+    request: Json<String>,
+) -> Result<impl Responder> {
     let payload = hex::decode(request.0).map_err(Error::from)?;
     let value = client.inject_operation(payload).await?;
     Ok(HttpResponse::build(StatusCode::OK).json(value))

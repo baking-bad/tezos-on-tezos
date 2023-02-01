@@ -80,7 +80,10 @@ pub async fn contract_entrypoints<T: TezosFacade>(
     Ok(HttpResponse::build(StatusCode::OK).json(value))
 }
 
-pub async fn contract<T: TezosFacade>(client: Data<T>, path: Path<(String, String)>) -> Result<impl Responder> {
+pub async fn contract<T: TezosFacade>(
+    client: Data<T>,
+    path: Path<(String, String)>,
+) -> Result<impl Responder> {
     let address: Address = path.1.as_str().try_into().map_err(Error::from)?;
     let value = client
         .get_contract(&path.0.as_str().try_into()?, &address)

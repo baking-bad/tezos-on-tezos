@@ -6,14 +6,20 @@ use actix_web::{
 
 use crate::rollup::TezosFacade;
 
-pub async fn operation<T: TezosFacade>(client: Data<T>, path: Path<(String, i32, i32)>) -> Result<impl Responder> {
+pub async fn operation<T: TezosFacade>(
+    client: Data<T>,
+    path: Path<(String, i32, i32)>,
+) -> Result<impl Responder> {
     let value = client
         .get_operation(&path.0.as_str().try_into()?, path.1, path.2)
         .await?;
     Ok(HttpResponse::build(StatusCode::OK).json(value))
 }
 
-pub async fn operation_list<T: TezosFacade>(client: Data<T>, path: Path<(String, i32)>) -> Result<impl Responder> {
+pub async fn operation_list<T: TezosFacade>(
+    client: Data<T>,
+    path: Path<(String, i32)>,
+) -> Result<impl Responder> {
     let value = client
         .get_operation_list(&path.0.as_str().try_into()?, path.1)
         .await?;

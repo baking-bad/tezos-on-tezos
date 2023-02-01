@@ -28,7 +28,7 @@ impl EphemeralContext {
     pub fn pending_removed(&self, key: &String) -> bool {
         match self.pending_state.get(key) {
             Some(None) => true,
-            _ => false
+            _ => false,
         }
     }
 }
