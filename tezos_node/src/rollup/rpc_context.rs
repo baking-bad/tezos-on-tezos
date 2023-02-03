@@ -1,12 +1,12 @@
-use context::{ContextNode, EphemeralContext, GenericContext};
 use log::debug;
 use reqwest::blocking::Client;
+use tezos_ctx::{ContextNode, EphemeralContext, GenericContext};
 
 use crate::{rollup::rpc_client::StateResponse, Error, Result};
 
-fn err_into(e: impl std::fmt::Debug) -> context::Error {
-    context::Error::Internal(context::error::InternalError::new(
-        context::error::InternalKind::Store,
+fn err_into(e: impl std::fmt::Debug) -> tezos_ctx::Error {
+    tezos_ctx::Error::Internal(tezos_ctx::error::InternalError::new(
+        tezos_ctx::error::InternalKind::Store,
         format!("RPC context error: {:?}", e),
     ))
 }
@@ -63,7 +63,7 @@ impl GenericContext for RpcContext {
         debug!("{}", msg)
     }
 
-    fn has(&self, key: String) -> context::Result<bool> {
+    fn has(&self, key: String) -> tezos_ctx::Result<bool> {
         match self.tmp_ctx.has(key.clone())? {
             true => return Ok(true),
             false => {
@@ -78,7 +78,7 @@ impl GenericContext for RpcContext {
         }
     }
 
-    fn get(&mut self, key: String) -> context::Result<Option<ContextNode>> {
+    fn get(&mut self, key: String) -> tezos_ctx::Result<Option<ContextNode>> {
         match self.tmp_ctx.get(key.clone())? {
             Some(val) => return Ok(Some(val)),
             None => {
@@ -90,7 +90,7 @@ impl GenericContext for RpcContext {
         self.get_state_value(key).map_err(err_into)
     }
 
-    fn set(&mut self, key: String, val: Option<ContextNode>) -> context::Result<()> {
+    fn set(&mut self, key: String, val: Option<ContextNode>) -> tezos_ctx::Result<()> {
         self.tmp_ctx.set(key, val)
     }
 
@@ -98,7 +98,7 @@ impl GenericContext for RpcContext {
         self.tmp_ctx.has_pending_changes()
     }
 
-    fn commit(&mut self) -> context::Result<()> {
+    fn commit(&mut self) -> tezos_ctx::Result<()> {
         self.tmp_ctx.commit()
     }
 

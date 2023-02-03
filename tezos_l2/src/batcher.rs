@@ -1,11 +1,11 @@
-use context::{
-    migrations::run_migrations, BatchHeader, BatchReceipt, ExecutorContext, GenericContext, Head,
-    InterpreterContext,
-};
 use tezos_core::{
     internal::coder::Encoder,
     internal::crypto::blake2b,
     types::encoded::{BlockHash, BlockPayloadHash, Encoded, OperationHash, OperationListListHash},
+};
+use tezos_ctx::{
+    migrations::run_migrations, BatchHeader, BatchReceipt, ExecutorContext, GenericContext, Head,
+    InterpreterContext,
 };
 use tezos_operation::{
     block_header, internal::coder::operation_content_bytes_coder::OperationContentBytesCoder,

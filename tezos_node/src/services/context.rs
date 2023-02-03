@@ -3,8 +3,8 @@ use actix_web::{
     web::{Data, Path},
     HttpResponse, Responder, Result,
 };
-use context::Config;
 use tezos_core::types::encoded::ScriptExprHash;
+use tezos_ctx::Config;
 
 use crate::{rollup::TezosFacade, Error};
 

@@ -1,6 +1,3 @@
-use context::{
-    migrations::run_migrations, ExecutorContext, GenericContext, Head, InterpreterContext,
-};
 use std::collections::HashMap;
 use tezos_core::internal::crypto::blake2b;
 use tezos_core::types::{
@@ -9,6 +6,9 @@ use tezos_core::types::{
         ImplicitAddress, OperationHash, PublicKey, SecretKey,
     },
     number::Nat,
+};
+use tezos_ctx::{
+    migrations::run_migrations, ExecutorContext, GenericContext, Head, InterpreterContext,
 };
 use tezos_michelson::micheline::Micheline;
 use tezos_operation::operations::{

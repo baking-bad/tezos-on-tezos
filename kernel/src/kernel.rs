@@ -1,6 +1,6 @@
-use context::{ExecutorContext, GenericContext};
 use host::{rollup_core::RawRollupCore, runtime::Runtime};
 use tezos_core::types::encoded::{Encoded, OperationHash};
+use tezos_ctx::{ExecutorContext, GenericContext};
 use tezos_l2::{batcher::apply_batch, constants};
 use tezos_operation::operations::SignedOperation;
 
@@ -82,10 +82,10 @@ mod test {
     use super::*;
     use crate::context::PVMContext;
 
-    use context::{ExecutorContext, Result};
     use hex;
     use host::rollup_core::Input;
     use mock_runtime::host::MockHost;
+    use tezos_ctx::{ExecutorContext, Result};
 
     #[test]
     fn send_tez() -> Result<()> {

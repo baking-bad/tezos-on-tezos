@@ -1,9 +1,9 @@
-use context::EphemeralContext;
 use serde_json::Value;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
 use tezos_core::types::encoded::Encoded;
+use tezos_ctx::EphemeralContext;
 use tezos_l2::executor::origination::originated_address;
 use tezos_michelson::micheline::Micheline;
 

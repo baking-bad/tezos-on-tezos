@@ -63,13 +63,17 @@ impl<T: RollupClient + Sync + Send> TezosFacade for T {
         block_id: &BlockId,
         address: &ImplicitAddress,
     ) -> Result<Nat> {
-        let counter: Nat = self
+        let counter: Nat = match self
             .get_state_value(
                 format!("/context/contracts/{}/counter", address.value()),
                 block_id,
             )
-            .await?
-            .try_into()?;
+            .await
+        {
+            Ok(val) => val.try_into()?,
+            Err(Error::KeyNotFound { key: _ }) => Nat::from_integer(0u32),
+            Err(err) => return Err(err),
+        };
         Ok(counter)
     }
 

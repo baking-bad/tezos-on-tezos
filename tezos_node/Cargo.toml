@@ -21,7 +21,7 @@ env_logger = "0.10.0"
 hex = "*"
 derive_more = "0.99"
 serde_json = "*"
-context = { path = "../context" }
+tezos_ctx = { path = "../tezos_ctx" }
 tezos_l2 = { path = "../tezos_l2" }
 tezos_vm = { path = "../tezos_vm" }
 tezos_rpc = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "develop", package = "tezos-rpc", default-features = false }

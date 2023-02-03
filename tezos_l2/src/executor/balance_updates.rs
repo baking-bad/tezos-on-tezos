@@ -1,5 +1,5 @@
-use context::ExecutorContext;
 use tezos_core::types::mutez::Mutez;
+use tezos_ctx::ExecutorContext;
 use tezos_rpc::models::balance_update::{BalanceUpdate, Contract, Kind, Origin};
 
 use crate::{Error, Result};

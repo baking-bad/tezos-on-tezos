@@ -32,9 +32,14 @@ impl<T: GenericContext> ExecutorContext for T {
         );
     }
 
-    fn get_counter(&mut self, address: &str) -> Result<Option<Nat>> {
+    fn get_counter(&mut self, address: &str) -> Result<Nat> {
         // TODO: use u64 or UBig instead of Nat, because it is String under the hood, not good for math
-        context_get_opt!(self, "/context/contracts/{}/counter", address)
+        context_get!(
+            self,
+            Nat::from_integer(0u32),
+            "/context/contracts/{}/counter",
+            address
+        )
     }
 
     fn set_counter(&mut self, address: &str, counter: Nat) -> Result<()> {

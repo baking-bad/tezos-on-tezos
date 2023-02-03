@@ -1,5 +1,5 @@
-use context::{ExecutorContext, GenericContext, InterpreterContext};
 use tezos_core::types::encoded::{ChainId, Encoded, ProtocolHash};
+use tezos_ctx::{ExecutorContext, GenericContext, InterpreterContext};
 use tezos_operation::operations::OperationContent;
 use tezos_rpc::models::operation::Operation as OperationReceipt;
 
@@ -76,8 +76,8 @@ pub fn execute_operation(
 
 #[cfg(test)]
 mod test {
-    use context::{EphemeralContext, ExecutorContext};
     use tezos_core::types::{mutez::Mutez, number::Nat};
+    use tezos_ctx::{EphemeralContext, ExecutorContext};
     use tezos_operation::operations::{SignedOperation, Transaction};
     use tezos_rpc::models::operation::{operation_result::OperationResultStatus, OperationContent};
 

@@ -148,7 +148,7 @@ impl_parsing_error!(tezos_michelson::Error);
 impl_parsing_error!(ibig::error::ParseError);
 impl_parsing_error!(chrono::ParseError);
 impl_parsing_error!(serde_json_wasm::de::Error);
-impl_parsing_error!(context::Error);
+impl_parsing_error!(tezos_ctx::Error);
 
 impl From<ibig::error::OutOfBoundsError> for Error {
     fn from(_: ibig::error::OutOfBoundsError) -> Self {

@@ -1,8 +1,8 @@
 use async_trait::async_trait;
-use context::ContextNode;
 use reqwest::Client;
 use serde::Deserialize;
 use tezos_core::types::encoded::{ChainId, Encoded, SmartRollupAddress};
+use tezos_ctx::ContextNode;
 
 use crate::{
     internal_error,

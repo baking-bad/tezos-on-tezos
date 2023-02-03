@@ -476,20 +476,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "context"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "derive_more",
- "serde",
- "serde-json-wasm",
- "tezos-core",
- "tezos-michelson",
- "tezos-operation",
- "tezos-rpc",
-]
-
-[[package]]
 name = "convert_case"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2256,7 +2242,6 @@ dependencies = [
 name = "tez_kernel"
 version = "0.1.0"
 dependencies = [
- "context",
  "derive_more",
  "hex",
  "host",
@@ -2264,6 +2249,7 @@ dependencies = [
  "tezos-core",
  "tezos-operation",
  "tezos-rpc",
+ "tezos_ctx",
  "tezos_l2",
 ]
 
@@ -2333,6 +2319,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "tezos_ctx"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "derive_more",
+ "serde",
+ "serde-json-wasm",
+ "tezos-core",
+ "tezos-michelson",
+ "tezos-operation",
+ "tezos-rpc",
+]
+
+[[package]]
 name = "tezos_encoding"
 version = "3.1.1"
 source = "git+https://github.com/emturner/tezedge.git?branch=master#7f4e1cd6e29282a5b6b5128381f42dab345ab50a"
@@ -2368,7 +2368,6 @@ version = "0.1.0"
 dependencies = [
  "blake2",
  "chrono",
- "context",
  "derive_more",
  "ed25519-dalek",
  "ibig",
@@ -2379,6 +2378,7 @@ dependencies = [
  "tezos-michelson",
  "tezos-operation",
  "tezos-rpc",
+ "tezos_ctx",
  "tezos_vm",
 ]
 
@@ -2388,7 +2388,6 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "async-trait",
- "context",
  "derive_more",
  "env_logger",
  "hex",
@@ -2403,6 +2402,7 @@ dependencies = [
  "tezos-michelson",
  "tezos-operation",
  "tezos-rpc",
+ "tezos_ctx",
  "tezos_l2",
  "tezos_vm",
  "tokio",
@@ -2429,7 +2429,6 @@ version = "0.1.0"
 dependencies = [
  "blake2",
  "chrono",
- "context",
  "derive_more",
  "hex",
  "ibig",
@@ -2438,6 +2437,7 @@ dependencies = [
  "serde-json-wasm",
  "tezos-core",
  "tezos-michelson",
+ "tezos_ctx",
 ]
 
 [[package]]

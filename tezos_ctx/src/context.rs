@@ -29,7 +29,7 @@ pub trait ExecutorContext {
     fn set_head(&mut self, head: Head) -> Result<()>;
     fn get_balance(&mut self, address: &str) -> Result<Option<Mutez>>;
     fn set_balance(&mut self, address: &str, balance: Mutez) -> Result<()>;
-    fn get_counter(&mut self, address: &str) -> Result<Option<Nat>>;
+    fn get_counter(&mut self, address: &str) -> Result<Nat>;
     fn set_counter(&mut self, address: &str, counter: Nat) -> Result<()>;
     fn has_public_key(&self, address: &str) -> Result<bool>;
     fn get_public_key(&mut self, address: &str) -> Result<Option<PublicKey>>;

@@ -1,9 +1,9 @@
-use context::{ExecutorContext, InterpreterContext};
 use derive_more::From;
 use tezos_core::types::{
     encoded::{Address, ContractAddress, Encoded},
     mutez::Mutez,
 };
+use tezos_ctx::{ExecutorContext, InterpreterContext};
 use tezos_operation::operations::{
     Entrypoint, OperationContent, Origination, Parameters, Transaction,
 };

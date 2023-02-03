@@ -7,7 +7,7 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-context = { path = "../context" }
+tezos_ctx = { path = "../tezos_ctx" }
 tezos_l2 = { path = "../tezos_l2" }
 host = { git = "https://gitlab.com/tezos/kernel" }
 tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "develop", package = "tezos-core", default-features = false }

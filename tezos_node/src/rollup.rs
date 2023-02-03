@@ -6,13 +6,13 @@ pub mod rpc_context;
 pub mod rpc_helpers;
 
 use async_trait::async_trait;
-use context::{BatchReceipt, ContextNode, Head};
 use serde::Serialize;
 use tezos_core::types::encoded::{
     Address, BlockHash, ChainId, ContractAddress, Encoded, ImplicitAddress, OperationHash,
     ProtocolHash, PublicKey, ScriptExprHash,
 };
 use tezos_core::types::{mutez::Mutez, number::Nat};
+use tezos_ctx::{BatchReceipt, ContextNode, Head};
 use tezos_michelson::micheline::Micheline;
 use tezos_operation::operations::SignedOperation;
 use tezos_rpc::models::{

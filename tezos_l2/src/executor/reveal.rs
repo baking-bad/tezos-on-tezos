@@ -1,5 +1,5 @@
-use context::ExecutorContext;
 use tezos_core::types::encoded::Encoded;
+use tezos_ctx::ExecutorContext;
 use tezos_operation::operations::Reveal;
 use tezos_rpc::models::operation::operation_result::{
     operations::reveal::RevealOperationResult, OperationResultStatus,
@@ -48,8 +48,8 @@ pub fn execute_reveal(
 
 #[cfg(test)]
 mod test {
-    use context::{EphemeralContext, ExecutorContext};
     use tezos_core::types::{encoded::PublicKey, mutez::Mutez, number::Nat};
+    use tezos_ctx::{EphemeralContext, ExecutorContext};
     use tezos_operation::operations::Reveal;
 
     use super::*;

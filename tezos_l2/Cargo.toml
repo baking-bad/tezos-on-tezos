@@ -8,7 +8,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 tezos_vm = { path = "../tezos_vm" }
-context = { path = "../context" }
+tezos_ctx = { path = "../tezos_ctx" }
 tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "develop", package = "tezos-core", default-features = false, features = ["ed25519"] }
 tezos_operation = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "develop", package = "tezos-operation", default-features = false, features = ["ed25519"] }
 tezos_rpc = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "develop", package = "tezos-rpc", default-features = false }

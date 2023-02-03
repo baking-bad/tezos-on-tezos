@@ -1,9 +1,9 @@
-use context::ExecutorContext;
 use tezos_core::types::{
     encoded::{Encoded, ImplicitAddress, OperationHash},
     mutez::Mutez,
     number::Nat,
 };
+use tezos_ctx::ExecutorContext;
 use tezos_operation::operations::{OperationContent, SignedOperation};
 
 use crate::{Error, Result};
@@ -96,10 +96,7 @@ pub fn validate_operation(
         return Err(Error::BalanceTooLow { balance });
     }
 
-    let mut counter = match context.get_counter(&source.value())? {
-        Some(value) => value.to_integer()?,
-        None => 0u64,
-    };
+    let mut counter: u64 = context.get_counter(&source.value())?.to_integer()?;
 
     for content in opg.contents.iter() {
         let next_counter: u64 = match content {
@@ -130,12 +127,12 @@ pub fn validate_operation(
 
 #[cfg(test)]
 mod test {
-    use context::{EphemeralContext, ExecutorContext, GenericContext};
     use tezos_core::types::{
         encoded::{Encoded, ImplicitAddress, PublicKey},
         mutez::Mutez,
         number::Nat,
     };
+    use tezos_ctx::{EphemeralContext, ExecutorContext, GenericContext};
     use tezos_operation::operations::{Reveal, SignedOperation, Transaction};
 
     use super::*;

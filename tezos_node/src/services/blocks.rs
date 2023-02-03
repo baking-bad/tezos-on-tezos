@@ -63,8 +63,8 @@ pub async fn block<T: TezosFacade>(
 #[cfg(test)]
 mod test {
     use actix_web::{test, web::Data, App};
-    use context::{BatchHeader, BatchReceipt, ExecutorContext, Head};
     use tezos_core::types::encoded::{BlockHash, Encoded};
+    use tezos_ctx::{BatchHeader, BatchReceipt, ExecutorContext, Head};
     use tezos_rpc::models::block::FullHeader;
 
     use crate::{rollup::mock_client::RollupMockClient, services::config, Result};

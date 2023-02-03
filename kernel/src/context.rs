@@ -1,6 +1,6 @@
-use context::{ContextNode, GenericContext, Result};
 use host::{rollup_core::RawRollupCore, runtime::Runtime};
 use std::collections::{HashMap, HashSet};
+use tezos_ctx::{ContextNode, GenericContext, Result};
 
 use crate::store::{store_delete, store_has, store_move, store_read, store_write};
 
@@ -144,9 +144,9 @@ where
 
 #[cfg(test)]
 mod test {
-    use context::{ExecutorContext, GenericContext, Result};
     use mock_runtime::host::MockHost;
     use tezos_core::types::mutez::Mutez;
+    use tezos_ctx::{ExecutorContext, GenericContext, Result};
 
     use crate::context::PVMContext;
 
