@@ -1,5 +1,6 @@
 pub mod block_id;
 pub mod facade;
+pub mod mock_client;
 pub mod rpc_client;
 pub mod rpc_context;
 pub mod rpc_helpers;
@@ -25,8 +26,10 @@ pub use block_id::BlockId;
 
 #[async_trait]
 pub trait RollupClient {
+    async fn initialize(&mut self) -> Result<()>;
     async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<ContextNode>;
     async fn get_chain_id(&self) -> Result<ChainId>;
+    async fn is_chain_synced(&self) -> Result<bool>;
     async fn inject_batch(&self, messages: Vec<Vec<u8>>) -> Result<()>;
 
     async fn get_batch_head(&self, block_id: &BlockId) -> Result<Head> {
@@ -128,11 +131,11 @@ pub trait TezosFacade {
     async fn get_operation(&self, block_id: &BlockId, pass: i32, index: i32) -> Result<Operation>;
     async fn get_operation_list(&self, block_id: &BlockId, pass: i32) -> Result<Vec<Operation>>;
     async fn get_operation_list_list(&self, block_id: &BlockId) -> Result<Vec<Vec<Operation>>>;
-    async fn inject_operation(&self, payload: Vec<u8>) -> Result<OperationHash>;
 }
 
 #[async_trait]
 pub trait TezosHelpers {
+    async fn inject_operation(&self, payload: Vec<u8>) -> Result<OperationHash>;
     async fn simulate_operation(
         &self,
         block_id: &BlockId,

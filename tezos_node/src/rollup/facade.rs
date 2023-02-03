@@ -3,12 +3,11 @@ use ibig::IBig;
 use std::collections::HashMap;
 use tezos_core::types::encoded::{
     Address, BlockHash, ContractAddress, Encoded, ImplicitAddress, OperationHash, PublicKey,
-    ScriptExprHash, Signature,
+    ScriptExprHash,
 };
 use tezos_core::types::{mutez::Mutez, number::Nat};
 use tezos_michelson::micheline::Micheline;
 use tezos_michelson::michelson::types::Type;
-use tezos_operation::operations::{SignedOperation, UnsignedOperation};
 use tezos_rpc::models::{
     block::{Block, FullHeader, Metadata},
     contract::{ContractEntrypoints, ContractInfo, ContractScript},
@@ -20,22 +19,6 @@ use crate::{
     rollup::{BlockId, BlockProtocols, RollupClient, TezosFacade},
     Error, Result,
 };
-
-pub fn parse_operation(payload: &[u8]) -> Result<OperationHash> {
-    const SIGNATURE_SIZE: usize = 64;
-    if payload.len() < SIGNATURE_SIZE {
-        return Err(Error::InvalidArguments {
-            message: format!("Payload too short"),
-        });
-    }
-
-    // validate encoding
-    UnsignedOperation::from_forged_bytes(&payload[..payload.len() - SIGNATURE_SIZE])?;
-    Signature::from_bytes(&payload[payload.len() - SIGNATURE_SIZE..])?;
-
-    let hash = SignedOperation::operation_hash(payload)?;
-    Ok(hash)
-}
 
 #[async_trait]
 impl<T: RollupClient + Sync + Send> TezosFacade for T {
@@ -288,13 +271,5 @@ impl<T: RollupClient + Sync + Send> TezosFacade for T {
         let receipt = self.get_batch_receipt(block_id).await?;
         // TODO: ttl blocks
         Ok(vec![receipt.header.predecessor])
-    }
-
-    async fn inject_operation(&self, payload: Vec<u8>) -> Result<OperationHash> {
-        let hash = parse_operation(payload.as_slice())?;
-        let chain_id = self.get_chain_id().await?;
-        let message = [chain_id.to_bytes()?, payload].concat();
-        self.inject_batch(vec![message]).await?;
-        Ok(hash)
     }
 }

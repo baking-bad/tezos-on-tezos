@@ -56,17 +56,6 @@ impl Default for RollupRpcClient {
 }
 
 impl RollupRpcClient {
-    pub async fn initialize(&mut self) -> Result<()> {
-        let address = self.get_rollup_address().await?;
-        let payload = address.to_bytes()?;
-        self.chain_id = Some(ChainId::from_bytes(&payload.as_slice()[..4])?);
-
-        let state_level = self.get_state_level(&BlockId::Head).await?;
-        let head_level = self.get_batch_head(&BlockId::Head).await?.level;
-        self.origination_level = Some(state_level - head_level);
-        Ok(())
-    }
-
     pub async fn get_rollup_address(&self) -> Result<SmartRollupAddress> {
         let res = self
             .client
@@ -77,6 +66,23 @@ impl RollupRpcClient {
         if res.status() == 200 {
             let value: String = res.json().await?;
             Ok(SmartRollupAddress::new(value)?)
+        } else {
+            Err(Error::RollupClientError {
+                status: res.status().as_u16(),
+            })
+        }
+    }
+
+    pub async fn get_tezos_level(&self) -> Result<i32> {
+        let res = self
+            .client
+            .get(format!("{}/global/tezos_level", self.base_url))
+            .send()
+            .await?;
+
+        if res.status() == 200 {
+            let value = res.text().await?;
+            Ok(i32::from_str_radix(&value, 10)?)
         } else {
             Err(Error::RollupClientError {
                 status: res.status().as_u16(),
@@ -123,6 +129,17 @@ impl RollupRpcClient {
 
 #[async_trait]
 impl RollupClient for RollupRpcClient {
+    async fn initialize(&mut self) -> Result<()> {
+        let address = self.get_rollup_address().await?;
+        let payload = address.to_bytes()?;
+        self.chain_id = Some(ChainId::from_bytes(&payload.as_slice()[..4])?);
+
+        let state_level = self.get_state_level(&BlockId::Head).await?;
+        let head_level = self.get_batch_head(&BlockId::Head).await?.level;
+        self.origination_level = Some(state_level - head_level);
+        Ok(())
+    }
+
     async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<ContextNode> {
         let block_id = self.convert_block_id(block_id)?;
         let res = self
@@ -158,6 +175,12 @@ impl RollupClient for RollupRpcClient {
         self.chain_id
             .clone()
             .ok_or(internal_error!(Misc, "Chain ID unknown"))
+    }
+
+    async fn is_chain_synced(&self) -> Result<bool> {
+        let tezos_level = self.get_tezos_level().await?;
+        let state_level = self.get_state_level(&BlockId::Head).await?;
+        Ok(state_level == tezos_level)
     }
 
     async fn inject_batch(&self, messages: Vec<Vec<u8>>) -> Result<()> {
