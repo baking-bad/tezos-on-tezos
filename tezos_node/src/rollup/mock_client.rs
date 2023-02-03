@@ -3,9 +3,10 @@ use context::{
     migrations::run_migrations, ContextNode, EphemeralContext, ExecutorContext, GenericContext,
     Head,
 };
+use log::debug;
 use std::cell::RefCell;
 use std::sync::Mutex;
-use tezos_core::types::encoded::{ChainId, OperationHash};
+use tezos_core::types::encoded::{ChainId, Encoded, OperationHash};
 use tezos_l2::{
     batcher::apply_batch, executor::operation::execute_operation,
     validator::operation::validate_operation,
@@ -43,12 +44,13 @@ impl Default for RollupMockClient {
 impl RollupMockClient {
     pub async fn bake(&self) -> Result<()> {
         let head = get_mut!(self.context).get_head()?;
-        apply_batch(
+        let res = apply_batch(
             get_mut!(self.context),
             head,
             get_mut!(self.mempool).drain(..).collect(),
             true,
         )?;
+        debug!("Baked {}", res);
         Ok(())
     }
 
@@ -93,6 +95,7 @@ impl RollupClient for RollupMockClient {
 impl TezosHelpers for RollupMockClient {
     async fn inject_operation(&self, payload: Vec<u8>) -> Result<OperationHash> {
         let (hash, opg) = parse_operation(payload.as_slice())?;
+        debug!("Injected {}\n{:#?}", hash.value(), &opg);
         get_mut!(self.mempool).push((hash.clone(), opg));
         Ok(hash)
     }

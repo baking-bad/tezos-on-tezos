@@ -12,17 +12,11 @@ use actix_web::{middleware::Logger, web::Data, App, HttpServer};
 
 pub async fn launch_node<
     T: Default + RollupClient + TezosFacade + TezosHelpers + Send + Sync + 'static,
->() -> std::io::Result<()> {
+>(
+    data: Data<T>,
+) -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "debug");
     env_logger::init();
-
-    let mut client = T::default();
-    client
-        .initialize()
-        .await
-        .expect("Failed to initialize client");
-
-    let data = Data::new(client);
 
     let server = HttpServer::new(move || {
         App::new()

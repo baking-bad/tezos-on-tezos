@@ -1,13 +1,13 @@
-use static_init::dynamic;
 use serial_test::serial;
+use static_init::dynamic;
 use std::path::PathBuf;
+use std::process::{Child, Command};
 use std::time::Duration;
 use tezos_rpc::{client::TezosRpc, http::default::HttpClient, Result};
 use tokio::time::sleep;
-use std::process::{Command, Child};
 
 struct TezosNode {
-    proc: Child
+    proc: Child,
 }
 
 impl Default for TezosNode {
@@ -17,21 +17,19 @@ impl Default for TezosNode {
             .unwrap()
             .join("target")
             .join("debug")
-            .join("mock-node");  // This is a workaround for CARGO_BIN_EXE_mock-node
+            .join("mock-node"); // This is a workaround for CARGO_BIN_EXE_mock-node
 
         Self {
             proc: Command::new(bin_path)
                 .spawn()
-                .expect("Failed to launch mock node")
+                .expect("Failed to launch mock node"),
         }
     }
 }
 
 impl Drop for TezosNode {
     fn drop(&mut self) {
-        self.proc
-            .kill()
-            .expect("Failed to stop mock node");
+        self.proc.kill().expect("Failed to stop mock node");
     }
 }
 
@@ -57,3 +55,11 @@ async fn integration_test() -> Result<()> {
     println!("{:?}", hash);
     Ok(())
 }
+
+// check head
+// reveal key
+// trasfer to new address
+// originate contract
+// call contract
+// access storage
+// access big_map
