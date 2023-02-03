@@ -12,12 +12,15 @@ struct TezosNode {
 
 impl Default for TezosNode {
     fn default() -> Self {
+        let bin_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap()
+            .join("target")
+            .join("debug")
+            .join("mock-node");  // This is a workaround for CARGO_BIN_EXE_mock-node
+
         Self {
-            proc: Command::new("cargo")
-                .arg("run")
-                .arg("--bin")
-                .arg("mock-node")
-                .current_dir(PathBuf::from(env!("CARGO_MANIFEST_DIR")))
+            proc: Command::new(bin_path)
                 .spawn()
                 .expect("Failed to launch mock node")
         }

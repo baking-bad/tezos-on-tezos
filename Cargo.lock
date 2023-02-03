@@ -1072,7 +1072,7 @@ dependencies = [
 [[package]]
 name = "host"
 version = "0.1.0"
-source = "git+https://gitlab.com/tezos/kernel#306d599449558cdd17af473edcb5b36dbb93e05c"
+source = "git+https://gitlab.com/tezos/kernel#603f9b9bfe8dc3c4fec17ea5668fa47d361d5e4e"
 dependencies = [
  "crypto",
 ]
@@ -1448,7 +1448,7 @@ dependencies = [
 [[package]]
 name = "mock_runtime"
 version = "0.1.0"
-source = "git+https://gitlab.com/tezos/kernel#306d599449558cdd17af473edcb5b36dbb93e05c"
+source = "git+https://gitlab.com/tezos/kernel#603f9b9bfe8dc3c4fec17ea5668fa47d361d5e4e"
 dependencies = [
  "crypto",
  "host",
@@ -2411,7 +2411,7 @@ dependencies = [
 [[package]]
 name = "tezos_rollup_encoding"
 version = "0.1.0"
-source = "git+https://gitlab.com/tezos/kernel#306d599449558cdd17af473edcb5b36dbb93e05c"
+source = "git+https://gitlab.com/tezos/kernel#603f9b9bfe8dc3c4fec17ea5668fa47d361d5e4e"
 dependencies = [
  "crypto",
  "host",
