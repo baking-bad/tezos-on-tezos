@@ -1,3 +1,4 @@
+pub mod entrypoints;
 pub mod error;
 pub mod formatter;
 pub mod instructions;

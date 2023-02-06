@@ -1,10 +1,7 @@
-use tezos_core::internal::{coder::Encoder, crypto::blake2b};
 use tezos_core::types::encoded::{
-    BlockHash, BlockPayloadHash, ChainId, ContextHash, Encoded, OperationListListHash, ProtocolHash,
+    BlockHash, BlockPayloadHash, ChainId, ContextHash, OperationListListHash, ProtocolHash,
 };
-use tezos_operation::{
-    block_header, internal::coder::operation_content_bytes_coder::OperationContentBytesCoder,
-};
+use tezos_operation::block_header;
 use tezos_rpc::models::{
     balance_update::BalanceUpdate,
     block::{
@@ -16,9 +13,11 @@ use tezos_rpc::models::{
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
-use crate::{constants::*, Result};
+use crate::Config;
 
-#[macro_export]
+pub const ZERO_SIGNATURE: &str =
+    "sigMzJ4GVAvXEd2RjsKGfG2H9QvqTSKCZsuB2KiHbZRGFz72XgF6KaKADznh674fQgBatxw3xdHqTtMHUZAGRprxy64wg1aq";
+
 macro_rules! ts2dt {
     ($ts: expr) => {
         NaiveDateTime::from_timestamp_opt($ts, 0).unwrap()
@@ -46,17 +45,9 @@ pub struct BatchReceipt {
     // pub batcher: ImplicitAddress
 }
 
-impl BatchHeader {
-    pub fn hash(&self) -> Result<BlockHash> {
-        let header = block_header::BlockHeader::from(self.to_owned());
-        let payload = OperationContentBytesCoder::encode(&header)?;
-        let hash = blake2b(payload.as_slice(), 32)?;
-        Ok(BlockHash::from_bytes(&hash)?)
-    }
-}
-
 impl From<BatchHeader> for block_header::BlockHeader {
     fn from(header: BatchHeader) -> Self {
+        let config = Config::default();
         Self {
             context: header.context,
             fitness: vec![],
@@ -66,7 +57,10 @@ impl From<BatchHeader> for block_header::BlockHeader {
             payload_hash: header.payload_hash,
             payload_round: 0,
             predecessor: header.predecessor,
-            proof_of_work_nonce: POW_NONCE.try_into().expect("Failed to convert pow nonce"), // TODO: repo commit hash
+            proof_of_work_nonce: config
+                .pow_nonce
+                .try_into()
+                .expect("Failed to convert pow nonce"),
             proto: 0,
             seed_nonce_hash: None,
             signature: ZERO_SIGNATURE
@@ -80,6 +74,7 @@ impl From<BatchHeader> for block_header::BlockHeader {
 
 impl From<BatchHeader> for Header {
     fn from(header: BatchHeader) -> Self {
+        let config = Config::default();
         Self {
             context: header.context,
             fitness: vec![],
@@ -91,7 +86,7 @@ impl From<BatchHeader> for Header {
             payload_round: 0,
             predecessor: header.predecessor,
             priority: 0,
-            proof_of_work_nonce: POW_NONCE.into(),
+            proof_of_work_nonce: config.pow_nonce.into(),
             proto: 0,
             seed_nonce_hash: None,
             signature: None,
@@ -103,6 +98,7 @@ impl From<BatchHeader> for Header {
 
 impl From<BatchReceipt> for Metadata {
     fn from(receipt: BatchReceipt) -> Self {
+        let config = Config::default();
         Self {
             baker: None, // TODO: + signature
             balance_updates: receipt.balance_updates,
@@ -112,13 +108,13 @@ impl From<BatchReceipt> for Metadata {
             level_info: Some(LevelInfo {
                 level: receipt.header.level,
                 level_position: receipt.header.level - 1,
-                cycle: receipt.header.level / CYCLE_BLOCKS,
-                cycle_position: receipt.header.level % CYCLE_BLOCKS,
+                cycle: receipt.header.level / config.blocks_per_cycle,
+                cycle_position: receipt.header.level % config.blocks_per_cycle,
                 expected_commitment: false,
             }),
             // default
-            max_operations_ttl: MAX_OPERATIONS_TTL,
-            max_operation_data_length: MAX_OPERATION_DATA_LENGTH,
+            max_operations_ttl: config.max_operations_time_to_live,
+            max_operation_data_length: config.max_operation_data_length,
             max_operation_list_length: vec![
                 OperationListLength {
                     max_size: 0,
@@ -133,11 +129,13 @@ impl From<BatchReceipt> for Metadata {
                     max_op: None,
                 },
                 OperationListLength {
-                    max_size: MAX_OPERATION_LIST_LENGTH,
-                    max_op: Some(MAX_TOTAL_OPERATION_DATA_LENGTH),
+                    max_size: config.max_operations_list_length,
+                    max_op: Some(
+                        config.max_operations_list_length * config.max_operation_data_length,
+                    ),
                 },
             ],
-            max_block_header_length: MAX_BLOCK_HEADER_LENGTH,
+            max_block_header_length: config.max_block_header_length,
             // null
             level: None,
             consumed_gas: None,
@@ -162,6 +160,7 @@ impl From<BatchReceipt> for Metadata {
 
 impl From<BatchReceipt> for FullHeader {
     fn from(receipt: BatchReceipt) -> Self {
+        let config = Config::default();
         Self {
             chain_id: receipt.chain_id,
             context: receipt.header.context,
@@ -174,7 +173,7 @@ impl From<BatchReceipt> for FullHeader {
             payload_round: 0,
             predecessor: receipt.header.predecessor,
             priority: 0,
-            proof_of_work_nonce: POW_NONCE.into(),
+            proof_of_work_nonce: config.pow_nonce.into(),
             proto: 0,
             protocol: receipt.protocol,
             seed_nonce_hash: None,

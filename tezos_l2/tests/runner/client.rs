@@ -1,6 +1,3 @@
-use context::{
-    migrations::run_migrations, ExecutorContext, GenericContext, Head, InterpreterContext,
-};
 use std::collections::HashMap;
 use tezos_core::internal::crypto::blake2b;
 use tezos_core::types::{
@@ -10,6 +7,9 @@ use tezos_core::types::{
     },
     number::Nat,
 };
+use tezos_ctx::{
+    migrations::run_migrations, ExecutorContext, GenericContext, Head, InterpreterContext,
+};
 use tezos_michelson::micheline::Micheline;
 use tezos_operation::operations::{
     Entrypoint, OperationContent, Origination, Parameters, Reveal, Script, SignedOperation,
@@ -17,9 +17,7 @@ use tezos_operation::operations::{
 };
 use tezos_rpc::models::operation::Operation;
 
-use tezos_l2::producer::batch::apply_batch;
-
-use rand::rngs::OsRng;
+use tezos_l2::batcher::apply_batch;
 
 pub struct Wallet {
     pub counter: u32,
@@ -56,13 +54,6 @@ impl Wallet {
         let bytes = [sk.to_bytes(), pk.to_bytes()].concat();
         let keypair = ed25519_dalek::Keypair::from_bytes(bytes.as_slice())
             .expect("Failed to reconstruct key pair");
-
-        Self::from_keypair(keypair)
-    }
-
-    pub fn new() -> Self {
-        let mut csprng = OsRng {};
-        let keypair = ed25519_dalek::Keypair::generate(&mut csprng);
 
         Self::from_keypair(keypair)
     }
@@ -112,11 +103,6 @@ impl<Context: GenericContext + ExecutorContext + InterpreterContext> Client<Cont
         );
     }
 
-    pub fn new_wallet(&mut self, alias: &'static str) -> &mut Self {
-        self.wallets.insert(alias.into(), Wallet::new());
-        self.use_wallet(alias)
-    }
-
     pub fn get_contract_balance(&mut self, address: &str) -> u32 {
         self.context
             .get_balance(address)
@@ -150,27 +136,13 @@ impl<Context: GenericContext + ExecutorContext + InterpreterContext> Client<Cont
         serde_json::to_string(&storage).unwrap()
     }
 
-    pub fn get_recent_operation(&mut self) -> String {
-        let head = self.context.get_head().expect("Failed to get head");
-
+    pub fn get_operation(&mut self, hash: &str) -> String {
         let receipt: Operation = self
             .context
-            .get_operation_receipt(head.level, 0)
-            .unwrap()
+            .get_operation_receipt(hash)
             .expect("Failed to get operation receipt");
 
         serde_json::to_string(&receipt).unwrap()
-    }
-
-    pub fn topup(&mut self, balance: u32) {
-        let wallet = self
-            .wallets
-            .get_mut(self.alias.expect("Active wallet not selected"))
-            .expect("Wallet not defined");
-
-        self.context
-            .set_balance(wallet.address.value(), &balance.into())
-            .unwrap();
     }
 
     pub fn reveal(&mut self) -> &mut Self {

@@ -3,6 +3,7 @@ mod runner;
 
 use runner::mock::MockClient;
 use serde_json::json;
+use tezos_core::types::encoded::Encoded;
 
 #[test]
 fn test_progress() {
@@ -157,14 +158,14 @@ fn test_contract_fails() {
 
     client.bake();
 
-    client
+    let opg_hash = client
         .call(&contract, "default", json!({ "string": contract }), 0)
         .inject();
 
     client.bake();
 
     assert!(client
-        .get_recent_operation()
+        .get_operation(opg_hash.value())
         .contains("michelson_v1.runtime_error"));
 }
 
@@ -269,7 +270,7 @@ fn test_big_map_to_self() {
 
     client.bake();
 
-    client
+    let opg_hash = client
         .call(&big_map_to_self, "default", json!({"prim": "Unit"}), 0)
         .inject();
 
@@ -277,6 +278,6 @@ fn test_big_map_to_self() {
 
     // ATM not supporting big map move
     assert!(client
-        .get_recent_operation()
+        .get_operation(opg_hash.value())
         .contains("michelson_v1.runtime_error"));
 }

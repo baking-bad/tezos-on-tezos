@@ -1,17 +1,31 @@
-use context::{
-    migrations::run_migrations, ExecutorContext, GenericContext, Head, InterpreterContext,
+use tezos_core::{
+    internal::coder::Encoder,
+    internal::crypto::blake2b,
+    types::encoded::{BlockHash, BlockPayloadHash, Encoded, OperationHash, OperationListListHash},
 };
-use tezos_core::types::encoded::{BlockPayloadHash, OperationHash, OperationListListHash};
-use tezos_operation::operations::SignedOperation;
+use tezos_ctx::{
+    migrations::run_migrations, BatchHeader, BatchReceipt, ExecutorContext, GenericContext, Head,
+    InterpreterContext,
+};
+use tezos_operation::{
+    block_header, internal::coder::operation_content_bytes_coder::OperationContentBytesCoder,
+    operations::SignedOperation,
+};
 use tezos_rpc::models::operation::Operation as OperationReceipt;
 
 use crate::{
     constants::*,
     executor::operation::execute_operation,
-    producer::types::{BatchHeader, BatchReceipt},
     validator::{batch::validate_batch, operation::ManagerOperation},
     Result,
 };
+
+pub fn block_hash(header: BatchHeader) -> Result<BlockHash> {
+    let header = block_header::BlockHeader::from(header);
+    let payload = OperationContentBytesCoder::encode(&header)?;
+    let hash = blake2b(payload.as_slice(), 32)?;
+    Ok(BlockHash::from_bytes(&hash)?)
+}
 
 fn naive_header(prev_head: Head, operations: &Vec<ManagerOperation>) -> Result<BatchHeader> {
     let operation_hashes: Vec<OperationHash> = operations.iter().map(|o| o.hash.clone()).collect();
@@ -49,23 +63,23 @@ pub fn apply_batch(
     // TODO: fees to batch producer (balance updates + update balance)
 
     let header = naive_header(prev_head, &operations)?;
-    let hash = header.hash()?;
-    let head = Head::new(header.level, hash.clone(), header.timestamp);
-
+    let hash = block_hash(header.clone())?;
     let receipt = BatchReceipt {
         chain_id: CHAIN_ID.try_into().unwrap(),
         protocol: PROTOCOL.try_into().unwrap(),
-        hash,
-        header,
+        hash: hash.clone(),
+        header: header.clone(),
         balance_updates,
     };
+    context.set_batch_receipt(receipt)?;
 
-    for (index, opg_receipt) in operation_receipts.into_iter().enumerate() {
-        let hash = opg_receipt.hash.clone().unwrap();
-        context.set_operation(head.level, index as i32, hash, opg_receipt)?;
+    let mut opg_hashes: Vec<OperationHash> = Vec::with_capacity(operation_receipts.len());
+    for opg_receipt in operation_receipts {
+        opg_hashes.push(opg_receipt.hash.clone().unwrap());
+        context.set_operation_receipt(opg_receipt)?;
     }
 
-    context.set_batch(receipt.header.level, receipt.hash.clone(), receipt)?;
+    let head = Head::new(header.level, hash.clone(), header.timestamp, opg_hashes);
     context.set_head(head.clone())?;
     context.commit()?;
 

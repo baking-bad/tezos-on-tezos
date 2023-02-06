@@ -1,7 +1,7 @@
-use context::{ExecutorContext, GenericContext};
 use host::{rollup_core::RawRollupCore, runtime::Runtime};
 use tezos_core::types::encoded::{Encoded, OperationHash};
-use tezos_l2::{constants, producer::batch::apply_batch};
+use tezos_ctx::{ExecutorContext, GenericContext};
+use tezos_l2::{batcher::apply_batch, constants};
 use tezos_operation::operations::SignedOperation;
 
 use crate::{
@@ -12,6 +12,7 @@ use crate::{
 
 pub fn kernel_run<Host: RawRollupCore>(context: &mut PVMContext<Host>) {
     let metadata = Runtime::reveal_metadata(context.as_mut()).expect("Failed to reveal metadata");
+
     let mut head = context.get_head().expect("Failed to get head");
 
     context.log(format!("Kernel invoked, prev head: {}", head));
@@ -81,21 +82,22 @@ mod test {
     use super::*;
     use crate::context::PVMContext;
 
-    use context::{ExecutorContext, Result};
     use hex;
     use host::rollup_core::Input;
     use mock_runtime::host::MockHost;
-    use tezos_l2::producer::types::BatchReceipt;
-    use tezos_rpc::models::operation::Operation as OperationReceipt;
+    use tezos_ctx::{ExecutorContext, Result};
 
     #[test]
     fn send_tez() -> Result<()> {
         let mut context = PVMContext::new(MockHost::default());
-        let input = hex::decode("0162fd30ac16979d9b88aca559e8fd8b97abd2519bebe09ad8a269d60df0b17ddc6b\
+        let input = hex::decode(
+            "0162fd30ac16979d9b88aca559e8fd8b97abd2519bebe09ad8a269d60df0b17ddc6b\
             00e8b36c80efb51ec85a14562426049aa182a3ce38f902e18a18e807000017143f62ff9c2f41b30ee00b8c64d233fda43adf05\
             eb829cfd2e733ee9a8f44b6c00e8b36c80efb51ec85a14562426049aa182a3ce3800e28a18ab0b8102c0843d00006b82198cb1\
             79e8306c1bedd08f12dc863f32888600b2014573fd63d27895841ea6ca9d45e23e1e3b836298801b5e390b3b0a0b412003af89\
-            c08e63b6d8cf6847300e627c4ce0882ce4e2b842295309de3a0bd6260f").unwrap();
+            c08e63b6d8cf6847300e627c4ce0882ce4e2b842295309de3a0bd6260f",
+        )
+        .unwrap();
         let level = 1;
         context.as_mut().as_mut().set_ready_for_input(level);
         context.as_mut().as_mut().add_next_inputs(
@@ -110,19 +112,17 @@ mod test {
 
         kernel_run(&mut context);
 
-        let opg_receipt: Option<OperationReceipt> = context.get_operation_receipt(0, 0i32)?;
-        // println!("Receipt: {:#?}", receipt);
-        assert!(opg_receipt.is_some(), "Expected operation receipt");
-        assert!(
-            opg_receipt.unwrap().hash.is_some(),
-            "Expected operation hash"
-        );
-
-        let batch_receipt: Option<BatchReceipt> = context.get_batch_receipt(0)?;
-        assert!(batch_receipt.is_some(), "Expected batch receipt");
-
         let head = context.get_head()?;
         assert_eq!(0, head.level);
+
+        let batch_receipt = context.get_batch_receipt(head.hash.value())?;
+        assert_eq!(batch_receipt.hash, head.hash);
+
+        for opg_hash in head.operations.iter() {
+            let opg_receipt = context.get_operation_receipt(opg_hash.value())?;
+            // println!("Receipt: {:#?}", receipt);
+            assert!(opg_receipt.hash.is_some(), "Expected operation hash");
+        }
 
         Ok(())
     }

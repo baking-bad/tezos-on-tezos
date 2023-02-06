@@ -1,5 +1,5 @@
-use context::ExecutorContext;
 use tezos_core::types::encoded::Encoded;
+use tezos_ctx::ExecutorContext;
 use tezos_operation::operations::Reveal;
 use tezos_rpc::models::operation::operation_result::{
     operations::reveal::RevealOperationResult, OperationResultStatus,
@@ -42,14 +42,14 @@ pub fn execute_reveal(
     //     return Ok(make_receipt!(OperationResultStatus::Failed))
     // }
 
-    context.set_public_key(reveal.source.value(), &reveal.public_key)?;
+    context.set_public_key(reveal.source.value(), reveal.public_key.clone())?;
     result!(Applied)
 }
 
 #[cfg(test)]
 mod test {
-    use context::{EphemeralContext, ExecutorContext};
     use tezos_core::types::{encoded::PublicKey, mutez::Mutez, number::Nat};
+    use tezos_ctx::{EphemeralContext, ExecutorContext};
     use tezos_operation::operations::Reveal;
 
     use super::*;
@@ -63,8 +63,8 @@ mod test {
         let public_key =
             PublicKey::try_from("edpktipCJ3SkjvtdcrwELhvupnyYJSmqoXu3kdzK1vL6fT5cY8FTEa").unwrap();
 
-        context.set_balance(address, &Mutez::from(1000000000u32))?;
-        context.set_counter(address, &Nat::try_from("100000").unwrap())?;
+        context.set_balance(address, Mutez::from(1000000000u32))?;
+        context.set_counter(address, Nat::try_from("100000").unwrap())?;
 
         let reveal = Reveal {
             source: address.try_into()?,

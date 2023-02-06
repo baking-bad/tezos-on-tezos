@@ -3,12 +3,12 @@ use std::backtrace::Backtrace;
 use tezos_core::types::mutez::Mutez;
 
 pub use chrono::ParseError as TimestampParsingError;
-pub use context::Error as ContextError;
 pub use ibig::error::OutOfBoundsError as BigIntOutOfBoundsError;
 pub use ibig::error::ParseError as BigIntParsingError;
 pub use serde_json_wasm::de::Error as DeserializationError;
 pub use serde_json_wasm::ser::Error as SerializationError;
 pub use tezos_core::Error as TezosCoreError;
+pub use tezos_ctx::Error as ContextError;
 pub use tezos_michelson::Error as TezosMichelsonError;
 pub use tezos_operation::Error as TezosOperationError;
 pub use tezos_rpc::Error as TezosRpcError;
@@ -48,7 +48,11 @@ impl InternalError {
 
 impl std::fmt::Display for InternalError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("{} error", self.kind))
+        f.write_fmt(format_args!(
+            "{} error, {}",
+            self.kind,
+            self.message.replace("\n", " ")
+        ))
     }
 }
 

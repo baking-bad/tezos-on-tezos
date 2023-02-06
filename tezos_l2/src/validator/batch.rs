@@ -1,5 +1,5 @@
-use context::{ExecutorContext, GenericContext};
 use tezos_core::types::encoded::{Encoded, OperationHash};
+use tezos_ctx::{ExecutorContext, GenericContext};
 use tezos_operation::operations::SignedOperation;
 
 use crate::{
@@ -17,11 +17,11 @@ pub fn validate_batch(
     let mut operations: Vec<ManagerOperation> = Vec::with_capacity(batch_payload.len());
 
     for (hash, opg) in batch_payload.into_iter() {
-        match validate_operation(context, opg, hash.clone()) {
+        match validate_operation(context, opg, hash.clone(), false) {
             Ok(op) => {
                 let balance = context.get_balance(&op.source.value())?.unwrap();
-                context.set_balance(&op.source.value(), &(balance - op.total_spent))?;
-                context.set_counter(&op.source.value(), &op.last_counter)?;
+                context.set_balance(&op.source.value(), balance - op.total_spent)?;
+                context.set_counter(&op.source.value(), op.last_counter.clone())?;
                 operations.push(op);
             }
             Err(err) => {

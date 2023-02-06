@@ -1,8 +1,8 @@
-use context::ExecutorContext;
 use tezos_core::{
     internal::crypto::blake2b,
     types::encoded::{ContractAddress, ContractHash, Encoded, OperationHash},
 };
+use tezos_ctx::ExecutorContext;
 use tezos_operation::operations::Origination;
 use tezos_rpc::models::operation::{
     operation_result::operations::origination::OriginationOperationResult,
@@ -96,8 +96,8 @@ pub fn execute_origination(
 
 #[cfg(test)]
 mod test {
-    use context::EphemeralContext;
     use tezos_core::types::mutez::Mutez;
+    use tezos_ctx::EphemeralContext;
     use tezos_michelson::michelson::{
         data::instructions::failwith,
         data::Unit,
@@ -113,7 +113,7 @@ mod test {
         let mut context = EphemeralContext::new();
 
         let source = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
-        context.set_balance(source, &Mutez::from(1000000000u32))?;
+        context.set_balance(source, Mutez::from(1000000000u32))?;
 
         let origination = Origination {
             source: source.try_into()?,

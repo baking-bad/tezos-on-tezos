@@ -1,5 +1,5 @@
-use context::{ExecutorContext, InterpreterContext};
 use tezos_core::types::encoded::{Address, Encoded};
+use tezos_ctx::{ExecutorContext, InterpreterContext};
 use tezos_michelson::micheline::Micheline;
 use tezos_operation::operations::{OperationContent, Transaction};
 use tezos_rpc::models::operation::{
@@ -118,8 +118,8 @@ pub fn execute_transaction(
 
 #[cfg(test)]
 mod test {
-    use context::{EphemeralContext, ExecutorContext};
     use tezos_core::types::mutez::Mutez;
+    use tezos_ctx::{EphemeralContext, ExecutorContext};
     use tezos_operation::operations::Transaction;
 
     use super::*;
@@ -132,7 +132,7 @@ mod test {
         let source = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
         let destination = "tz1NEgotHhj4fkm8AcwquQqQBrQsAMRUg86c";
 
-        context.set_balance(source, &Mutez::from(1000000000u32))?;
+        context.set_balance(source, Mutez::from(1000000000u32))?;
 
         let transaction = Transaction {
             source: source.try_into()?,

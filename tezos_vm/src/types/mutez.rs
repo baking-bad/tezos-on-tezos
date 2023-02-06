@@ -141,7 +141,7 @@ impl Div<MutezItem> for MutezItem {
     type Output = Result<OptionItem>;
 
     fn div(self, rhs: MutezItem) -> Self::Output {
-        if rhs.0 == 0u8.into() {
+        if rhs.0 == 0i64 {
             Ok(OptionItem::None(types::pair(vec![
                 types::nat(),
                 types::mutez(),

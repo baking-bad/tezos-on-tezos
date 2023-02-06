@@ -5,7 +5,7 @@ use tezos_core::types::{
 use tezos_michelson::micheline::Micheline;
 use tezos_michelson::michelson::{data::Instruction, types::Type};
 
-pub use context::InterpreterContext;
+pub use tezos_ctx::InterpreterContext;
 
 use crate::{
     err_unsupported,

@@ -16,6 +16,21 @@ impl EphemeralContext {
             modified_keys: Vec::new(),
         }
     }
+
+    pub fn spawn(&self) -> Self {
+        Self {
+            state: self.state.clone(),
+            pending_state: HashMap::new(),
+            modified_keys: Vec::new(),
+        }
+    }
+
+    pub fn pending_removed(&self, key: &String) -> bool {
+        match self.pending_state.get(key) {
+            Some(None) => true,
+            _ => false,
+        }
+    }
 }
 
 impl GenericContext for EphemeralContext {
@@ -24,13 +39,15 @@ impl GenericContext for EphemeralContext {
     }
 
     fn has(&self, key: String) -> Result<bool> {
-        match self.pending_state.contains_key(&key) {
-            true => Ok(true),
-            false => Ok(self.state.contains_key(&key)),
+        match self.pending_state.get(&key) {
+            Some(Some(_)) => Ok(true),
+            Some(None) => Ok(false),
+            None => Ok(self.state.contains_key(&key)),
         }
     }
 
     fn get(&mut self, key: String) -> Result<Option<ContextNode>> {
+        // self.log(format!("get {}", &key));
         match self.pending_state.get(&key) {
             Some(cached_value) => Ok(cached_value.to_owned()),
             None => match self.state.get(&key) {
@@ -44,6 +61,7 @@ impl GenericContext for EphemeralContext {
     }
 
     fn set(&mut self, key: String, val: Option<ContextNode>) -> Result<()> {
+        // self.log(format!("set {} = {:?}", &key, &val));
         self.pending_state.insert(key.clone(), val);
         self.modified_keys.push(key);
         Ok(())
@@ -84,17 +102,18 @@ impl GenericContext for EphemeralContext {
 #[cfg(test)]
 mod test {
     use crate::{EphemeralContext, ExecutorContext, GenericContext, Result};
+    use tezos_core::types::mutez::Mutez;
 
     #[test]
     fn store_balance() -> Result<()> {
         let mut context = EphemeralContext::new();
 
         let address = "tz1Mj7RzPmMAqDUNFBn5t5VbXmWW4cSUAdtT";
-        let balance = 1000u32.into();
+        let balance: Mutez = 1000u32.into();
 
         assert!(context.get_balance(&address)?.is_none()); // both host and cache accessed
 
-        context.set_balance(&address, &balance)?; // cached
+        context.set_balance(&address, balance.clone())?; // cached
         context.commit()?; // save
         context.clear(); // cache cleared
 

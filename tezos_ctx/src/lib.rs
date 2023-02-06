@@ -9,6 +9,8 @@ pub use crate::{
         ViewerContext,
     },
     error::{Error, Result},
+    types::batch::{BatchHeader, BatchReceipt},
+    types::config::Config,
     types::head::Head,
     types::node::ContextNode,
 };

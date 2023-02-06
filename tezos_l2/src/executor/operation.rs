@@ -1,5 +1,5 @@
-use context::{ExecutorContext, GenericContext, InterpreterContext};
 use tezos_core::types::encoded::{ChainId, Encoded, ProtocolHash};
+use tezos_ctx::{ExecutorContext, GenericContext, InterpreterContext};
 use tezos_operation::operations::OperationContent;
 use tezos_rpc::models::operation::Operation as OperationReceipt;
 
@@ -58,7 +58,7 @@ pub fn execute_operation(
         BalanceUpdates::reserve(context, opg.source.value(), &total_fees)?;
     } else {
         // all applied, no rollbacks
-        context.set_counter(opg.source.value(), &opg.last_counter)?;
+        context.set_counter(opg.source.value(), opg.last_counter.clone())?;
     }
 
     context.commit()?;
@@ -76,8 +76,8 @@ pub fn execute_operation(
 
 #[cfg(test)]
 mod test {
-    use context::{EphemeralContext, ExecutorContext};
     use tezos_core::types::{mutez::Mutez, number::Nat};
+    use tezos_ctx::{EphemeralContext, ExecutorContext};
     use tezos_operation::operations::{SignedOperation, Transaction};
     use tezos_rpc::models::operation::{operation_result::OperationResultStatus, OperationContent};
 
@@ -110,8 +110,8 @@ mod test {
         let source = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
         let destination = "tz1NEgotHhj4fkm8AcwquQqQBrQsAMRUg86c";
 
-        context.set_balance(source, &Mutez::from(4000u32))?;
-        context.set_counter(source, &Nat::try_from("1").unwrap())?;
+        context.set_balance(source, Mutez::from(4000u32))?;
+        context.set_counter(source, Nat::try_from("1").unwrap())?;
         context.commit()?;
 
         macro_rules! make_tx {
@@ -130,16 +130,22 @@ mod test {
         }
 
         let opg = ManagerOperation {
-            hash: "ooKsoMe48CCt1ERrk5DgnSovFazhm53yfAYbwxNQmjWVtbNzLME".try_into().unwrap(),
+            hash: "ooKsoMe48CCt1ERrk5DgnSovFazhm53yfAYbwxNQmjWVtbNzLME"
+                .try_into()
+                .unwrap(),
             origin: SignedOperation::new(
-                "BMNvSHmWUkdonkG2oFwwQKxHUdrYQhUXqxLaSRX9wjMGfLddURC".try_into().unwrap(),
+                "BMNvSHmWUkdonkG2oFwwQKxHUdrYQhUXqxLaSRX9wjMGfLddURC"
+                    .try_into()
+                    .unwrap(),
                 vec![make_tx!(2u32).into(), make_tx!(3u32).into(), make_tx!(4u32).into()],
-                "sigw1WNdYweqz1c7zKcvZFHQ18swSv4HBWje5quRmixxitPk7z8jtY63qXgKLPVfTM6XGxExPatBWJP44Bknyu3hDHDKJZgY".try_into().unwrap()
+                "sigw1WNdYweqz1c7zKcvZFHQ18swSv4HBWje5quRmixxitPk7z8jtY63qXgKLPVfTM6XGxExPatBWJP44Bknyu3hDHDKJZgY"
+                    .try_into()
+                    .unwrap(),
             ),
             last_counter: 4u32.into(),
             source: source.try_into()?,
             total_fees: 3000u32.into(),
-            total_spent: 0u32.into()  // <-- not true, fot the sake of the test
+            total_spent: 0u32.into(), // <-- not true, fot the sake of the test
         };
 
         let receipt = execute_operation(&mut context, &opg)?;
