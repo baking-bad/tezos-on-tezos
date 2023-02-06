@@ -24,14 +24,14 @@ serde_json = "*"
 tezos_ctx = { path = "../tezos_ctx" }
 tezos_l2 = { path = "../tezos_l2" }
 tezos_vm = { path = "../tezos_vm" }
-tezos_rpc = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "develop", package = "tezos-rpc", default-features = false }
-tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "develop", package = "tezos-core", default-features = false, features = ["ed25519"] }
-tezos_operation = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "develop", package = "tezos-operation", default-features = false, features = ["ed25519"] }
-tezos_michelson = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "develop", package = "tezos-michelson", default-features = false }
+tezos_rpc = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "fix/operation-encoding", package = "tezos-rpc", default-features = false }
+tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "fix/operation-encoding", package = "tezos-core", default-features = false, features = ["ed25519"] }
+tezos_operation = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "fix/operation-encoding", package = "tezos-operation", default-features = false, features = ["ed25519"] }
+tezos_michelson = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "fix/operation-encoding", package = "tezos-michelson", default-features = false }
+tezos_contract = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "fix/operation-encoding", package = "tezos-contract", default-features = false }
 ibig = { version = "0.3", features = ["std", "num-traits"], default-features = false }
 
 [dev-dependencies]
 tokio = { version = "1.25.0", features = ["process", "macros"] }
 static_init = "1.0.3"
-serial_test = "1.0.0"
-tezos_rpc = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "develop", package = "tezos-rpc", features = ["http"] }
+tezos_rpc = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "fix/operation-encoding", package = "tezos-rpc", features = ["http"] }

@@ -8,10 +8,10 @@ pub mod shell;
 use crate::rollup::{RollupClient, TezosFacade, TezosHelpers};
 use crate::services::{
     blocks::{block, block_hash, block_header, block_metadata, block_protocols, live_blocks},
-    context::{big_map_value, constants, delegate, delegates},
+    context::{big_map_value, big_map_value_normalized, constants, delegate, delegates},
     contracts::{
         contract, contract_balance, contract_counter, contract_delegate, contract_entrypoints,
-        contract_public_key, contract_script, contract_storage,
+        contract_public_key, contract_script, contract_script_normalized, contract_storage,
     },
     helpers::run_operation,
     operations::{
@@ -22,16 +22,20 @@ use crate::services::{
 };
 use actix_web::web::{get, post, ServiceConfig};
 
+#[macro_export]
+macro_rules! json_response {
+    ($value: expr) => {
+        actix_web::HttpResponse::build(actix_web::http::StatusCode::OK).json($value)
+    };
+}
+
 pub fn config<T: RollupClient + TezosFacade + TezosHelpers + 'static>(cfg: &mut ServiceConfig) {
     cfg.route("/chains/main/chain_id", get().to(chain_id::<T>))
         .route(
             "/chains/main/is_bootstrapped",
             get().to(is_bootstrapped::<T>),
         )
-        .route(
-            "/chains/main/injection/operation",
-            post().to(inject_operation::<T>),
-        )
+        .route("/injection/operation", post().to(inject_operation::<T>))
         .route(
             "/chains/main/blocks/{block_id}/helpers/scripts/run_operation",
             post().to(run_operation::<T>),
@@ -70,8 +74,12 @@ pub fn config<T: RollupClient + TezosFacade + TezosHelpers + 'static>(cfg: &mut 
             get().to(constants),
         )
         .route(
-            "/chains/main/blocks/{block_id}/context/big_maps/{big_map_id}/values/{key_hash}",
+            "/chains/main/blocks/{block_id}/context/big_maps/{big_map_id}/{key_hash}",
             get().to(big_map_value::<T>),
+        )
+        .route(
+            "/chains/main/blocks/{block_id}/context/big_maps/{big_map_id}/{key_hash}/normalized",
+            post().to(big_map_value_normalized::<T>),
         )
         .route(
             "/chains/main/blocks/{block_id}/context/contracts/{contract_id}/manager_key",
@@ -96,6 +104,10 @@ pub fn config<T: RollupClient + TezosFacade + TezosHelpers + 'static>(cfg: &mut 
         .route(
             "/chains/main/blocks/{block_id}/context/contracts/{contract_id}/script",
             get().to(contract_script::<T>),
+        )
+        .route(
+            "/chains/main/blocks/{block_id}/context/contracts/{contract_id}/script/normalized",
+            post().to(contract_script_normalized::<T>),
         )
         .route(
             "/chains/main/blocks/{block_id}/context/contracts/{contract_id}/entrypoints",

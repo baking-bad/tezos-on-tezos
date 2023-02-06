@@ -112,6 +112,7 @@ impl TezosHelpers for RollupMockClient {
         let mut context = get_mut!(self.context).spawn();
         let hash = operation.hash()?;
         let opg = validate_operation(&mut context, operation, hash, true)?;
+        // TODO: handle validation errors and return RpcError / 200
         let receipt = execute_operation(&mut context, &opg)?;
         Ok(receipt)
     }

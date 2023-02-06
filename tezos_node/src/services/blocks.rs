@@ -4,14 +4,14 @@ use actix_web::{
     HttpResponse, Responder, Result,
 };
 
-use crate::rollup::TezosFacade;
+use crate::{json_response, rollup::TezosFacade};
 
 pub async fn block_hash<T: TezosFacade>(
     client: Data<T>,
     path: Path<(String,)>,
 ) -> Result<impl Responder> {
     let value = client.get_block_hash(&path.0.as_str().try_into()?).await?;
-    Ok(HttpResponse::build(StatusCode::OK).json(value))
+    Ok(json_response!(value))
 }
 
 pub async fn block_header<T: TezosFacade>(
@@ -21,7 +21,7 @@ pub async fn block_header<T: TezosFacade>(
     let value = client
         .get_block_header(&path.0.as_str().try_into()?)
         .await?;
-    Ok(HttpResponse::build(StatusCode::OK).json(value))
+    Ok(json_response!(value))
 }
 
 pub async fn block_metadata<T: TezosFacade>(
@@ -31,7 +31,7 @@ pub async fn block_metadata<T: TezosFacade>(
     let value = client
         .get_block_metadata(&path.0.as_str().try_into()?)
         .await?;
-    Ok(HttpResponse::build(StatusCode::OK).json(value))
+    Ok(json_response!(value))
 }
 
 pub async fn block_protocols<T: TezosFacade>(
@@ -41,7 +41,9 @@ pub async fn block_protocols<T: TezosFacade>(
     let value = client
         .get_block_protocols(&path.0.as_str().try_into()?)
         .await?;
-    Ok(HttpResponse::build(StatusCode::OK).json(value))
+    Ok(HttpResponse::build(StatusCode::OK)
+        .append_header(("content-type", "application/json"))
+        .json(value))
 }
 
 pub async fn live_blocks<T: TezosFacade>(
@@ -49,7 +51,7 @@ pub async fn live_blocks<T: TezosFacade>(
     path: Path<(String,)>,
 ) -> Result<impl Responder> {
     let value = client.get_live_blocks(&path.0.as_str().try_into()?).await?;
-    Ok(HttpResponse::build(StatusCode::OK).json(value))
+    Ok(json_response!(value))
 }
 
 pub async fn block<T: TezosFacade>(
@@ -57,7 +59,7 @@ pub async fn block<T: TezosFacade>(
     path: Path<(String,)>,
 ) -> Result<impl Responder> {
     let value = client.get_block(&path.0.as_str().try_into()?).await?;
-    Ok(HttpResponse::build(StatusCode::OK).json(value))
+    Ok(json_response!(value))
 }
 
 #[cfg(test)]

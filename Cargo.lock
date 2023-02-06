@@ -235,9 +235,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.68"
+version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2cb2f989d18dd141ab8ae82f64d1a8cdd37e0840f73a406896cf5e99502fab61"
+checksum = "224afbd727c3d6e4b90103ece64b8d1b67fbb1973b1046c2281eed3f3803f800"
 
 [[package]]
 name = "arrayref"
@@ -661,19 +661,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dashmap"
-version = "5.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "907076dfda823b0b36d2a1bb5f90c96660a5bbcd7729e10727f07858f22c4edc"
-dependencies = [
- "cfg-if",
- "hashbrown",
- "lock_api",
- "once_cell",
- "parking_lot_core 0.9.7",
-]
-
-[[package]]
 name = "der"
 version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -871,28 +858,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fed34cd105917e91daa4da6b3728c47b068749d6a62c59811f06ed2ac71d9da7"
 
 [[package]]
-name = "futures"
-version = "0.3.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13e2792b0ff0340399d58445b88fd9770e3489eff258a4cbc1523418f12abf84"
-dependencies = [
- "futures-channel",
- "futures-core",
- "futures-executor",
- "futures-io",
- "futures-sink",
- "futures-task",
- "futures-util",
-]
-
-[[package]]
 name = "futures-channel"
 version = "0.3.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2e5317663a9089767a1ec00a487df42e0ca174b61b4483213ac24448e4664df5"
 dependencies = [
  "futures-core",
- "futures-sink",
 ]
 
 [[package]]
@@ -900,17 +871,6 @@ name = "futures-core"
 version = "0.3.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec90ff4d0fe1f57d600049061dc6bb68ed03c7d2fbd697274c41805dcb3f8608"
-
-[[package]]
-name = "futures-executor"
-version = "0.3.26"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8de0a35a6ab97ec8869e32a2473f4b1324459e14c29275d14b10cb1fd19b50e"
-dependencies = [
- "futures-core",
- "futures-task",
- "futures-util",
-]
 
 [[package]]
 name = "futures-io"
@@ -936,10 +896,8 @@ version = "0.3.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c1d6de3acfef38d2be4b1f543f553131788603495be83da675e180c8d6b7bd1"
 dependencies = [
- "futures-channel",
  "futures-core",
  "futures-io",
- "futures-sink",
  "futures-task",
  "memchr",
  "pin-project-lite",
@@ -1038,6 +996,12 @@ checksum = "ee512640fe35acbfb4bb779db6f0d80704c2cacfa2e39b601ef3e3f47d1ae4c7"
 dependencies = [
  "libc",
 ]
+
+[[package]]
+name = "hermit-abi"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "856b5cb0902c2b6d65d5fd97dfa30f9b70c7538e770b98eab5ed52d8db923e01"
 
 [[package]]
 name = "hex"
@@ -1236,14 +1200,14 @@ checksum = "30e22bd8629359895450b59ea7a776c850561b96a3b1d31321c1949d9e6c9146"
 
 [[package]]
 name = "is-terminal"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "28dfb6c8100ccc63462345b67d1bbc3679177c75ee4bf59bf29c8b1d110b8189"
+checksum = "22e18b0a45d56fe973d6db23972bf5bc46f988a4a2385deac9cc29572f09daef"
 dependencies = [
- "hermit-abi",
+ "hermit-abi 0.3.0",
  "io-lifetimes",
  "rustix",
- "windows-sys 0.42.0",
+ "windows-sys 0.45.0",
 ]
 
 [[package]]
@@ -1520,7 +1484,7 @@ version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fac9e2da13b5eb447a6ce3d392f23a29d8694bff781bf03a16cd9ac8697593b"
 dependencies = [
- "hermit-abi",
+ "hermit-abi 0.2.6",
  "libc",
 ]
 
@@ -1733,9 +1697,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.50"
+version = "1.0.51"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ef7d57beacfaf2d8aee5937dab7b7f28de3cb8b1828479bb5de2a7106f2bae2"
+checksum = "5d727cae5b39d21da60fa540906919ad737832fe0b1c165da3a34d6548c849d6"
 dependencies = [
  "unicode-ident",
 ]
@@ -1909,16 +1873,16 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "0.36.7"
+version = "0.36.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4fdebc4b395b7fbb9ab11e462e20ed9051e7b16e42d24042c776eca0ac81b03"
+checksum = "f43abb88211988493c1abb44a70efa56ff0ce98f233b7b276146f1f3f7ba9644"
 dependencies = [
  "bitflags",
  "errno",
  "io-lifetimes",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.42.0",
+ "windows-sys 0.45.0",
 ]
 
 [[package]]
@@ -2008,9 +1972,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.91"
+version = "1.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "877c235533714907a8c2464236f5c4b2a17262ef1bd71f38f35ea592c8da6883"
+checksum = "7434af0dc1cbd59268aa98b4c22c131c0584d2232f6fb166efb993e2832e896a"
 dependencies = [
  "itoa",
  "ryu",
@@ -2027,31 +1991,6 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
-]
-
-[[package]]
-name = "serial_test"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "538c30747ae860d6fb88330addbbd3e0ddbe46d662d032855596d8a8ca260611"
-dependencies = [
- "dashmap",
- "futures",
- "lazy_static",
- "log",
- "parking_lot 0.12.1",
- "serial_test_derive",
-]
-
-[[package]]
-name = "serial_test_derive"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "079a83df15f85d89a68d64ae1238f142f172b1fa915d0d76b26a7cba1b659a69"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -2254,9 +2193,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "tezos-contract"
+version = "0.1.3"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=fix/operation-encoding#d4582b4696a0485668f3b6d1a49b515c5514335a"
+dependencies = [
+ "async-trait",
+ "derive_more",
+ "tezos-core",
+ "tezos-michelson",
+ "tezos-operation",
+ "tezos-rpc",
+]
+
+[[package]]
 name = "tezos-core"
 version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#624657b15ef86a48b8d7ab3d5db2233156c7d4ff"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=fix/operation-encoding#d4582b4696a0485668f3b6d1a49b515c5514335a"
 dependencies = [
  "blake2",
  "bs58",
@@ -2275,7 +2227,7 @@ dependencies = [
 [[package]]
 name = "tezos-michelson"
 version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#624657b15ef86a48b8d7ab3d5db2233156c7d4ff"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=fix/operation-encoding#d4582b4696a0485668f3b6d1a49b515c5514335a"
 dependencies = [
  "chrono",
  "derive_more",
@@ -2291,7 +2243,7 @@ dependencies = [
 [[package]]
 name = "tezos-operation"
 version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#624657b15ef86a48b8d7ab3d5db2233156c7d4ff"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=fix/operation-encoding#d4582b4696a0485668f3b6d1a49b515c5514335a"
 dependencies = [
  "chrono",
  "derive_more",
@@ -2305,7 +2257,7 @@ dependencies = [
 [[package]]
 name = "tezos-rpc"
 version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=develop#624657b15ef86a48b8d7ab3d5db2233156c7d4ff"
+source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=fix/operation-encoding#d4582b4696a0485668f3b6d1a49b515c5514335a"
 dependencies = [
  "async-trait",
  "chrono",
@@ -2396,8 +2348,8 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
- "serial_test",
  "static_init",
+ "tezos-contract",
  "tezos-core",
  "tezos-michelson",
  "tezos-operation",

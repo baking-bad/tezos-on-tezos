@@ -47,6 +47,7 @@ impl GenericContext for EphemeralContext {
     }
 
     fn get(&mut self, key: String) -> Result<Option<ContextNode>> {
+        // self.log(format!("get {}", &key));
         match self.pending_state.get(&key) {
             Some(cached_value) => Ok(cached_value.to_owned()),
             None => match self.state.get(&key) {
@@ -60,6 +61,7 @@ impl GenericContext for EphemeralContext {
     }
 
     fn set(&mut self, key: String, val: Option<ContextNode>) -> Result<()> {
+        // self.log(format!("set {} = {:?}", &key, &val));
         self.pending_state.insert(key.clone(), val);
         self.modified_keys.push(key);
         Ok(())

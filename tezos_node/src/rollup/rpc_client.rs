@@ -41,7 +41,7 @@ pub struct RollupRpcClient {
     pub base_url: String,
     client: Client,
     chain_id: Option<ChainId>,
-    origination_level: Option<i32>,
+    origination_level: Option<u32>,
 }
 
 impl Default for RollupRpcClient {
@@ -73,7 +73,7 @@ impl RollupRpcClient {
         }
     }
 
-    pub async fn get_tezos_level(&self) -> Result<i32> {
+    pub async fn get_tezos_level(&self) -> Result<u32> {
         let res = self
             .client
             .get(format!("{}/global/tezos_level", self.base_url))
@@ -82,7 +82,7 @@ impl RollupRpcClient {
 
         if res.status() == 200 {
             let value = res.text().await?;
-            Ok(i32::from_str_radix(&value, 10)?)
+            Ok(u32::from_str_radix(&value, 10)?)
         } else {
             Err(Error::RollupClientError {
                 status: res.status().as_u16(),
@@ -90,8 +90,8 @@ impl RollupRpcClient {
         }
     }
 
-    pub async fn get_state_level(&self, block_id: &BlockId) -> Result<i32> {
-        let block_id = self.convert_block_id(block_id)?;
+    pub async fn get_state_level(&self, block_id: &BlockId) -> Result<u32> {
+        let block_id = self.convert_block_id(block_id).await?;
         let res = self
             .client
             .get(format!(
@@ -103,7 +103,7 @@ impl RollupRpcClient {
 
         if res.status() == 200 {
             let value = res.text().await?;
-            Ok(i32::from_str_radix(&value, 10)?)
+            Ok(u32::from_str_radix(&value, 10)?)
         } else {
             Err(Error::RollupClientError {
                 status: res.status().as_u16(),
@@ -111,7 +111,7 @@ impl RollupRpcClient {
         }
     }
 
-    fn convert_block_id(&self, block_id: &BlockId) -> Result<String> {
+    async fn convert_block_id(&self, block_id: &BlockId) -> Result<String> {
         let origination_level = self
             .origination_level
             .ok_or(internal_error!(Misc, "Origination level unknown"))?;
@@ -120,6 +120,10 @@ impl RollupRpcClient {
             BlockId::Head => Ok("head".into()),
             BlockId::Genesis => Ok(origination_level.to_string()),
             BlockId::Level(level) => Ok((level + origination_level).to_string()),
+            BlockId::Offset(offset) => {
+                let state_head = self.get_tezos_level().await?;
+                Ok((state_head - offset).to_string())
+            }
             BlockId::Hash(hash) => Err(Error::KeyNotFound {
                 key: hash.into_string(),
             }),
@@ -135,13 +139,17 @@ impl RollupClient for RollupRpcClient {
         self.chain_id = Some(ChainId::from_bytes(&payload.as_slice()[..4])?);
 
         let state_level = self.get_state_level(&BlockId::Head).await?;
-        let head_level = self.get_batch_head(&BlockId::Head).await?.level;
+        let head_level: u32 = self
+            .get_batch_head(&BlockId::Head)
+            .await?
+            .level
+            .try_into()?;
         self.origination_level = Some(state_level - head_level);
         Ok(())
     }
 
     async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<ContextNode> {
-        let block_id = self.convert_block_id(block_id)?;
+        let block_id = self.convert_block_id(block_id).await?;
         let res = self
             .client
             .get(format!(

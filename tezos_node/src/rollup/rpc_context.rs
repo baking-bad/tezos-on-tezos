@@ -15,11 +15,11 @@ pub struct RpcContext {
     base_url: String,
     client: Client,
     tmp_ctx: EphemeralContext,
-    state_level: i32,
+    state_level: u32,
 }
 
 impl RpcContext {
-    pub fn new(base_url: String, state_level: i32) -> Self {
+    pub fn new(base_url: String, state_level: u32) -> Self {
         Self {
             client: Client::new(),
             tmp_ctx: EphemeralContext::new(),

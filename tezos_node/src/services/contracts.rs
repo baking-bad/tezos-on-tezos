@@ -5,7 +5,7 @@ use actix_web::{
 };
 use tezos_core::types::encoded::{Address, ContractAddress, ImplicitAddress};
 
-use crate::{rollup::TezosFacade, Error};
+use crate::{json_response, rollup::TezosFacade, Error};
 
 pub async fn contract_balance<T: TezosFacade>(
     client: Data<T>,
@@ -15,7 +15,7 @@ pub async fn contract_balance<T: TezosFacade>(
     let value = client
         .get_contract_balance(&path.0.as_str().try_into()?, &address)
         .await?;
-    Ok(HttpResponse::build(StatusCode::OK).json(value))
+    Ok(json_response!(value))
 }
 
 pub async fn contract_counter<T: TezosFacade>(
@@ -26,7 +26,7 @@ pub async fn contract_counter<T: TezosFacade>(
     let value = client
         .get_contract_counter(&path.0.as_str().try_into()?, &address)
         .await?;
-    Ok(HttpResponse::build(StatusCode::OK).json(value))
+    Ok(json_response!(value))
 }
 
 pub async fn contract_public_key<T: TezosFacade>(
@@ -37,7 +37,7 @@ pub async fn contract_public_key<T: TezosFacade>(
     let value = client
         .get_contract_public_key(&path.0.as_str().try_into()?, &address)
         .await?;
-    Ok(HttpResponse::build(StatusCode::OK).json(value))
+    Ok(json_response!(value))
 }
 
 pub async fn contract_delegate<T: TezosFacade>(
@@ -55,7 +55,7 @@ pub async fn contract_storage<T: TezosFacade>(
     let value = client
         .get_contract_storage(&path.0.as_str().try_into()?, &address)
         .await?;
-    Ok(HttpResponse::build(StatusCode::OK).json(value))
+    Ok(json_response!(value))
 }
 
 pub async fn contract_script<T: TezosFacade>(
@@ -66,7 +66,15 @@ pub async fn contract_script<T: TezosFacade>(
     let value = client
         .get_contract_script(&path.0.as_str().try_into()?, &address)
         .await?;
-    Ok(HttpResponse::build(StatusCode::OK).json(value))
+    Ok(json_response!(value))
+}
+
+pub async fn contract_script_normalized<T: TezosFacade>(
+    client: Data<T>,
+    path: Path<(String, String)>,
+) -> Result<impl Responder> {
+    // TODO: handle unparsing mode https://gitlab.com/tezos/tezos/-/blob/master/docs/api/mumbai-openapi.json
+    contract_script(client, path).await
 }
 
 pub async fn contract_entrypoints<T: TezosFacade>(
@@ -77,7 +85,7 @@ pub async fn contract_entrypoints<T: TezosFacade>(
     let value = client
         .get_contract_entrypoints(&path.0.as_str().try_into()?, &address)
         .await?;
-    Ok(HttpResponse::build(StatusCode::OK).json(value))
+    Ok(json_response!(value))
 }
 
 pub async fn contract<T: TezosFacade>(
@@ -88,5 +96,5 @@ pub async fn contract<T: TezosFacade>(
     let value = client
         .get_contract(&path.0.as_str().try_into()?, &address)
         .await?;
-    Ok(HttpResponse::build(StatusCode::OK).json(value))
+    Ok(json_response!(value))
 }

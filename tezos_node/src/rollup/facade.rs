@@ -189,7 +189,7 @@ impl<T: RollupClient + Sync + Send> TezosFacade for T {
         let value: Micheline = self
             .get_state_value(
                 format!(
-                    "/context/big_maps/{}/values/{}",
+                    "/context/bigmaps/{}/values/{}",
                     big_map_id,
                     key_hash.value()
                 ),
