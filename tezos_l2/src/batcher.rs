@@ -54,6 +54,7 @@ pub fn apply_batch(
 
     let balance_updates = run_migrations(context, &prev_head)?;
     let operations = validate_batch(context, batch_payload, atomic)?;
+    let chain_id = prev_head.chain_id.clone();
 
     let mut operation_receipts: Vec<OperationReceipt> = Vec::with_capacity(operations.len());
     for opg in operations.iter() {
@@ -65,7 +66,7 @@ pub fn apply_batch(
     let header = naive_header(prev_head, &operations)?;
     let hash = block_hash(header.clone())?;
     let receipt = BatchReceipt {
-        chain_id: CHAIN_ID.try_into().unwrap(),
+        chain_id: chain_id.clone(),
         protocol: PROTOCOL.try_into().unwrap(),
         hash: hash.clone(),
         header: header.clone(),
@@ -79,7 +80,13 @@ pub fn apply_batch(
         context.set_operation_receipt(opg_receipt)?;
     }
 
-    let head = Head::new(header.level, hash.clone(), header.timestamp, opg_hashes);
+    let head = Head::new(
+        chain_id,
+        header.level,
+        hash.clone(),
+        header.timestamp,
+        opg_hashes,
+    );
     context.set_head(head.clone())?;
     context.commit()?;
 

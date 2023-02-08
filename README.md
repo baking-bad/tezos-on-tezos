@@ -11,6 +11,8 @@ Aside from the pure research interest there might be long-term advantages of suc
 * Reduced operational costs (contract automation, oracles)
 * Custom MEV-resistant techniques
 * Chain-native tokenomics
+* Feeless experience
+* Contract wallets as first-class citizens
 * Potentially smaller operation latency
 
 If this project shows good results, we will consider to relocate or partially implement our [DeFi products](https://bakingbad.dev/) in an app-specific rollup.
@@ -33,8 +35,11 @@ Also in the scope of our developing tools and indexing stack we want to better u
 - [x] Implement a minimal viable Michelson interpreter
 - [x] Interact with the kernel via inbox and access rollup state via RPC
 - [x] Support contract calls and internal transactions
-- [ ] Tezos RPC facade node
-- [ ] More tests
+- [x] Tezos RPC facade node
+- [ ] Deploy a periodic testnet
+- [ ] Add support to BCD
+- [ ] Increase test coverage
+- [ ] Spam-prevention mechanism
 
 ## Limitations
 
@@ -65,7 +70,15 @@ Install build dependencies:
 make install
 ```
 
-Build kernel and installer:
+### Single command
+
+```
+make monday
+```
+
+### Step by step
+
+Build kernel, installer, and facade node:
 ```
 make build
 ```
@@ -93,18 +106,6 @@ make rollup-node
 You can also run container in interactive mode:
 ```
 make operator-shell
-```
-
-### Aliases
-
-In order to run a whole setup on latest Mondaynet do:
-```
-make monday
-```
-
-For the Dailynet:
-```
-make daily
 ```
 
 ## How to test

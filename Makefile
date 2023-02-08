@@ -7,8 +7,8 @@ DAILY_TAG=master_7e51d27c_20221220201529
 DAILY_NETWORK=dailynet-2022-12-21
 
 # https://teztnets.xyz/mondaynet-about
-MONDAY_TAG=master_68779c31_20230129203845
-MONDAY_NETWORK=mondaynet-2023-01-30
+MONDAY_TAG=master_0b861fd0_20230203200457
+MONDAY_NETWORK=mondaynet-2023-02-06
 
 install:
 	cd ~/.cargo/bin \
@@ -28,6 +28,10 @@ build-installer:
 build-dac-codec:
 	RUSTC_BOOTSTRAP=1 cargo build --package dac_codec --release -Z sparse-registry 
 	cp ./target/release/dac-codec ./.bin/dac-codec
+
+build-node:
+	RUSTC_BOOTSTRAP=1 cargo build --package tezos_node --release -Z sparse-registry 
+	cp ./target/release/tezos-node ./.bin/tezos-node
 
 pages:
 	rm -rf ./.bin/wasm_2_0_0
@@ -50,17 +54,14 @@ trace:
 # TODO: pass test suite name
 	RUST_LIB_BACKTRACE=1 cargo test --jobs 1 --no-fail-fast --test e2e --features trace -- --nocapture --test-threads=1 e2e_abs_00
 
+image-facade:
+	docker build -t ghcr.io/baking-bad/tz-rollup-facade:latest --file ./build/facade/Dockerfile.local .
+
 image-daily:
-	docker build -t ghcr.io/baking-bad/tz-rollup-operator:daily --build-arg OCTEZ_TAG=$(DAILY_TAG) --build-arg NETWORK=$(DAILY_NETWORK) --file ./build/Dockerfile.local .
+	docker build -t ghcr.io/baking-bad/tz-rollup-operator:daily --build-arg OCTEZ_TAG=$(DAILY_TAG) --build-arg NETWORK=$(DAILY_NETWORK) --file ./build/operator/Dockerfile.local .
 
 image-monday:
-	docker build -t ghcr.io/baking-bad/tz-rollup-operator:monday --build-arg OCTEZ_TAG=$(MONDAY_TAG) --build-arg NETWORK=$(MONDAY_NETWORK) --file ./build/Dockerfile.local .
-
-image:
-	$(MAKE) image-$(TAG)
-
-show-address:
-	sudo cat .tezos-client/public_key_hashs
+	docker build -t ghcr.io/baking-bad/tz-rollup-operator:monday --build-arg OCTEZ_TAG=$(MONDAY_TAG) --build-arg NETWORK=$(MONDAY_NETWORK) --file ./build/operator/Dockerfile.local .
 
 generate-keypair:
 	docker run --rm -v $$PWD/.tezos-client:/root/.tezos-client/ -v rollup-node-$(TAG):/root/.tezos-smart-rollup-node ghcr.io/baking-bad/tz-rollup-operator:$(TAG) generate-keypair
@@ -73,14 +74,14 @@ originate-rollup:
 
 rollup-node:
 	docker stop tz-rollup-operator || true
-	docker run --rm --name tz-rollup-operator -d -v $$PWD/.tezos-client:/root/.tezos-client/ -v $$PWD/.logs:/root/logs/ -v rollup-node-$(TAG):/root/.tezos-smart-rollup-node -p 127.0.0.1:8932:8932 ghcr.io/baking-bad/tz-rollup-operator:$(TAG) rollup-node
+	docker run --rm --name tz-rollup-operator -d -v $$PWD/.tezos-client:/root/.tezos-client/ -v $$PWD/.logs:/root/logs/ -v rollup-node-$(TAG):/root/.tezos-smart-rollup-node -p 127.0.0.1:8932:8932 ghcr.io/baking-bad/tz-rollup-operator:$(TAG) rollup-node --debug
 	docker logs tz-rollup-operator -f 2>&1 | grep smart_rollup_node
 
 populate-inbox:
 	docker run --rm -v $$PWD/.tezos-client:/root/.tezos-client/ -v $$PWD/.bin:/root/.bin ghcr.io/baking-bad/tz-rollup-operator:$(TAG) populate-inbox /root/.bin/messages.json
 
 operator-shell:
-	docker run --rm -it --entrypoint=/bin/sh -v $$PWD/.tezos-client:/root/.tezos-client/ -v rollup-node-$(TAG):/root/.tezos-smart-rollup-node ghcr.io/baking-bad/tz-rollup-operator:$(TAG)
+	docker run --rm -it --entrypoint=/bin/bash -v $$PWD/.tezos-client:/root/.tezos-client/ -v rollup-node-$(TAG):/root/.tezos-smart-rollup-node ghcr.io/baking-bad/tz-rollup-operator:$(TAG)
 
 wat:
 	cargo build --package tez_kernel --target wasm32-unknown-unknown
@@ -93,12 +94,16 @@ debug:
 
 daily:
 	$(MAKE) build
-	$(MAKE) image TAG=daily
+	$(MAKE) image-daily
 	$(MAKE) originate-rollup TAG=daily
 	$(MAKE) rollup-node TAG=daily
 
 monday:
 	$(MAKE) build
-	$(MAKE) image TAG=monday
+	$(MAKE) image-monday
 	$(MAKE) originate-rollup TAG=monday
 	$(MAKE) rollup-node TAG=monday
+
+facade:
+	$(MAKE) build-node
+	$(MAKE) image-facade

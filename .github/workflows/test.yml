@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: Run unit tests & try to build
+    name: Run tests, check formatting, & try to build binaries
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -22,6 +22,9 @@ jobs:
           override: true
           components: rustfmt, clippy
           target: wasm32-unknown-unknown
+      
+      - name: Check formatting
+        run: cargo fmt --check
 
       - name: Install nextest
         uses: taiki-e/install-action@nextest
@@ -35,11 +38,11 @@ jobs:
         with:
           junit_files: "target/nextest/default/*.xml"
 
-      - name: Check formatting
-        run: cargo fmt --check
-
       - name: Install WASM tools
         run: make install
 
       - name: Build kernels
         run: make build
+
+      - name: Build nodes
+        run: make build-node

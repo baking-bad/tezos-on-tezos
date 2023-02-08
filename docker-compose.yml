@@ -1,0 +1,27 @@
+version: "3.8"
+services:
+  operator:
+    image: ghcr.io/baking-bad/tz-rollup-operator:${TAG:-monday}
+    command: rollup-node
+    restart: "no"
+    environment:
+      - ROLLUP_ADDRESS=${ROLLUP_ADDRESS:-sr17pEABASBwTkGmASNfd2ZgP5DZu1A6PRcD}
+      - OPERATOR_ADDRESS=${OPERATOR_ADDRESS:-tz1N96ka7u5cKVbrLdK6wa6KyLoAgdfDzKns}
+    volumes:
+      - ./.tezos-client/:/root/.tezos-client/
+    ports:
+      - 127.0.0.1:8932:8932
+    networks:
+      - internal
+
+  facade:
+    image: ghcr.io/baking-bad/tz-rollup-facade:${TAG:-latest}
+    command: --endpoint http://operator:8932 --rpc-addr "0.0.0.0"
+    restart: always
+    ports:
+      - 127.0.0.1:8732:8732
+    networks:
+      - internal
+
+networks:
+  internal:

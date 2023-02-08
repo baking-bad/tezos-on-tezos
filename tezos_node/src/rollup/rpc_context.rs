@@ -46,7 +46,7 @@ impl RpcContext {
                 }
                 Some(StateResponse::Errors(errors)) => {
                     let message = errors.first().unwrap().to_string();
-                    Err(Error::DurableStorageError { message })
+                    Err(Error::RollupInternalError { message })
                 }
                 None => Ok(None),
             }

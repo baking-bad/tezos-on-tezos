@@ -8,21 +8,23 @@ use crate::{
     rollup::{RollupClient, TezosFacade, TezosHelpers},
     services::config,
 };
-use actix_web::{middleware::Logger, web::Data, App, HttpServer};
+use actix_web::{
+    middleware::{Logger, NormalizePath},
+    web::Data,
+    App, HttpServer,
+};
 
-pub async fn launch_node<
-    T: Default + RollupClient + TezosFacade + TezosHelpers + Send + Sync + 'static,
->(
+pub async fn launch_node<T: RollupClient + TezosFacade + TezosHelpers + Send + Sync + 'static>(
     data: Data<T>,
+    addr: &str,
+    port: u16,
 ) -> std::io::Result<()> {
-    std::env::set_var("RUST_LOG", "debug");
-    env_logger::init();
-
     let server = HttpServer::new(move || {
         App::new()
             .app_data(data.clone())
             .configure(config::<T>)
             .wrap(Logger::default())
+            .wrap(NormalizePath::trim())
     });
-    server.bind(("127.0.0.1", 8732))?.run().await
+    server.bind((addr, port))?.run().await
 }

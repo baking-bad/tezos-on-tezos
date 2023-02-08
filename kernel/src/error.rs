@@ -52,6 +52,8 @@ impl std::error::Error for InternalError {
 #[derive(Debug, Display, Error)]
 pub enum Error {
     Internal(InternalError),
+    #[display(fmt = "UnexpectedL2OperationPrefix")]
+    UnexpectedL2OperationPrefix,
     #[display(fmt = "UnexpectedL2OperationLength")]
     UnexpectedL2OperationLength {
         length: usize,

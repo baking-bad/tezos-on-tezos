@@ -6,12 +6,12 @@ client_dir="/root/.tezos-client"
 rollup_dir="/root/.tezos-smart-rollup-node"
 endpoint="https://rpc.$NETWORK.teztnets.xyz"
 faucet="https://faucet.$NETWORK.teztnets.xyz"
-log_config="file-descriptor-path:///root/logs/kernel_debug.log?name=kernel_debug&chmod=0o644"
+debug_log_config="file-descriptor-path:///root/logs/kernel_debug.log?name=kernel_debug&chmod=0o644"
 
 command=$1
 shift 1
 
-launch_rollup_node() {
+launch_rollup() {
     if [ ! -f "$rollup_dir/config.json" ]; then
         echo "Generating operator config..."
         if [ -z "$ROLLUP_ADDRESS" ]; then
@@ -22,9 +22,15 @@ launch_rollup_node() {
             echo "OPERATOR_ADDRESS is not set"
             exit 2
         fi
+        mkdir $rollup_dir || true
         octez-smart-rollup-node --base-dir "$client_dir" init operator config for "$ROLLUP_ADDRESS" with operators "$OPERATOR_ADDRESS" --data-dir "$rollup_dir"
     fi
-    TEZOS_LOG='* -> info' TEZOS_EVENTS_CONFIG="$log_config" exec octez-smart-rollup-node --endpoint "$endpoint" -d "$client_dir" run --data-dir "$rollup_dir" --rpc-addr "0.0.0.0"
+
+    if [[ $* == "--debug" ]]; then
+        log_config=$debug_log_config
+    fi
+
+    TEZOS_LOG='* -> info' TEZOS_EVENTS_CONFIG=$log_config exec octez-smart-rollup-node --endpoint "$endpoint" -d "$client_dir" run --data-dir "$rollup_dir" --rpc-addr "0.0.0.0"
 }
 
 originate_rollup() {
@@ -69,7 +75,7 @@ populate_inbox() {
 
 case $command in
     rollup-node)
-        launch_rollup_node
+        launch_rollup
         ;;
     originate-rollup)
         originate_rollup
@@ -88,7 +94,7 @@ case $command in
 Available commands:
 
 Daemons:
-- rollup-node
+- rollup-node --debug
 
 Commands:
   - originate-rollup

@@ -1,10 +1,10 @@
-use tezos_core::types::encoded::{ChainId, Encoded, ProtocolHash};
+use tezos_core::types::encoded::Encoded;
 use tezos_ctx::{ExecutorContext, GenericContext, InterpreterContext};
 use tezos_operation::operations::OperationContent;
 use tezos_rpc::models::operation::Operation as OperationReceipt;
 
 use crate::{
-    constants::{CHAIN_ID, PROTOCOL},
+    constants::PROTOCOL,
     error::{Error, Result},
     executor::{
         balance_updates::BalanceUpdates, origination::execute_origination, reveal::execute_reveal,
@@ -64,9 +64,10 @@ pub fn execute_operation(
     context.commit()?;
     context.log(format!("Operation included: {}", opg.hash.value()));
 
+    let head = context.get_head()?;
     Ok(OperationReceipt {
-        protocol: Some(ProtocolHash::new(PROTOCOL.into())?),
-        chain_id: Some(ChainId::new(CHAIN_ID.into())?),
+        protocol: Some(PROTOCOL.try_into()?),
+        chain_id: Some(head.chain_id),
         hash: Some(opg.hash.to_owned()),
         branch: opg.origin.branch.clone(),
         signature: Some(opg.origin.signature.clone()),

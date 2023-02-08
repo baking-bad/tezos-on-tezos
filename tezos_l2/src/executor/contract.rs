@@ -33,7 +33,7 @@ pub fn deploy_contract(
     let scope = OperationScope {
         amount: 0u32.into(),
         balance,
-        chain_id: constants::CHAIN_ID.try_into()?,
+        chain_id: head.chain_id,
         level: head.level + 1,
         now: head.timestamp + constants::BLOCK_TIME,
         parameters: None,
@@ -79,7 +79,7 @@ pub fn execute_contract(
     let scope = OperationScope {
         amount: transaction.amount.clone(),
         balance,
-        chain_id: constants::CHAIN_ID.try_into()?,
+        chain_id: head.chain_id,
         level: head.level + 1,
         now: head.timestamp + constants::BLOCK_TIME,
         parameters: match &transaction.parameters {

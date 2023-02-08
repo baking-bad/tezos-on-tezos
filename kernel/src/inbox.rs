@@ -8,6 +8,7 @@ use tezos_operation::operations::{SignedOperation, UnsignedOperation};
 
 use crate::error::{Error, Result};
 
+const CHAIN_ID_SIZE: usize = 4;
 const SIGNATURE_SIZE: usize = 64;
 
 #[derive(Debug, Clone)]
@@ -48,14 +49,20 @@ pub enum InboxMessage {
     Unknown(i32),
 }
 
-pub fn parse_l2_operation<'a>(payload: &'a [u8]) -> Result<InboxMessage> {
-    if payload.len() <= SIGNATURE_SIZE {
+pub fn parse_l2_operation<'a>(payload: &'a [u8], chain_prefix: &[u8]) -> Result<InboxMessage> {
+    if payload.len() <= CHAIN_ID_SIZE + SIGNATURE_SIZE {
         return Err(Error::UnexpectedL2OperationLength {
             length: payload.len(),
         });
     }
-    let unsigned_op =
-        UnsignedOperation::from_forged_bytes(&payload[..payload.len() - SIGNATURE_SIZE])?;
+
+    if payload[..CHAIN_ID_SIZE] != *chain_prefix {
+        return Err(Error::UnexpectedL2OperationPrefix);
+    }
+
+    let unsigned_op = UnsignedOperation::from_forged_bytes(
+        &payload[CHAIN_ID_SIZE..payload.len() - SIGNATURE_SIZE],
+    )?;
     let signature = Signature::from_bytes(&payload[payload.len() - SIGNATURE_SIZE..])?;
     let hash = SignedOperation::operation_hash(payload)?;
     Ok(InboxMessage::L2Operation {
@@ -64,17 +71,15 @@ pub fn parse_l2_operation<'a>(payload: &'a [u8]) -> Result<InboxMessage> {
     })
 }
 
-pub fn read_inbox(host: &mut impl RawRollupCore) -> Result<InboxMessage> {
+pub fn read_inbox(host: &mut impl RawRollupCore, chain_prefix: &[u8]) -> Result<InboxMessage> {
     match host.read_input(MAX_INPUT_MESSAGE_SIZE) {
-        Ok(Some(Input::Message(message))) => {
-            match message.as_ref() {
-                b"\x00\x01" => Ok(InboxMessage::BeginBlock(message.level)),
-                b"\x00\x02" => Ok(InboxMessage::EndBlock(message.level)),
-                [b'\x00', b'\x03', info @ ..] => Ok(InboxMessage::LevelInfo(info.try_into()?)),
-                [b'\x01', payload @ ..] => parse_l2_operation(payload), // TODO: add chain_id prefix
-                _ => Ok(InboxMessage::Unknown(message.id)),
-            }
-        }
+        Ok(Some(Input::Message(message))) => match message.as_ref() {
+            b"\x00\x01" => Ok(InboxMessage::BeginBlock(message.level)),
+            b"\x00\x02" => Ok(InboxMessage::EndBlock(message.level)),
+            [b'\x00', b'\x03', info @ ..] => Ok(InboxMessage::LevelInfo(info.try_into()?)),
+            [b'\x01', payload @ ..] => parse_l2_operation(payload, chain_prefix),
+            _ => Ok(InboxMessage::Unknown(message.id)),
+        },
         Ok(Some(Input::Slot(_message))) => todo!("handle slot message"),
         Ok(None) => Ok(InboxMessage::NoMoreData),
         Err(err) => Err(err.into()),

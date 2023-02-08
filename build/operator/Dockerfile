@@ -18,11 +18,10 @@ RUN wget "https://raw.githubusercontent.com/zcash/zcash/master/zcutil/fetch-para
   && sed '/SAPLING_SPROUT_GROTH16_NAME/d; /progress/d; /retry-connrefused/d' fetch-params.sh | sh \
   && rm fetch-params.sh
 COPY --from=octez /usr/local/bin/octez-sc-rollup-node-alpha /usr/bin/octez-sc-rollup-node
-COPY --from=octez /usr/local/bin/octez-sc-rollup-client-alpha /usr/bin/octez-sc-rollup-client
 COPY --from=octez /usr/local/bin/octez-client /usr/bin/octez-client
 COPY --from=builder /build/.bin/wasm_2_0_0/ /root/.tezos-sc-rollup-node/wasm_2_0_0/
 COPY --from=builder /build/.bin/installer.wasm /root/.tezos-sc-rollup-node/kernel.wasm
-COPY ./build/entrypoint.sh .
+COPY ./build/operator/entrypoint.sh .
 RUN chmod +x entrypoint.sh
 ARG NETWORK="mondaynet-2022-12-12"
 ENV NETWORK=${NETWORK}

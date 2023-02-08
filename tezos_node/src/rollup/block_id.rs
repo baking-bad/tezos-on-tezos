@@ -5,7 +5,6 @@ use crate::{Error, Result};
 #[derive(Debug, Clone, PartialEq)]
 pub enum BlockId {
     Head,
-    Genesis,
     Level(u32),
     Offset(u32),
     Hash(BlockHash),
@@ -21,7 +20,6 @@ impl TryFrom<&str> for BlockId {
     fn try_from(value: &str) -> Result<Self> {
         match value {
             "head" => Ok(Self::Head),
-            "genesis" => Ok(Self::Genesis),
             offset if is_offset(offset) => {
                 let val = offset
                     .trim_start_matches("head~")

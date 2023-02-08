@@ -12,7 +12,7 @@ COPY --from=octez /usr/local/bin/octez-smart-rollup-client-alpha /usr/bin/octez-
 COPY --from=octez /usr/local/bin/octez-client /usr/bin/octez-client
 COPY ./.bin/wasm_2_0_0/ /root/.tezos-smart-rollup-node/wasm_2_0_0/
 COPY ./.bin/installer.wasm /root/.tezos-smart-rollup-node/kernel.wasm
-COPY ./build/entrypoint.sh .
+COPY ./build/operator/entrypoint.sh .
 RUN chmod +x entrypoint.sh
 ARG NETWORK
 ENV NETWORK=${NETWORK}

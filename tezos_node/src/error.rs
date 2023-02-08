@@ -62,7 +62,7 @@ impl std::error::Error for InternalError {
 pub enum Error {
     Internal(InternalError),
     KeyNotFound { key: String },
-    DurableStorageError { message: String },
+    RollupInternalError { message: String },
     RollupClientError { status: u16 },
     InvalidArguments { message: String },
 }

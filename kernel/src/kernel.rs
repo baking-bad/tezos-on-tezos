@@ -1,5 +1,5 @@
 use host::{rollup_core::RawRollupCore, runtime::Runtime};
-use tezos_core::types::encoded::{Encoded, OperationHash};
+use tezos_core::types::encoded::{ChainId, Encoded, OperationHash};
 use tezos_ctx::{ExecutorContext, GenericContext};
 use tezos_l2::{batcher::apply_batch, constants};
 use tezos_operation::operations::SignedOperation;
@@ -12,14 +12,15 @@ use crate::{
 
 pub fn kernel_run<Host: RawRollupCore>(context: &mut PVMContext<Host>) {
     let metadata = Runtime::reveal_metadata(context.as_mut()).expect("Failed to reveal metadata");
-
     let mut head = context.get_head().expect("Failed to get head");
+    head.chain_id =
+        ChainId::from_bytes(&metadata.raw_rollup_address[..4]).expect("Failed to decode chain ID");
 
     context.log(format!("Kernel invoked, prev head: {}", head));
 
     let mut batch_payload: Vec<(OperationHash, SignedOperation)> = Vec::new();
     let res: Result<()> = loop {
-        match read_inbox(context.as_mut()) {
+        match read_inbox(context.as_mut(), &metadata.raw_rollup_address[..4]) {
             Ok(InboxMessage::BeginBlock(inbox_level)) => {
                 // Origination level is the one before kernel is first time invoked
                 // We assume single rollup block per inbox block here
@@ -90,8 +91,12 @@ mod test {
     #[test]
     fn send_tez() -> Result<()> {
         let mut context = PVMContext::new(MockHost::default());
+        // default rollup address is scr1HLXM32GacPNDrhHDLAssZG88eWqCUbyLF
+        // chain_id is first 4 bytes (4da51c5d)
+        // 01 is inbox prefix for external messages
+        // the rest is the operation payload
         let input = hex::decode(
-            "0162fd30ac16979d9b88aca559e8fd8b97abd2519bebe09ad8a269d60df0b17ddc6b\
+            "014da51c5d62fd30ac16979d9b88aca559e8fd8b97abd2519bebe09ad8a269d60df0b17ddc6b\
             00e8b36c80efb51ec85a14562426049aa182a3ce38f902e18a18e807000017143f62ff9c2f41b30ee00b8c64d233fda43adf05\
             eb829cfd2e733ee9a8f44b6c00e8b36c80efb51ec85a14562426049aa182a3ce3800e28a18ab0b8102c0843d00006b82198cb1\
             79e8306c1bedd08f12dc863f32888600b2014573fd63d27895841ea6ca9d45e23e1e3b836298801b5e390b3b0a0b412003af89\
@@ -113,7 +118,9 @@ mod test {
         kernel_run(&mut context);
 
         let head = context.get_head()?;
+        println!("{:?}", head);
         assert_eq!(0, head.level);
+        assert_eq!(1, head.operations.len());
 
         let batch_receipt = context.get_batch_receipt(head.hash.value())?;
         assert_eq!(batch_receipt.hash, head.hash);

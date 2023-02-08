@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use log::debug;
 use reqwest::Client;
 use serde::Deserialize;
 use tezos_core::types::encoded::{ChainId, Encoded, SmartRollupAddress};
@@ -36,6 +37,13 @@ pub enum StateResponse {
     Errors(Vec<StateError>),
 }
 
+#[derive(Deserialize)]
+#[serde(untagged)]
+pub enum LevelResponse {
+    Value(u32),
+    Errors(Vec<StateError>),
+}
+
 #[derive(Clone, Debug)]
 pub struct RollupRpcClient {
     pub base_url: String,
@@ -44,18 +52,16 @@ pub struct RollupRpcClient {
     origination_level: Option<u32>,
 }
 
-impl Default for RollupRpcClient {
-    fn default() -> Self {
+impl RollupRpcClient {
+    pub fn new(endpoint: &str) -> Self {
         Self {
-            base_url: "http://localhost:8932".into(),
+            base_url: endpoint.into(),
             client: Client::new(),
             origination_level: None,
             chain_id: None,
         }
     }
-}
 
-impl RollupRpcClient {
     pub async fn get_rollup_address(&self) -> Result<SmartRollupAddress> {
         let res = self
             .client
@@ -81,8 +87,14 @@ impl RollupRpcClient {
             .await?;
 
         if res.status() == 200 {
-            let value = res.text().await?;
-            Ok(u32::from_str_radix(&value, 10)?)
+            let content: LevelResponse = res.json().await?;
+            match content {
+                LevelResponse::Value(value) => Ok(value),
+                LevelResponse::Errors(errors) => {
+                    let message = errors.first().unwrap().to_string();
+                    Err(Error::RollupInternalError { message })
+                }
+            }
         } else {
             Err(Error::RollupClientError {
                 status: res.status().as_u16(),
@@ -102,8 +114,14 @@ impl RollupRpcClient {
             .await?;
 
         if res.status() == 200 {
-            let value = res.text().await?;
-            Ok(u32::from_str_radix(&value, 10)?)
+            let content: LevelResponse = res.json().await?;
+            match content {
+                LevelResponse::Value(value) => Ok(value),
+                LevelResponse::Errors(errors) => {
+                    let message = errors.first().unwrap().to_string();
+                    Err(Error::RollupInternalError { message })
+                }
+            }
         } else {
             Err(Error::RollupClientError {
                 status: res.status().as_u16(),
@@ -112,14 +130,14 @@ impl RollupRpcClient {
     }
 
     async fn convert_block_id(&self, block_id: &BlockId) -> Result<String> {
-        let origination_level = self
-            .origination_level
-            .ok_or(internal_error!(Misc, "Origination level unknown"))?;
-
         match block_id {
             BlockId::Head => Ok("head".into()),
-            BlockId::Genesis => Ok(origination_level.to_string()),
-            BlockId::Level(level) => Ok((level + origination_level).to_string()),
+            BlockId::Level(level) => {
+                let origination_level = self
+                    .origination_level
+                    .ok_or(internal_error!(Misc, "Origination level yet unknown"))?;
+                Ok((level + origination_level).to_string())
+            }
             BlockId::Offset(offset) => {
                 let state_head = self.get_tezos_level().await?;
                 Ok((state_head - offset).to_string())
@@ -135,16 +153,27 @@ impl RollupRpcClient {
 impl RollupClient for RollupRpcClient {
     async fn initialize(&mut self) -> Result<()> {
         let address = self.get_rollup_address().await?;
+        debug!("Rollup address: {}", address.value());
+
         let payload = address.to_bytes()?;
         self.chain_id = Some(ChainId::from_bytes(&payload.as_slice()[..4])?);
+        debug!("Chain ID: {}", self.chain_id.as_ref().unwrap().value());
 
         let state_level = self.get_state_level(&BlockId::Head).await?;
+        debug!("PVM state level: {}", state_level);
+
         let head_level: u32 = self
             .get_batch_head(&BlockId::Head)
             .await?
             .level
             .try_into()?;
+        debug!("Chain head level: {}", head_level);
+
         self.origination_level = Some(state_level - head_level);
+        debug!(
+            "Rollup origination level: {}",
+            self.origination_level.as_ref().unwrap()
+        );
         Ok(())
     }
 
@@ -168,7 +197,7 @@ impl RollupClient for RollupRpcClient {
                 }
                 Some(StateResponse::Errors(errors)) => {
                     let message = errors.first().unwrap().to_string();
-                    Err(Error::DurableStorageError { message })
+                    Err(Error::RollupInternalError { message })
                 }
                 None => Err(Error::KeyNotFound { key }),
             }

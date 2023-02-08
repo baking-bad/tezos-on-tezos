@@ -4,6 +4,9 @@ use tezos_node::{launch_node, rollup::mock_client::RollupMockClient, rollup::Rol
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    std::env::set_var("RUST_LOG", "debug");
+    env_logger::init();
+
     let mut client = RollupMockClient::default();
     client
         .initialize()
@@ -21,5 +24,5 @@ async fn main() -> std::io::Result<()> {
         }
     });
 
-    launch_node::<RollupMockClient>(data).await
+    launch_node::<RollupMockClient>(data, "127.0.0.1", 8732).await
 }
