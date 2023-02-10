@@ -77,7 +77,7 @@ impl ContextInterpreter for Get {
     fn execute(&self, stack: &mut Stack, context: &mut impl InterpreterContext) -> Result<()> {
         let res = if let Some(n) = &self.n {
             let pair = pop_cast!(stack, Pair);
-            let idx: usize = n.to_integer()?;
+            let idx: usize = n.try_into()?;
             pair.get(idx)?
         } else {
             let key = stack.pop()?;
@@ -100,7 +100,7 @@ impl Interpreter for Update {
     ) -> Result<()> {
         let res: StackItem = if let Some(n) = &self.n {
             let item = stack.pop()?;
-            let idx = n.to_integer()?;
+            let idx = n.try_into()?;
             let mut pair = pop_cast!(stack, Pair);
             pair.update(idx, item)?;
             pair.into()

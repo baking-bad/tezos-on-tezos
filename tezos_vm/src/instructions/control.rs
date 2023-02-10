@@ -34,7 +34,7 @@ impl Interpreter for Dip {
         context: &mut impl InterpreterContext,
     ) -> Result<()> {
         let count: usize = match &self.n {
-            Some(n) => n.to_integer()?,
+            Some(n) => n.try_into()?,
             None => 1,
         };
         stack.protect(count)?;

@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use ibig::IBig;
 use std::collections::HashMap;
 use tezos_core::types::encoded::{
     Address, BlockHash, ContractAddress, Encoded, ImplicitAddress, OperationHash, PublicKey,
@@ -140,7 +139,7 @@ impl<T: RollupClient + Sync + Send> TezosFacade for T {
         let (counter, script) = match address {
             Address::Implicit(tz) => {
                 let counter = self.get_contract_counter(block_id, tz).await?;
-                (Some(IBig::from_str_radix(counter.to_str(), 10)?), None)
+                (Some(counter), None)
             }
             Address::Originated(kt) => {
                 let script = self.get_contract_script(block_id, kt).await?;
@@ -148,7 +147,7 @@ impl<T: RollupClient + Sync + Send> TezosFacade for T {
             }
         };
         Ok(ContractInfo {
-            balance: IBig::from_str_radix(&balance.to_string(), 10)?,
+            balance,
             counter,
             script,
             delegate: None,

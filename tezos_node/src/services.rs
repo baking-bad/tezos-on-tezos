@@ -18,7 +18,7 @@ use crate::services::{
         operation, operation_hash, operation_hash_list, operation_hash_list_list, operation_list,
         operation_list_list,
     },
-    shell::{chain_id, inject_operation, is_bootstrapped},
+    shell::{chain_id, inject_operation, is_bootstrapped, pending_operations, version},
 };
 use actix_web::web::{get, post, ServiceConfig};
 
@@ -30,10 +30,15 @@ macro_rules! json_response {
 }
 
 pub fn config<T: RollupClient + TezosFacade + TezosHelpers + 'static>(cfg: &mut ServiceConfig) {
-    cfg.route("/chains/main/chain_id", get().to(chain_id::<T>))
+    cfg.route("/version", get().to(version::<T>))
+        .route("/chains/main/chain_id", get().to(chain_id::<T>))
         .route(
             "/chains/main/is_bootstrapped",
             get().to(is_bootstrapped::<T>),
+        )
+        .route(
+            "/chains/main/mempool/pending_operations",
+            get().to(pending_operations::<T>),
         )
         .route("/injection/operation", post().to(inject_operation::<T>))
         .route(

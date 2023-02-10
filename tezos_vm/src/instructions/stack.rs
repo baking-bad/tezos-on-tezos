@@ -1,3 +1,5 @@
+use std::borrow::Borrow;
+
 use tezos_michelson::michelson::data::instructions::{Dig, Drop, Dug, Dup, Push, Swap};
 
 use crate::{
@@ -15,7 +17,7 @@ impl PureInterpreter for Push {
 impl PureInterpreter for Drop {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let count: usize = match &self.n {
-            Some(n) => n.to_integer()?,
+            Some(n) => n.try_into()?,
             None => 1,
         };
         for _ in 0..count {
@@ -28,7 +30,7 @@ impl PureInterpreter for Drop {
 impl PureInterpreter for Dup {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let n: usize = match &self.n {
-            Some(n) => n.to_integer()?,
+            Some(n) => n.try_into()?,
             None => 1,
         };
         if n == 0 {
@@ -50,7 +52,7 @@ impl PureInterpreter for Swap {
 
 impl PureInterpreter for Dig {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let item = stack.pop_at(self.n.to_integer()?)?;
+        let item = stack.pop_at(self.n.borrow().try_into()?)?;
         stack.push(item)
     }
 }
@@ -58,6 +60,6 @@ impl PureInterpreter for Dig {
 impl PureInterpreter for Dug {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let item = stack.pop()?;
-        stack.push_at(self.n.to_integer()?, item)
+        stack.push_at(self.n.borrow().try_into()?, item)
     }
 }

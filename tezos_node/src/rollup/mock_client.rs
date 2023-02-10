@@ -13,6 +13,9 @@ use tezos_l2::{
 };
 use tezos_operation::operations::SignedOperation;
 use tezos_rpc::models::operation::Operation;
+use tezos_rpc::models::version::{
+    AdditionalInfo, CommitInfo, NetworkVersion, Version, VersionInfo,
+};
 
 use crate::{
     rollup::{rpc_helpers::parse_operation, BlockId, RollupClient, TezosHelpers},
@@ -80,6 +83,25 @@ impl RollupClient for RollupMockClient {
 
     async fn get_chain_id(&self) -> Result<ChainId> {
         Ok(CHAIN_ID.try_into()?)
+    }
+
+    async fn get_version(&self) -> Result<VersionInfo> {
+        Ok(VersionInfo {
+            version: Version {
+                major: 0,
+                minor: 0,
+                additional_info: AdditionalInfo::Dev,
+            },
+            network_version: NetworkVersion {
+                chain_name: "TEZOS-ROLLUP-2023-02-08T00:00:00.000Z".into(),
+                distributed_db_version: 0,
+                p2p_version: 0,
+            },
+            commit_info: CommitInfo {
+                commit_hash: "00000000".into(),
+                commit_date: "2023-02-08 00:00:00 +0000".into(),
+            },
+        })
     }
 
     async fn is_chain_synced(&self) -> Result<bool> {

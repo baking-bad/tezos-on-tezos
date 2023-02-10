@@ -19,6 +19,7 @@ use tezos_rpc::models::{
     block::{Block, FullHeader, Metadata},
     contract::{ContractEntrypoints, ContractInfo, ContractScript},
     operation::Operation,
+    version::VersionInfo,
 };
 
 use crate::Result;
@@ -29,6 +30,7 @@ pub trait RollupClient {
     async fn initialize(&mut self) -> Result<()>;
     async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<ContextNode>;
     async fn get_chain_id(&self) -> Result<ChainId>;
+    async fn get_version(&self) -> Result<VersionInfo>;
     async fn is_chain_synced(&self) -> Result<bool>;
     async fn inject_batch(&self, messages: Vec<Vec<u8>>) -> Result<()>;
 

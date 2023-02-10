@@ -11,7 +11,7 @@ pub trait Formatter {
 
 fn format_instr_n(opcode: &str, arg: Option<&Nat>) -> String {
     match arg {
-        Some(arg) => format!("{} {}", opcode, arg.to_str()),
+        Some(arg) => format!("{} {}", opcode, arg.to_string()),
         None => opcode.to_string(),
     }
 }

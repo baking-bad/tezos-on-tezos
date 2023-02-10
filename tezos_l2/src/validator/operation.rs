@@ -96,23 +96,21 @@ pub fn validate_operation(
         return Err(Error::BalanceTooLow { balance });
     }
 
-    let mut counter: u64 = context.get_counter(&source.value())?.to_integer()?;
+    let mut counter = context.get_counter(&source.value())?;
 
     for content in opg.contents.iter() {
-        let next_counter: u64 = match content {
+        let next_counter = match content {
             OperationContent::Reveal(reveal) => &reveal.counter,
             OperationContent::Transaction(transaction) => &transaction.counter,
             OperationContent::Origination(origination) => &origination.counter,
             _ => return Err(Error::OperationKindUnsupported),
-        }
-        .to_integer()?;
-        if next_counter <= counter {
+        };
+        if *next_counter <= counter {
             return Err(Error::CounterInThePast {
-                expected: counter + 1,
-                found: next_counter,
+                counter: counter.to_string(),
             });
         }
-        counter = next_counter;
+        counter = next_counter.clone();
     }
 
     Ok(ManagerOperation {
@@ -121,7 +119,7 @@ pub fn validate_operation(
         source: source.clone(),
         total_fees,
         total_spent,
-        last_counter: counter.into(),
+        last_counter: counter,
     })
 }
 

@@ -4,6 +4,9 @@ use reqwest::Client;
 use serde::Deserialize;
 use tezos_core::types::encoded::{ChainId, Encoded, SmartRollupAddress};
 use tezos_ctx::ContextNode;
+use tezos_rpc::models::version::{
+    AdditionalInfo, CommitInfo, NetworkVersion, Version, VersionInfo,
+};
 
 use crate::{
     internal_error,
@@ -214,6 +217,25 @@ impl RollupClient for RollupRpcClient {
             .ok_or(internal_error!(Misc, "Chain ID unknown"))
     }
 
+    async fn get_version(&self) -> Result<VersionInfo> {
+        Ok(VersionInfo {
+            version: Version {
+                major: 0,
+                minor: 0,
+                additional_info: AdditionalInfo::Dev,
+            },
+            network_version: NetworkVersion {
+                chain_name: "TEZOS-ROLLUP-2023-02-08T00:00:00.000Z".into(),
+                distributed_db_version: 0,
+                p2p_version: 0,
+            },
+            commit_info: CommitInfo {
+                commit_hash: "00000000".into(),
+                commit_date: "2023-02-08 00:00:00 +0000".into(),
+            },
+        })
+    }
+
     async fn is_chain_synced(&self) -> Result<bool> {
         let tezos_level = self.get_tezos_level().await?;
         let state_level = self.get_state_level(&BlockId::Head).await?;
@@ -221,6 +243,8 @@ impl RollupClient for RollupRpcClient {
     }
 
     async fn inject_batch(&self, messages: Vec<Vec<u8>>) -> Result<()> {
+        let messages: Vec<String> = messages.into_iter().map(|msg| hex::encode(msg)).collect();
+
         let res = self
             .client
             .post(format!("{}/local/batcher/injection", self.base_url))

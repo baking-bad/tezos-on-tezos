@@ -15,9 +15,9 @@ use crate::{
 
 impl NatItem {
     pub fn from_data(data: Data) -> Result<StackItem> {
-        let val = match data {
-            Data::Int(val) => UBig::from_str_radix(val.to_str(), 10)?,
-            Data::Nat(val) => UBig::from_str_radix(val.to_str(), 10)?,
+        let val: UBig = match data {
+            Data::Int(val) => val.try_into()?,
+            Data::Nat(val) => val.into(),
             _ => return err_mismatch!("Int or Nat", data.format()),
         };
         Ok(StackItem::Nat(val.into()))

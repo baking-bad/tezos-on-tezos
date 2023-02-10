@@ -91,12 +91,12 @@ mod test {
     #[test]
     fn send_tez() -> Result<()> {
         let mut context = PVMContext::new(MockHost::default());
-        // default rollup address is scr1HLXM32GacPNDrhHDLAssZG88eWqCUbyLF
-        // chain_id is first 4 bytes (4da51c5d)
+        // default rollup address is sr1V6huFSUBUujzubUCg9nNXqpzfG9t4XD1h
+        // chain_id is first 4 bytes (fceda8e6)
         // 01 is inbox prefix for external messages
         // the rest is the operation payload
         let input = hex::decode(
-            "014da51c5d62fd30ac16979d9b88aca559e8fd8b97abd2519bebe09ad8a269d60df0b17ddc6b\
+            "01fceda8e662fd30ac16979d9b88aca559e8fd8b97abd2519bebe09ad8a269d60df0b17ddc6b\
             00e8b36c80efb51ec85a14562426049aa182a3ce38f902e18a18e807000017143f62ff9c2f41b30ee00b8c64d233fda43adf05\
             eb829cfd2e733ee9a8f44b6c00e8b36c80efb51ec85a14562426049aa182a3ce3800e28a18ab0b8102c0843d00006b82198cb1\
             79e8306c1bedd08f12dc863f32888600b2014573fd63d27895841ea6ca9d45e23e1e3b836298801b5e390b3b0a0b412003af89\

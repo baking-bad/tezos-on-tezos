@@ -36,7 +36,7 @@ impl PureInterpreter for Cdr {
 
 fn parse_arity(n: &Option<Nat>) -> Result<usize> {
     let n: usize = match n {
-        Some(n) => n.to_integer()?,
+        Some(n) => n.try_into()?,
         None => 2,
     };
     if n < 2 {

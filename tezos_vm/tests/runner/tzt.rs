@@ -221,7 +221,7 @@ fn parse_big_map_values(
                     .expect("Expected literal")
                     .into_micheline_int()
                     .expect("Expected int")
-                    .to_integer()?;
+                    .try_into()?;
                 context.init_big_map(ptr, scope.self_address.clone());
                 let schema = args.remove(0);
                 let elts: Vec<PrimitiveApplication> = args

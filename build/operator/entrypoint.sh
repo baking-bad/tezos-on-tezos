@@ -26,9 +26,9 @@ launch_rollup() {
         octez-smart-rollup-node --base-dir "$client_dir" init operator config for "$ROLLUP_ADDRESS" with operators "$OPERATOR_ADDRESS" --data-dir "$rollup_dir"
     fi
 
-    if [[ $* == "--debug" ]]; then
-        log_config=$debug_log_config
-    fi
+    # if [[ $* == "--debug" ]]; then
+    #     log_config=$debug_log_config
+    # fi
 
     TEZOS_LOG='* -> info' TEZOS_EVENTS_CONFIG=$log_config exec octez-smart-rollup-node --endpoint "$endpoint" -d "$client_dir" run --data-dir "$rollup_dir" --rpc-addr "0.0.0.0"
 }

@@ -23,7 +23,7 @@ impl TimestampItem {
     pub fn from_data(data: Data) -> Result<StackItem> {
         let timestamp = match data {
             Data::String(val) => DateTime::parse_from_rfc3339(val.to_str())?.timestamp(),
-            Data::Int(val) => val.to_integer()?,
+            Data::Int(val) => val.try_into()?,
             _ => return err_mismatch!("String or Int", data.format()),
         };
         Ok(StackItem::Timestamp(Self::new(timestamp)?))

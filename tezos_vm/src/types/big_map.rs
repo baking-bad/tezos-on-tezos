@@ -70,7 +70,7 @@ impl BigMapItem {
         match data {
             Data::Int(ptr) => {
                 let diff = BigMapDiff {
-                    id: ptr.to_integer()?,
+                    id: ptr.try_into()?,
                     inner_type: (key_type.clone(), val_type.clone()),
                     updates: BTreeMap::new(),
                     alloc: false,

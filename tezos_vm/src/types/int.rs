@@ -17,9 +17,7 @@ use crate::{
 impl IntItem {
     pub fn from_data(data: Data) -> Result<StackItem> {
         match data {
-            Data::Int(val) => Ok(StackItem::Int(
-                IBig::from_str_radix(val.to_str(), 10)?.into(),
-            )),
+            Data::Int(val) => Ok(StackItem::Int(IntItem(val.into()))),
             _ => err_mismatch!("Int", data.format()),
         }
     }

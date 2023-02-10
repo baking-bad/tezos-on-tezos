@@ -1,7 +1,6 @@
 use actix_web::{
-    http::StatusCode,
     web::{Data, Path},
-    HttpResponse, Responder, Result,
+    Responder, Result,
 };
 
 use crate::{json_response, rollup::TezosFacade};
@@ -41,9 +40,7 @@ pub async fn block_protocols<T: TezosFacade>(
     let value = client
         .get_block_protocols(&path.0.as_str().try_into()?)
         .await?;
-    Ok(HttpResponse::build(StatusCode::OK)
-        .append_header(("content-type", "application/json"))
-        .json(value))
+    Ok(json_response!(value))
 }
 
 pub async fn live_blocks<T: TezosFacade>(

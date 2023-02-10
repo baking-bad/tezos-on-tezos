@@ -67,25 +67,15 @@ pub enum Error {
     Internal(InternalError),
     OperationKindUnsupported,
     BalanceNotInitialized,
-    BalanceTooLow {
-        balance: Mutez,
-    },
-    ContractCodeMissing {
-        address: String,
-    },
-    ContractStorageMissing {
-        address: String,
-    },
+    BalanceTooLow { balance: Mutez },
+    ContractCodeMissing { address: String },
+    ContractStorageMissing { address: String },
     InconsistentSources,
     ContentsListError,
     UnrevealedPublicKey,
     InvalidSignature,
     EmptyImplicitContract,
-    #[display(fmt = "expected {}, found {}", expected, found)]
-    CounterInThePast {
-        expected: u64,
-        found: u64,
-    },
+    CounterInThePast { counter: String },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

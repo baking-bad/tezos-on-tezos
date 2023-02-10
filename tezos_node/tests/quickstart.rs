@@ -1,4 +1,3 @@
-use ibig::UBig;
 use serde_json::json;
 use static_init::dynamic;
 use std::path::PathBuf;
@@ -6,6 +5,7 @@ use std::process::{Child, Command};
 use std::time::Duration;
 use tezos_contract::ContractFetcher;
 use tezos_core::types::encoded::{Encoded, ImplicitAddress, OperationHash, SecretKey};
+use tezos_core::types::number::Nat;
 use tezos_l2::executor::origination::originated_address;
 use tezos_michelson::michelson::data;
 use tezos_operation::operations::{
@@ -79,7 +79,7 @@ async fn wait_operation(
     })
 }
 
-async fn send_operation<F: FnOnce(ImplicitAddress, UBig) -> OperationContent>(
+async fn send_operation<F: FnOnce(ImplicitAddress, Nat) -> OperationContent>(
     rpc: &TezosRpc<HttpClient>,
     make_content: F,
 ) -> Result<OperationHash> {
@@ -91,7 +91,7 @@ async fn send_operation<F: FnOnce(ImplicitAddress, UBig) -> OperationContent>(
         .get_contract_counter(&source.clone().into())
         .send()
         .await?
-        + 1u32;
+        + 1u32.into();
     let operation = UnsignedOperation::new(branch, vec![make_content(source, counter)]);
     // println!("{:#?}", operation);
     let operation_with_fee = rpc.min_fee(operation, None).await?;
@@ -110,7 +110,7 @@ async fn test_00_check_balance(rpc: &TezosRpc<HttpClient>) -> Result<()> {
         .get_contract(&ACTIVATOR_ADDRESS.try_into().unwrap())
         .send()
         .await?;
-    assert!(contract.balance > 0.into());
+    assert!(contract.balance > 0u32.into());
     Ok(())
 }
 

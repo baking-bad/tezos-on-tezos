@@ -26,7 +26,7 @@ impl MutezItem {
 
     pub fn from_data(data: Data) -> Result<StackItem> {
         match data {
-            Data::Int(val) => match val.to_integer::<i64>() {
+            Data::Int(val) => match TryInto::<i64>::try_into(val) {
                 Ok(val) => Ok(Self::new(val)?.into()),
                 Err(_) => Err(Error::MutezOverflow.into()),
             },
