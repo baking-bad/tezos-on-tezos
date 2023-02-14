@@ -12,15 +12,17 @@ COPY . .
 RUN make build
 
 FROM alpine:3.15 AS rollup
-RUN apk --no-cache add binutils gcc gmp libgmpxx hidapi libc-dev libev libffi sudo wget
-RUN wget "https://raw.githubusercontent.com/zcash/zcash/master/zcutil/fetch-params.sh" \
-  && export OSTYPE=linux \
-  && sed '/SAPLING_SPROUT_GROTH16_NAME/d; /progress/d; /retry-connrefused/d' fetch-params.sh | sh \
-  && rm fetch-params.sh
-COPY --from=octez /usr/local/bin/octez-smart-rollup-node-PtMumbai /usr/bin/octez-smart-rollup-node
+RUN apk --no-cache add binutils gcc gmp libgmpxx hidapi libc-dev libev libffi sudo
+ARG OCTEZ_PROTO="PtMumbai"
+#ARG RELEASE="auto-release"
+#RUN wget "https://github.com/serokell/tezos-packaging/releases/download/$RELEASE/octez-smart-rollup-node-$OCTEZ_PROTO" -O "/usr/bin/octez-smart-rollup-node" \
+#  && chmod +x /usr/bin/octez-smart-rollup-node
+#RUN wget "https://github.com/serokell/tezos-packaging/releases/download/$RELEASE/octez-client" -O "/usr/bin/octez-client" \
+#  && chmod +x /usr/bin/octez-client
+COPY --from=octez /usr/local/bin/octez-smart-rollup-node-${OCTEZ_PROTO} /usr/bin/octez-smart-rollup-node
 COPY --from=octez /usr/local/bin/octez-client /usr/bin/octez-client
-COPY --from=builder /build/.bin/wasm_2_0_0/ /root/.tezos-sc-rollup-node/wasm_2_0_0/
-COPY --from=builder /build/.bin/installer.wasm /root/.tezos-sc-rollup-node/kernel.wasm
+COPY --from=builder /build/.bin/wasm_2_0_0/ /root/wasm_2_0_0/
+COPY --from=builder /build/.bin/installer.wasm /root/kernel.wasm
 COPY ./build/operator/entrypoint.sh .
 RUN chmod +x entrypoint.sh
 ARG NETWORK="mumbainet"

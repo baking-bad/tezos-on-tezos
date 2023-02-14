@@ -12,18 +12,38 @@ command=$1
 shift 1
 
 launch_rollup() {
+    if [ ! -f "$client_dir/secret_keys" ]; then
+        echo "Importing operator key..."
+        if [ -z "$OPERATOR_KEY" ]; then
+            echo "OPERATOR_KEY is not set"
+            exit 2
+        fi
+        octez-client --endpoint "$endpoint" import secret key operator "$OPERATOR_KEY"
+    fi
+
     if [ ! -f "$rollup_dir/config.json" ]; then
         echo "Generating operator config..."
         if [ -z "$ROLLUP_ADDRESS" ]; then
             echo "ROLLUP_ADDRESS is not set"
             exit 1
         fi
-        if [ -z "$OPERATOR_ADDRESS" ]; then
-            echo "OPERATOR_ADDRESS is not set"
+        mkdir $rollup_dir || true
+        operator_address=$(octez-client --endpoint "$endpoint" show address "operator" 2>&1 | grep Hash | grep -oE "tz.*")
+        octez-smart-rollup-node --base-dir "$client_dir" init operator config for "$ROLLUP_ADDRESS" with operators "$operator_address" --data-dir "$rollup_dir"
+    fi
+
+    if [ ! -f "$client_dir/secret_keys" ]; then
+        echo "Importing operator key..."
+        if [ -z "$OPERATOR_KEY" ]; then
+            echo "OPERATOR_KEY is not set"
             exit 2
         fi
-        mkdir $rollup_dir || true
-        octez-smart-rollup-node --base-dir "$client_dir" init operator config for "$ROLLUP_ADDRESS" with operators "$OPERATOR_ADDRESS" --data-dir "$rollup_dir"
+        octez-client --endpoint "$endpoint" import secret key operator "$OPERATOR_KEY"
+    fi
+
+    if [ ! -d "$rollup_dir/wasm_2_0_0" ]; then
+        echo "Initializing metadata folder..."
+        cp -R /root/wasm_2_0_0 "$rollup_dir/wasm_2_0_0"
     fi
 
     # if [[ $* == "--debug" ]]; then
@@ -42,11 +62,11 @@ originate_rollup() {
         echo "ORIGINATOR_KEY is not set, using 'operator'"
         ORIGINATOR_KEY="operator"
     fi
-    if [ ! -f "$rollup_dir/kernel.wasm" ]; then
+    if [ ! -f "/root/kernel.wasm" ]; then
         echo "Kernel not found"
         exit 1
     fi
-    kernel="$(xxd -p "$rollup_dir/kernel.wasm" | tr -d '\n')"
+    kernel="$(xxd -p "/root/kernel.wasm" | tr -d '\n')"
     
     octez-client --endpoint "$endpoint" originate smart rollup from "$ORIGINATOR_KEY" of kind wasm_2_0_0 of type bytes with kernel "$kernel" --burn-cap 999 | tee originate.out
     rollup_address=$(cat originate.out | grep -oE "sr1.*")

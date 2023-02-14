@@ -48,6 +48,7 @@ pub fn validate_operation(
             return Err(Error::InconsistentSources);
         }
 
+        // TODO: deny 0 amount if destination is implicit
         // TODO: check against constant fee values (per operation kind)
 
         total_fees += content.fee();

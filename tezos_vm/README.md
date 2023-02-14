@@ -5,14 +5,17 @@ This is the MVP of a Michelson interpreter written in Rust.
 ## About
 The purpose of this crate is to provide a standalone, lightweight, and WASM-friendly implementation of the Michelson VM. The applications can vary including educational projects, developer tools, but the initial goal is to use it in a Tezos L2 solution.
 
+### Roadmap
+
+- [ ] Views
+- [ ] Events
+- [ ] Tickets
+- [ ] Missing hash functions (`SHA3`, `KECCAK`)
+- [ ] Internal originations
+
 ### Not implemented
-Non-supported Michelson features (at least in the first iteration):
-* Several hash functions (`SHA3`, `KECCAK`)
-* Views
-* Events
+Non-supported Michelson features:
 * Sapling
-* Tickets
-* Internal originations (`CREATE_CONTRACT`)
 * Global constants
 * Chest
 * Rollups :D

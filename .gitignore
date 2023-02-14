@@ -6,3 +6,4 @@
 target
 tez_kernel/target
 boot_kernel/target
+*.env

@@ -7,8 +7,12 @@ DAILY_TAG=master_7e51d27c_20221220201529
 DAILY_NETWORK=dailynet-2022-12-21
 
 # https://teztnets.xyz/mondaynet-about
-MONDAY_TAG=master_0b861fd0_20230203200457
-MONDAY_NETWORK=mondaynet-2023-02-06
+MONDAY_TAG=master_69656b8a_20230211074400
+MONDAY_NETWORK=mondaynet-2023-02-13
+
+# https://teztnets.xyz/mumbainet-about
+MUMBAI_TAG=v16.0-rc1
+MUMBAI_NETWORK=mumbainet
 
 install:
 	cd ~/.cargo/bin \
@@ -30,6 +34,7 @@ build-dac-codec:
 	cp ./target/release/dac-codec ./.bin/dac-codec
 
 build-node:
+	mkdir .bin || true
 	RUSTC_BOOTSTRAP=1 cargo build --package tezos_node --release -Z sparse-registry 
 	cp ./target/release/tezos-node ./.bin/tezos-node
 
@@ -55,13 +60,16 @@ trace:
 	RUST_LIB_BACKTRACE=1 cargo test --jobs 1 --no-fail-fast --test e2e --features trace -- --nocapture --test-threads=1 e2e_abs_00
 
 image-facade:
-	docker build -t ghcr.io/baking-bad/tz-rollup-facade:latest --file ./build/facade/Dockerfile.local .
+	docker build -t ghcr.io/baking-bad/tz-rollup-facade:$(TAG) --file ./build/facade/Dockerfile.local .
 
-image-daily:
-	docker build -t ghcr.io/baking-bad/tz-rollup-operator:daily --build-arg OCTEZ_TAG=$(DAILY_TAG) --build-arg NETWORK=$(DAILY_NETWORK) --file ./build/operator/Dockerfile.local .
+image-operator:
+	docker build -t ghcr.io/baking-bad/tz-rollup-operator:$(TAG) --build-arg OCTEZ_TAG=$(OCTEZ_TAG) --build-arg OCTEZ_PROTO=$(OCTEZ_PROTO) --build-arg NETWORK=$(NETWORK) --file ./build/operator/Dockerfile.local .
 
-image-monday:
-	docker build -t ghcr.io/baking-bad/tz-rollup-operator:monday --build-arg OCTEZ_TAG=$(MONDAY_TAG) --build-arg NETWORK=$(MONDAY_NETWORK) --file ./build/operator/Dockerfile.local .
+image-operator-monday:
+	$(MAKE) image-operator TAG=monday OCTEZ_TAG=$(MONDAY_TAG) OCTEZ_PROTO=alpha NETWORK=$(MONDAY_NETWORK)
+
+image-operator-mumbai:
+	$(MAKE) image-operator TAG=mumbai OCTEZ_TAG=$(MUMBAI_TAG) OCTEZ_PROTO=PtMumbai NETWORK=$(MUMBAI_NETWORK)
 
 generate-keypair:
 	docker run --rm -v $$PWD/.tezos-client:/root/.tezos-client/ -v rollup-node-$(TAG):/root/.tezos-smart-rollup-node ghcr.io/baking-bad/tz-rollup-operator:$(TAG) generate-keypair
@@ -94,15 +102,21 @@ debug:
 
 daily:
 	$(MAKE) build
-	$(MAKE) image-daily
+	$(MAKE) image-operator TAG=daily OCTEZ_TAG=$(DAILY_TAG) NETWORK=$(DAILY_NETWORK) OCTEZ_PROTO=alpha
 	$(MAKE) originate-rollup TAG=daily
 	$(MAKE) rollup-node TAG=daily
 
 monday:
 	$(MAKE) build
-	$(MAKE) image-monday
+	$(MAKE) image-operator-monday
 	$(MAKE) originate-rollup TAG=monday
 	$(MAKE) rollup-node TAG=monday
+
+mumbai:
+	$(MAKE) build
+	$(MAKE) image-operator-mumbai
+	$(MAKE) originate-rollup TAG=mumbai
+	$(MAKE) rollup-node TAG=mumbai
 
 facade:
 	$(MAKE) build-node

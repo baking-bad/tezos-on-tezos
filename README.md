@@ -2,7 +2,7 @@
 
 Optimistic rollup enabled with Tezos VM running on top of Tezos L1.
 
-**IMPORTANT: THIS IS A RESEARCH PROJECT, DO NOT RUN THIS CODE IN THE MAINNET**
+**IMPORTANT: THIS IS AN EARLY BETA, DO NOT RUN THIS CODE IN THE MAINNET**
 
 ## About
 
@@ -14,6 +14,7 @@ Aside from the pure research interest there might be long-term advantages of suc
 * Feeless experience
 * Contract wallets as first-class citizens
 * Potentially smaller operation latency
+* Alternative VMs for executing smart contracts (WASM)
 
 If this project shows good results, we will consider to relocate or partially implement our [DeFi products](https://bakingbad.dev/) in an app-specific rollup.
 
@@ -40,6 +41,7 @@ Also in the scope of our developing tools and indexing stack we want to better u
 - [ ] Add support to BCD
 - [ ] Increase test coverage
 - [ ] Spam-prevention mechanism
+- [ ] WASM smart contracts
 
 ## Limitations
 
