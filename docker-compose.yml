@@ -6,6 +6,8 @@ services:
     restart: "no"
     env_file:
       - mumbai.env
+      # ROLLUP_ADDRESS
+      # OPERATOR_KEY
     ports:
       - 127.0.0.1:8932:8932
     networks:

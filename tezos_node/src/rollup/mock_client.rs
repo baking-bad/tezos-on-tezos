@@ -73,7 +73,7 @@ impl RollupClient for RollupMockClient {
 
     async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<ContextNode> {
         match &block_id {
-            BlockId::Head => {}
+            BlockId::Head => {},
             _ => unimplemented!("Can only access state at head level in the mockup mode"),
         };
         get_mut!(self.context)

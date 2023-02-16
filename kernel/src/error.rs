@@ -67,11 +67,6 @@ pub enum Error {
         expected: i32,
         found: i32,
     },
-    #[display(fmt = "InconsistentHeadTimestamp")]
-    InconsistentHeadTimestamp {
-        upper_bound: i64,
-        found: i64,
-    },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

@@ -145,9 +145,13 @@ impl RollupRpcClient {
                 let state_head = self.get_tezos_level().await?;
                 Ok((state_head - offset).to_string())
             }
-            BlockId::Hash(hash) => Err(Error::KeyNotFound {
-                key: hash.into_string(),
-            }),
+            BlockId::Hash(hash) => {
+                let level = self.get_batch_level(hash).await?;
+                let origination_level = self
+                    .origination_level
+                    .ok_or(internal_error!(Misc, "Origination level yet unknown"))?;
+                Ok(((level as u32) + origination_level).to_string())
+            },
         }
     }
 }

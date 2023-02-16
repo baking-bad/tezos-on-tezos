@@ -13,7 +13,7 @@ use crate::services::{
         contract, contract_balance, contract_counter, contract_delegate, contract_entrypoints,
         contract_public_key, contract_script, contract_script_normalized, contract_storage,
     },
-    helpers::run_operation,
+    helpers::{run_operation, forge_operation, preapply_operations},
     operations::{
         operation, operation_hash, operation_hash_list, operation_hash_list_list, operation_list,
         operation_list_list,
@@ -44,6 +44,14 @@ pub fn config<T: RollupClient + TezosFacade + TezosHelpers + 'static>(cfg: &mut 
         .route(
             "/chains/main/blocks/{block_id}/helpers/scripts/run_operation",
             post().to(run_operation::<T>),
+        )
+        .route(
+            "/chains/main/blocks/{block_id}/helpers/forge/operations",
+            post().to(forge_operation::<T>),
+        )
+        .route(
+            "/chains/main/blocks/{block_id}/helpers/preapply/operations",
+            post().to(preapply_operations::<T>),
         )
         .route(
             "/chains/main/blocks/{block_id}/hash",

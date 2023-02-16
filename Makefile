@@ -60,7 +60,7 @@ trace:
 	RUST_LIB_BACKTRACE=1 cargo test --jobs 1 --no-fail-fast --test e2e --features trace -- --nocapture --test-threads=1 e2e_abs_00
 
 image-facade:
-	docker build -t ghcr.io/baking-bad/tz-rollup-facade:$(TAG) --file ./build/facade/Dockerfile.local .
+	docker build -t ghcr.io/baking-bad/tz-rollup-facade:$(TAG) --file ./build/facade/Dockerfile .
 
 image-operator:
 	docker build -t ghcr.io/baking-bad/tz-rollup-operator:$(TAG) --build-arg OCTEZ_TAG=$(OCTEZ_TAG) --build-arg OCTEZ_PROTO=$(OCTEZ_PROTO) --build-arg NETWORK=$(NETWORK) --file ./build/operator/Dockerfile.local .

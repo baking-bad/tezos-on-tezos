@@ -47,13 +47,17 @@ impl<T: RollupClient + Sync + Send> TezosFacade for T {
     }
 
     async fn get_contract_balance(&self, block_id: &BlockId, address: &Address) -> Result<Mutez> {
-        let balance: Mutez = self
+        let balance: Mutez = match self
             .get_state_value(
                 format!("/context/contracts/{}/balance", address.value()),
                 block_id,
             )
-            .await?
-            .try_into()?;
+            .await
+        {
+            Ok(val) => val.try_into()?,
+            Err(Error::KeyNotFound { key: _ }) => 0u32.into(),
+            Err(err) => return Err(err),
+        };
         Ok(balance)
     }
 
@@ -70,7 +74,7 @@ impl<T: RollupClient + Sync + Send> TezosFacade for T {
             .await
         {
             Ok(val) => val.try_into()?,
-            Err(Error::KeyNotFound { key: _ }) => Nat::from_integer(0u32),
+            Err(Error::KeyNotFound { key: _ }) => 0u32.into(),
             Err(err) => return Err(err),
         };
         Ok(counter)
@@ -80,14 +84,18 @@ impl<T: RollupClient + Sync + Send> TezosFacade for T {
         &self,
         block_id: &BlockId,
         address: &ImplicitAddress,
-    ) -> Result<PublicKey> {
-        let pubkey: PublicKey = self
+    ) -> Result<Option<PublicKey>> {
+        let pubkey: Option<PublicKey> = match self
             .get_state_value(
                 format!("/context/contracts/{}/pubkey", address.value()),
                 block_id,
             )
-            .await?
-            .try_into()?;
+            .await
+        {
+            Ok(val) => Some(val.try_into()?),
+            Err(Error::KeyNotFound { key: _ }) => None,
+            Err(err) => return Err(err),
+        };
         Ok(pubkey)
     }
 

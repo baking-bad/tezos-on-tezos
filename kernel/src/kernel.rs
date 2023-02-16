@@ -1,7 +1,7 @@
 use host::{rollup_core::RawRollupCore, runtime::Runtime};
 use tezos_core::types::encoded::{ChainId, Encoded, OperationHash};
 use tezos_ctx::{ExecutorContext, GenericContext};
-use tezos_l2::{batcher::apply_batch, constants};
+use tezos_l2::{batcher::apply_batch};
 use tezos_operation::operations::SignedOperation;
 
 use crate::{
@@ -34,17 +34,7 @@ pub fn kernel_run<Host: RawRollupCore>(context: &mut PVMContext<Host>) {
                 }
             }
             Ok(InboxMessage::LevelInfo(info)) => {
-                if head.timestamp == 0 {
-                    head.timestamp = info.predecessor_timestamp;
-                } else {
-                    let upper_bound = info.predecessor_timestamp + constants::BLOCK_TIME;
-                    if head.timestamp > upper_bound {
-                        break Err(Error::InconsistentHeadTimestamp {
-                            upper_bound,
-                            found: head.timestamp,
-                        });
-                    }
-                }
+                head.timestamp = info.predecessor_timestamp;
             }
             Ok(InboxMessage::L2Operation { hash, opg }) => {
                 context.log(format!("Operation pending: {}", &hash.value()));

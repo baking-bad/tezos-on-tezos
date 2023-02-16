@@ -42,6 +42,14 @@ pub trait RollupClient {
         Ok(head)
     }
 
+    async fn get_batch_level(&self, hash: &BlockHash) -> Result<i32> {
+        let receipt: BatchReceipt = self
+            .get_state_value(format!("/batches/{}", hash.value()), &BlockId::Head)
+            .await?
+            .try_into()?;
+        Ok(receipt.header.level)
+    }
+
     async fn get_batch_receipt(&self, block_id: &BlockId) -> Result<BatchReceipt> {
         let hash = match block_id {
             BlockId::Hash(hash) => hash.clone(),
@@ -88,7 +96,7 @@ pub trait TezosFacade {
         &self,
         block_id: &BlockId,
         address: &ImplicitAddress,
-    ) -> Result<PublicKey>;
+    ) -> Result<Option<PublicKey>>;
     async fn get_contract_code(
         &self,
         block_id: &BlockId,

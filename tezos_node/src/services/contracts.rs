@@ -98,3 +98,60 @@ pub async fn contract<T: TezosFacade>(
         .await?;
     Ok(json_response!(value))
 }
+
+#[cfg(test)]
+mod test {
+    use actix_web::{test, web::Data, App};
+    use tezos_core::types::{mutez::Mutez, number::Nat, encoded::PublicKey};
+    use tezos_ctx::{ExecutorContext, Head};
+    use tezos_rpc::models::contract::ContractInfo;
+
+    use crate::{rollup::mock_client::RollupMockClient, services::config, Result};
+
+    #[actix_web::test]
+    async fn test_non_existent_contract() -> Result<()> {
+        let client = RollupMockClient::default();
+        client.patch(|context| {
+            context.set_head(Head::default()).unwrap();
+            Ok(())
+        })?;
+
+        let app = test::init_service(
+            App::new()
+                .configure(config::<RollupMockClient>)
+                .app_data(Data::new(client)),
+        )
+        .await;
+
+        let req = test::TestRequest::get()
+            .uri("/chains/main/blocks/head/context/contracts/tz1N2386URdGRJDbMuEEn757Y5HBPg5XwtmQ")
+            .to_request();
+        let res: ContractInfo = test::call_and_read_body_json(&app, req).await;
+        assert_eq!(Mutez::from(0u32), res.balance);
+        assert_eq!(Some(Nat::from("0").unwrap()), res.counter);
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn test_non_existent_manager_key() -> Result<()> {
+        let client = RollupMockClient::default();
+        client.patch(|context| {
+            context.set_head(Head::default()).unwrap();
+            Ok(())
+        })?;
+
+        let app = test::init_service(
+            App::new()
+                .configure(config::<RollupMockClient>)
+                .app_data(Data::new(client)),
+        )
+        .await;
+
+        let req = test::TestRequest::get()
+            .uri("/chains/main/blocks/head/context/contracts/tz1N2386URdGRJDbMuEEn757Y5HBPg5XwtmQ/manager_key")
+            .to_request();
+        let res: Option<PublicKey> = test::call_and_read_body_json(&app, req).await;
+        assert!(res.is_none());
+        Ok(())
+    }
+}

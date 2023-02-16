@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use tezos_core::types::number::Nat;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -7,9 +8,11 @@ pub struct Config {
     pub max_block_header_length: i32,
     pub max_operation_data_length: i32,
     pub max_operations_list_length: i32,
-    pub pow_nonce: &'static str,
-    pub hard_gas_limit_per_operation: i32,
-    pub hard_storage_limit_per_operation: i32,
+    pub pow_nonce: String,
+    pub hard_gas_limit_per_operation: Nat,
+    pub hard_storage_limit_per_operation: Nat,
+    pub hard_gas_limit_per_block: Nat,
+    pub cost_per_byte: Nat,
 }
 
 impl Config {
@@ -20,9 +23,11 @@ impl Config {
             max_block_header_length: 2048,
             max_operation_data_length: 86400,
             max_operations_list_length: 1024,
-            pow_nonce: "deadbeef",
-            hard_gas_limit_per_operation: 0,
-            hard_storage_limit_per_operation: 0,
+            pow_nonce: "deadbeef".into(),
+            hard_gas_limit_per_operation: 1040000u64.into(),
+            hard_storage_limit_per_operation: 60000u64.into(),
+            hard_gas_limit_per_block: 5200000u64.into(),
+            cost_per_byte: 250u32.into(),
         }
     }
 }
