@@ -49,20 +49,22 @@ impl BalanceUpdates {
 
         let mut dst_balance = context.get_balance(destination)?.unwrap_or(0u32.into());
 
-        if src_balance < *amount {
-            return Err(Error::BalanceTooLow {
-                balance: src_balance,
-            });
+        if *amount > 0u32.into() {
+            if src_balance < *amount {
+                return Err(Error::BalanceTooLow {
+                    balance: src_balance,
+                });
+            }
+
+            src_balance -= *amount;
+            dst_balance += *amount;
+
+            context.set_balance(source, src_balance.clone())?;
+            context.set_balance(destination, dst_balance.clone())?;
+
+            self.push_contract_update(source, format!("-{}", amount));
+            self.push_contract_update(destination, amount.to_string());
         }
-
-        src_balance -= *amount;
-        dst_balance += *amount;
-
-        context.set_balance(source, src_balance.clone())?;
-        context.set_balance(destination, dst_balance.clone())?;
-
-        self.push_contract_update(source, format!("-{}", amount));
-        self.push_contract_update(destination, amount.to_string());
 
         Ok((src_balance, dst_balance))
     }

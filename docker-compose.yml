@@ -1,11 +1,11 @@
 version: "3.8"
 services:
   operator:
-    image: ghcr.io/baking-bad/tz-rollup-operator:${TAG:-mumbai}
+    image: ghcr.io/baking-bad/tz-rollup-operator:${TAG}
     command: rollup-node
     restart: "no"
     env_file:
-      - mumbai.env
+      - local.env
       # ROLLUP_ADDRESS
       # OPERATOR_KEY
     ports:
@@ -14,7 +14,7 @@ services:
       - internal
 
   facade:
-    image: ghcr.io/baking-bad/tz-rollup-facade:${TAG:-mumbai}
+    image: ghcr.io/baking-bad/tz-rollup-facade:${TAG}
     command: --endpoint http://operator:8932 --rpc-addr "0.0.0.0"
     restart: always
     ports:
