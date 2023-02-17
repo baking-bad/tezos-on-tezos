@@ -1,6 +1,7 @@
 use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
 use derive_more::{Display, Error};
 use std::backtrace::Backtrace;
+use tezos_rpc::models::error::RpcError;
 
 #[derive(Debug, Display)]
 pub enum InternalKind {
@@ -65,6 +66,7 @@ pub enum Error {
     RollupInternalError { message: String },
     RollupClientError { status: u16 },
     InvalidArguments { message: String },
+    RpcErrors { response: String },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -118,10 +120,19 @@ impl From<tezos_vm::Error> for Error {
     }
 }
 
+impl From<Vec<RpcError>> for Error {
+    fn from(errors: Vec<RpcError>) -> Self {
+        Error::RpcErrors {
+            response: serde_json::to_string(&errors).expect("Failed to serialize RPC errors"),
+        }
+    }
+}
+
 impl Error {
     pub fn format(&self) -> String {
         match self {
             Self::Internal(internal) => internal.format(),
+            Self::RpcErrors { response } => response.clone(),
             err => format!("{:#?}", err),
         }
     }

@@ -1,7 +1,7 @@
 use host::{rollup_core::RawRollupCore, runtime::Runtime};
 use tezos_core::types::encoded::{ChainId, Encoded, OperationHash};
 use tezos_ctx::{ExecutorContext, GenericContext};
-use tezos_l2::{batcher::apply_batch};
+use tezos_l2::batcher::apply_batch;
 use tezos_operation::operations::SignedOperation;
 
 use crate::{

@@ -151,7 +151,7 @@ impl RollupRpcClient {
                     .origination_level
                     .ok_or(internal_error!(Misc, "Origination level yet unknown"))?;
                 Ok(((level as u32) + origination_level).to_string())
-            },
+            }
         }
     }
 }

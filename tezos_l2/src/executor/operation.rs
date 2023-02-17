@@ -10,12 +10,12 @@ use crate::{
         balance_updates::BalanceUpdates, origination::execute_origination, reveal::execute_reveal,
         transaction::execute_transaction,
     },
-    validator::operation::ManagerOperation,
+    validator::operation::ValidOperation,
 };
 
 pub fn execute_operation(
     context: &mut (impl GenericContext + ExecutorContext + InterpreterContext),
-    opg: &ManagerOperation,
+    opg: &ValidOperation,
 ) -> Result<OperationReceipt> {
     context.check_no_pending_changes()?;
 
@@ -83,7 +83,7 @@ mod test {
     use tezos_rpc::models::operation::{operation_result::OperationResultStatus, OperationContent};
 
     use super::*;
-    use crate::validator::operation::ManagerOperation;
+    use crate::validator::operation::ValidOperation;
     use crate::Result;
 
     macro_rules! get_status {
@@ -130,7 +130,7 @@ mod test {
             };
         }
 
-        let opg = ManagerOperation {
+        let opg = ValidOperation {
             hash: "ooKsoMe48CCt1ERrk5DgnSovFazhm53yfAYbwxNQmjWVtbNzLME"
                 .try_into()
                 .unwrap(),

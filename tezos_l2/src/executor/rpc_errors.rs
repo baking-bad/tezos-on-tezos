@@ -1,4 +1,4 @@
-use tezos_core::types::mutez::Mutez;
+use tezos_core::types::{mutez::Mutez, number::Nat};
 pub use tezos_rpc::models::error::RpcError;
 
 #[derive(Clone, Debug)]
@@ -25,68 +25,68 @@ impl RpcErrors {
         self.errors
     }
 
-    // pub fn unrevealed_key(contract: &str) -> RpcError {
-    //     RpcError {
-    //         kind: "temporary".into(),
-    //         id: "contract.unrevealed_key".into(),
-    //         contract: Some(contract.to_string().into()),
-    //         ..DEFAULT_ERROR
-    //     }
-    // }
+    pub fn unrevealed_key(&mut self, contract: &str) {
+        self.errors.push(RpcError {
+            kind: "temporary".into(),
+            id: "contract.unrevealed_key".into(),
+            contract: Some(contract.to_string().into()),
+            ..DEFAULT_ERROR
+        })
+    }
 
-    // pub fn inconsistent_sources() -> RpcError {
-    //     RpcError {
-    //         kind: "permanent".into(),
-    //         id: "validate.operation.inconsistent_sources".into(),
-    //         ..DEFAULT_ERROR
-    //     }
-    // }
+    pub fn inconsistent_sources(&mut self) {
+        self.errors.push(RpcError {
+            kind: "permanent".into(),
+            id: "validate.operation.inconsistent_sources".into(),
+            ..DEFAULT_ERROR
+        })
+    }
 
-    // pub fn contents_list_error() -> RpcError {
-    //     RpcError {
-    //         kind: "temporary".into(),
-    //         id: "operation.contents_list_error".into(),
-    //         ..DEFAULT_ERROR
-    //     }
-    // }
+    pub fn contents_list_error(&mut self) {
+        self.errors.push(RpcError {
+            kind: "temporary".into(),
+            id: "operation.contents_list_error".into(),
+            ..DEFAULT_ERROR
+        })
+    }
 
-    // pub fn invalid_signature() -> RpcError {
-    //     RpcError {
-    //         kind: "temporary".into(),
-    //         id: "operation.invalid_signature".into(),
-    //         ..DEFAULT_ERROR
-    //     }
-    // }
+    pub fn invalid_signature(&mut self) {
+        self.errors.push(RpcError {
+            kind: "temporary".into(),
+            id: "operation.invalid_signature".into(),
+            ..DEFAULT_ERROR
+        })
+    }
 
-    // pub fn empty_implicit_contract(contract: &str) -> RpcError {
-    //     RpcError {
-    //         kind: "temporary".into(),
-    //         id: "implicit.empty_implicit_contract".into(),
-    //         contract: Some(contract.to_string().into()),
-    //         ..DEFAULT_ERROR
-    //     }
-    // }
+    pub fn empty_implicit_contract(&mut self, contract: &str) {
+        self.errors.push(RpcError {
+            kind: "temporary".into(),
+            id: "implicit.empty_implicit_contract".into(),
+            contract: Some(contract.to_string().into()),
+            ..DEFAULT_ERROR
+        })
+    }
 
-    // pub fn contract_balance_too_low(amount: &Mutez, balance: &Mutez, contract: &str) -> RpcError {
-    //     RpcError {
-    //         kind: "temporary".into(),
-    //         id: "contract.balance_too_low".into(),
-    //         amount: Some(amount.to_string()),
-    //         balance: Some(balance.to_string()),
-    //         contract: Some(contract.to_string().into()),
-    //         ..DEFAULT_ERROR
-    //     }
-    // }
+    pub fn contract_balance_too_low(&mut self, amount: &Mutez, balance: &Mutez, contract: &str) {
+        self.errors.push(RpcError {
+            kind: "temporary".into(),
+            id: "contract.balance_too_low".into(),
+            amount: Some(amount.to_string()),
+            balance: Some(balance.to_string()),
+            contract: Some(contract.to_string().into()),
+            ..DEFAULT_ERROR
+        })
+    }
 
-    // pub fn counter_in_the_past(contract: &str, expected: u64, found: u64) -> RpcError {
-    //     RpcError {
-    //         kind: "temporary".into(),
-    //         id: "contract.counter_in_the_past".into(),
-    //         contract: Some(contract.to_string().into()),
-    //         message: Some(format!("Expected {}, found {}", expected, found)),
-    //         ..DEFAULT_ERROR
-    //     }
-    // }
+    pub fn counter_in_the_past(&mut self, contract: &str, expected: &Nat, found: &Nat) {
+        self.errors.push(RpcError {
+            kind: "temporary".into(),
+            id: "contract.counter_in_the_past".into(),
+            contract: Some(contract.to_string().into()),
+            message: Some(format!("Expected {}, found {}", expected, found)),
+            ..DEFAULT_ERROR
+        })
+    }
 
     // pub fn bad_stack(message: String) -> RpcError {
     //     RpcError {

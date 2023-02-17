@@ -1,3 +1,4 @@
+use derive_more::{From, TryInto};
 use tezos_core::types::{
     encoded::{Encoded, ImplicitAddress, OperationHash},
     mutez::Mutez,
@@ -6,9 +7,19 @@ use tezos_core::types::{
 use tezos_ctx::ExecutorContext;
 use tezos_operation::operations::{OperationContent, SignedOperation};
 
-use crate::{Error, Result};
+use crate::{
+    executor::rpc_errors::{RpcError, RpcErrors},
+    Error, Result,
+};
 
-pub struct ManagerOperation {
+#[derive(Clone, Debug, From, TryInto)]
+pub enum ValidatedOperation {
+    Valid(ValidOperation),
+    Invalid(Vec<RpcError>),
+}
+
+#[derive(Clone, Debug)]
+pub struct ValidOperation {
     pub hash: OperationHash,
     pub origin: SignedOperation,
     pub source: ImplicitAddress,
@@ -22,10 +33,11 @@ pub fn validate_operation(
     opg: SignedOperation,
     hash: OperationHash,
     dry_run: bool,
-) -> Result<ManagerOperation> {
-    let mut source = None;
+) -> Result<ValidatedOperation> {
+    let mut source: Option<ImplicitAddress> = None;
     let mut total_fees: Mutez = 0u32.into();
     let mut total_spent: Mutez = 0u32.into();
+    let mut errors = RpcErrors::new();
 
     // TODO: validate branch?
     // On the one hand there should be something like TTL
@@ -42,10 +54,16 @@ pub fn validate_operation(
             _ => return Err(Error::OperationKindUnsupported),
         };
 
-        if source.is_none() {
-            source = Some(address);
-        } else if source.unwrap() != address {
-            return Err(Error::InconsistentSources);
+        match &source {
+            None => {
+                source = Some(address.clone());
+            }
+            Some(source) => {
+                if source != address {
+                    errors.inconsistent_sources();
+                    return Ok(ValidatedOperation::Invalid(errors.unwrap()));
+                }
+            }
         }
 
         // TODO: deny 0 amount if destination is implicit
@@ -55,12 +73,15 @@ pub fn validate_operation(
         total_spent += content.fee() + amount.unwrap_or(0u32.into());
     }
 
-    if source.is_none() {
-        return Err(Error::ContentsListError);
-    }
+    let source = match source {
+        Some(val) => val,
+        None => {
+            errors.contents_list_error();
+            return Ok(ValidatedOperation::Invalid(errors.unwrap()));
+        }
+    };
 
-    let source = source.unwrap().clone();
-    let public_key = match context.get_public_key(&source.value())? {
+    let public_key = match context.get_public_key(source.value())? {
         Some(value) => value,
         None => {
             let revealed_key = opg
@@ -72,10 +93,12 @@ pub fn validate_operation(
                 })
                 .next();
 
-            if revealed_key.is_some() {
-                revealed_key.unwrap()
-            } else {
-                return Err(Error::UnrevealedPublicKey);
+            match revealed_key {
+                Some(key) => key,
+                None => {
+                    errors.unrevealed_key(source.value());
+                    return Ok(ValidatedOperation::Invalid(errors.unwrap()));
+                }
             }
         }
     };
@@ -83,21 +106,28 @@ pub fn validate_operation(
     if !dry_run {
         match opg.verify(&public_key) {
             Ok(true) => (),
-            Ok(false) => return Err(Error::InvalidSignature),
+            Ok(false) => {
+                errors.invalid_signature();
+                return Ok(ValidatedOperation::Invalid(errors.unwrap()));
+            }
             Err(err) => return Err(err.into()),
         };
     }
 
-    let balance = match context.get_balance(&source.value())? {
+    let balance = match context.get_balance(source.value())? {
         Some(value) => value,
-        None => return Err(Error::EmptyImplicitContract),
+        None => {
+            errors.empty_implicit_contract(source.value());
+            return Ok(ValidatedOperation::Invalid(errors.unwrap()));
+        }
     };
 
     if balance < total_spent {
-        return Err(Error::BalanceTooLow { balance });
+        errors.contract_balance_too_low(&total_spent, &balance, source.value());
+        return Ok(ValidatedOperation::Invalid(errors.unwrap()));
     }
 
-    let mut counter = context.get_counter(&source.value())?;
+    let mut counter = context.get_counter(source.value())?;
 
     for content in opg.contents.iter() {
         let next_counter = match content {
@@ -107,21 +137,21 @@ pub fn validate_operation(
             _ => return Err(Error::OperationKindUnsupported),
         };
         if *next_counter <= counter {
-            return Err(Error::CounterInThePast {
-                counter: counter.to_string(),
-            });
+            errors.counter_in_the_past(source.value(), &(counter + 1u32.into()), next_counter);
+            return Ok(ValidatedOperation::Invalid(errors.unwrap()));
         }
         counter = next_counter.clone();
     }
 
-    Ok(ManagerOperation {
+    Ok(ValidOperation {
         hash,
         origin: opg,
-        source: source.clone(),
+        source,
         total_fees,
         total_spent,
         last_counter: counter,
-    })
+    }
+    .into())
 }
 
 #[cfg(test)]
@@ -171,7 +201,7 @@ mod test {
         );
 
         let hash = opg.hash()?;
-        let op = validate_operation(&mut context, opg, hash, false)?;
+        let op: ValidOperation = validate_operation(&mut context, opg, hash, false)?.try_into()?;
         assert_eq!(op.total_fees, 417u32.into());
         assert_eq!(op.last_counter, 2336132u32.into());
 
@@ -220,7 +250,7 @@ mod test {
         );
 
         let hash = opg.hash()?;
-        let op = validate_operation(&mut context, opg, hash, false)?;
+        let op: ValidOperation = validate_operation(&mut context, opg, hash, false)?.try_into()?;
         assert_eq!(op.total_fees, 1039u32.into());
         assert_eq!(op.last_counter, 85938847u32.into());
 

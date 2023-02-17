@@ -1,7 +1,10 @@
 use actix_web::rt::task;
 use async_trait::async_trait;
 use tezos_core::types::encoded::{Encoded, OperationHash, Signature};
-use tezos_l2::{executor::operation::execute_operation, validator::operation::validate_operation};
+use tezos_l2::{
+    executor::operation::execute_operation,
+    validator::operation::{validate_operation, ValidatedOperation},
+};
 use tezos_operation::operations::{SignedOperation, UnsignedOperation};
 use tezos_rpc::models::operation::Operation;
 
@@ -50,7 +53,10 @@ impl TezosHelpers for RollupRpcClient {
         task::spawn_blocking(move || -> Result<Operation> {
             let mut context = RpcContext::new(base_url, state_level);
             let hash = operation.hash()?;
-            let opg = validate_operation(&mut context, operation, hash, true)?;
+            let opg = match validate_operation(&mut context, operation, hash, true)? {
+                ValidatedOperation::Valid(opg) => opg,
+                ValidatedOperation::Invalid(errors) => return Err(errors.into()),
+            };
             let receipt = execute_operation(&mut context, &opg)?;
             Ok(receipt)
         })

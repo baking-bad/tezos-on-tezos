@@ -1,6 +1,7 @@
 use actix_web::{
+    error::ErrorInternalServerError,
     web::{Data, Json, Path},
-    Responder, Result, error::ErrorInternalServerError
+    Responder, Result,
 };
 use serde::{Deserialize, Deserializer};
 use tezos_core::types::{
@@ -8,9 +9,10 @@ use tezos_core::types::{
     mutez::Mutez,
     number::Nat,
 };
-use tezos_michelson::micheline::{Micheline, sequence::Sequence};
+use tezos_michelson::micheline::{sequence::Sequence, Micheline};
 use tezos_operation::operations::{
-    OperationContent, Origination, Reveal, SignedOperation, Transaction, Parameters, Script, Entrypoint, Operation,
+    Entrypoint, Operation, OperationContent, Origination, Parameters, Reveal, Script,
+    SignedOperation, Transaction,
 };
 
 use crate::{json_response, rollup::TezosHelpers, Error};
@@ -28,16 +30,15 @@ pub fn deserialize_params_opt<'de, D>(deserializer: D) -> Result<Option<Paramete
 where
     D: Deserializer<'de>,
 {
-    Option::<ParametersRequest>::deserialize(deserializer)
-        .map(|req: Option<ParametersRequest>| {
-            match req {
-                Some(params) => Some(Parameters {
-                    entrypoint: Entrypoint::from_str(&params.entrypoint),
-                    value: params.value
-                }),
-                None => None,
-            }
-        })
+    Option::<ParametersRequest>::deserialize(deserializer).map(|req: Option<ParametersRequest>| {
+        match req {
+            Some(params) => Some(Parameters {
+                entrypoint: Entrypoint::from_str(&params.entrypoint),
+                value: params.value,
+            }),
+            None => None,
+        }
+    })
 }
 
 #[derive(Deserialize, Clone)]
@@ -46,7 +47,7 @@ pub struct ScriptRequest {
     pub code: Sequence,
     pub storage: Micheline,
 }
-    
+
 #[derive(Deserialize, Clone)]
 #[serde(remote = "Reveal")]
 struct RevealRequest {
@@ -68,7 +69,7 @@ pub struct TransactionRequest {
     pub storage_limit: Nat,
     pub amount: Mutez,
     pub destination: Address,
-    #[serde(deserialize_with = "deserialize_params_opt")]
+    #[serde(default, deserialize_with = "deserialize_params_opt")]
     pub parameters: Option<Parameters>,
 }
 
@@ -143,7 +144,10 @@ pub async fn run_operation<T: TezosHelpers>(
     request: Json<RunOperationRequest>,
 ) -> Result<impl Responder> {
     let value = client
-        .simulate_operation(&path.0.as_str().try_into()?, request.0.operation.try_into()?)
+        .simulate_operation(
+            &path.0.as_str().try_into()?,
+            request.0.operation.try_into()?,
+        )
         .await?;
     Ok(json_response!(value))
 }
@@ -165,9 +169,10 @@ pub async fn forge_operation<T: TezosHelpers>(
     request: Json<OperationRequest>,
 ) -> Result<impl Responder> {
     let operation: SignedOperation = request.0.try_into()?;
-    let value = hex::encode(operation
-        .to_forged_bytes()
-        .map_err(ErrorInternalServerError)?
+    let value = hex::encode(
+        operation
+            .to_forged_bytes()
+            .map_err(ErrorInternalServerError)?,
     );
     Ok(json_response!(value))
 }
@@ -175,8 +180,9 @@ pub async fn forge_operation<T: TezosHelpers>(
 #[cfg(test)]
 mod test {
     use actix_web::{test, web::Data, App};
-    use tezos_ctx::{ExecutorContext, Head};
     use serde_json::json;
+    use tezos_ctx::{ExecutorContext, Head};
+    use tezos_rpc::models::error::RpcError;
 
     use crate::{rollup::mock_client::RollupMockClient, services::config, Result};
 
@@ -222,6 +228,42 @@ mod test {
             "0bbf872a8a1e553381bde7f7e05df77ee41e69ca2df91a1cac26dd5af88ab82d6c00c34db0eaef2592adf9d0da9c94eab6a6bfc7070ad7039adfa7268a0c0000015b02cf10d7b3a6550e673bd04c76ef4106d7266e00ffff0f70726f766964655f656e74726f70790000000600b7e1a7b611",
             res.as_str()
         );
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn test_preapply_operation() -> Result<()> {
+        let client = RollupMockClient::default();
+        client.patch(|context| {
+            context.set_head(Head::default()).unwrap();
+            Ok(())
+        })?;
+
+        let app = test::init_service(
+            App::new()
+                .configure(config::<RollupMockClient>)
+                .app_data(Data::new(client)),
+        )
+        .await;
+
+        let req = test::TestRequest::post()
+            .uri("/chains/main/blocks/head/helpers/preapply/operations")
+            .set_json(json!([{
+                "branch": "BKoTRgyCZxBavMzKgTzaxVk3nKayFpFMr7QRZB16hzji7GGyEg6",
+                "contents": [{
+                    "kind": "transaction",
+                    "source": "tz1dShXbbgJ4i1L6KMWAuuNdBPk5xCM1NRrU",
+                    "fee": "471",
+                    "counter": "80342938",
+                    "gas_limit": "1546",
+                    "storage_limit": "0",
+                    "amount": "0",
+                    "destination": "KT1GszRPFC31pjKXuRfTU53BfFhx3vwqK3bZ",
+                }]
+            }]))
+            .to_request();
+        let res: Vec<RpcError> = test::call_and_read_body_json(&app, req).await;
+        assert_eq!(&res[0].id, "contract.unrevealed_key");
         Ok(())
     }
 }

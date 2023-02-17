@@ -13,7 +13,7 @@ use crate::services::{
         contract, contract_balance, contract_counter, contract_delegate, contract_entrypoints,
         contract_public_key, contract_script, contract_script_normalized, contract_storage,
     },
-    helpers::{run_operation, forge_operation, preapply_operations},
+    helpers::{forge_operation, preapply_operations, run_operation},
     operations::{
         operation, operation_hash, operation_hash_list, operation_hash_list_list, operation_list,
         operation_list_list,

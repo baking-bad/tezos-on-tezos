@@ -16,7 +16,7 @@ use tezos_rpc::models::operation::Operation as OperationReceipt;
 use crate::{
     constants::*,
     executor::operation::execute_operation,
-    validator::{batch::validate_batch, operation::ManagerOperation},
+    validator::{batch::validate_batch, operation::ValidOperation},
     Result,
 };
 
@@ -27,7 +27,7 @@ pub fn block_hash(header: BatchHeader) -> Result<BlockHash> {
     Ok(BlockHash::from_bytes(&hash)?)
 }
 
-fn naive_header(prev_head: Head, operations: &Vec<ManagerOperation>) -> Result<BatchHeader> {
+fn naive_header(prev_head: Head, operations: &Vec<ValidOperation>) -> Result<BatchHeader> {
     let operation_hashes: Vec<OperationHash> = operations.iter().map(|o| o.hash.clone()).collect();
     Ok(BatchHeader {
         level: prev_head.level + 1,

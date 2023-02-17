@@ -102,7 +102,7 @@ pub async fn contract<T: TezosFacade>(
 #[cfg(test)]
 mod test {
     use actix_web::{test, web::Data, App};
-    use tezos_core::types::{mutez::Mutez, number::Nat, encoded::PublicKey};
+    use tezos_core::types::{encoded::PublicKey, mutez::Mutez, number::Nat};
     use tezos_ctx::{ExecutorContext, Head};
     use tezos_rpc::models::contract::ContractInfo;
 

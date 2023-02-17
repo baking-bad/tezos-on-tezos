@@ -8,8 +8,9 @@ use tezos_ctx::{
     Head,
 };
 use tezos_l2::{
-    batcher::apply_batch, executor::operation::execute_operation,
-    validator::operation::validate_operation,
+    batcher::apply_batch,
+    executor::operation::execute_operation,
+    validator::operation::{validate_operation, ValidatedOperation},
 };
 use tezos_operation::operations::SignedOperation;
 use tezos_rpc::models::operation::Operation;
@@ -73,7 +74,7 @@ impl RollupClient for RollupMockClient {
 
     async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<ContextNode> {
         match &block_id {
-            BlockId::Head => {},
+            BlockId::Head => {}
             _ => unimplemented!("Can only access state at head level in the mockup mode"),
         };
         get_mut!(self.context)
@@ -133,8 +134,10 @@ impl TezosHelpers for RollupMockClient {
         };
         let mut context = get_mut!(self.context).spawn();
         let hash = operation.hash()?;
-        let opg = validate_operation(&mut context, operation, hash, true)?;
-        // TODO: handle validation errors and return RpcError / 200
+        let opg = match validate_operation(&mut context, operation, hash, true)? {
+            ValidatedOperation::Valid(opg) => opg,
+            ValidatedOperation::Invalid(errors) => return Err(errors.into()),
+        };
         let receipt = execute_operation(&mut context, &opg)?;
         Ok(receipt)
     }
