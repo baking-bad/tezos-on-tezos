@@ -9,7 +9,7 @@ RUN wget -c https://github.com/WebAssembly/binaryen/releases/download/version_11
 RUN wget -c https://github.com/WebAssembly/wabt/releases/download/1.0.31/wabt-1.0.31-ubuntu.tar.gz -O - | tar -xzv wabt-1.0.31/bin/wasm-strip --strip-components 2
 WORKDIR /build
 COPY . .
-RUN make build
+RUN make build-operator
 
 FROM alpine:3.15 AS rollup
 RUN apk --no-cache add binutils gcc gmp libgmpxx hidapi libc-dev libev libffi sudo

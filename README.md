@@ -16,13 +16,6 @@ Aside from the pure research interest there might be long-term advantages of suc
 * Potentially smaller operation latency
 * Alternative VMs for executing smart contracts (WASM)
 
-If this project shows good results, we will consider to relocate or partially implement our [DeFi products](https://bakingbad.dev/) in an app-specific rollup.
-
-Also in the scope of our developing tools and indexing stack we want to better understand:
-* Which features should we add to [BCD](https://better-call.dev) for SCORU devs
-* How to run e2e rollup tests using [Pytezos](https://pytezos.org)
-* How to index SCORU (and EVM rollup in particular) for enabling [DipDup](https://dipdup.io) and [TzKT](https://tzkt.io) with the rollup chain data
-
 ## Roadmap
 
 - [x] MVP Tezos-compatible kernel supporting plain transactions and public key reveals
@@ -37,25 +30,31 @@ Also in the scope of our developing tools and indexing stack we want to better u
 - [x] Interact with the kernel via inbox and access rollup state via RPC
 - [x] Support contract calls and internal transactions
 - [x] Tezos RPC facade node
-- [ ] Deploy a periodic testnet
-- [ ] Add support to BCD
+- [x] Deploy a periodic testnet
+- [x] Add support to BCD
+- [ ] Permanent testnet
+- [ ] Add missing Michelson features necessary to onboard first dapps
 - [ ] Increase test coverage
 - [ ] Spam-prevention mechanism
+- [ ] Configurable gas/storage metering
+- [ ] Sequencer fees
+- [ ] Micheline (de)serialization derive macros
 - [ ] WASM smart contracts
 
 ## Limitations
 
 Current design is intentionally simplified to speed up development while having a minimal necessary functional to operate.
-* Fix-priced operations, just general gas/storage limits
+* No gas/storage metering (although it can be incorporated rather easily)
 * No money burning
 * Non-sequential account counters
-* Only 3 manager operations supported: transaction, reveal, origination (wip)
-* Branch is not validated (infinite TTL)
+* Only 3 manager operations supported: transaction, reveal, origination
+* Branch is currently not validated (infinite TTL)
 * BigMaps cannot be copied/removed, but can be moved (Rust-like semantics)
 * No temporary BigMap allocations
-* (To be continued)
+* Several Michelson features are not supported
+* Only wallet/indexer RPC endpoints are exposed
 
-## How to run
+## Installation
 
 Install Rust toolchain:
 ```
@@ -72,42 +71,60 @@ Install build dependencies:
 make install
 ```
 
-### Single command
+## Build
+
+To build the kernel and its installer:
+```
+make build-operator
+```
+
+Then you can create a local docker image (depending on target network):
+```
+make image-operator-daily
+make image-operator-monday
+make image-operator-mumbai
+```
+
+The difference is mainly in Octez binaries shipped together with the kernel.
+
+To build a facade node and its docker image:
+```
+make build-facade
+make image-facade
+```
+
+## How to run
+
+Run `make generate-keypair` to initialize a Tezos L1 account, and top it up using https://teztnets.xyz faucet, depending on the network you are going to use.
+
+### Operator
+
+Build kernel and its installer, then originate a new rollup, and run a rollup node.  
+
+For Mondaynet and Dailynet:
+1. Check that latest periodic network has correct settings in the Makefile (needs to be updated manually)
+2. Depending on the target L1 network run
 
 ```
+make daily
 make monday
+make mumbai
 ```
 
-### Step by step
+### Operator + Facade
 
-Build kernel, installer, and facade node:
-```
-make build
-```
+Once you have both operator and facade images built, you can run them together with compose.
 
-Create operator image:
+First, create a `local.env` file with two environment variables:
 ```
-make image
+ROLLUP_ADDRESS=<sr rollup address from node logs>
+OPERATOR_KEY=unencrypted:<edsk private key from .tezos-client folder>
 ```
 
-Generate key pair and top up your balance:
-```
-make generate-keypair
-```
+Then run docker-compose specifying the image tag:
 
-Originate rollup in Mondaynet:
 ```
-make originate-rollup
-```
-
-Now you can run the operator node in daemon mode
-```
-make rollup-node
-```
-
-You can also run container in interactive mode:
-```
-make operator-shell
+TAG=monday docker-compose up -d
 ```
 
 ## How to test
@@ -147,9 +164,9 @@ Run kernel:
 > step inbox
 ```
 
-Make sure operation receipt is saved:
+Make sure kernel state is updated:
 ```
-> show key /context/blocks/0/operations/1
+> show key /head
 ```
 
 ## Troubleshooting

@@ -14,7 +14,7 @@ services:
       - internal
 
   facade:
-    image: ghcr.io/baking-bad/tz-rollup-facade:${TAG}
+    image: ghcr.io/baking-bad/tz-rollup-facade:latest
     command: --endpoint http://operator:8932 --rpc-addr "0.0.0.0"
     restart: always
     ports:

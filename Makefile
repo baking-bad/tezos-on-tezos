@@ -33,7 +33,7 @@ build-dac-codec:
 	RUSTC_BOOTSTRAP=1 cargo build --package dac_codec --release -Z sparse-registry 
 	cp ./target/release/dac-codec ./.bin/dac-codec
 
-build-node:
+build-facade:
 	mkdir .bin || true
 	RUSTC_BOOTSTRAP=1 cargo build --package tezos_node --release -Z sparse-registry 
 	cp ./target/release/tezos-node ./.bin/tezos-node
@@ -42,7 +42,7 @@ pages:
 	rm -rf ./.bin/wasm_2_0_0
 	./.bin/dac-codec -o ./.bin/wasm_2_0_0 ./.bin/tez_kernel.wasm
 
-build:
+build-operator:
 	mkdir .bin || true
 	$(MAKE) build-kernel
 	$(MAKE) build-dac-codec
@@ -60,10 +60,13 @@ trace:
 	RUST_LIB_BACKTRACE=1 cargo test --jobs 1 --no-fail-fast --test e2e --features trace -- --nocapture --test-threads=1 e2e_abs_00
 
 image-facade:
-	docker build -t ghcr.io/baking-bad/tz-rollup-facade:$(TAG) --file ./build/facade/Dockerfile .
+	docker build -t ghcr.io/baking-bad/tz-rollup-facade:latest --file ./build/facade/Dockerfile.local .
 
 image-operator:
 	docker build -t ghcr.io/baking-bad/tz-rollup-operator:$(TAG) --build-arg OCTEZ_TAG=$(OCTEZ_TAG) --build-arg OCTEZ_PROTO=$(OCTEZ_PROTO) --build-arg NETWORK=$(NETWORK) --file ./build/operator/Dockerfile.local .
+
+image-operator-daily:
+	$(MAKE) image-operator TAG=daily OCTEZ_TAG=$(DAILY_TAG) OCTEZ_PROTO=alpha NETWORK=$(DAILY_NETWORK)
 
 image-operator-monday:
 	$(MAKE) image-operator TAG=monday OCTEZ_TAG=$(MONDAY_TAG) OCTEZ_PROTO=alpha NETWORK=$(MONDAY_NETWORK)
@@ -101,23 +104,31 @@ debug:
 	docker run --rm -it --entrypoint=/bin/sh --name wasm-repl -v $$PWD/.bin:/root/.bin tezos/tezos:$(MONDAY_TAG) /usr/local/bin/octez-smart-rollup-wasm-debugger /root/.bin/debug_kernel.wasm --inputs /root/.bin/inputs.json
 
 daily:
-	$(MAKE) build
-	$(MAKE) image-operator TAG=daily OCTEZ_TAG=$(DAILY_TAG) NETWORK=$(DAILY_NETWORK) OCTEZ_PROTO=alpha
+	$(MAKE) build-operator
+	$(MAKE) image-operator-daily
 	$(MAKE) originate-rollup TAG=daily
 	$(MAKE) rollup-node TAG=daily
 
 monday:
-	$(MAKE) build
+	$(MAKE) build-operator
 	$(MAKE) image-operator-monday
 	$(MAKE) originate-rollup TAG=monday
 	$(MAKE) rollup-node TAG=monday
 
 mumbai:
-	$(MAKE) build
+	$(MAKE) build-operator
 	$(MAKE) image-operator-mumbai
 	$(MAKE) originate-rollup TAG=mumbai
 	$(MAKE) rollup-node TAG=mumbai
 
 facade:
-	$(MAKE) build-node
-	$(MAKE) image-facade
+	$(MAKE) build-facade
+	docker run --rm -v $$PWD/.tezos-client:/root/.tezos-client/ -e ROLLUP_ADDRESS=$(ROLLUP_ADDRESS) ghcr.io/baking-bad/tz-rollup-facade:latest
+
+push-facade:
+	docker build -t ghcr.io/baking-bad/tz-rollup-facade:$(TAG) --file ./build/facade/Dockerfile .
+	docker push ghcr.io/baking-bad/tz-rollup-facade:$(TAG)
+
+push-operator:
+	docker build -t ghcr.io/baking-bad/tz-rollup-operator:$(TAG) --file ./build/operator/Dockerfile .
+	docker push ghcr.io/baking-bad/tz-rollup-operator:$(TAG)
