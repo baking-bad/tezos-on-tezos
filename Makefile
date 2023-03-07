@@ -7,11 +7,11 @@ DAILY_TAG=master_7e51d27c_20221220201529
 DAILY_NETWORK=dailynet-2022-12-21
 
 # https://teztnets.xyz/mondaynet-about
-MONDAY_TAG=master_69656b8a_20230211074400
-MONDAY_NETWORK=mondaynet-2023-02-13
+MONDAY_TAG=master_f9675b19_20230303221946
+MONDAY_NETWORK=mondaynet-2023-03-06
 
 # https://teztnets.xyz/mumbainet-about
-MUMBAI_TAG=v16.0-rc1
+MUMBAI_TAG=v16.0-rc3
 MUMBAI_NETWORK=mumbainet
 
 install:
@@ -125,10 +125,10 @@ facade:
 	$(MAKE) build-facade
 	docker run --rm -v $$PWD/.tezos-client:/root/.tezos-client/ -e ROLLUP_ADDRESS=$(ROLLUP_ADDRESS) ghcr.io/baking-bad/tz-rollup-facade:latest
 
-push-facade:
-	docker build -t ghcr.io/baking-bad/tz-rollup-facade:$(TAG) --file ./build/facade/Dockerfile .
-	docker push ghcr.io/baking-bad/tz-rollup-facade:$(TAG)
+push-facade-monday:
+	docker build -t ghcr.io/baking-bad/tz-rollup-facade:$(MONDAY_NETWORK) --file ./build/facade/Dockerfile .
+	docker push ghcr.io/baking-bad/tz-rollup-facade:$(MONDAY_NETWORK)
 
-push-operator:
-	docker build -t ghcr.io/baking-bad/tz-rollup-operator:$(TAG) --file ./build/operator/Dockerfile .
-	docker push ghcr.io/baking-bad/tz-rollup-operator:$(TAG)
+push-operator-monday:
+	docker build -t ghcr.io/baking-bad/tz-rollup-operator:$(MONDAY_NETWORK) --build-arg OCTEZ_TAG=$(MONDAY_TAG) --build-arg OCTEZ_PROTO=alpha --build-arg NETWORK=$(MONDAY_NETWORK) --file ./build/operator/Dockerfile .
+	docker push ghcr.io/baking-bad/tz-rollup-operator:$(MONDAY_NETWORK)

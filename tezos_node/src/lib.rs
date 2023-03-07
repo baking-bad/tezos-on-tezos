@@ -10,9 +10,13 @@ use crate::{
 };
 use actix_web::{
     middleware::{Logger, NormalizePath},
-    web::Data,
-    App, HttpServer,
+    web::{Data, get},
+    App, HttpServer, Responder,
 };
+
+pub async fn teztnets<T: RollupClient>(client: Data<T>) -> Result<impl Responder> {
+    Ok(json_response!(""))
+}
 
 pub async fn launch_node<T: RollupClient + TezosFacade + TezosHelpers + Send + Sync + 'static>(
     data: Data<T>,
@@ -23,6 +27,7 @@ pub async fn launch_node<T: RollupClient + TezosFacade + TezosHelpers + Send + S
         App::new()
             .app_data(data.clone())
             .configure(config::<T>)
+            .route("/teztnets.json", get().to(teztnets::<T>))
             .wrap(Logger::default())
             .wrap(NormalizePath::trim())
     });
