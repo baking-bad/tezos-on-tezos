@@ -10,24 +10,31 @@ use crate::{
 };
 use actix_web::{
     middleware::{Logger, NormalizePath},
-    web::{Data, get},
+    web::{get, Data, resource},
     App, HttpServer, Responder,
 };
+use serde_json::json;
 
-pub async fn teztnets<T: RollupClient>(client: Data<T>) -> Result<impl Responder> {
-    Ok(json_response!(""))
+// Follows the https://teztnets.xyz/teztnets.json file format so that BCD can index a resettable chain
+pub async fn teztnets(rpc_url: Data<String>) -> Result<impl Responder> {
+    Ok(json_response!(json!({"rollupnet": {"rpc_url": rpc_url}})))
 }
 
 pub async fn launch_node<T: RollupClient + TezosFacade + TezosHelpers + Send + Sync + 'static>(
     data: Data<T>,
     addr: &str,
     port: u16,
+    host: Data<String>,
 ) -> std::io::Result<()> {
     let server = HttpServer::new(move || {
         App::new()
             .app_data(data.clone())
             .configure(config::<T>)
-            .route("/teztnets.json", get().to(teztnets::<T>))
+            .service(
+                resource("/teztnets.json")
+                    .app_data(host.clone())
+                    .route(get().to(teztnets))
+            )
             .wrap(Logger::default())
             .wrap(NormalizePath::trim())
     });
