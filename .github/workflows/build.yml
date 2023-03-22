@@ -76,4 +76,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy rollup
-        run: docker run -v "/var/run/docker.sock":"/var/run/docker.sock" -e ORIGINATOR_KEY=${{ env.ORIGINATOR_KEY }} ${{ needs.build.outputs.operator }} originate-rollup
+        run: docker run -v "/var/run/docker.sock":"/var/run/docker.sock" -e ORIGINATOR_KEY=${{ secrets.ORIGINATOR_KEY }} ${{ needs.build.outputs.operator }} originate-rollup
