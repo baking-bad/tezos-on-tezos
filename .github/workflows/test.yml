@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: Run tests, check formatting, & try to build binaries
+    name: Check formatting and run tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
