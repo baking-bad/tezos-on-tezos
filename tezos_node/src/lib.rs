@@ -10,7 +10,7 @@ use crate::{
 };
 use actix_web::{
     middleware::{Logger, NormalizePath},
-    web::{get, Data, resource},
+    web::{get, resource, Data},
     App, HttpServer, Responder,
 };
 use serde_json::json;
@@ -33,7 +33,7 @@ pub async fn launch_node<T: RollupClient + TezosFacade + TezosHelpers + Send + S
             .service(
                 resource("/teztnets.json")
                     .app_data(host.clone())
-                    .route(get().to(teztnets))
+                    .route(get().to(teztnets)),
             )
             .wrap(Logger::default())
             .wrap(NormalizePath::trim())

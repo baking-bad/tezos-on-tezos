@@ -1,4 +1,4 @@
-ARG OCTEZ_TAG=v16.0-rc1
+ARG OCTEZ_TAG=v16.0-rc3
 FROM tezos/tezos:${OCTEZ_TAG} AS octez
 
 FROM rust:slim-buster AS builder
