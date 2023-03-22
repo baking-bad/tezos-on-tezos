@@ -40,18 +40,18 @@ jobs:
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_BASE }}/tz-rollup-operator
 
-      # - name: Operator build & push
-      #   uses: docker/build-push-action@v2
-      #   with:
-      #     context: .
-      #     file: build/operator/Dockerfile
-      #     build-args: |
-      #       NETWORK=ghostnet
-      #     push: true
-      #     cache-from: type=gha
-      #     cache-to: type=gha,mode=max
-      #     tags: ${{ steps.meta-operator.outputs.tags }}
-      #     labels: ${{ steps.meta-operator.outputs.labels }}
+      - name: Operator build & push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: build/operator/Dockerfile
+          build-args: |
+            NETWORK=ghostnet
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: ${{ steps.meta-operator.outputs.tags }}
+          labels: ${{ steps.meta-operator.outputs.labels }}
 
       - name: Facade tags & labels
         id: meta-facade
@@ -76,4 +76,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy rollup
-        run: docker run -v "/var/run/docker.sock":"/var/run/docker.sock" -e ORIGINATOR_KEY=${{ secrets.ORIGINATOR_KEY }} ${{ needs.build.outputs.operator }} originate-rollup
+        run: docker run -v "/var/run/docker.sock":"/var/run/docker.sock" -e OPERATOR_KEY=${{ secrets.OPERATOR_KEY }} ${{ needs.build.outputs.operator }} originate-rollup
