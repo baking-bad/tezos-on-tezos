@@ -40,18 +40,18 @@ jobs:
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_BASE }}/tz-rollup-operator
 
-      - name: Operator build & push
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: build/operator/Dockerfile
-          build-args: |
-            NETWORK=ghostnet
-          push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          tags: ${{ steps.meta-operator.outputs.tags }}
-          labels: ${{ steps.meta-operator.outputs.labels }}
+      # - name: Operator build & push
+      #   uses: docker/build-push-action@v2
+      #   with:
+      #     context: .
+      #     file: build/operator/Dockerfile
+      #     build-args: |
+      #       NETWORK=ghostnet
+      #     push: true
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
+      #     tags: ${{ steps.meta-operator.outputs.tags }}
+      #     labels: ${{ steps.meta-operator.outputs.labels }}
 
       - name: Facade tags & labels
         id: meta-facade
@@ -59,16 +59,16 @@ jobs:
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_BASE }}/tz-rollup-facade
 
-      - name: Facade build & push
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: build/facade/Dockerfile
-          push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          tags: ${{ steps.meta-facade.outputs.tags }}
-          labels: ${{ steps.meta-facade.outputs.labels }}
+      # - name: Facade build & push
+      #   uses: docker/build-push-action@v2
+      #   with:
+      #     context: .
+      #     file: build/facade/Dockerfile
+      #     push: true
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
+      #     tags: ${{ steps.meta-facade.outputs.tags }}
+      #     labels: ${{ steps.meta-facade.outputs.labels }}
 
   deploy:
     name: Deploy rollup to testnet
@@ -80,5 +80,4 @@ jobs:
         with:
           image: ${{ needs.build.outputs.operator }}
           options: -e ORIGINATOR_KEY=${{ env.ORIGINATOR_KEY }}
-          shell: entrypoint.sh
-          run: originate-rollup
+          run: entrypoint.sh originate-rollup
