@@ -12,12 +12,14 @@ on:
 
 jobs:
   build:
-    name: Build and push docker images, deploy rollup to testnet
+    name: Build and push docker images
     runs-on: ubuntu-latest
     env:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       DOCKER_REGISTRY: ghcr.io
       DOCKER_IMAGE_BASE: ${{ github.repository_owner }}
+    outputs:
+      operator: ${{ steps.meta-operator.outputs.tags }}
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
@@ -67,3 +69,17 @@ jobs:
           cache-to: type=gha,mode=max
           tags: ${{ steps.meta-facade.outputs.tags }}
           labels: ${{ steps.meta-facade.outputs.labels }}
+
+    deploy:
+      name: Deploy rollup to testnet
+      needs: build
+      runs-on: ubuntu-latest
+      steps:
+        - name: Deploy rollup
+          uses: addnab/docker-run-action@v3
+          with:
+            image: ${{ needs.build.outputs.operator }}
+            options: -e ORIGINATOR_KEY=${{ env.ORIGINATOR_KEY }}
+            shell: entrypoint.sh
+            run: originate-rollup
+
