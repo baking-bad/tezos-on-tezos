@@ -76,8 +76,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy rollup
-        uses: addnab/docker-run-action@v3
-        with:
-          image: ${{ needs.build.outputs.operator }}
-          options: -e ORIGINATOR_KEY=${{ env.ORIGINATOR_KEY }}
-          run: entrypoint.sh originate-rollup
+        run: docker run -v "/var/run/docker.sock":"/var/run/docker.sock" -e ORIGINATOR_KEY=${{ env.ORIGINATOR_KEY }} ${{ needs.build.outputs.operator }} originate-rollup
