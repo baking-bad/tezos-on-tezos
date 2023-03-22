@@ -23,7 +23,7 @@ import_key() {
 }
 
 launch_rollup() {
-    import_key()
+    import_key
 
     if [ ! -f "$rollup_dir/config.json" ]; then
         echo "Generating operator config..."
@@ -49,7 +49,7 @@ launch_rollup() {
 }
 
 originate_rollup() {
-    import_key()
+    import_key
 
     if [ -f "$rollup_dir/config.json" ]; then
         echo "Found existing rollup config"
