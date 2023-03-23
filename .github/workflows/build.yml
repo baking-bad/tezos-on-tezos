@@ -76,7 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy rollup
-        run: docker run -v "/var/run/docker.sock":"/var/run/docker.sock" -e OPERATOR_KEY=${{ secrets.OPERATOR_KEY }} ${{ needs.build.outputs.operator }} originate-rollup > originate.out
+        run: docker run -v "/var/run/docker.sock":"/var/run/docker.sock" -e OPERATOR_KEY=${{ secrets.OPERATOR_KEY }} ${{ needs.build.outputs.operator }} originate-rollup | tee originate.out
 
       - name: Extract rollup address
         run: |
