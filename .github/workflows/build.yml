@@ -76,4 +76,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy rollup
-        run: docker run -v "/var/run/docker.sock":"/var/run/docker.sock" -e OPERATOR_KEY=${{ secrets.OPERATOR_KEY }} ${{ needs.build.outputs.operator }} originate-rollup
+        run: docker run -v "/var/run/docker.sock":"/var/run/docker.sock" -e OPERATOR_KEY=${{ secrets.OPERATOR_KEY }} ${{ needs.build.outputs.operator }} originate-rollup > originate.out
+
+      - name: Extract rollup address
+        run: |
+          ROLLUP_ADDRESS=$(cat originate.out | grep -oE "sr1.*")
+          echo "ROLLUP_ADDRESS=$ROLLUP_ADDRESS" >> $GITHUB_ENV
+
+      - name: Update PR with the deployment link
+        uses: edumserrano/find-create-or-update-comment@v1
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-includes: '<!-- pr-rollup-deployment -->'
+          comment-author: 'github-actions[bot]'
+          body: |
+            <!-- pr-rollup-deployment -->
+            [${{ env.ROLLUP_ADDRESS }}](https://api.ghostnet.tzkt.io/v1/accounts/${{ env.ROLLUP_ADDRESS }}/operations)
+          edit-mode: replace
+          reactions: rocket
