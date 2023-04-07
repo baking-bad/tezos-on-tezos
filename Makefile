@@ -7,7 +7,7 @@ MONDAY_TAG=master_f9675b19_20230303221946
 MONDAY_NETWORK=mondaynet-2023-03-06
 
 # https://teztnets.xyz/ghostnet-about
-GHOST_TAG=v16.0-rc3
+GHOST_TAG=v16.1
 GHOST_NETWORK=ghostnet
 
 install:
