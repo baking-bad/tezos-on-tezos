@@ -9,7 +9,8 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 tezos_ctx = { path = "../tezos_ctx" }
 tezos_l2 = { path = "../tezos_l2" }
-host = { git = "https://gitlab.com/tezos/kernel" }
+tezos_smart_rollup_host = { git = "https://gitlab.com/tezos/tezos", branch = "master", package = "tezos_smart_rollup_host" }
+tezos_smart_rollup_core = { git = "https://gitlab.com/tezos/tezos", branch = "master", package = "tezos_smart_rollup_core" }
 tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-core", default-features = false }
 tezos_operation = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-operation", default-features = false }
 
@@ -18,5 +19,5 @@ hex = "*"
 
 [dev-dependencies]
 tezos_rpc = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-rpc", default-features = false }
-mock_runtime = { git = "https://gitlab.com/tezos/kernel" }
+mock_runtime = { git = "https://gitlab.com/tezos/tezos", branch = "master", package = "tezos_smart_rollup_mock" }
 hex = "*"

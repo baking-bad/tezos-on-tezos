@@ -1,6 +1,6 @@
-use host::{rollup_core::RawRollupCore, runtime::Runtime};
 use std::collections::{HashMap, HashSet};
 use tezos_ctx::{ContextNode, GenericContext, Result};
+use tezos_smart_rollup_host::runtime::Runtime;
 
 use crate::store::{store_delete, store_has, store_move, store_read, store_write};
 
@@ -8,7 +8,7 @@ const TMP_PREFIX: &str = "/tmp";
 
 pub struct PVMContext<Host>
 where
-    Host: RawRollupCore,
+    Host: Runtime,
 {
     host: Host,
     state: HashMap<String, Option<ContextNode>>,
@@ -18,7 +18,7 @@ where
 
 impl<Host> AsMut<Host> for PVMContext<Host>
 where
-    Host: RawRollupCore,
+    Host: Runtime,
 {
     fn as_mut(&mut self) -> &mut Host {
         &mut self.host
@@ -27,7 +27,7 @@ where
 
 impl<Host> PVMContext<Host>
 where
-    Host: RawRollupCore,
+    Host: Runtime,
 {
     pub fn new(host: Host) -> Self {
         PVMContext {
@@ -39,7 +39,7 @@ where
     }
 }
 
-impl<Host: RawRollupCore> PVMContext<Host> {
+impl<Host: Runtime> PVMContext<Host> {
     pub fn persist(&mut self) -> Result<()> {
         for (key, exists) in self.saved_state.drain() {
             if exists {
@@ -54,7 +54,7 @@ impl<Host: RawRollupCore> PVMContext<Host> {
 
 impl<Host> GenericContext for PVMContext<Host>
 where
-    Host: RawRollupCore,
+    Host: Runtime,
 {
     fn log(&self, msg: String) {
         self.host.write_debug(msg.as_str())
@@ -144,7 +144,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use mock_runtime::host::MockHost;
+    use mock_runtime::MockHost;
     use tezos_core::types::mutez::Mutez;
     use tezos_ctx::{ExecutorContext, GenericContext, Result};
 

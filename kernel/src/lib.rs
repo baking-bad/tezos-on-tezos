@@ -9,6 +9,8 @@ pub use error::{Error, Result};
 #[cfg(target_arch = "wasm32")]
 #[no_mangle]
 pub extern "C" fn kernel_run() {
-    let mut context = crate::context::PVMContext::new(unsafe { host::wasm_host::WasmHost::new() });
+    let mut context = crate::context::PVMContext::new(unsafe {
+        tezos_smart_rollup_core::rollup_host::RollupHost::new()
+    });
     crate::kernel::kernel_run(&mut context);
 }

@@ -4,7 +4,7 @@ use std::fs::{create_dir_all, File};
 use std::io::{Read, Write};
 use std::path::PathBuf;
 use tezos_core::internal::crypto::Crypto;
-use tezos_encoding::enc::BinWriter;
+use tezos_data_encoding::enc::BinWriter;
 use tezos_rollup_encoding::dac::{Page, V0ContentPage, V0HashPage, MAX_PAGE_SIZE};
 // use tezos_core::types::encoded::{ScRollupRevealHash, Encoded};
 

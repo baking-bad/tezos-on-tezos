@@ -1,6 +1,5 @@
-use host::{
+use tezos_smart_rollup_host::{
     path::RefPath,
-    rollup_core::RawRollupCore,
     runtime::{load_value_sized, save_value_sized, Runtime, RuntimeError, ValueType},
 };
 
@@ -17,7 +16,7 @@ macro_rules! str_to_path {
     };
 }
 
-pub fn store_has(host: &impl RawRollupCore, key: &str) -> tezos_ctx::Result<bool> {
+pub fn store_has(host: &impl Runtime, key: &str) -> tezos_ctx::Result<bool> {
     match Runtime::store_has(host, &str_to_path!(key)) {
         Ok(Some(ValueType::Value)) => Ok(true),
         Err(err) => Err(err_into(err)),
@@ -25,7 +24,7 @@ pub fn store_has(host: &impl RawRollupCore, key: &str) -> tezos_ctx::Result<bool
     }
 }
 
-pub fn store_read(host: &impl RawRollupCore, key: &str) -> tezos_ctx::Result<Option<Vec<u8>>> {
+pub fn store_read(host: &impl Runtime, key: &str) -> tezos_ctx::Result<Option<Vec<u8>>> {
     match load_value_sized(host, &str_to_path!(key)) {
         Ok(val) => Ok(Some(val)),
         Err(RuntimeError::PathNotFound) => Ok(None),
@@ -34,7 +33,7 @@ pub fn store_read(host: &impl RawRollupCore, key: &str) -> tezos_ctx::Result<Opt
 }
 
 pub fn store_write(
-    host: &mut impl RawRollupCore,
+    host: &mut impl Runtime,
     key: &str,
     val: Vec<u8>,
 ) -> tezos_ctx::Result<()> {
@@ -42,7 +41,7 @@ pub fn store_write(
     Ok(())
 }
 
-pub fn store_delete(host: &mut impl RawRollupCore, key: &str) -> tezos_ctx::Result<()> {
+pub fn store_delete(host: &mut impl Runtime, key: &str) -> tezos_ctx::Result<()> {
     match Runtime::store_delete(host, &str_to_path!(key)) {
         Ok(()) => Ok(()),
         Err(RuntimeError::PathNotFound) => Ok(()),
@@ -51,7 +50,7 @@ pub fn store_delete(host: &mut impl RawRollupCore, key: &str) -> tezos_ctx::Resu
 }
 
 pub fn store_move(
-    host: &mut impl RawRollupCore,
+    host: &mut impl Runtime,
     from_key: &str,
     to_key: &str,
 ) -> tezos_ctx::Result<()> {

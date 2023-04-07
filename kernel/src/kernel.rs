@@ -1,8 +1,8 @@
-use host::{rollup_core::RawRollupCore, runtime::Runtime};
 use tezos_core::types::encoded::{ChainId, Encoded, OperationHash};
 use tezos_ctx::{ExecutorContext, GenericContext};
 use tezos_l2::batcher::apply_batch;
 use tezos_operation::operations::SignedOperation;
+use tezos_smart_rollup_host::runtime::Runtime;
 
 use crate::{
     context::PVMContext,
@@ -10,7 +10,7 @@ use crate::{
     Error, Result,
 };
 
-pub fn kernel_run<Host: RawRollupCore>(context: &mut PVMContext<Host>) {
+pub fn kernel_run<Host: Runtime>(context: &mut PVMContext<Host>) {
     let metadata = Runtime::reveal_metadata(context.as_mut()).expect("Failed to reveal metadata");
     let mut head = context.get_head().expect("Failed to get head");
     head.chain_id =
@@ -25,7 +25,7 @@ pub fn kernel_run<Host: RawRollupCore>(context: &mut PVMContext<Host>) {
                 // Origination level is the one before kernel is first time invoked
                 // We assume single rollup block per inbox block here
                 // Note that head level is the one prior to the current block
-                let expected = inbox_level - metadata.origination_level - 2;
+                let expected = inbox_level as i32 - metadata.origination_level as i32 - 2;
                 if head.level != expected {
                     break Err(Error::InconsistentHeadLevel {
                         expected,
@@ -78,9 +78,9 @@ mod test {
     use crate::context::PVMContext;
 
     use hex;
-    use host::rollup_core::Input;
-    use mock_runtime::host::MockHost;
+    use mock_runtime::MockHost;
     use tezos_ctx::{ExecutorContext, Result};
+    use tezos_smart_rollup_host::input::Message;
 
     #[test]
     fn send_tez() -> Result<()> {
@@ -102,9 +102,9 @@ mod test {
         context.as_mut().as_mut().add_next_inputs(
             level,
             vec![
-                (Input::MessageData, b"\x00\x01".to_vec()),
-                (Input::MessageData, input),
-                (Input::MessageData, b"\x00\x02".to_vec()),
+                (Message, b"\x00\x01".to_vec()),
+                (Message, input),
+                (Message, b"\x00\x02".to_vec()),
             ]
             .iter(),
         );

@@ -171,7 +171,7 @@ pub fn install_kernel(root_hash: &[u8; PREIMAGE_HASH_SIZE]) {
 pub mod host {
     use super::PREIMAGE_HASH_SIZE;
     use core::slice::{from_raw_parts, from_raw_parts_mut};
-    use mock_runtime::host::MockHost;
+    use mock_runtime::MockHost;
     use once_cell::sync::Lazy;
     pub static mut HOST: Lazy<MockHost> = Lazy::new(|| MockHost::default());
 
@@ -232,7 +232,7 @@ pub mod host {
 mod tests {
     use super::*;
     use hex;
-    use mock_runtime::state::HostState;
+    use mock_runtime::HostState;
     use tezos_encoding::enc::BinWriter;
     use tezos_rollup_encoding::dac::{Page, V0ContentPage, V0HashPage, MAX_PAGE_SIZE};
 

@@ -95,8 +95,8 @@ macro_rules! impl_from_error {
 
 impl_from_error!(TezosCoreError, TezosEncoding);
 impl_from_error!(TezosOperationError, TezosEncoding);
-impl_from_error!(host::runtime::RuntimeError, WasmHost);
-impl_from_error!(host::path::PathError, WasmHost);
+impl_from_error!(tezos_smart_rollup_host::runtime::RuntimeError, WasmHost);
+impl_from_error!(tezos_smart_rollup_host::path::PathError, WasmHost);
 
 impl From<TezosProtoError> for Error {
     fn from(error: TezosProtoError) -> Self {
