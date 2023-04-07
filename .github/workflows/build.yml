@@ -80,7 +80,7 @@ jobs:
 
       - name: Extract rollup address
         run: |
-          ROLLUP_ADDRESS=$(cat originate.out | grep -oE "sr1.*" | tr -d '\n')
+          ROLLUP_ADDRESS=$(cat originate.out | grep -oE "sr1.*" | uniq | tr -d '\n')
           echo "ROLLUP_ADDRESS=$ROLLUP_ADDRESS" >> $GITHUB_ENV
 
       - name: Update PR with the deployment link
@@ -91,6 +91,6 @@ jobs:
           comment-author: 'github-actions[bot]'
           body: |
             <!-- pr-rollup-deployment -->
-            [${{ env.ROLLUP_ADDRESS }}](https://api.ghostnet.tzkt.io/v1/accounts/${{ env.ROLLUP_ADDRESS }}/operations)
+            Deployed at [${{ env.ROLLUP_ADDRESS }}](https://ghostnet.tzkt.io/${{ env.ROLLUP_ADDRESS }})
           edit-mode: replace
           reactions: rocket
