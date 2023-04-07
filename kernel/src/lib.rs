@@ -8,14 +8,13 @@ pub use error::{Error, Result};
 
 #[cfg(target_arch = "wasm32")]
 fn panic_hook(info: &core::panic::PanicInfo) {
-    let message =
-        if let Some(message) = info.payload().downcast_ref::<std::string::String>() {
-            format!("Kernel panic {:?} at {:?}", message, info.location())
-        } else {
-            let message = info.payload().downcast_ref::<&str>();
-            format!("Kernel panic {:?} at {:?}", message, info.location())
-        };
-    
+    let message = if let Some(message) = info.payload().downcast_ref::<std::string::String>() {
+        format!("Kernel panic {:?} at {:?}", message, info.location())
+    } else {
+        let message = info.payload().downcast_ref::<&str>();
+        format!("Kernel panic {:?} at {:?}", message, info.location())
+    };
+
     unsafe {
         host::rollup_core::write_debug(message.as_ptr(), message.len());
     }
