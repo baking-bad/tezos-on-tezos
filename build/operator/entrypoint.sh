@@ -4,9 +4,17 @@ set -e
 
 client_dir="/root/.tezos-client"
 rollup_dir="/root/.tezos-smart-rollup-node"
-endpoint="https://rpc.$NETWORK.teztnets.xyz"
+endpoint=$NODE_URI
 faucet="https://faucet.$NETWORK.teztnets.xyz"
 debug_log_config="file-descriptor-path:///root/logs/kernel_debug.log?name=kernel_debug&chmod=0o644"
+
+if [ -z "$NODE_URI" ]; then
+    if [ -z "$NETWORK" ]; then
+        echo "NETWORK is not set"
+        exit 1
+    fi
+    endpoint="https://rpc.$NETWORK.teztnets.xyz"
+fi
 
 command=$1
 shift 1

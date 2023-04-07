@@ -59,16 +59,16 @@ jobs:
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_BASE }}/tz-rollup-facade
 
-      # - name: Facade build & push
-      #   uses: docker/build-push-action@v2
-      #   with:
-      #     context: .
-      #     file: build/facade/Dockerfile
-      #     push: true
-      #     cache-from: type=gha
-      #     cache-to: type=gha,mode=max
-      #     tags: ${{ steps.meta-facade.outputs.tags }}
-      #     labels: ${{ steps.meta-facade.outputs.labels }}
+      - name: Facade build & push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: build/facade/Dockerfile
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: ${{ steps.meta-facade.outputs.tags }}
+          labels: ${{ steps.meta-facade.outputs.labels }}
 
   deploy:
     name: Deploy rollup to testnet
@@ -80,7 +80,7 @@ jobs:
 
       - name: Extract rollup address
         run: |
-          ROLLUP_ADDRESS=$(cat originate.out | grep -oE "sr1.*")
+          ROLLUP_ADDRESS=$(cat originate.out | grep -oE "sr1.*" | tr -d '\n')
           echo "ROLLUP_ADDRESS=$ROLLUP_ADDRESS" >> $GITHUB_ENV
 
       - name: Update PR with the deployment link
