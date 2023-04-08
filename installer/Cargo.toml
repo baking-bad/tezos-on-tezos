@@ -7,10 +7,10 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dev-dependencies]
-host = { git = "https://gitlab.com/tezos/kernel" }
-mock_runtime = { git = "https://gitlab.com/tezos/kernel" }
+host = { git = "https://gitlab.com/tezos/kernel", rev = "1e1d96a9f1c594efd11c57bad0fa96e5d90c3fca" }
+mock_runtime = { git = "https://gitlab.com/tezos/kernel", rev = "1e1d96a9f1c594efd11c57bad0fa96e5d90c3fca" }
 tezos_encoding = { git = "https://github.com/emturner/tezedge.git", branch = "master", default-features = false }
-tezos_rollup_encoding = { git = "https://gitlab.com/tezos/kernel" }
+tezos_rollup_encoding = { git = "https://gitlab.com/tezos/kernel", rev = "1e1d96a9f1c594efd11c57bad0fa96e5d90c3fca" }
 tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-core" }
 hex = { version = "0.4.3" }
 once_cell = "1.16.0"

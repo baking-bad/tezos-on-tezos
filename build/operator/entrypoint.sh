@@ -48,7 +48,7 @@ launch_rollup() {
         cp -R /root/wasm_2_0_0 "$rollup_dir/wasm_2_0_0"
     fi
 
-    # Write logs to a file: "file-descriptor-path:///root/logs/kernel_debug.log?name=kernel_debug&chmod=0o644"
+    # Write logs to a file: "file-descriptor-path:///kernel_debug.log?name=kernel_debug&chmod=0o644"
     TEZOS_LOG='* -> info' TEZOS_EVENTS_CONFIG=$LOG_CONFIG exec octez-smart-rollup-node --endpoint "$endpoint" -d "$client_dir" run --data-dir "$rollup_dir" --rpc-addr "0.0.0.0"
 }
 
