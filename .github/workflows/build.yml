@@ -12,7 +12,6 @@ on:
 
 jobs:
   build:
-    if: ${{ !contains(github.event.head_commit.message, '[skip-build]') }}
     name: Build and push docker images
     runs-on: ubuntu-latest
     env:
@@ -102,15 +101,17 @@ jobs:
 
       - name: Create GitHub deployment
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        uses: avakar/create-deployment@v1
+        uses: altinukshini/deployment-action@releases/v1
         id: deployment
         with:
+          token: "${{ github.token }}"
           environment: ghostnet
 
       - name: Update deployment status
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        uses: avakar/set-deployment-status@v1
+        uses: altinukshini/deployment-status@releases/v1
         with:
-          environment_url: https://ghostnet.tzkt.io/${{ env.ROLLUP_ADDRESS }}
+          token: "${{ github.token }}"
           state: "success"
+          environment_url: https://ghostnet.tzkt.io/${{ env.ROLLUP_ADDRESS }}
           deployment_id: ${{ steps.deployment.outputs.deployment_id }}
