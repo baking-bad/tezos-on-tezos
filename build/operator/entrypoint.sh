@@ -6,7 +6,6 @@ client_dir="/root/.tezos-client"
 rollup_dir="/root/.tezos-smart-rollup-node"
 endpoint=$NODE_URI
 faucet="https://faucet.$NETWORK.teztnets.xyz"
-debug_log_config="file-descriptor-path:///root/logs/kernel_debug.log?name=kernel_debug&chmod=0o644"
 
 if [ -z "$NODE_URI" ]; then
     if [ -z "$NETWORK" ]; then
@@ -49,11 +48,8 @@ launch_rollup() {
         cp -R /root/wasm_2_0_0 "$rollup_dir/wasm_2_0_0"
     fi
 
-    # if [[ $* == "--debug" ]]; then
-    #     log_config=$debug_log_config
-    # fi
-
-    TEZOS_LOG='* -> info' TEZOS_EVENTS_CONFIG=$log_config exec octez-smart-rollup-node --endpoint "$endpoint" -d "$client_dir" run --data-dir "$rollup_dir" --rpc-addr "0.0.0.0"
+    # Write logs to a file: "file-descriptor-path:///root/logs/kernel_debug.log?name=kernel_debug&chmod=0o644"
+    TEZOS_LOG='* -> info' TEZOS_EVENTS_CONFIG=$LOG_CONFIG exec octez-smart-rollup-node --endpoint "$endpoint" -d "$client_dir" run --data-dir "$rollup_dir" --rpc-addr "0.0.0.0"
 }
 
 originate_rollup() {

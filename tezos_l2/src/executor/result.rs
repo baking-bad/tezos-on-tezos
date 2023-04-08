@@ -109,7 +109,7 @@ impl ExecutionResult {
                     .into_iter()
                     .for_each(|r| r.aggregate_internals(internals));
             }
-            _ => unimplemented!(),
+            _ => unimplemented!("Only internal transactions allowed"),
         }
     }
 }
