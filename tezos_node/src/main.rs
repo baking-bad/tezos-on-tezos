@@ -12,6 +12,9 @@ struct Args {
 
     #[arg(short, long, default_value_t = 8732)]
     port: u16,
+
+    #[arg(short, long)]
+    rpc_host: Option<String>,
 }
 
 #[actix_web::main]
@@ -19,6 +22,9 @@ async fn main() -> std::io::Result<()> {
     env_logger::init();
 
     let args = Args::parse();
+    let rpc_host = args
+        .rpc_host
+        .unwrap_or(format!("http://{}:{}", args.rpc_addr, args.port));
 
     let mut client = RollupRpcClient::new(&args.endpoint);
     client
@@ -27,5 +33,6 @@ async fn main() -> std::io::Result<()> {
         .expect("Failed to initialize client");
 
     let data = Data::new(client);
-    launch_node::<RollupRpcClient>(data, &args.rpc_addr, args.port).await
+    let host = Data::new(rpc_host);
+    launch_node::<RollupRpcClient>(data, &args.rpc_addr, args.port, host).await
 }

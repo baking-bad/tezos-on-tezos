@@ -50,7 +50,7 @@ impl std::error::Error for InternalError {
 
 impl PartialEq for InternalError {
     fn eq(&self, _: &Self) -> bool {
-        unimplemented!()
+        unimplemented!("Internal error is not comparable")
     }
 }
 

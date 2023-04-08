@@ -11,7 +11,7 @@ tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/i
 tezos_rpc = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-rpc", default-features = false }
 tezos_michelson = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-michelson", default-features = false }
 tezos_operation = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-operation", default-features = false, features = ["ed25519"] }
-serde-json-wasm = "*"
+serde-json-wasm = { git = "https://github.com/CosmWasm/serde-json-wasm", branch = "main" }
 serde = { version = "1.0", features = ["derive"] }
 derive_more = "0.99"
 chrono = { version = "0.4", default-features = false }

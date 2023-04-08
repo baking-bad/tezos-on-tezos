@@ -101,7 +101,7 @@ mod test {
             OperationContent::Origination(origination) => get_status!(origination),
             _ => return Err(Error::OperationKindUnsupported),
         }
-        panic!("Operation metadata is missing: {:?}", receipt)
+        panic!("Operation metadata is missing: {:?}", receipt) // TODO: avoid panic?
     }
 
     #[test]

@@ -35,6 +35,10 @@ pub fn kernel_run<Host: RawRollupCore>(context: &mut PVMContext<Host>) {
             }
             Ok(InboxMessage::LevelInfo(info)) => {
                 head.timestamp = info.predecessor_timestamp;
+                context.log(format!(
+                    "L1 predecessor block: {}",
+                    info.predecessor.value()
+                ))
             }
             Ok(InboxMessage::L2Operation { hash, opg }) => {
                 context.log(format!("Operation pending: {}", &hash.value()));

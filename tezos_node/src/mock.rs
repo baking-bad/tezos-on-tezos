@@ -24,5 +24,11 @@ async fn main() -> std::io::Result<()> {
         }
     });
 
-    launch_node::<RollupMockClient>(data, "127.0.0.1", 8732).await
+    launch_node::<RollupMockClient>(
+        data,
+        "127.0.0.1",
+        8732,
+        Data::new("http://localhost:8732".into()),
+    )
+    .await
 }

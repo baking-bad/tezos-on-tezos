@@ -6,8 +6,8 @@ services:
     restart: "no"
     env_file:
       - local.env
-      # ROLLUP_ADDRESS
-      # OPERATOR_KEY
+      # ROLLUP_ADDRESS e.g. sr1...
+      # OPERATOR_KEY e.g. unencrypted:edsk...
     ports:
       - 127.0.0.1:8932:8932
     networks:

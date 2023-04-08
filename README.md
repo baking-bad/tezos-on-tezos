@@ -6,15 +6,40 @@ Optimistic rollup enabled with Tezos VM running on top of Tezos L1.
 
 ## About
 
-The goal of this project is to create PoC of a permissioned application-specific rollup enabled with Tezos VM.  
+The goal of this project is to create PoC of a permissioned application-specific rollup enabled with Tezos (Michelson) VM.  
 Aside from the pure research interest there might be long-term advantages of such solution:
 * Reduced operational costs (contract automation, oracles)
 * Custom MEV-resistant techniques
 * Chain-native tokenomics
 * Feeless experience
-* Contract wallets as first-class citizens
-* Potentially smaller operation latency
-* Alternative VMs for executing smart contracts (WASM)
+* Contract wallets as first-class citizens (account abstraction)
+
+We are also open to 
+
+## How to play
+
+`Rollupnet` is a public deployment of the smart rollup operator + Tezos-compatible facade node, it is used mostly for testing and demonstrating purposes.  
+
+### RPC
+
+Public endpoint:
+* https://rollupnet.zaun.baking-bad.org/chains/main/blocks/head
+
+You need to add custom network to your wallet, if you want to interact with the `rollupnet`. Check out this tutorial on how to add custom RPC provider to Temple wallet: https://www.youtube.com/watch?v=VzeSFdna8Vk
+
+### BCD
+
+We have a dedicated instance of Better Call Dev explorer for periodic test networks including `rollupnet`:
+* https://teztnets.better-call.dev/
+
+You can use it to deploy and interact with smart contracts using web interface.
+
+### Feedback
+
+Your feedback is extremely valuable, and we also expect lots of bugs at early stage, so please contact us if anything works not as expected:
+* [Discord](https://discord.com/invite/RcPGSdcVSx) server
+* [Telegram](https://t.me/baking_bad_chat) chat
+* [Slack](https://tezos-dev.slack.com/archives/CV5NX7F2L) channel
 
 ## Roadmap
 
@@ -32,7 +57,7 @@ Aside from the pure research interest there might be long-term advantages of suc
 - [x] Tezos RPC facade node
 - [x] Deploy a periodic testnet
 - [x] Add support to BCD
-- [ ] Permanent testnet
+- [x] Permanent testnet
 - [ ] Add missing Michelson features necessary to onboard first dapps
 - [ ] Increase test coverage
 - [ ] Spam-prevention mechanism
@@ -40,7 +65,6 @@ Aside from the pure research interest there might be long-term advantages of suc
 - [ ] Sequencer fees
 - [ ] Micheline (de)serialization derive macros
 - [ ] WASM smart contracts
-
 ## Limitations
 
 Current design is intentionally simplified to speed up development while having a minimal necessary functional to operate.
@@ -80,9 +104,8 @@ make build-operator
 
 Then you can create a local docker image (depending on target network):
 ```
-make image-operator-daily
 make image-operator-monday
-make image-operator-mumbai
+make image-operator-ghost
 ```
 
 The difference is mainly in Octez binaries shipped together with the kernel.
@@ -101,14 +124,13 @@ Run `make generate-keypair` to initialize a Tezos L1 account, and top it up usin
 
 Build kernel and its installer, then originate a new rollup, and run a rollup node.  
 
-For Mondaynet and Dailynet:
+For Mondaynet and Ghostnet:
 1. Check that latest periodic network has correct settings in the Makefile (needs to be updated manually)
 2. Depending on the target L1 network run
 
 ```
-make daily
 make monday
-make mumbai
+make ghost
 ```
 
 ### Operator + Facade

@@ -1,4 +1,4 @@
-ARG OCTEZ_TAG=v16.0-rc1
+ARG OCTEZ_TAG=v16.1
 FROM tezos/tezos:${OCTEZ_TAG} AS octez
 
 FROM rust:slim-buster AS builder
@@ -25,6 +25,6 @@ COPY --from=builder /build/.bin/wasm_2_0_0/ /root/wasm_2_0_0/
 COPY --from=builder /build/.bin/installer.wasm /root/kernel.wasm
 COPY ./build/operator/entrypoint.sh .
 RUN chmod +x entrypoint.sh
-ARG NETWORK="mumbainet"
+ARG NETWORK="ghostnet"
 ENV NETWORK=${NETWORK}
 ENTRYPOINT [ "./entrypoint.sh" ]
