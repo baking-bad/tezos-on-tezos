@@ -84,6 +84,7 @@ jobs:
           echo "ROLLUP_ADDRESS=$ROLLUP_ADDRESS" >> $GITHUB_ENV
 
       - name: Update PR with the deployment link
+        if: github.event_name == 'pull_request'
         uses: edumserrano/find-create-or-update-comment@v1
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -94,3 +95,21 @@ jobs:
             Deployed at [${{ env.ROLLUP_ADDRESS }}](https://ghostnet.tzkt.io/${{ env.ROLLUP_ADDRESS }})
           edit-mode: replace
           reactions: rocket
+
+      - name: Create GitHub deployment
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: altinukshini/deployment-action@releases/v1
+        id: deployment
+        with:
+          token: "${{ github.token }}"
+          target_url: https://ghostnet.tzkt.io/${{ env.ROLLUP_ADDRESS }}
+          environment: development
+
+      - name: Update deployment status
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: altinukshini/deployment-status@releases/v1
+        with:
+          token: "${{ github.token }}"
+          target_url: https://ghostnet.tzkt.io/${{ env.ROLLUP_ADDRESS }}
+          state: "success"
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
