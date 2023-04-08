@@ -102,18 +102,15 @@ jobs:
 
       - name: Create GitHub deployment
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        uses: altinukshini/deployment-action@releases/v1
+        uses: avakar/create-deployment@v1
         id: deployment
         with:
-          token: "${{ github.token }}"
-          target_url: https://ghostnet.tzkt.io/${{ env.ROLLUP_ADDRESS }}
-          environment: development
+          environment: ghostnet
 
       - name: Update deployment status
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        uses: altinukshini/deployment-status@releases/v1
+        uses: avakar/set-deployment-status@v1
         with:
-          token: "${{ github.token }}"
-          target_url: https://ghostnet.tzkt.io/${{ env.ROLLUP_ADDRESS }}
+          environment_url: https://ghostnet.tzkt.io/${{ env.ROLLUP_ADDRESS }}
           state: "success"
           deployment_id: ${{ steps.deployment.outputs.deployment_id }}

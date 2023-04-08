@@ -14,8 +14,6 @@ Aside from the pure research interest there might be long-term advantages of suc
 * Feeless experience
 * Contract wallets as first-class citizens (account abstraction)
 
-We are also open to 
-
 ## How to play
 
 `Rollupnet` is a public deployment of the smart rollup operator + Tezos-compatible facade node, it is used mostly for testing and demonstrating purposes.  
