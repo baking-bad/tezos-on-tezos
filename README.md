@@ -25,12 +25,26 @@ Public endpoint:
 
 You need to add custom network to your wallet, if you want to interact with the `rollupnet`. Check out this tutorial on how to add custom RPC provider to Temple wallet: https://www.youtube.com/watch?v=VzeSFdna8Vk
 
+### Keys
+
+Import one of the following bootstrap keys:
+* `edsk3gUfUPyBSfrS9CCgmCiQsTCHGkviBDusMxDJstFtojtc1zcpsh`
+* `edsk39qAm1fiMjgmPkw1EgQYkMzkJezLNewd7PLNHTkr6w9XA2zdfo`
+* `edsk4ArLQgBTLWG5FJmnGnT689VKoqhXwmDPBuGx3z4cvwU9MmrPZZ`
+* `edsk2uqQB9AY4FvioK2YMdfmyMrer5R8mGFyuaLLFfSRo8EoyNdht3`
+* `edsk4QLrcijEffxV31gGdN2HU7UpyJjA8drFoNcmnB28n89YjPNRFm`
+
 ### BCD
 
 We have a dedicated instance of Better Call Dev explorer for periodic test networks including `rollupnet`:
 * https://teztnets.better-call.dev/
 
 You can use it to deploy and interact with smart contracts using web interface.
+
+### Limitations
+
+* With the current limit (4096 bytes) for inbox messages you won't be able to deploy large smart contracts
+* Some Michelson features are not yet supported, so you might not able to deploy contracts containing particular opcodes
 
 ### Feedback
 
