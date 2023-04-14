@@ -47,7 +47,7 @@ jobs:
           context: .
           file: build/operator/Dockerfile
           build-args: |
-            NETWORK=ghostnet
+            NETWORK=mumbainet
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -95,7 +95,7 @@ jobs:
           comment-author: 'github-actions[bot]'
           body: |
             <!-- pr-rollup-deployment -->
-            Deployed at [${{ env.ROLLUP_ADDRESS }}](https://ghostnet.tzkt.io/${{ env.ROLLUP_ADDRESS }})
+            Deployed at [${{ env.ROLLUP_ADDRESS }}](https://mumbainet.tzkt.io/${{ env.ROLLUP_ADDRESS }})
           edit-mode: replace
           reactions: rocket
 
@@ -105,7 +105,7 @@ jobs:
         id: deployment
         with:
           token: "${{ github.token }}"
-          environment: ghostnet
+          environment: mumbainet
 
       - name: Update deployment status
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
@@ -113,5 +113,5 @@ jobs:
         with:
           token: "${{ github.token }}"
           state: "success"
-          environment_url: https://ghostnet.tzkt.io/${{ env.ROLLUP_ADDRESS }}
+          environment_url: https://mumbainet.tzkt.io/${{ env.ROLLUP_ADDRESS }}
           deployment_id: ${{ steps.deployment.outputs.deployment_id }}
