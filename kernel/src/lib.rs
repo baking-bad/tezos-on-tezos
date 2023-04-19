@@ -25,7 +25,7 @@ fn panic_hook(info: &core::panic::PanicInfo) {
 #[cfg(target_arch = "wasm32")]
 #[no_mangle]
 pub extern "C" fn kernel_run() {
-    let mut context = crate::context::PVMContext::new(unsafe { host::wasm_host::WasmHost::new() });
     std::panic::set_hook(Box::new(panic_hook));
+    let mut context = crate::context::PVMContext::new(unsafe { host::wasm_host::WasmHost::new() });
     crate::kernel::kernel_run(&mut context);
 }
