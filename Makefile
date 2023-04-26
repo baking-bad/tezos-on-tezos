@@ -90,11 +90,13 @@ operator-shell:
 wat:
 	cargo build --package tez_kernel --target wasm32-unknown-unknown
 	wasm2wat -o ./.bin/kernel.wat ./target/wasm32-unknown-unknown/debug/tez_kernel.wasm
+	# check if there's no floating point calc
+	grep -nE 'f(32|64)\.' ./.bin/kernel.wat || true
 
 debug:
 	cargo build --package tez_kernel --target wasm32-unknown-unknown --profile release --target-dir ./target/repl
 	wasm-strip -o ./.bin/debug_kernel.wasm ./target/repl/wasm32-unknown-unknown/release/tez_kernel.wasm
-	docker run --rm -it --entrypoint=/bin/sh --name wasm-repl -v $$PWD/.bin:/root/.bin tezos/tezos:$(MONDAY_TAG) /usr/local/bin/octez-smart-rollup-wasm-debugger /root/.bin/debug_kernel.wasm --inputs /root/.bin/inputs.json
+	docker run --rm -it --entrypoint=/usr/local/bin/octez-smart-rollup-wasm-debugger --name wasm-repl -v $$PWD/.bin:/home/.bin tezos/tezos:$(MONDAY_TAG) /home/.bin/debug_kernel.wasm --inputs /home/.bin/inputs.json
 
 monday:
 	$(MAKE) build-operator

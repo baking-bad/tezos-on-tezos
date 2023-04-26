@@ -89,9 +89,17 @@ context_node_type_core!(Nat);
 macro_rules! context_node_type_rpc {
     ($ty: ty) => {
         impl ContextNodeType for $ty {
-            fn decode(bytes: &[u8]) -> Result<ContextNode> {
-                let value: $ty = serde_json_wasm::de::from_slice(bytes)?;
-                Ok(value.into())
+            fn decode(_bytes: &[u8]) -> Result<ContextNode> {
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    // This is a workaround to avoid floating point operations introduced by serde.
+                    // Since we do not need RPC models deserialization inside the kernel,
+                    // we can only enable that for tests and binaries that are not compiled to wasm.
+                    let value: $ty = serde_json_wasm::de::from_slice(_bytes)?;
+                    return Ok(value.into());
+                }
+                #[cfg(target_arch = "wasm32")]
+                unimplemented!()
             }
 
             fn encode(&self) -> Result<Vec<u8>> {
@@ -101,7 +109,6 @@ macro_rules! context_node_type_rpc {
     };
 }
 
-context_node_type_rpc!(Head);
 context_node_type_rpc!(Operation);
 context_node_type_rpc!(BatchReceipt);
 
@@ -119,5 +126,16 @@ impl ContextNodeType for i64 {
 
     fn encode(&self) -> Result<Vec<u8>> {
         Ok(self.to_be_bytes().to_vec())
+    }
+}
+
+impl ContextNodeType for Head {
+    fn decode(bytes: &[u8]) -> Result<ContextNode> {
+        let value: Head = serde_json_wasm::de::from_slice(bytes)?;
+        Ok(value.into())
+    }
+
+    fn encode(&self) -> Result<Vec<u8>> {
+        Ok(serde_json_wasm::ser::to_vec(self)?)
     }
 }
