@@ -3,11 +3,11 @@
 TAG:=ghost
 
 # https://teztnets.xyz/mondaynet-about
-MONDAY_TAG=master_f9675b19_20230303221946
-MONDAY_NETWORK=mondaynet-2023-03-06
+MONDAY_TAG=master_9b10efc7_20230422025549
+MONDAY_NETWORK=mondaynet-2023-04-24
 
 # https://teztnets.xyz/ghostnet-about
-GHOST_TAG=v16.1
+GHOST_TAG=v16.3
 GHOST_NETWORK=ghostnet
 
 install:
