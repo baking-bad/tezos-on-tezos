@@ -114,13 +114,11 @@ To build the kernel and its installer:
 make build-operator
 ```
 
-Then you can create a local docker image (depending on target network):
-```
-make image-operator-monday
-make image-operator-ghost
-```
+Then you can create a local docker image, depending on target network:
+- `make image-operator-monday`
+- `make image-operator-ghost`
 
-The difference is mainly in Octez binaries shipped together with the kernel.
+Other options are not in the Makefile, but you can add them yourself, the difference is mainly in Octez binaries shipped together with the kernel.
 
 To build a facade node and its docker image:
 ```
@@ -135,15 +133,11 @@ Run `make generate-keypair` to initialize a Tezos L1 account, and top it up usin
 ### Operator
 
 Build kernel and its installer, then originate a new rollup, and run a rollup node.  
+Depending on the target L1 network run one of:
+- `make monday`
+- `make ghost`
 
-For Mondaynet and Ghostnet:
-1. Check that latest periodic network has correct settings in the Makefile (needs to be updated manually)
-2. Depending on the target L1 network run
-
-```
-make monday
-make ghost
-```
+Other options are not in the Makefile, but you can add them yourself based on the existing ones.
 
 ### Operator + Facade
 
