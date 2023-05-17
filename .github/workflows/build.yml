@@ -83,7 +83,7 @@ jobs:
 
       - name: Extract rollup address
         run: |
-          ROLLUP_ADDRESS=$(cat originate.out | grep -oE "sr1.*" | uniq | tr -d '\n')
+          ROLLUP_ADDRESS=$(cat originate.out | grep -oE "sr1[a-Z0-9]{33}" | uniq | tr -d '\n')
           echo "ROLLUP_ADDRESS=$ROLLUP_ADDRESS" >> $GITHUB_ENV
 
       - name: Update PR with the deployment link
