@@ -66,17 +66,9 @@ originate_rollup() {
     fi
     kernel="$(xxd -p "/root/kernel.wasm" | tr -d '\n')"
     
-    octez-client --endpoint "$endpoint" originate smart rollup from operator of kind wasm_2_0_0 of type bytes with kernel "$kernel" --burn-cap 999 | tee originate.out
-    rollup_address=$(cat originate.out | grep -oE "sr1.*")
-    if [ -z "$rollup_address" ]; then
-        echo "Failed to parse rollup address"
-        exit 2
-    else
-        echo "Originated rollup: $rollup_address"
-    fi
-
+    octez-client --endpoint "$endpoint" originate smart rollup tot from operator of kind wasm_2_0_0 of type bytes with kernel "$kernel" --burn-cap 999 | tee originate.out
     operator_address=$(octez-client --endpoint "$endpoint" show address "operator" 2>&1 | grep Hash | grep -oE "tz.*")
-    octez-smart-rollup-node --base-dir "$client_dir" init operator config for "$rollup_address" with operators "$operator_address" --data-dir "$rollup_dir"
+    octez-smart-rollup-node --base-dir "$client_dir" init operator config for tot with operators "$operator_address" --data-dir "$rollup_dir"
 }
 
 generate_keypair() {
