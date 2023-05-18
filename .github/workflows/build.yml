@@ -47,7 +47,7 @@ jobs:
           context: .
           file: build/operator/Dockerfile.debug
           build-args: |
-            NETWORK=mumbainet
+            NETWORK=mondaynet-2023-05-15
             TEZOS_BRANCH=ole@wasmer-instance-leak
           push: true
           cache-from: type=gha
