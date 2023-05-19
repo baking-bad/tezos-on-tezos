@@ -20,13 +20,13 @@ COPY . .
 RUN make build-operator
 
 FROM alpine:3.15 AS rollup
-ARG OCTEZ_PROTO="alpha"
+ARG OCTEZ_PROTO="PtMumbai"
 COPY --from=octez /home/tezos/tezos/octez-smart-rollup-node-${OCTEZ_PROTO} /usr/bin/octez-smart-rollup-node
 COPY --from=octez /home/tezos/tezos/octez-client /usr/bin/octez-client
 COPY --from=builder /build/.bin/wasm_2_0_0/ /root/wasm_2_0_0/
 COPY --from=builder /build/.bin/installer.wasm /root/kernel.wasm
 COPY ./build/operator/entrypoint.sh .
 RUN chmod +x entrypoint.sh
-ARG NETWORK="ghostnet"
+ARG NETWORK="mumbainet"
 ENV NETWORK=${NETWORK}
 ENTRYPOINT [ "./entrypoint.sh" ]
