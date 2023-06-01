@@ -179,14 +179,17 @@ pub async fn forge_operation<T: TezosHelpers>(
 
 #[cfg(test)]
 mod test {
-    use actix_web::{test, web::Data, App, http::header::ContentType};
+    use actix_web::{http::header::ContentType, test, web::Data, App};
     use serde_json::json;
-    use tezos_core::types::{mutez::Mutez, encoded::{Encoded, PublicKey}};
-    use tezos_ctx::{ExecutorContext, Head, GenericContext};
-    use tezos_rpc::models::{error::RpcError, operation::Operation};
     use std::fs::File;
     use std::io::Read;
     use std::path::PathBuf;
+    use tezos_core::types::{
+        encoded::{Encoded, PublicKey},
+        mutez::Mutez,
+    };
+    use tezos_ctx::{ExecutorContext, GenericContext, Head};
+    use tezos_rpc::models::{error::RpcError, operation::Operation};
 
     use crate::{rollup::mock_client::RollupMockClient, services::config, Result};
 
@@ -276,8 +279,21 @@ mod test {
         let client = RollupMockClient::default();
         client.patch(|context| {
             context.set_head(Head::default()).unwrap();
-            context.set_public_key("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx", PublicKey::new(String::from("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav")).unwrap()).unwrap();
-            context.set_balance("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx", Mutez::from(100000u32)).unwrap();
+            context
+                .set_public_key(
+                    "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx",
+                    PublicKey::new(String::from(
+                        "edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav",
+                    ))
+                    .unwrap(),
+                )
+                .unwrap();
+            context
+                .set_balance(
+                    "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx",
+                    Mutez::from(100000u32),
+                )
+                .unwrap();
             context.commit().unwrap();
             Ok(())
         })?;
@@ -305,7 +321,10 @@ mod test {
             .to_request();
 
         let res: Operation = test::call_and_read_body_json(&app, req).await;
-        assert_eq!(res.hash.unwrap().into_string(), "oooHiZmTVQFVe48pqX2BqnywnH6PWDKUquYoPjtVkihLRpGQHZd");
+        assert_eq!(
+            res.hash.unwrap().into_string(),
+            "oooHiZmTVQFVe48pqX2BqnywnH6PWDKUquYoPjtVkihLRpGQHZd"
+        );
         Ok(())
     }
 }
