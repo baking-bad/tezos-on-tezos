@@ -179,10 +179,14 @@ pub async fn forge_operation<T: TezosHelpers>(
 
 #[cfg(test)]
 mod test {
-    use actix_web::{test, web::Data, App};
+    use actix_web::{test, web::Data, App, http::header::ContentType};
     use serde_json::json;
-    use tezos_ctx::{ExecutorContext, Head};
-    use tezos_rpc::models::error::RpcError;
+    use tezos_core::types::{mutez::Mutez, encoded::{Encoded, PublicKey}};
+    use tezos_ctx::{ExecutorContext, Head, GenericContext};
+    use tezos_rpc::models::{error::RpcError, operation::Operation};
+    use std::fs::File;
+    use std::io::Read;
+    use std::path::PathBuf;
 
     use crate::{rollup::mock_client::RollupMockClient, services::config, Result};
 
@@ -264,6 +268,44 @@ mod test {
             .to_request();
         let res: Vec<RpcError> = test::call_and_read_body_json(&app, req).await;
         assert_eq!(&res[0].id, "contract.unrevealed_key");
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn test_run_operation() -> Result<()> {
+        let client = RollupMockClient::default();
+        client.patch(|context| {
+            context.set_head(Head::default()).unwrap();
+            context.set_public_key("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx", PublicKey::new(String::from("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav")).unwrap()).unwrap();
+            context.set_balance("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx", Mutez::from(100000u32)).unwrap();
+            context.commit().unwrap();
+            Ok(())
+        })?;
+
+        let app = test::init_service(
+            App::new()
+                .configure(config::<RollupMockClient>)
+                .app_data(Data::new(client)),
+        )
+        .await;
+
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("tests/data/origination_payload.json");
+
+        let mut file = File::open(path).expect("Failed to open operation payload file");
+        let mut buffer: Vec<u8> = Vec::new();
+
+        file.read_to_end(&mut buffer)
+            .expect("Failed to read operation payload file");
+
+        let req = test::TestRequest::post()
+            .uri("/chains/main/blocks/head/helpers/scripts/run_operation")
+            .set_payload(buffer)
+            .insert_header(ContentType::json())
+            .to_request();
+
+        let res: Operation = test::call_and_read_body_json(&app, req).await;
+        assert_eq!(res.hash.unwrap().into_string(), "oooHiZmTVQFVe48pqX2BqnywnH6PWDKUquYoPjtVkihLRpGQHZd");
         Ok(())
     }
 }

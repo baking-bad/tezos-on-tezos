@@ -1,5 +1,5 @@
 use tezos_michelson::micheline::{
-    primitive_application, primitive_application::PrimitiveApplication, sequence,
+    primitive_application, sequence,
     sequence::Sequence, Micheline,
 };
 use tezos_michelson::michelson::{
@@ -179,12 +179,17 @@ impl TryFrom<Sequence> for MichelsonScript {
         let mut code_ty: Option<Instruction> = None;
 
         for section in sections.into_values() {
-            let prim = PrimitiveApplication::try_from(section)?;
-            match prim.prim() {
-                "parameter" => param_ty = Some(*Parameter::try_from(prim)?.r#type),
-                "storage" => storage_ty = Some(*Storage::try_from(prim)?.r#type),
-                "code" => code_ty = Some(*Code::try_from(prim)?.code),
-                prim => return err_unsupported!(prim),
+            match section {
+                Micheline::Sequence(inner) => return MichelsonScript::try_from(inner),
+                Micheline::PrimitiveApplication(prim) => {
+                    match prim.prim() {
+                        "parameter" => param_ty = Some(*Parameter::try_from(prim)?.r#type),
+                        "storage" => storage_ty = Some(*Storage::try_from(prim)?.r#type),
+                        "code" => code_ty = Some(*Code::try_from(prim)?.code),
+                        prim => return err_unsupported!(prim),
+                    }
+                },
+                Micheline::Literal(_) => return err_unsupported!("literal")
             }
         }
 
