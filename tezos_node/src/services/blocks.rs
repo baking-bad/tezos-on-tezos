@@ -2,8 +2,23 @@ use actix_web::{
     web::{Data, Path},
     Responder, Result,
 };
+use chrono::NaiveDateTime;
+use serde::{Deserialize, Serialize};
+use tezos_core::types::encoded::BlockHash;
 
-use crate::{json_response, rollup::TezosFacade};
+use crate::{
+    json_response,
+    rollup::{BlockId, TezosFacade},
+};
+
+#[derive(Serialize, Deserialize)]
+pub struct BootstrapInfo {
+    pub hash: BlockHash,
+    #[serde(with = "rfc3339_timestamp")]
+    pub timestamp: NaiveDateTime,
+}
+
+pub mod rfc3339_timestamp;
 
 pub async fn block_hash<T: TezosFacade>(
     client: Data<T>,
@@ -59,6 +74,15 @@ pub async fn block<T: TezosFacade>(
     Ok(json_response!(value))
 }
 
+pub async fn bootstrap_info<T: TezosFacade>(client: Data<T>) -> Result<impl Responder> {
+    let header = client.get_block_header(&BlockId::Head).await?;
+    let value = BootstrapInfo {
+        hash: header.hash,
+        timestamp: header.timestamp,
+    };
+    Ok(json_response!(value))
+}
+
 #[cfg(test)]
 mod test {
     use actix_web::{test, web::Data, App};
@@ -66,7 +90,40 @@ mod test {
     use tezos_ctx::{BatchHeader, BatchReceipt, ExecutorContext, Head};
     use tezos_rpc::models::block::FullHeader;
 
-    use crate::{rollup::mock_client::RollupMockClient, services::config, Result};
+    use crate::{
+        rollup::mock_client::RollupMockClient,
+        services::{blocks::BootstrapInfo, config},
+        Result,
+    };
+
+    fn get_test_batch_receipt() -> BatchReceipt {
+        BatchReceipt {
+            balance_updates: None,
+            chain_id: "NetXdQprcVkpaWU".try_into().unwrap(),
+            hash: "BKiHLREqU3JkXfzEDYAkmmfX48gBDtYhMrpA98s7Aq4SzbUAB6M"
+                .try_into()
+                .unwrap(), // head::default
+            protocol: "PtLimaPtLMwfNinJi9rCfDPWea8dFgTZ1MeJ9f1m2SRic6ayiwW"
+                .try_into()
+                .unwrap(),
+            header: BatchHeader {
+                predecessor: "BM4iF1PGVN74h1kvqUtY26boVKpZuJFvpQRN34JLYSkQ9G3jBnn"
+                    .try_into()
+                    .unwrap(),
+                level: 3113764,
+                timestamp: 1675429049,
+                operations_hash: "LLoZzirJsJexRFU6yznwPxSfETprh8Yd5scW1DXfFAwoGmcvQJteE"
+                    .try_into()
+                    .unwrap(),
+                payload_hash: "vh2tsz2UVT8kVJzgye4MpngkRvJJLgnNhZjUgn9oURpB1PYpyrFK"
+                    .try_into()
+                    .unwrap(),
+                context: "CoVnr5Sy57UkHt1Aqmw62KyLUYxVmKCyp45HY7MXW8sFemT3Uf6i"
+                    .try_into()
+                    .unwrap(),
+            },
+        }
+    }
 
     #[actix_web::test]
     async fn test_block_hash() -> Result<()> {
@@ -99,34 +156,7 @@ mod test {
         let client = RollupMockClient::default();
         client.patch(|context| {
             context.set_head(Head::default()).unwrap();
-            context
-                .set_batch_receipt(BatchReceipt {
-                    balance_updates: None,
-                    chain_id: "NetXdQprcVkpaWU".try_into().unwrap(),
-                    hash: "BKiHLREqU3JkXfzEDYAkmmfX48gBDtYhMrpA98s7Aq4SzbUAB6M"
-                        .try_into()
-                        .unwrap(), // head::default
-                    protocol: "PtLimaPtLMwfNinJi9rCfDPWea8dFgTZ1MeJ9f1m2SRic6ayiwW"
-                        .try_into()
-                        .unwrap(),
-                    header: BatchHeader {
-                        predecessor: "BM4iF1PGVN74h1kvqUtY26boVKpZuJFvpQRN34JLYSkQ9G3jBnn"
-                            .try_into()
-                            .unwrap(),
-                        level: 3113764,
-                        timestamp: 1675429049,
-                        operations_hash: "LLoZzirJsJexRFU6yznwPxSfETprh8Yd5scW1DXfFAwoGmcvQJteE"
-                            .try_into()
-                            .unwrap(),
-                        payload_hash: "vh2tsz2UVT8kVJzgye4MpngkRvJJLgnNhZjUgn9oURpB1PYpyrFK"
-                            .try_into()
-                            .unwrap(),
-                        context: "CoVnr5Sy57UkHt1Aqmw62KyLUYxVmKCyp45HY7MXW8sFemT3Uf6i"
-                            .try_into()
-                            .unwrap(),
-                    },
-                })
-                .unwrap();
+            context.set_batch_receipt(get_test_batch_receipt()).unwrap();
             Ok(())
         })?;
 
@@ -146,6 +176,34 @@ mod test {
             res.predecessor.value()
         );
         assert_eq!("NetXdQprcVkpaWU", res.chain_id.value());
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn test_bootstrap_info() -> Result<()> {
+        let client = RollupMockClient::default();
+        client.patch(|context| {
+            context.set_head(Head::default()).unwrap();
+            context.set_batch_receipt(get_test_batch_receipt()).unwrap();
+            Ok(())
+        })?;
+
+        let app = test::init_service(
+            App::new()
+                .configure(config::<RollupMockClient>)
+                .app_data(Data::new(client)),
+        )
+        .await;
+
+        let req = test::TestRequest::get()
+            .uri("/monitor/bootstrapped")
+            .to_request();
+
+        let res: BootstrapInfo = test::call_and_read_body_json(&app, req).await;
+        assert_eq!(
+            "BKiHLREqU3JkXfzEDYAkmmfX48gBDtYhMrpA98s7Aq4SzbUAB6M",
+            res.hash.value()
+        );
         Ok(())
     }
 }

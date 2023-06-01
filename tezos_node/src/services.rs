@@ -22,6 +22,8 @@ use crate::services::{
 };
 use actix_web::web::{get, post, ServiceConfig};
 
+use self::blocks::bootstrap_info;
+
 #[macro_export]
 macro_rules! json_response {
     ($value: expr) => {
@@ -74,6 +76,7 @@ pub fn config<T: RollupClient + TezosFacade + TezosHelpers + 'static>(cfg: &mut 
             get().to(live_blocks::<T>),
         )
         .route("/chains/main/blocks/{block_id}", get().to(block::<T>))
+        .route("/monitor/bootstrapped", get().to(bootstrap_info::<T>))
         .route(
             "/chains/main/blocks/{block_id}/context/delegates",
             get().to(delegates),
