@@ -22,7 +22,7 @@ use crate::services::{
 };
 use actix_web::web::{get, post, ServiceConfig};
 
-use self::blocks::bootstrap_info;
+use self::blocks::{block_header_shell, bootstrap_info};
 
 #[macro_export]
 macro_rules! json_response {
@@ -62,6 +62,10 @@ pub fn config<T: RollupClient + TezosFacade + TezosHelpers + 'static>(cfg: &mut 
         .route(
             "/chains/main/blocks/{block_id}/header",
             get().to(block_header::<T>),
+        )
+        .route(
+            "/chains/main/blocks/{block_id}/header/shell",
+            get().to(block_header_shell::<T>),
         )
         .route(
             "/chains/main/blocks/{block_id}/metadata",

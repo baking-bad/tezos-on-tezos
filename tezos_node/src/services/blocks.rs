@@ -4,12 +4,14 @@ use actix_web::{
 };
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use tezos_core::types::encoded::BlockHash;
+use tezos_core::types::encoded::{BlockHash, ContextHash, OperationListListHash};
 
 use crate::{
     json_response,
     rollup::{BlockId, TezosFacade},
 };
+
+pub mod rfc3339_timestamp;
 
 #[derive(Serialize, Deserialize)]
 pub struct BootstrapInfo {
@@ -18,7 +20,18 @@ pub struct BootstrapInfo {
     pub timestamp: NaiveDateTime,
 }
 
-pub mod rfc3339_timestamp;
+#[derive(Serialize, Deserialize)]
+pub struct HeaderShell {
+    pub level: i32,
+    pub proto: u8,
+    pub predecessor: BlockHash,
+    #[serde(with = "rfc3339_timestamp")]
+    pub timestamp: NaiveDateTime,
+    pub validation_pass: u8,
+    pub operations_hash: OperationListListHash,
+    pub fitness: Vec<String>,
+    pub context: ContextHash,
+}
 
 pub async fn block_hash<T: TezosFacade>(
     client: Data<T>,
@@ -35,6 +48,26 @@ pub async fn block_header<T: TezosFacade>(
     let value = client
         .get_block_header(&path.0.as_str().try_into()?)
         .await?;
+    Ok(json_response!(value))
+}
+
+pub async fn block_header_shell<T: TezosFacade>(
+    client: Data<T>,
+    path: Path<(String,)>,
+) -> Result<impl Responder> {
+    let full_header = client
+        .get_block_header(&path.0.as_str().try_into()?)
+        .await?;
+    let value = HeaderShell {
+        level: full_header.level,
+        proto: full_header.proto,
+        predecessor: full_header.predecessor,
+        timestamp: full_header.timestamp,
+        validation_pass: full_header.validation_pass,
+        operations_hash: full_header.operations_hash,
+        fitness: full_header.fitness,
+        context: full_header.context,
+    };
     Ok(json_response!(value))
 }
 
@@ -92,7 +125,10 @@ mod test {
 
     use crate::{
         rollup::mock_client::RollupMockClient,
-        services::{blocks::BootstrapInfo, config},
+        services::{
+            blocks::{BootstrapInfo, HeaderShell},
+            config,
+        },
         Result,
     };
 
@@ -176,6 +212,45 @@ mod test {
             res.predecessor.value()
         );
         assert_eq!("NetXdQprcVkpaWU", res.chain_id.value());
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn test_block_header_shell() -> Result<()> {
+        let client = RollupMockClient::default();
+        client.patch(|context| {
+            context.set_head(Head::default()).unwrap();
+            context.set_batch_receipt(get_test_batch_receipt()).unwrap();
+            Ok(())
+        })?;
+
+        let app = test::init_service(
+            App::new()
+                .configure(config::<RollupMockClient>)
+                .app_data(Data::new(client)),
+        )
+        .await;
+
+        let req = test::TestRequest::get()
+            .uri("/chains/main/blocks/head/header/shell")
+            .to_request();
+        let res: HeaderShell = test::call_and_read_body_json(&app, req).await;
+
+        assert_eq!(3113764, res.level);
+        assert_eq!(0, res.proto);
+        assert_eq!(
+            "BM4iF1PGVN74h1kvqUtY26boVKpZuJFvpQRN34JLYSkQ9G3jBnn",
+            res.predecessor.value()
+        );
+        assert_eq!(4, res.validation_pass);
+        assert_eq!(
+            "LLoZzirJsJexRFU6yznwPxSfETprh8Yd5scW1DXfFAwoGmcvQJteE",
+            res.operations_hash.value()
+        );
+        assert_eq!(
+            "CoVnr5Sy57UkHt1Aqmw62KyLUYxVmKCyp45HY7MXW8sFemT3Uf6i",
+            res.context.value()
+        );
         Ok(())
     }
 
