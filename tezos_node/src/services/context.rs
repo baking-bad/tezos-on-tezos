@@ -9,7 +9,7 @@ use tezos_ctx::Config;
 use crate::{json_response, rollup::TezosFacade, Error};
 
 pub async fn constants() -> Result<impl Responder> {
-    Ok(json_response!(Config::default()))
+    Ok(json_response!(Config::default().tezos))
 }
 
 pub async fn delegates() -> Result<impl Responder> {

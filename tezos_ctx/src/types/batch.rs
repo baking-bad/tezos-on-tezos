@@ -108,13 +108,13 @@ impl From<BatchReceipt> for Metadata {
             level_info: Some(LevelInfo {
                 level: receipt.header.level,
                 level_position: receipt.header.level - 1,
-                cycle: receipt.header.level / config.blocks_per_cycle,
-                cycle_position: receipt.header.level % config.blocks_per_cycle,
+                cycle: receipt.header.level / config.tezos.blocks_per_cycle,
+                cycle_position: receipt.header.level % config.tezos.blocks_per_cycle,
                 expected_commitment: false,
             }),
             // default
-            max_operations_ttl: config.max_operations_time_to_live,
-            max_operation_data_length: config.max_operation_data_length,
+            max_operations_ttl: config.tezos.max_operations_time_to_live,
+            max_operation_data_length: config.tezos.max_operation_data_length,
             max_operation_list_length: vec![
                 OperationListLength {
                     max_size: 0,
@@ -131,7 +131,7 @@ impl From<BatchReceipt> for Metadata {
                 OperationListLength {
                     max_size: config.max_operations_list_length,
                     max_op: Some(
-                        config.max_operations_list_length * config.max_operation_data_length,
+                        config.max_operations_list_length * config.tezos.max_operation_data_length,
                     ),
                 },
             ],

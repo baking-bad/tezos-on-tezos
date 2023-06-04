@@ -1,6 +1,6 @@
 use actix_web::{
     error::ErrorInternalServerError,
-    web::{Data, Json, Path},
+    web::{Data, Json, Path, Query},
     Responder, Result,
 };
 use serde::{Deserialize, Deserializer};
@@ -107,6 +107,21 @@ pub struct OperationRequest {
 #[derive(Deserialize, Debug, Clone)]
 pub struct RunOperationRequest {
     operation: OperationRequest,
+    //chain_id
+}
+
+#[derive(Deserialize)]
+pub struct SimulateOperationRequest {
+    operation: OperationRequest,
+    //blocks_before_activation: i32,
+    //latency: i16,
+    //chain_id
+}
+
+#[allow(dead_code)]
+#[derive(Deserialize)]
+pub struct SimulateOperationQueryParams {
+    successor_level: Option<bool>,
 }
 
 impl TryInto<OperationContent> for RequestContent {
@@ -142,6 +157,21 @@ pub async fn run_operation<T: TezosHelpers>(
     client: Data<T>,
     path: Path<(String,)>,
     request: Json<RunOperationRequest>,
+) -> Result<impl Responder> {
+    let value = client
+        .simulate_operation(
+            &path.0.as_str().try_into()?,
+            request.0.operation.try_into()?,
+        )
+        .await?;
+    Ok(json_response!(value))
+}
+
+pub async fn simulate_operation<T: TezosHelpers>(
+    client: Data<T>,
+    path: Path<(String,)>,
+    _query: Query<SimulateOperationQueryParams>,
+    request: Json<SimulateOperationRequest>,
 ) -> Result<impl Responder> {
     let value = client
         .simulate_operation(
