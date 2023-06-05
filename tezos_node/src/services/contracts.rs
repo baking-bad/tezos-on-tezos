@@ -99,6 +99,14 @@ pub async fn contract<T: TezosFacade>(
     Ok(json_response!(value))
 }
 
+pub async fn contract_raw_json_bytes_stub<T: TezosFacade>(
+    _client: Data<T>,
+    _path: Path<(String,)>,
+) -> Result<impl Responder> {
+    // temporary stub
+    Ok(json_response!("0"))
+}
+
 #[cfg(test)]
 mod test {
     use actix_web::{test, web::Data, App};
@@ -152,6 +160,35 @@ mod test {
             .to_request();
         let res: Option<PublicKey> = test::call_and_read_body_json(&app, req).await;
         assert!(res.is_none());
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn test_context_raw_json_stubs() -> Result<()> {
+        let client = RollupMockClient::default();
+        client.patch(|context| {
+            context.set_head(Head::default()).unwrap();
+            Ok(())
+        })?;
+
+        let app = test::init_service(
+            App::new()
+                .configure(config::<RollupMockClient>)
+                .app_data(Data::new(client)),
+        )
+        .await;
+
+        let endpoints = [
+            "/chains/main/blocks/head/context/raw/json/contracts/index/KT1GszRPFC31pjKXuRfTU53BfFhx3vwqK3bZ/used_bytes",
+            "/chains/main/blocks/head/context/raw/json/contracts/index/KT1GszRPFC31pjKXuRfTU53BfFhx3vwqK3bZ/paid_bytes",
+            "/chains/main/blocks/head/context/raw/json/big_maps/index/0/total_bytes",
+        ];
+
+        for endpoint in endpoints {
+            let req = test::TestRequest::get().uri(endpoint).to_request();
+            let res: String = test::call_and_read_body_json(&app, req).await;
+            assert_eq!("0", res);
+        }
         Ok(())
     }
 }

@@ -11,7 +11,8 @@ use crate::services::{
     context::{big_map_value, big_map_value_normalized, constants, delegate, delegates},
     contracts::{
         contract, contract_balance, contract_counter, contract_delegate, contract_entrypoints,
-        contract_public_key, contract_script, contract_script_normalized, contract_storage,
+        contract_public_key, contract_raw_json_bytes_stub, contract_script,
+        contract_script_normalized, contract_storage,
     },
     helpers::{forge_operation, preapply_operations, run_operation, simulate_operation},
     operations::{
@@ -140,6 +141,18 @@ pub fn config<T: RollupClient + TezosFacade + TezosHelpers + 'static>(cfg: &mut 
         .route(
             "/chains/main/blocks/{block_id}/context/contracts/{contract_id}",
             get().to(contract::<T>),
+        )
+        .route(
+            "/chains/main/blocks/{block_id}/context/raw/json/contracts/index/{contract_id}/used_bytes",
+            get().to(contract_raw_json_bytes_stub::<T>),
+        )
+        .route(
+            "/chains/main/blocks/{block_id}/context/raw/json/contracts/index/{contract_id}/paid_bytes",
+            get().to(contract_raw_json_bytes_stub::<T>),
+        )
+        .route(
+            "/chains/main/blocks/{block_id}/context/raw/json/big_maps/index/0/total_bytes",
+            get().to(contract_raw_json_bytes_stub::<T>),
         )
         .route(
             "/chains/main/blocks/{block_id}/operations/{pass}/{index}",
