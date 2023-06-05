@@ -357,4 +357,63 @@ mod test {
         );
         Ok(())
     }
+
+    #[actix_web::test]
+    async fn test_simulate_operation() -> Result<()> {
+        let client = RollupMockClient::default();
+        client.patch(|context| {
+            context.set_head(Head::default()).unwrap();
+            context
+                .set_public_key(
+                    "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx",
+                    PublicKey::new(String::from(
+                        "edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav",
+                    ))
+                    .unwrap(),
+                )
+                .unwrap();
+            context
+                .set_balance(
+                    "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx",
+                    Mutez::from(100000u32),
+                )
+                .unwrap();
+            context.commit().unwrap();
+            Ok(())
+        })?;
+
+        let app = test::init_service(
+            App::new()
+                .configure(config::<RollupMockClient>)
+                .app_data(Data::new(client)),
+        )
+        .await;
+
+        let req = test::TestRequest::post()
+            .uri("/chains/main/blocks/head/helpers/scripts/simulate_operation?successor_level=true")
+            .set_json(json!({
+                "operation": {
+                    "branch": "BMGK5hqUdRZ6PMNtHmiB4KLt8Sy9q1GNZZbGXoGaeTTwAUqhUwU",
+                    "contents": [{
+                        "kind": "transaction",
+                        "source": "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx",
+                        "fee": "471",
+                        "counter": "80342938",
+                        "gas_limit": "1546",
+                        "storage_limit": "0",
+                        "amount": "0",
+                        "destination": "tz1dShXbbgJ4i1L6KMWAuuNdBPk5xCM1NRrU",
+                    }]
+                },
+                "chain_id": "NetXRc5LThNqBfZ"
+            }))
+            .to_request();
+
+        let res: Operation = test::call_and_read_body_json(&app, req).await;
+        assert_eq!(
+            res.hash.unwrap().into_string(),
+            "opU1Dyi8Y3RsKo5GWJbtL1y2aM5m5CpftgqUeZXcZTt8LLNtJc9"
+        );
+        Ok(())
+    }
 }
