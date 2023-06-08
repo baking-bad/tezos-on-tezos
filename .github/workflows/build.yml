@@ -45,10 +45,10 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: build/operator/Dockerfile.debug
+          file: build/operator/Dockerfile
           build-args: |
             NETWORK=mumbainet
-            TEZOS_BRANCH=ole@wasmer-instance-leak
+#            TEZOS_BRANCH=ole@wasmer-instance-leak
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
