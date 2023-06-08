@@ -116,7 +116,7 @@ make build-operator
 
 Then you can create a local docker image, depending on target network:
 - `make image-operator-monday`
-- `make image-operator-ghost`
+- `make image-operator-mumbai`
 
 Other options are not in the Makefile, but you can add them yourself, the difference is mainly in Octez binaries shipped together with the kernel.
 
@@ -134,12 +134,28 @@ Run `make generate-keypair` to initialize a Tezos L1 account, and top it up usin
 
 Build kernel and its installer, then originate a new rollup, and run a rollup node.  
 Depending on the target L1 network run one of:
-- `make monday`
-- `make ghost`
+- `make operator-monday`
+- `make operator-mumbai`
 
 Other options are not in the Makefile, but you can add them yourself based on the existing ones.
 
-### Operator + Facade
+Note that every time you run this target a new rollup will be deployed, so make sure you have enough funds for a 10k bond. Use [faucet](https://teztnets.xyz/) to top up your account.
+
+In order to just run operator with an existing rollup:
+
+```
+make rollup-node TAG=monday
+```
+
+### Facade
+
+The following target will build the facade node and run it with default arguments:
+
+```
+make facade
+```
+
+### Docker compose
 
 Once you have both operator and facade images built, you can run them together with compose.
 
@@ -149,7 +165,7 @@ ROLLUP_ADDRESS=<sr rollup address from node logs>
 OPERATOR_KEY=unencrypted:<edsk private key from .tezos-client folder>
 ```
 
-Then run docker-compose specifying the image tag:
+Then run docker-compose specifying the image tag, e.g.:
 
 ```
 TAG=monday docker-compose up -d
