@@ -5,15 +5,15 @@ OCTEZ_TAG:=
 OCTEZ_PROTO:=
 NETWORK:=
 
-env-ghostnet:
-ifeq ($(NETWORK), ghostnet)
-	@echo "NETWORK is already set to 'ghostnet'"
+env-mumbainet:
+ifeq ($(NETWORK), mumbainet)
+	@echo "NETWORK is already set to 'mumbainet'"
 else
-#	$(eval OCTEZ_TAG := $(shell curl -s https://teztnets.xyz/teztnets.json | jq -r ".ghostnet.git_ref"))
-	$(eval OCTEZ_TAG := v17.0-rc1)
-	$(eval OCTEZ_PROTO := $(shell curl -s https://teztnets.xyz/teztnets.json | jq -r ".ghostnet.last_baking_daemon"))
-	$(eval NETWORK := ghostnet)
-	$(eval TAG := ghost)
+#	$(eval OCTEZ_TAG := $(shell curl -s https://teztnets.xyz/teztnets.json | jq -r ".mumbainet.git_ref"))
+	$(eval OCTEZ_TAG := v17.0)
+	$(eval OCTEZ_PROTO := $(shell curl -s https://teztnets.xyz/teztnets.json | jq -r ".mumbainet.last_baking_daemon"))
+	$(eval NETWORK := mumbainet)
+	$(eval TAG := mumbai)
 	@echo "OCTEZ_TAG is now set to: $(OCTEZ_TAG)"
 	@echo "OCTEZ_PROTO is now set to: $(OCTEZ_PROTO)"
 	@echo "NETWORK is now set to: $(NETWORK)"
@@ -119,22 +119,22 @@ debug: env-mondaynet
 shell-monday: env-mondaynet
 	$(MAKE) operator-shell TAG=$(TAG)
 
-shell-ghost: env-ghostnet
+shell-mumbai: env-mumbainet
 	$(MAKE) operator-shell TAG=$(TAG)
 
 image-operator-monday: env-mondaynet
 	$(MAKE) image-operator TAG=$(TAG) OCTEZ_TAG=$(OCTEZ_TAG) OCTEZ_PROTO=$(OCTEZ_PROTO) NETWORK=$(NETWORK)
 
-image-operator-ghost: env-ghostnet
+image-operator-mumbai: env-mumbainet
 	$(MAKE) image-operator TAG=$(TAG) OCTEZ_TAG=$(OCTEZ_TAG) OCTEZ_PROTO=$(OCTEZ_PROTO) NETWORK=$(NETWORK)
 
-monday: env-mondaynet
+operator-monday: env-mondaynet
 	$(MAKE) build-operator
 	$(MAKE) image-operator TAG=$(TAG) OCTEZ_TAG=$(OCTEZ_TAG) OCTEZ_PROTO=$(OCTEZ_PROTO) NETWORK=$(NETWORK)
 	$(MAKE) originate-rollup TAG=$(TAG)
 	$(MAKE) rollup-node TAG=$(TAG)
 
-ghost: env-ghostnet
+operator-mumbai: env-mumbainet
 	$(MAKE) build-operator
 	$(MAKE) image-operator TAG=$(TAG) OCTEZ_TAG=$(OCTEZ_TAG) OCTEZ_PROTO=$(OCTEZ_PROTO) NETWORK=$(NETWORK)
 	$(MAKE) originate-rollup TAG=$(TAG)
@@ -142,4 +142,4 @@ ghost: env-ghostnet
 
 facade:
 	$(MAKE) build-facade
-	docker run --rm -v $$PWD/.tezos-client:/root/.tezos-client/ -e ROLLUP_ADDRESS=$(ROLLUP_ADDRESS) ghcr.io/baking-bad/tz-rollup-facade:latest
+	RUST_BACKTRACE=1 RUST_LOG=debug ./.bin/tezos-node
