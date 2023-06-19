@@ -1,9 +1,9 @@
 [workspace]
 members = [
-  "kernel",
   "installer",
   "dac_codec",
   "tezos_proto",
+  "tezos_kernel",
   "michelson_vm",
   "tezos_node",
   "tezos_ctx",

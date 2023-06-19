@@ -4,6 +4,6 @@
 .python-version
 .logs
 target
-tez_kernel/target
+tezos_kernel/target
 boot_kernel/target
 *.env

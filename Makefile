@@ -40,9 +40,9 @@ install:
 		&& wget -c https://github.com/WebAssembly/wabt/releases/download/1.0.31/wabt-1.0.31-ubuntu.tar.gz -O - | tar -xzv wabt-1.0.31/bin/wasm-strip wabt-1.0.31/bin/wasm2wat --strip-components 2
 
 build-kernel:
-	RUSTC_BOOTSTRAP=1 cargo build --package tez_kernel --target wasm32-unknown-unknown --release -Z sparse-registry
-	wasm-strip -o ./.bin/tez_kernel.wasm ./target/wasm32-unknown-unknown/release/tez_kernel.wasm
-	# wasm-opt -Oz -o ./.bin/tez_kernel.wasm ./target/wasm32-unknown-unknown/release/tez_kernel.wasm
+	RUSTC_BOOTSTRAP=1 cargo build --package tezos_kernel --target wasm32-unknown-unknown --release -Z sparse-registry
+	wasm-strip -o ./.bin/tezos_kernel.wasm ./target/wasm32-unknown-unknown/release/tezos_kernel.wasm
+	# wasm-opt -Oz -o ./.bin/tezos_kernel.wasm ./target/wasm32-unknown-unknown/release/tezos_kernel.wasm
 
 build-installer:
 	RUSTC_BOOTSTRAP=1 cargo build --package installer --target wasm32-unknown-unknown --release -Z sparse-registry
@@ -60,7 +60,7 @@ build-facade:
 
 pages:
 	rm -rf ./.bin/wasm_2_0_0
-	./.bin/dac-codec -o ./.bin/wasm_2_0_0 ./.bin/tez_kernel.wasm
+	./.bin/dac-codec -o ./.bin/wasm_2_0_0 ./.bin/tezos_kernel.wasm
 
 build-operator:
 	mkdir .bin || true
@@ -106,14 +106,14 @@ operator-shell:
 	docker run --rm -it --entrypoint=/bin/sh -v $$PWD/.tezos-client:/root/.tezos-client/ -v rollup-node-$(TAG):/root/.tezos-smart-rollup-node ghcr.io/baking-bad/tz-rollup-operator:$(TAG)
 
 wat:
-	cargo build --package tez_kernel --target wasm32-unknown-unknown
-	wasm2wat -o ./.bin/kernel.wat ./target/wasm32-unknown-unknown/debug/tez_kernel.wasm
+	cargo build --package tezos_kernel --target wasm32-unknown-unknown
+	wasm2wat -o ./.bin/kernel.wat ./target/wasm32-unknown-unknown/debug/tezos_kernel.wasm
 	# check if there's no floating point calc
 	grep -nE 'f(32|64)\.' ./.bin/kernel.wat || true
 
 debug: env-mondaynet
-	cargo build --package tez_kernel --target wasm32-unknown-unknown --profile release --target-dir ./target/repl
-	wasm-strip -o ./.bin/debug_kernel.wasm ./target/repl/wasm32-unknown-unknown/release/tez_kernel.wasm
+	cargo build --package tezos_kernel --target wasm32-unknown-unknown --profile release --target-dir ./target/repl
+	wasm-strip -o ./.bin/debug_kernel.wasm ./target/repl/wasm32-unknown-unknown/release/tezos_kernel.wasm
 	docker run --rm -it --entrypoint=/usr/local/bin/octez-smart-rollup-wasm-debugger --name wasm-repl -v $$PWD/.bin:/home/.bin tezos/tezos:$(TAG) /home/.bin/debug_kernel.wasm --inputs /home/.bin/inputs.json
 
 shell-monday: env-mondaynet
