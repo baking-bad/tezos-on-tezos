@@ -1,0 +1,87 @@
+[
+  {
+    "args": [
+      [
+        {
+          "args": [
+            [
+              {
+                "prim": "UNIT"
+              },
+              {
+                "prim": "FAILWITH"
+              }
+            ],
+            [
+              {
+                "args": [
+                  {
+                    "prim": "int"
+                  },
+                  {
+                    "int": "1"
+                  }
+                ],
+                "prim": "PUSH"
+              },
+              {
+                "prim": "ADD"
+              }
+            ]
+          ],
+          "prim": "IF_LEFT"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "string"
+                },
+                {
+                  "prim": "int"
+                }
+              ],
+              "prim": "or"
+            },
+            {
+              "args": [
+                {
+                  "int": "2"
+                }
+              ],
+              "prim": "Right"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "int"
+            },
+            {
+              "int": "3"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

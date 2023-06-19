@@ -1,0 +1,75 @@
+[
+  {
+    "args": [
+      {
+        "prim": "address"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "unit"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "CAR"
+        },
+        {
+          "args": [
+            {
+              "prim": "unit"
+            }
+          ],
+          "prim": "CONTRACT"
+        },
+        [
+          {
+            "args": [
+              [
+                [
+                  {
+                    "prim": "UNIT"
+                  },
+                  {
+                    "prim": "FAILWITH"
+                  }
+                ]
+              ],
+              [
+                {
+                  "prim": "RENAME"
+                }
+              ]
+            ],
+            "prim": "IF_NONE"
+          }
+        ],
+        {
+          "prim": "DROP"
+        },
+        {
+          "prim": "UNIT"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

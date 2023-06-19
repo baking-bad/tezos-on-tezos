@@ -1,0 +1,32 @@
+[
+  {
+    "args": [
+      {
+        "string": "loop_left.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      [
+        {
+          "string": ""
+        }
+      ]
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "result"
+  }
+]

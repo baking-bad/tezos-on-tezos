@@ -862,18 +862,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dac_codec"
-version = "0.1.0"
-dependencies = [
- "clap",
- "hex",
- "once_cell",
- "tezos-core",
- "tezos_encoding",
- "tezos_rollup_encoding",
-]
-
-[[package]]
 name = "der"
 version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1544,19 +1532,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a0c10553d664a4d0bcff9f4215d0aac67a639cc68ef660840afe309b807bc9f5"
 dependencies = [
  "generic-array",
-]
-
-[[package]]
-name = "installer"
-version = "0.1.0"
-dependencies = [
- "hex",
- "host",
- "mock_runtime",
- "once_cell",
- "tezos-core",
- "tezos_encoding",
- "tezos_rollup_encoding",
 ]
 
 [[package]]

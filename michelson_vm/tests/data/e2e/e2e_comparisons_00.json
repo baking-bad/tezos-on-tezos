@@ -1,0 +1,147 @@
+[
+  {
+    "args": [
+      {
+        "string": "comparisons.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      [
+        {
+          "int": "-9999999"
+        },
+        {
+          "int": "-1"
+        },
+        {
+          "int": "0"
+        },
+        {
+          "int": "1"
+        },
+        {
+          "int": "9999999"
+        }
+      ]
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        [
+          {
+            "prim": "False"
+          },
+          {
+            "prim": "False"
+          },
+          {
+            "prim": "False"
+          },
+          {
+            "prim": "True"
+          },
+          {
+            "prim": "True"
+          }
+        ],
+        [
+          {
+            "prim": "False"
+          },
+          {
+            "prim": "False"
+          },
+          {
+            "prim": "True"
+          },
+          {
+            "prim": "True"
+          },
+          {
+            "prim": "True"
+          }
+        ],
+        [
+          {
+            "prim": "True"
+          },
+          {
+            "prim": "True"
+          },
+          {
+            "prim": "False"
+          },
+          {
+            "prim": "False"
+          },
+          {
+            "prim": "False"
+          }
+        ],
+        [
+          {
+            "prim": "True"
+          },
+          {
+            "prim": "True"
+          },
+          {
+            "prim": "True"
+          },
+          {
+            "prim": "False"
+          },
+          {
+            "prim": "False"
+          }
+        ],
+        [
+          {
+            "prim": "True"
+          },
+          {
+            "prim": "True"
+          },
+          {
+            "prim": "False"
+          },
+          {
+            "prim": "True"
+          },
+          {
+            "prim": "True"
+          }
+        ],
+        [
+          {
+            "prim": "False"
+          },
+          {
+            "prim": "False"
+          },
+          {
+            "prim": "True"
+          },
+          {
+            "prim": "False"
+          },
+          {
+            "prim": "False"
+          }
+        ]
+      ]
+    ],
+    "prim": "result"
+  }
+]

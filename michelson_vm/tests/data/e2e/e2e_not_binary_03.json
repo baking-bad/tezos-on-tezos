@@ -1,0 +1,44 @@
+[
+  {
+    "args": [
+      {
+        "string": "not_binary.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "int": "-9"
+          }
+        ],
+        "prim": "Left"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "None"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "int": "8"
+          }
+        ],
+        "prim": "Some"
+      }
+    ],
+    "prim": "result"
+  }
+]

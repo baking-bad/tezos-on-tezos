@@ -1,0 +1,52 @@
+[
+  {
+    "args": [
+      {
+        "string": "list_id.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      [
+        {
+          "string": "a"
+        },
+        {
+          "string": "b"
+        },
+        {
+          "string": "c"
+        }
+      ]
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      [
+        {
+          "string": ""
+        }
+      ]
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "string": "a"
+        },
+        {
+          "string": "b"
+        },
+        {
+          "string": "c"
+        }
+      ]
+    ],
+    "prim": "result"
+  }
+]

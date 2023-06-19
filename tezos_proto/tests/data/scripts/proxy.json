@@ -1,0 +1,63 @@
+[
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "unit"
+          }
+        ],
+        "prim": "contract"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "unit"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "UNPAIR"
+        },
+        {
+          "prim": "AMOUNT"
+        },
+        {
+          "prim": "UNIT"
+        },
+        {
+          "prim": "TRANSFER_TOKENS"
+        },
+        {
+          "args": [
+            [
+              {
+                "args": [
+                  {
+                    "prim": "operation"
+                  }
+                ],
+                "prim": "NIL"
+              }
+            ]
+          ],
+          "prim": "DIP"
+        },
+        {
+          "prim": "CONS"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

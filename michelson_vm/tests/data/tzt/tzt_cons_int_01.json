@@ -1,0 +1,69 @@
+[
+  {
+    "args": [
+      [
+        {
+          "prim": "CONS"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "int"
+            },
+            {
+              "int": "1"
+            }
+          ],
+          "prim": "Stack_elt"
+        },
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "int"
+                }
+              ],
+              "prim": "list"
+            },
+            []
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "int"
+                }
+              ],
+              "prim": "list"
+            },
+            [
+              {
+                "int": "1"
+              }
+            ]
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "args": [
+      [
+        {
+          "prim": "SELF"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      []
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      {
+        "prim": "int"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "string": "KT1BEqzn5Wx8uJrZNvuS9DVHmLvG9td3fDLi"
+      }
+    ],
+    "prim": "self"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "int"
+                }
+              ],
+              "prim": "contract"
+            },
+            {
+              "string": "KT1BEqzn5Wx8uJrZNvuS9DVHmLvG9td3fDLi"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

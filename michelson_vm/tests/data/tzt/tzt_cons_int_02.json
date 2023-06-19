@@ -1,0 +1,100 @@
+[
+  {
+    "args": [
+      [
+        {
+          "prim": "CONS"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "int"
+            },
+            {
+              "int": "1"
+            }
+          ],
+          "prim": "Stack_elt"
+        },
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "int"
+                }
+              ],
+              "prim": "list"
+            },
+            [
+              {
+                "int": "1"
+              },
+              {
+                "int": "2"
+              },
+              {
+                "int": "3"
+              },
+              {
+                "int": "4"
+              },
+              {
+                "int": "5"
+              }
+            ]
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "int"
+                }
+              ],
+              "prim": "list"
+            },
+            [
+              {
+                "int": "1"
+              },
+              {
+                "int": "1"
+              },
+              {
+                "int": "2"
+              },
+              {
+                "int": "3"
+              },
+              {
+                "int": "4"
+              },
+              {
+                "int": "5"
+              }
+            ]
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

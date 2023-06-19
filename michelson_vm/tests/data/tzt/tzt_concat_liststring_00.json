@@ -1,0 +1,64 @@
+[
+  {
+    "args": [
+      [
+        {
+          "prim": "CONCAT"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "string"
+                }
+              ],
+              "prim": "list"
+            },
+            [
+              {
+                "string": "he"
+              },
+              {
+                "string": "llo"
+              },
+              {
+                "string": " "
+              },
+              {
+                "string": "world"
+              }
+            ]
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "string"
+            },
+            {
+              "string": "hello world"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

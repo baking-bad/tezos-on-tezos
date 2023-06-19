@@ -1,0 +1,75 @@
+[
+  {
+    "args": [
+      [
+        {
+          "prim": "MEM"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "int"
+            },
+            {
+              "int": "5"
+            }
+          ],
+          "prim": "Stack_elt"
+        },
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "int"
+                }
+              ],
+              "prim": "set"
+            },
+            [
+              {
+                "int": "1"
+              },
+              {
+                "int": "3"
+              },
+              {
+                "int": "5"
+              },
+              {
+                "int": "7"
+              }
+            ]
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "bool"
+            },
+            {
+              "prim": "True"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

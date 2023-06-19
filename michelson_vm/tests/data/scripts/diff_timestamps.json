@@ -1,0 +1,66 @@
+[
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "timestamp"
+          },
+          {
+            "prim": "timestamp"
+          }
+        ],
+        "prim": "pair"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "int"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "CAR"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "prim": "CAR"
+        },
+        {
+          "args": [
+            [
+              {
+                "prim": "CDR"
+              }
+            ]
+          ],
+          "prim": "DIP"
+        },
+        {
+          "prim": "SUB"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

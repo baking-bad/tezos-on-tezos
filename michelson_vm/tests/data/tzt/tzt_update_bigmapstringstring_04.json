@@ -1,0 +1,157 @@
+[
+  {
+    "args": [
+      [
+        {
+          "prim": "UPDATE"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "string"
+            },
+            {
+              "string": "3"
+            }
+          ],
+          "prim": "Stack_elt"
+        },
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "string"
+                }
+              ],
+              "prim": "option"
+            },
+            {
+              "prim": "None"
+            }
+          ],
+          "prim": "Stack_elt"
+        },
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "string"
+                },
+                {
+                  "prim": "string"
+                }
+              ],
+              "prim": "big_map"
+            },
+            {
+              "int": "0"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "string"
+                },
+                {
+                  "prim": "string"
+                }
+              ],
+              "prim": "big_map"
+            },
+            [
+              {
+                "args": [
+                  {
+                    "string": "1"
+                  },
+                  {
+                    "string": "one"
+                  }
+                ],
+                "prim": "Elt"
+              },
+              {
+                "args": [
+                  {
+                    "string": "2"
+                  },
+                  {
+                    "string": "two"
+                  }
+                ],
+                "prim": "Elt"
+              }
+            ]
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "int": "0"
+            },
+            {
+              "prim": "string"
+            },
+            {
+              "prim": "string"
+            },
+            [
+              {
+                "args": [
+                  {
+                    "string": "1"
+                  },
+                  {
+                    "string": "one"
+                  }
+                ],
+                "prim": "Elt"
+              },
+              {
+                "args": [
+                  {
+                    "string": "2"
+                  },
+                  {
+                    "string": "two"
+                  }
+                ],
+                "prim": "Elt"
+              }
+            ]
+          ],
+          "prim": "Big_map"
+        }
+      ]
+    ],
+    "prim": "big_maps"
+  }
+]

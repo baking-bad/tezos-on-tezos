@@ -1,0 +1,112 @@
+[
+  {
+    "args": [
+      [
+        {
+          "prim": "MEM"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "1"
+            }
+          ],
+          "prim": "Stack_elt"
+        },
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "nat"
+                },
+                {
+                  "prim": "nat"
+                }
+              ],
+              "prim": "big_map"
+            },
+            {
+              "int": "0"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "bool"
+            },
+            {
+              "prim": "True"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "int": "0"
+            },
+            {
+              "prim": "nat"
+            },
+            {
+              "prim": "nat"
+            },
+            [
+              {
+                "args": [
+                  {
+                    "int": "1"
+                  },
+                  {
+                    "int": "4"
+                  }
+                ],
+                "prim": "Elt"
+              },
+              {
+                "args": [
+                  {
+                    "int": "2"
+                  },
+                  {
+                    "int": "11"
+                  }
+                ],
+                "prim": "Elt"
+              }
+            ]
+          ],
+          "prim": "Big_map"
+        }
+      ]
+    ],
+    "prim": "big_maps"
+  }
+]

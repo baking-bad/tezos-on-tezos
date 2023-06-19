@@ -1,0 +1,57 @@
+[
+  {
+    "args": [
+      [
+        {
+          "prim": "LSR"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "32"
+            }
+          ],
+          "prim": "Stack_elt"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "300"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "int": "32"
+          },
+          {
+            "int": "300"
+          }
+        ],
+        "prim": "GeneralOverflow"
+      }
+    ],
+    "prim": "output"
+  }
+]

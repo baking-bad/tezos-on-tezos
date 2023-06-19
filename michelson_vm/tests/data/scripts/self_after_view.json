@@ -1,0 +1,167 @@
+[
+  {
+    "args": [
+      {
+        "prim": "address"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "address"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "CAR"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "0"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "args": [
+            {
+              "string": "id"
+            },
+            {
+              "args": [
+                {
+                  "prim": "nat"
+                },
+                {
+                  "prim": "nat"
+                }
+              ],
+              "prim": "pair"
+            }
+          ],
+          "prim": "VIEW"
+        },
+        [
+          {
+            "args": [
+              [
+                [
+                  {
+                    "prim": "UNIT"
+                  },
+                  {
+                    "prim": "FAILWITH"
+                  }
+                ]
+              ],
+              [
+                {
+                  "prim": "RENAME"
+                }
+              ]
+            ],
+            "prim": "IF_NONE"
+          }
+        ],
+        {
+          "prim": "DROP"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            }
+          ],
+          "prim": "CONTRACT"
+        },
+        [
+          {
+            "args": [
+              [
+                [
+                  {
+                    "prim": "UNIT"
+                  },
+                  {
+                    "prim": "FAILWITH"
+                  }
+                ]
+              ],
+              [
+                {
+                  "prim": "RENAME"
+                }
+              ]
+            ],
+            "prim": "IF_NONE"
+          }
+        ],
+        {
+          "args": [
+            {
+              "prim": "mutez"
+            },
+            {
+              "int": "1500"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "0"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "TRANSFER_TOKENS"
+        },
+        {
+          "prim": "SELF"
+        },
+        {
+          "prim": "ADDRESS"
+        },
+        {
+          "prim": "SWAP"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "SWAP"
+        },
+        {
+          "prim": "CONS"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

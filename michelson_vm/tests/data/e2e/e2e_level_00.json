@@ -1,0 +1,34 @@
+[
+  {
+    "args": [
+      {
+        "string": "level.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "prim": "Unit"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "int": "111"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "int": "1"
+      }
+    ],
+    "prim": "result"
+  }
+]

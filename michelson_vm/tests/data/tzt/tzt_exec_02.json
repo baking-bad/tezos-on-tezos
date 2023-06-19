@@ -1,0 +1,98 @@
+[
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "string"
+            },
+            {
+              "prim": "string"
+            },
+            [
+              {
+                "args": [
+                  {
+                    "prim": "string"
+                  },
+                  {
+                    "string": "_abc"
+                  }
+                ],
+                "prim": "PUSH"
+              },
+              {
+                "args": [
+                  {
+                    "prim": "string"
+                  }
+                ],
+                "prim": "NIL"
+              },
+              {
+                "prim": "SWAP"
+              },
+              {
+                "prim": "CONS"
+              },
+              {
+                "prim": "SWAP"
+              },
+              {
+                "prim": "CONS"
+              },
+              {
+                "prim": "CONCAT"
+              }
+            ]
+          ],
+          "prim": "LAMBDA"
+        },
+        {
+          "prim": "SWAP"
+        },
+        {
+          "prim": "EXEC"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "string"
+            },
+            {
+              "string": ""
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "string"
+            },
+            {
+              "string": "_abc"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

@@ -1,0 +1,58 @@
+[
+  {
+    "args": [
+      {
+        "string": "dip.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "int": "1"
+          },
+          {
+            "int": "1"
+          }
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "int": "0"
+          },
+          {
+            "int": "0"
+          }
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "int": "1"
+          },
+          {
+            "int": "2"
+          }
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "result"
+  }
+]

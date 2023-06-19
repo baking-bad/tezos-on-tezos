@@ -1,0 +1,39 @@
+[
+  {
+    "args": [
+      {
+        "string": "not.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "prim": "True"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "None"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "False"
+          }
+        ],
+        "prim": "Some"
+      }
+    ],
+    "prim": "result"
+  }
+]

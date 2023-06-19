@@ -1,0 +1,86 @@
+[
+  {
+    "args": [
+      {
+        "string": "get_and_update_map.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "string": "hi"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "args": [
+              {
+                "int": "5"
+              }
+            ],
+            "prim": "Some"
+          },
+          [
+            {
+              "args": [
+                {
+                  "string": "hello"
+                },
+                {
+                  "int": "4"
+                }
+              ],
+              "prim": "Elt"
+            }
+          ]
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "None"
+          },
+          [
+            {
+              "args": [
+                {
+                  "string": "hello"
+                },
+                {
+                  "int": "4"
+                }
+              ],
+              "prim": "Elt"
+            },
+            {
+              "args": [
+                {
+                  "string": "hi"
+                },
+                {
+                  "int": "5"
+                }
+              ],
+              "prim": "Elt"
+            }
+          ]
+        ],
+        "prim": "Pair"
+      }
+    ],
+    "prim": "result"
+  }
+]

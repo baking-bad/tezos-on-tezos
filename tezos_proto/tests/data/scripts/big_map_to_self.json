@@ -1,0 +1,174 @@
+[
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "annots": [
+              "%have_fun"
+            ],
+            "args": [
+              {
+                "args": [
+                  {
+                    "prim": "string"
+                  },
+                  {
+                    "prim": "nat"
+                  }
+                ],
+                "prim": "big_map"
+              },
+              {
+                "prim": "unit"
+              }
+            ],
+            "prim": "pair"
+          },
+          {
+            "annots": [
+              "%default"
+            ],
+            "prim": "unit"
+          }
+        ],
+        "prim": "or"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "string"
+          },
+          {
+            "prim": "nat"
+          }
+        ],
+        "prim": "big_map"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            [
+              {
+                "args": [
+                  {
+                    "prim": "operation"
+                  }
+                ],
+                "prim": "NIL"
+              }
+            ]
+          ],
+          "prim": "DIP"
+        },
+        {
+          "args": [
+            [
+              {
+                "prim": "DROP"
+              }
+            ],
+            [
+              {
+                "prim": "DROP"
+              },
+              {
+                "annots": [
+                  "%have_fun"
+                ],
+                "prim": "SELF"
+              },
+              {
+                "args": [
+                  {
+                    "prim": "mutez"
+                  },
+                  {
+                    "int": "0"
+                  }
+                ],
+                "prim": "PUSH"
+              },
+              {
+                "args": [
+                  {
+                    "int": "4"
+                  }
+                ],
+                "prim": "DUP"
+              },
+              {
+                "args": [
+                  {
+                    "args": [
+                      {
+                        "prim": "nat"
+                      }
+                    ],
+                    "prim": "option"
+                  },
+                  {
+                    "args": [
+                      {
+                        "int": "8"
+                      }
+                    ],
+                    "prim": "Some"
+                  }
+                ],
+                "prim": "PUSH"
+              },
+              {
+                "args": [
+                  {
+                    "prim": "string"
+                  },
+                  {
+                    "string": "hahaha"
+                  }
+                ],
+                "prim": "PUSH"
+              },
+              {
+                "prim": "UPDATE"
+              },
+              {
+                "prim": "UNIT"
+              },
+              {
+                "prim": "SWAP"
+              },
+              {
+                "prim": "PAIR"
+              },
+              {
+                "prim": "TRANSFER_TOKENS"
+              },
+              {
+                "prim": "CONS"
+              }
+            ]
+          ],
+          "prim": "IF_LEFT"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

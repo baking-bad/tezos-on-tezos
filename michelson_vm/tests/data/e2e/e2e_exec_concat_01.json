@@ -1,0 +1,34 @@
+[
+  {
+    "args": [
+      {
+        "string": "exec_concat.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "string": "test"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "string": "?"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "string": "test_abc"
+      }
+    ],
+    "prim": "result"
+  }
+]

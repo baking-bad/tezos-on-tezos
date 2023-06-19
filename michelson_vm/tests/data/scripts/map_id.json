@@ -1,0 +1,55 @@
+[
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "nat"
+          },
+          {
+            "prim": "nat"
+          }
+        ],
+        "prim": "map"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "nat"
+          },
+          {
+            "prim": "nat"
+          }
+        ],
+        "prim": "map"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "CAR"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

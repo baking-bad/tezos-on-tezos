@@ -1,0 +1,44 @@
+[
+  {
+    "args": [
+      []
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "timestamp"
+            },
+            {
+              "int": "0"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "timestamp"
+            },
+            {
+              "string": "1970-01-01T00:00:00Z"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

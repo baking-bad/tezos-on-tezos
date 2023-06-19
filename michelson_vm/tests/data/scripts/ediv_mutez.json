@@ -1,0 +1,158 @@
+[
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "mutez"
+          },
+          {
+            "args": [
+              {
+                "prim": "mutez"
+              },
+              {
+                "prim": "nat"
+              }
+            ],
+            "prim": "or"
+          }
+        ],
+        "prim": "pair"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "args": [
+              {
+                "args": [
+                  {
+                    "prim": "nat"
+                  },
+                  {
+                    "prim": "mutez"
+                  }
+                ],
+                "prim": "pair"
+              }
+            ],
+            "prim": "option"
+          },
+          {
+            "args": [
+              {
+                "args": [
+                  {
+                    "prim": "mutez"
+                  },
+                  {
+                    "prim": "mutez"
+                  }
+                ],
+                "prim": "pair"
+              }
+            ],
+            "prim": "option"
+          }
+        ],
+        "prim": "or"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "CAR"
+        },
+        {
+          "prim": "UNPAIR"
+        },
+        {
+          "prim": "SWAP"
+        },
+        {
+          "args": [
+            [
+              {
+                "prim": "SWAP"
+              },
+              {
+                "prim": "EDIV"
+              },
+              {
+                "args": [
+                  {
+                    "args": [
+                      {
+                        "args": [
+                          {
+                            "prim": "mutez"
+                          },
+                          {
+                            "prim": "mutez"
+                          }
+                        ],
+                        "prim": "pair"
+                      }
+                    ],
+                    "prim": "option"
+                  }
+                ],
+                "prim": "LEFT"
+              }
+            ],
+            [
+              {
+                "prim": "SWAP"
+              },
+              {
+                "prim": "EDIV"
+              },
+              {
+                "args": [
+                  {
+                    "args": [
+                      {
+                        "args": [
+                          {
+                            "prim": "nat"
+                          },
+                          {
+                            "prim": "mutez"
+                          }
+                        ],
+                        "prim": "pair"
+                      }
+                    ],
+                    "prim": "option"
+                  }
+                ],
+                "prim": "RIGHT"
+              }
+            ]
+          ],
+          "prim": "IF_LEFT"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

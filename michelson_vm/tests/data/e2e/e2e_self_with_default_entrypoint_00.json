@@ -1,0 +1,34 @@
+[
+  {
+    "args": [
+      {
+        "string": "self_with_default_entrypoint.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "prim": "Unit"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "Unit"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "prim": "Unit"
+      }
+    ],
+    "prim": "result"
+  }
+]

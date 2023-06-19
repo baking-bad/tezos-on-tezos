@@ -1,0 +1,123 @@
+[
+  {
+    "args": [
+      {
+        "prim": "unit"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "unit"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "DROP"
+        },
+        {
+          "prim": "UNIT"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "10"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "args": [
+            {
+              "prim": "string"
+            }
+          ],
+          "prim": "LEFT"
+        },
+        {
+          "annots": [
+            "%event"
+          ],
+          "prim": "EMIT"
+        },
+        {
+          "args": [
+            {
+              "prim": "string"
+            },
+            {
+              "string": "lorem ipsum"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            }
+          ],
+          "prim": "RIGHT"
+        },
+        {
+          "annots": [
+            "%event"
+          ],
+          "args": [
+            {
+              "args": [
+                {
+                  "annots": [
+                    "%number"
+                  ],
+                  "prim": "nat"
+                },
+                {
+                  "annots": [
+                    "%words"
+                  ],
+                  "prim": "string"
+                }
+              ],
+              "prim": "or"
+            }
+          ],
+          "prim": "EMIT"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "SWAP"
+        },
+        {
+          "prim": "CONS"
+        },
+        {
+          "prim": "SWAP"
+        },
+        {
+          "prim": "CONS"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

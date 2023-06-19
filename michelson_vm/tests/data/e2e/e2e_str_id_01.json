@@ -1,0 +1,39 @@
+[
+  {
+    "args": [
+      {
+        "string": "str_id.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "string": "abcd"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "None"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "string": "abcd"
+          }
+        ],
+        "prim": "Some"
+      }
+    ],
+    "prim": "result"
+  }
+]

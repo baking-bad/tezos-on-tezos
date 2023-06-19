@@ -1,0 +1,958 @@
+[
+  {
+    "args": [
+      {
+        "annots": [
+          ":param_unit"
+        ],
+        "prim": "unit"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "annots": [
+          ":u1"
+        ],
+        "prim": "unit"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "DROP"
+        },
+        {
+          "prim": "UNIT"
+        },
+        {
+          "prim": "UNIT"
+        },
+        {
+          "prim": "PAIR"
+        },
+        {
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "annots": [
+            "@b"
+          ],
+          "prim": "UNIT"
+        },
+        {
+          "annots": [
+            "@a"
+          ],
+          "prim": "UNIT"
+        },
+        {
+          "prim": "PAIR"
+        },
+        {
+          "annots": [
+            "@c",
+            "@d"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "annots": [
+            "@b"
+          ],
+          "prim": "UNIT"
+        },
+        {
+          "annots": [
+            "@a"
+          ],
+          "prim": "UNIT"
+        },
+        {
+          "annots": [
+            "%@",
+            "%@"
+          ],
+          "prim": "PAIR"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%a",
+            "%b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%",
+            "%b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%a",
+            "%"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%",
+            "%"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%a"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%a",
+            "%b",
+            "@a",
+            "@b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "@a",
+            "@b",
+            "%a",
+            "%b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "@a",
+            "@%",
+            "%a",
+            "%b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "@%",
+            "@%",
+            "%a",
+            "%b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "@%",
+            "@b",
+            "%a",
+            "%b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DROP"
+        },
+        {
+          "annots": [
+            "@d"
+          ],
+          "prim": "UNIT"
+        },
+        {
+          "annots": [
+            "@c"
+          ],
+          "prim": "UNIT"
+        },
+        {
+          "annots": [
+            "%a",
+            "%b"
+          ],
+          "prim": "PAIR"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%a",
+            "%b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%",
+            "%b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%a",
+            "%"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%",
+            "%"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%a"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%a",
+            "%b",
+            "@a",
+            "@b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "@a",
+            "@b",
+            "%a",
+            "%b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "@a",
+            "@%",
+            "%a",
+            "%b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "@%",
+            "@%",
+            "%a",
+            "%b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "@%",
+            "@b",
+            "%a",
+            "%b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DROP"
+        },
+        {
+          "prim": "UNIT"
+        },
+        {
+          "prim": "UNIT"
+        },
+        {
+          "annots": [
+            "%a",
+            "%b"
+          ],
+          "prim": "PAIR"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%a",
+            "%b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%",
+            "%b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%a",
+            "%"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%",
+            "%"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%a"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "%a",
+            "%b",
+            "@a",
+            "@b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "@a",
+            "@b",
+            "%a",
+            "%b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "@a",
+            "@%",
+            "%a",
+            "%b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "@%",
+            "@%",
+            "%a",
+            "%b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "@%",
+            "@b",
+            "%a",
+            "%b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DROP"
+        },
+        {
+          "prim": "UNIT"
+        },
+        {
+          "prim": "UNIT"
+        },
+        {
+          "annots": [
+            "%a",
+            "%b",
+            "@p"
+          ],
+          "prim": "PAIR"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "@%%",
+            "@b"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "@a",
+            "@%%"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "@%%",
+            "@%%"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "@%",
+            "@%%"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DUP"
+        },
+        {
+          "annots": [
+            "@%%",
+            "@%"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "DROP"
+        },
+        {
+          "annots": [
+            "@b"
+          ],
+          "prim": "UNIT"
+        },
+        {
+          "annots": [
+            "@a"
+          ],
+          "prim": "UNIT"
+        },
+        {
+          "annots": [
+            "@c"
+          ],
+          "prim": "PAIR"
+        },
+        {
+          "annots": [
+            "@b",
+            "@a"
+          ],
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "DROP"
+        },
+        {
+          "prim": "UNIT"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

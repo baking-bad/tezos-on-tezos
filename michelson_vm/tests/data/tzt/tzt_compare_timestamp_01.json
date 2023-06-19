@@ -1,0 +1,59 @@
+[
+  {
+    "args": [
+      [
+        {
+          "prim": "COMPARE"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "timestamp"
+            },
+            {
+              "int": "1"
+            }
+          ],
+          "prim": "Stack_elt"
+        },
+        {
+          "args": [
+            {
+              "prim": "timestamp"
+            },
+            {
+              "int": "2"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "int"
+            },
+            {
+              "int": "-1"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

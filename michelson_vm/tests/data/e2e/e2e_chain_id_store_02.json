@@ -1,0 +1,44 @@
+[
+  {
+    "args": [
+      {
+        "string": "chain_id_store.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "prim": "Unit"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "string": "NetXdQprcVkpaWU"
+          }
+        ],
+        "prim": "Some"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "string": "NetXdQprcVkpaWU"
+          }
+        ],
+        "prim": "Some"
+      }
+    ],
+    "prim": "result"
+  }
+]

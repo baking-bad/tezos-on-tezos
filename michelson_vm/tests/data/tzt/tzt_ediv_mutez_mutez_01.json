@@ -1,0 +1,85 @@
+[
+  {
+    "args": [
+      [
+        {
+          "prim": "EDIV"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "mutez"
+            },
+            {
+              "int": "102"
+            }
+          ],
+          "prim": "Stack_elt"
+        },
+        {
+          "args": [
+            {
+              "prim": "mutez"
+            },
+            {
+              "int": "3"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "args": [
+                    {
+                      "prim": "nat"
+                    },
+                    {
+                      "prim": "mutez"
+                    }
+                  ],
+                  "prim": "pair"
+                }
+              ],
+              "prim": "option"
+            },
+            {
+              "args": [
+                {
+                  "args": [
+                    {
+                      "int": "34"
+                    },
+                    {
+                      "int": "0"
+                    }
+                  ],
+                  "prim": "Pair"
+                }
+              ],
+              "prim": "Some"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

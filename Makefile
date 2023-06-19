@@ -35,9 +35,10 @@ else
 endif
 
 install:
-	cd ~/.cargo/bin \
+	cd $$HOME/.cargo/bin \
 		&& wget -c https://github.com/WebAssembly/binaryen/releases/download/version_111/binaryen-version_111-x86_64-linux.tar.gz -O - | tar -xzv binaryen-version_111/bin/wasm-opt --strip-components 2 \
 		&& wget -c https://github.com/WebAssembly/wabt/releases/download/1.0.31/wabt-1.0.31-ubuntu.tar.gz -O - | tar -xzv wabt-1.0.31/bin/wasm-strip wabt-1.0.31/bin/wasm2wat --strip-components 2
+	cargo install tezos-smart-rollup-installer
 
 build-kernel:
 	RUSTC_BOOTSTRAP=1 cargo build --package tezos_kernel --target wasm32-unknown-unknown --release -Z sparse-registry
@@ -45,28 +46,19 @@ build-kernel:
 	# wasm-opt -Oz -o ./.bin/tezos_kernel.wasm ./target/wasm32-unknown-unknown/release/tezos_kernel.wasm
 
 build-installer:
-	RUSTC_BOOTSTRAP=1 cargo build --package installer --target wasm32-unknown-unknown --release -Z sparse-registry
-	wasm-strip -o ./.bin/installer.wasm ./target/wasm32-unknown-unknown/release/installer.wasm
-	# wasm-opt -Oz -o ./.bin/installer.wasm ./target/wasm32-unknown-unknown/release/installer.wasm
-
-build-dac-codec:
-	RUSTC_BOOTSTRAP=1 cargo build --package dac_codec --release -Z sparse-registry 
-	cp ./target/release/dac-codec ./.bin/dac-codec
+	smart-rollup-installer get-reveal-installer \
+		--upgrade-to ./.bin/tezos_kernel.wasm \
+		--output ./.bin/installer.wasm \
+		--preimages-dir ./.bin/wasm_2_0_0
 
 build-facade:
 	mkdir .bin || true
 	RUSTC_BOOTSTRAP=1 cargo build --package tezos_node --release -Z sparse-registry 
 	cp ./target/release/tezos-node ./.bin/tezos-node
 
-pages:
-	rm -rf ./.bin/wasm_2_0_0
-	./.bin/dac-codec -o ./.bin/wasm_2_0_0 ./.bin/tezos_kernel.wasm
-
 build-operator:
 	mkdir .bin || true
 	$(MAKE) build-kernel
-	$(MAKE) build-dac-codec
-	$(MAKE) pages
 	$(MAKE) build-installer
 
 test:

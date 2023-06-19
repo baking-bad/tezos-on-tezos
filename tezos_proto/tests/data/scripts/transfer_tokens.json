@@ -1,0 +1,77 @@
+[
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "unit"
+          }
+        ],
+        "prim": "contract"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "unit"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "CAR"
+        },
+        {
+          "args": [
+            [
+              {
+                "prim": "UNIT"
+              }
+            ]
+          ],
+          "prim": "DIP"
+        },
+        {
+          "args": [
+            {
+              "prim": "mutez"
+            },
+            {
+              "int": "100000000"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "UNIT"
+        },
+        {
+          "prim": "TRANSFER_TOKENS"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "SWAP"
+        },
+        {
+          "prim": "CONS"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

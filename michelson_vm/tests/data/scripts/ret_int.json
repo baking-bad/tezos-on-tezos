@@ -1,0 +1,58 @@
+[
+  {
+    "args": [
+      {
+        "prim": "unit"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "nat"
+          }
+        ],
+        "prim": "option"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "DROP"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "300"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "SOME"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

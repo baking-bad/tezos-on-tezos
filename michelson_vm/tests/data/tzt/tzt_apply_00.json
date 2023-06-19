@@ -1,0 +1,125 @@
+[
+  {
+    "args": [
+      [
+        {
+          "prim": "APPLY"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "string"
+            },
+            {
+              "string": "Hi"
+            }
+          ],
+          "prim": "Stack_elt"
+        },
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "args": [
+                    {
+                      "prim": "string"
+                    },
+                    {
+                      "prim": "int"
+                    }
+                  ],
+                  "prim": "pair"
+                },
+                {
+                  "prim": "nat"
+                }
+              ],
+              "prim": "lambda"
+            },
+            [
+              {
+                "prim": "DROP"
+              },
+              {
+                "args": [
+                  {
+                    "prim": "nat"
+                  },
+                  {
+                    "int": "1"
+                  }
+                ],
+                "prim": "PUSH"
+              }
+            ]
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "int"
+                },
+                {
+                  "prim": "nat"
+                }
+              ],
+              "prim": "lambda"
+            },
+            [
+              {
+                "args": [
+                  {
+                    "prim": "string"
+                  },
+                  {
+                    "string": "Hi"
+                  }
+                ],
+                "prim": "PUSH"
+              },
+              {
+                "prim": "PAIR"
+              },
+              [
+                {
+                  "prim": "DROP"
+                },
+                {
+                  "args": [
+                    {
+                      "prim": "nat"
+                    },
+                    {
+                      "int": "1"
+                    }
+                  ],
+                  "prim": "PUSH"
+                }
+              ]
+            ]
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

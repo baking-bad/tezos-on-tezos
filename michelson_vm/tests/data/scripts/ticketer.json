@@ -1,0 +1,153 @@
+[
+  {
+    "args": [
+      {
+        "prim": "address"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "nat"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            [
+              {
+                "prim": "DUP"
+              }
+            ]
+          ],
+          "prim": "DIP"
+        },
+        {
+          "prim": "SWAP"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            },
+            {
+              "int": "1"
+            }
+          ],
+          "prim": "PUSH"
+        },
+        {
+          "prim": "SWAP"
+        },
+        {
+          "prim": "TICKET"
+        },
+        [
+          {
+            "args": [
+              [
+                [
+                  {
+                    "prim": "UNIT"
+                  },
+                  {
+                    "prim": "FAILWITH"
+                  }
+                ]
+              ],
+              [
+                {
+                  "prim": "RENAME"
+                }
+              ]
+            ],
+            "prim": "IF_NONE"
+          }
+        ],
+        {
+          "args": [
+            [
+              {
+                "args": [
+                  {
+                    "args": [
+                      {
+                        "prim": "nat"
+                      }
+                    ],
+                    "prim": "ticket"
+                  }
+                ],
+                "prim": "CONTRACT"
+              },
+              [
+                {
+                  "args": [
+                    [
+                      [
+                        {
+                          "prim": "UNIT"
+                        },
+                        {
+                          "prim": "FAILWITH"
+                        }
+                      ]
+                    ],
+                    [
+                      {
+                        "prim": "RENAME"
+                      }
+                    ]
+                  ],
+                  "prim": "IF_NONE"
+                }
+              ],
+              {
+                "args": [
+                  {
+                    "prim": "mutez"
+                  },
+                  {
+                    "int": "0"
+                  }
+                ],
+                "prim": "PUSH"
+              }
+            ]
+          ],
+          "prim": "DIP"
+        },
+        {
+          "prim": "TRANSFER_TOKENS"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "SWAP"
+        },
+        {
+          "prim": "CONS"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]

@@ -1,0 +1,70 @@
+[
+  {
+    "args": [
+      [
+        {
+          "args": [
+            []
+          ],
+          "prim": "MAP"
+        },
+        {
+          "prim": "CONCAT"
+        }
+      ]
+    ],
+    "prim": "code"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "args": [
+                {
+                  "prim": "bytes"
+                }
+              ],
+              "prim": "list"
+            },
+            [
+              {
+                "bytes": "00ab"
+              },
+              {
+                "bytes": "cd"
+              },
+              {
+                "bytes": "ef"
+              },
+              {
+                "bytes": "00"
+              }
+            ]
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "input"
+  },
+  {
+    "args": [
+      [
+        {
+          "args": [
+            {
+              "prim": "bytes"
+            },
+            {
+              "bytes": "00abcdef00"
+            }
+          ],
+          "prim": "Stack_elt"
+        }
+      ]
+    ],
+    "prim": "output"
+  }
+]

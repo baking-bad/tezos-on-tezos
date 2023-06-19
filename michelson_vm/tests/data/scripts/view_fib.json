@@ -1,0 +1,80 @@
+[
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "nat"
+          },
+          {
+            "prim": "address"
+          }
+        ],
+        "prim": "pair"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "nat"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "CAR"
+        },
+        {
+          "prim": "UNPAIR"
+        },
+        {
+          "args": [
+            {
+              "string": "fib"
+            },
+            {
+              "prim": "nat"
+            }
+          ],
+          "prim": "VIEW"
+        },
+        [
+          {
+            "args": [
+              [
+                [
+                  {
+                    "prim": "UNIT"
+                  },
+                  {
+                    "prim": "FAILWITH"
+                  }
+                ]
+              ],
+              [
+                {
+                  "args": [
+                    {
+                      "prim": "operation"
+                    }
+                  ],
+                  "prim": "NIL"
+                },
+                {
+                  "prim": "PAIR"
+                }
+              ]
+            ],
+            "prim": "IF_NONE"
+          }
+        ]
+      ]
+    ],
+    "prim": "code"
+  }
+]

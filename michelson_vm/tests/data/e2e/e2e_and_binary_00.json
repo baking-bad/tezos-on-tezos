@@ -1,0 +1,34 @@
+[
+  {
+    "args": [
+      {
+        "string": "and_binary.json"
+      }
+    ],
+    "prim": "script"
+  },
+  {
+    "args": [
+      {
+        "prim": "Unit"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "prim": "Unit"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      {
+        "prim": "Unit"
+      }
+    ],
+    "prim": "result"
+  }
+]

@@ -1,0 +1,52 @@
+[
+  {
+    "args": [
+      {
+        "prim": "unit"
+      }
+    ],
+    "prim": "parameter"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "prim": "nat"
+          }
+        ],
+        "prim": "option"
+      }
+    ],
+    "prim": "storage"
+  },
+  {
+    "args": [
+      [
+        {
+          "prim": "DROP"
+        },
+        {
+          "args": [
+            {
+              "prim": "nat"
+            }
+          ],
+          "prim": "NONE"
+        },
+        {
+          "args": [
+            {
+              "prim": "operation"
+            }
+          ],
+          "prim": "NIL"
+        },
+        {
+          "prim": "PAIR"
+        }
+      ]
+    ],
+    "prim": "code"
+  }
+]
