@@ -1,0 +1,11 @@
+[package]
+name = "sapling_kernel"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+tezos-smart-rollup = "0.1.0"
+sapling_proto = { path = "../sapling_proto" }

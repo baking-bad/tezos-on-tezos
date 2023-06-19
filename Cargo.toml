@@ -7,6 +7,9 @@ members = [
   "tezos_vm",
   "tezos_node",
   "tezos_ctx",
+  "sapling_proto",
+  "sapling_kernel",
+  "zcash_params"
 ]
 
 [profile.release]
