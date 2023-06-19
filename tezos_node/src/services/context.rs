@@ -4,7 +4,7 @@ use actix_web::{
     HttpResponse, Responder, Result,
 };
 use tezos_core::types::encoded::ScriptExprHash;
-use tezos_ctx::Config;
+use layered_store::Config;
 
 use crate::{json_response, rollup::TezosFacade, Error};
 

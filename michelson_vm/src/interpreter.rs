@@ -1,11 +1,9 @@
 use tezos_core::types::{
-    encoded::{Address, ChainId, ContractAddress, ImplicitAddress},
+    encoded::{Address, ChainId, ContractAddress, ImplicitAddress, ScriptExprHash},
     mutez::Mutez,
 };
 use tezos_michelson::micheline::Micheline;
 use tezos_michelson::michelson::{data::Instruction, types::Type};
-
-pub use tezos_ctx::InterpreterContext;
 
 use crate::{
     err_unsupported,
@@ -15,6 +13,26 @@ use crate::{
     types::{BigMapDiff, StackItem},
     Result,
 };
+
+pub trait InterpreterContext {
+    fn get_contract_type(&mut self, address: &ContractAddress) -> Result<Option<Micheline>>;
+    fn set_contract_type(&mut self, address: ContractAddress, value: Micheline) -> Result<()>;
+    fn allocate_big_map(&mut self, owner: ContractAddress) -> Result<i64>;
+    // TODO: transfer_big_map
+    fn get_big_map_owner(&mut self, ptr: i64) -> Result<Option<ContractAddress>>;
+    fn has_big_map_value(&mut self, ptr: i64, key_hash: &ScriptExprHash) -> Result<bool>;
+    fn get_big_map_value(
+        &mut self,
+        ptr: i64,
+        key_hash: &ScriptExprHash,
+    ) -> Result<Option<Micheline>>;
+    fn set_big_map_value(
+        &mut self,
+        ptr: i64,
+        key_hash: ScriptExprHash,
+        value: Option<Micheline>,
+    ) -> Result<()>;
+}
 
 pub struct OperationScope {
     pub chain_id: ChainId,

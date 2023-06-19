@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
-use crate::{ContextNode, GenericContext, Result};
+use crate::{LayeredStore, StoreType, Result};
 
-pub struct EphemeralContext {
-    state: HashMap<String, ContextNode>,
-    pending_state: HashMap<String, Option<ContextNode>>,
+pub struct EphemeralStore<T: StoreType> {
+    state: HashMap<String, T>,
+    pending_state: HashMap<String, Option<T>>,
     modified_keys: Vec<String>,
 }
 
-impl EphemeralContext {
+impl<T: StoreType> EphemeralStore<T> {
     pub fn new() -> Self {
         Self {
             state: HashMap::new(),
@@ -33,7 +33,7 @@ impl EphemeralContext {
     }
 }
 
-impl GenericContext for EphemeralContext {
+impl<T: StoreType> LayeredStore<T> for EphemeralStore<T> {
     fn log(&self, msg: String) {
         eprintln!("[DEBUG] {}", msg);
     }
@@ -46,7 +46,7 @@ impl GenericContext for EphemeralContext {
         }
     }
 
-    fn get(&mut self, key: String) -> Result<Option<ContextNode>> {
+    fn get(&mut self, key: String) -> Result<Option<T>> {
         // self.log(format!("get {}", &key));
         match self.pending_state.get(&key) {
             Some(cached_value) => Ok(cached_value.to_owned()),
@@ -60,7 +60,7 @@ impl GenericContext for EphemeralContext {
         }
     }
 
-    fn set(&mut self, key: String, val: Option<ContextNode>) -> Result<()> {
+    fn set(&mut self, key: String, val: Option<T>) -> Result<()> {
         // self.log(format!("set {} = {:?}", &key, &val));
         self.pending_state.insert(key.clone(), val);
         self.modified_keys.push(key);
@@ -101,29 +101,37 @@ impl GenericContext for EphemeralContext {
 
 #[cfg(test)]
 mod test {
-    use crate::{EphemeralContext, ExecutorContext, GenericContext, Result};
-    use tezos_core::types::mutez::Mutez;
+    use crate::{ephemeral::EphemeralStore, LayeredStore, StoreType, Result};
+    
+    #[derive(Clone)]
+    pub struct EphemeralStoreType {
+        pub value: i64
+    }
+
+    impl StoreType for EphemeralStoreType {
+        fn from_vec(value: Vec<u8>) -> Result<Self> {
+            Ok(Self {
+                value: i64::from_be_bytes(value.as_slice().try_into().unwrap())
+            })
+        }
+
+        fn to_vec(&self) -> Result<Vec<u8>> {
+            Ok(self.value.to_be_bytes().to_vec())
+        }
+    }
 
     #[test]
-    fn store_balance() -> Result<()> {
-        let mut context = EphemeralContext::new();
+    fn test_mock_store() -> Result<()> {
+        let mut store: EphemeralStore<EphemeralStoreType> = EphemeralStore::new();
 
-        let address = "tz1Mj7RzPmMAqDUNFBn5t5VbXmWW4cSUAdtT";
-        let balance: Mutez = 1000u32.into();
+        assert!(store.get("/test".into())?.is_none());
 
-        assert!(context.get_balance(&address)?.is_none()); // both host and cache accessed
+        store.set("/test".into(), Some(EphemeralStoreType { value: 42 }))?; // cached
+        store.commit()?; // write to tmp folder
+        store.clear(); // clean up
 
-        context.set_balance(&address, balance.clone())?; // cached
-        context.commit()?; // save
-        context.clear(); // cache cleared
-
-        assert!(context.get_balance(&address)?.is_some()); // cached
-        assert_eq!(
-            context
-                .get_balance(&address)?
-                .expect("Balance must not be null"),
-            balance
-        ); // served from the cache
+        assert!(store.get("/test".into())?.is_some()); // cached again
+        assert_eq!(42, store.get("/test".into())?.unwrap().value); // served from the cache
 
         Ok(())
     }

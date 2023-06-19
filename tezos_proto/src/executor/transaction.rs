@@ -1,11 +1,11 @@
 use tezos_core::types::encoded::{Address, Encoded};
-use tezos_ctx::{ExecutorContext, InterpreterContext};
 use tezos_michelson::micheline::Micheline;
 use tezos_operation::operations::{OperationContent, Transaction};
 use tezos_rpc::models::operation::{
     operation_result::operations::transaction::TransactionOperationResult,
     operation_result::OperationResultStatus,
 };
+use michelson_vm::interpreter::InterpreterContext;
 
 use crate::{
     executor::balance_updates::BalanceUpdates,
@@ -13,11 +13,12 @@ use crate::{
     executor::lazy_diff::LazyDiff,
     executor::result::ExecutionResult,
     executor::rpc_errors::RpcErrors,
+    context::TezosContext,
     Error, Result,
 };
 
 pub fn execute_transaction(
-    context: &mut (impl ExecutorContext + InterpreterContext),
+    context: &mut (impl TezosContext + InterpreterContext),
     transaction: &Transaction,
     sender: Option<Address>,
     skip: bool,
@@ -119,15 +120,14 @@ pub fn execute_transaction(
 #[cfg(test)]
 mod test {
     use tezos_core::types::mutez::Mutez;
-    use tezos_ctx::{EphemeralContext, ExecutorContext};
     use tezos_operation::operations::Transaction;
 
     use super::*;
-    use crate::Result;
+    use crate::{Result, context::TezosEphemeralContext};
 
     #[test]
     fn test_transaction_applied() -> Result<()> {
-        let mut context = EphemeralContext::new();
+        let mut context = TezosEphemeralContext::new();
 
         let source = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
         let destination = "tz1NEgotHhj4fkm8AcwquQqQBrQsAMRUg86c";

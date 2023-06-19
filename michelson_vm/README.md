@@ -70,7 +70,7 @@ pub struct michelson_vm::interpreter::OperationScope {
 
 InterpreterContext is a public trait you need to implement:
 ```rust
-pub trait tezos_ctx::InterpreterContext {
+pub trait layered_store::InterpreterContext {
     fn get_contract_type(&self, address: &ContractAddress) -> Result<Option<Micheline>>;
     fn set_contract_type(&mut self, address: ContractAddress, value: Micheline) -> Result<()>;
     fn allocate_big_map(&mut self, owner: ContractAddress) -> Result<i64>;

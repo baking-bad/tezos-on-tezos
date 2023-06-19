@@ -4,11 +4,11 @@ use tezos_core::types::{
     mutez::Mutez,
     number::Nat,
 };
-use tezos_ctx::ExecutorContext;
 use tezos_operation::operations::{OperationContent, SignedOperation};
 
 use crate::{
     executor::rpc_errors::{RpcError, RpcErrors},
+    context::TezosContext,
     Error, Result,
 };
 
@@ -29,7 +29,7 @@ pub struct ValidOperation {
 }
 
 pub fn validate_operation(
-    context: &mut impl ExecutorContext,
+    context: &mut impl TezosContext,
     opg: SignedOperation,
     hash: OperationHash,
     dry_run: bool,
@@ -161,15 +161,14 @@ mod test {
         mutez::Mutez,
         number::Nat,
     };
-    use tezos_ctx::{EphemeralContext, ExecutorContext, GenericContext};
     use tezos_operation::operations::{Reveal, SignedOperation, Transaction};
 
     use super::*;
-    use crate::Result;
+    use crate::{Result, context::TezosEphemeralContext};
 
     #[test]
     fn test_valid_tx() -> Result<()> {
-        let mut context = EphemeralContext::new();
+        let mut context = TezosEphemeralContext::new();
 
         let address = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
         context.set_balance(address, Mutez::from(1000000000u32))?;
@@ -210,7 +209,7 @@ mod test {
 
     #[test]
     fn test_reveal_and_tx_batch() -> Result<()> {
-        let mut context = EphemeralContext::new();
+        let mut context = TezosEphemeralContext::new();
 
         let address = ImplicitAddress::try_from("tz1Ng3bkhPwf6byrSWzBeBRTuaiKCQXzyRUK").unwrap();
         context.set_balance(&address.value(), Mutez::from(1000000000u32))?;

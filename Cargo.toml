@@ -2,9 +2,9 @@
 members = [
   "tezos_proto",
   "tezos_kernel",
-  "michelson_vm",
   "tezos_node",
-  "tezos_ctx",
+  "michelson_vm",
+  "layered_store",
   "sapling_proto",
   "sapling_kernel",
   "zcash_params"

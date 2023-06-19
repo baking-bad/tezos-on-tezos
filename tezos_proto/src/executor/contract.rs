@@ -3,17 +3,16 @@ use tezos_core::types::{
     encoded::{Address, ContractAddress, Encoded},
     mutez::Mutez,
 };
-use tezos_ctx::{ExecutorContext, InterpreterContext};
 use tezos_operation::operations::{
     Entrypoint, OperationContent, Origination, Parameters, Transaction,
 };
 use michelson_vm::{
-    interpreter::OperationScope,
+    interpreter::{InterpreterContext, OperationScope},
     script::{MichelsonScript, ScriptReturn},
     types::InternalContent,
 };
 
-use crate::{constants, Error, Result};
+use crate::{config, Error, Result, context::TezosContext};
 
 #[derive(Debug, From)]
 pub enum ContractOutput {
@@ -22,7 +21,7 @@ pub enum ContractOutput {
 }
 
 pub fn deploy_contract(
-    context: &mut (impl ExecutorContext + InterpreterContext),
+    context: &mut (impl TezosContext + InterpreterContext),
     origination: &Origination,
     self_address: ContractAddress,
     balance: Mutez,
@@ -35,7 +34,7 @@ pub fn deploy_contract(
         balance,
         chain_id: head.chain_id,
         level: head.level + 1,
-        now: head.timestamp + constants::BLOCK_TIME,
+        now: head.timestamp + config::BLOCK_TIME,
         parameters: None,
         self_address,
         self_type: script.get_type(),
@@ -55,7 +54,7 @@ pub fn deploy_contract(
 }
 
 pub fn execute_contract(
-    context: &mut (impl ExecutorContext + InterpreterContext),
+    context: &mut (impl TezosContext + InterpreterContext),
     transaction: &Transaction,
     sender: Option<Address>,
     balance: Mutez,
@@ -81,7 +80,7 @@ pub fn execute_contract(
         balance,
         chain_id: head.chain_id,
         level: head.level + 1,
-        now: head.timestamp + constants::BLOCK_TIME,
+        now: head.timestamp + config::BLOCK_TIME,
         parameters: match &transaction.parameters {
             Some(params) => Some((params.entrypoint.to_str().into(), params.value.clone())),
             None => None,

@@ -12,7 +12,6 @@ use tezos_core::types::encoded::{
     ProtocolHash, PublicKey, ScriptExprHash,
 };
 use tezos_core::types::{mutez::Mutez, number::Nat};
-use tezos_ctx::{BatchReceipt, ContextNode, Head};
 use tezos_michelson::micheline::Micheline;
 use tezos_operation::operations::SignedOperation;
 use tezos_rpc::models::{
@@ -21,6 +20,13 @@ use tezos_rpc::models::{
     operation::Operation,
     version::VersionInfo,
 };
+use tezos_proto::{
+    context::{
+        batch::BatchReceipt,
+        head::Head,
+        codec::TezosStoreType
+    },
+};
 
 use crate::Result;
 pub use block_id::BlockId;
@@ -28,7 +34,7 @@ pub use block_id::BlockId;
 #[async_trait]
 pub trait RollupClient {
     async fn initialize(&mut self) -> Result<()>;
-    async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<ContextNode>;
+    async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<TezosStoreType>;
     async fn get_chain_id(&self) -> Result<ChainId>;
     async fn get_version(&self) -> Result<VersionInfo>;
     async fn is_chain_synced(&self) -> Result<bool>;

@@ -9,6 +9,9 @@ pub mod tracer;
 pub mod typechecker;
 pub mod types;
 
+#[cfg(any(test, feature = "mock"))]
+pub mod mock;
+
 pub use error::{Error, Result};
 
 #[cfg(feature = "trace")]

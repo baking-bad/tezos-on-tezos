@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 use tezos_core::types::number::Nat;
 
+pub const PROTOCOL: &str = "ProtoALphaALphaALphaALphaALphaALphaALphaALphaDdp3zK";
+pub const BLOCK_TIME: i64 = 8;
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Config {
     pub blocks_per_cycle: i32,

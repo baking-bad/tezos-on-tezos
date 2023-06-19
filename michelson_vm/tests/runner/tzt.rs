@@ -18,11 +18,11 @@ use michelson_vm::{
     types::big_map::get_key_hash,
     types::{BigMapDiff, BigMapItem, MapItem, StackItem},
     Error, Result,
+    mock::{default_scope, MockContext},
 };
 
 use crate::runner::{
     micheline::read_from_file,
-    mock::{default_scope, MockContext},
 };
 
 pub struct TZT {

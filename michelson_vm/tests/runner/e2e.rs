@@ -1,11 +1,13 @@
 use tezos_michelson::micheline::{
     primitive_application::PrimitiveApplication, sequence::Sequence, Micheline,
 };
-use michelson_vm::{interpreter::OperationScope, script::MichelsonScript, Error, Result};
+use michelson_vm::{
+    interpreter::OperationScope, script::MichelsonScript, Error, Result, 
+    mock::{default_scope, MockContext},
+};
 
 use crate::runner::{
     micheline::{parse_literal, read_from_file},
-    mock::{default_scope, MockContext},
 };
 
 pub enum Expectation {

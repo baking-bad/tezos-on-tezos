@@ -1,8 +1,7 @@
 use tezos_core::types::mutez::Mutez;
-use tezos_ctx::ExecutorContext;
 use tezos_rpc::models::balance_update::{BalanceUpdate, Contract, Kind, Origin};
 
-use crate::{Error, Result};
+use crate::{Error, Result, context::TezosContext};
 
 #[derive(Clone, Debug)]
 pub struct BalanceUpdates {
@@ -38,7 +37,7 @@ impl BalanceUpdates {
 
     pub fn transfer(
         &mut self,
-        context: &mut impl ExecutorContext,
+        context: &mut impl TezosContext,
         source: &str,
         destination: &str,
         amount: &Mutez,
@@ -70,7 +69,7 @@ impl BalanceUpdates {
     }
 
     pub fn reserve(
-        context: &mut impl ExecutorContext,
+        context: &mut impl TezosContext,
         source: &str,
         amount: &Mutez,
     ) -> Result<Mutez> {

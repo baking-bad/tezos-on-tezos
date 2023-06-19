@@ -1,7 +1,10 @@
 use tezos_core::types::mutez::Mutez;
 use tezos_rpc::models::balance_update::{BalanceUpdate, Contract, Kind, Origin};
 
-use crate::{ExecutorContext, GenericContext, Head, Result};
+use crate::{
+    context::{TezosContext, head::Head},
+    Result
+};
 
 const SEED_ACCOUNTS: [&str; 8] = [
     "tz1grSQDByRpnVs7sPtaprNZRp531ZKz6Jmm", // Pytezos built-in key
@@ -15,9 +18,7 @@ const SEED_ACCOUNTS: [&str; 8] = [
 ];
 const SEED_BALANCE: u64 = 40_000_000_000_000u64;
 
-pub fn genesis_migration(
-    context: &mut (impl ExecutorContext + GenericContext),
-) -> Result<Vec<BalanceUpdate>> {
+pub fn genesis_migration(context: &mut impl TezosContext) -> Result<Vec<BalanceUpdate>> {
     let mut updates: Vec<BalanceUpdate> = Vec::with_capacity(SEED_ACCOUNTS.len());
     let balance = Mutez::try_from(SEED_BALANCE).unwrap();
 
@@ -36,7 +37,7 @@ pub fn genesis_migration(
 }
 
 pub fn run_migrations(
-    context: &mut (impl ExecutorContext + GenericContext),
+    context: &mut impl TezosContext,
     head: &Head,
 ) -> Result<Option<Vec<BalanceUpdate>>> {
     context.check_no_pending_changes()?;
@@ -49,11 +50,11 @@ pub fn run_migrations(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{EphemeralContext, Result};
+    use crate::{context::TezosEphemeralContext, Result};
 
     #[test]
     fn test_seed_acconuts() -> Result<()> {
-        let mut context = EphemeralContext::new();
+        let mut context = TezosEphemeralContext::new();
 
         let head = context.get_head()?;
         assert_eq!(-1, head.level);

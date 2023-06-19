@@ -1,6 +1,6 @@
 use host::{rollup_core::RawRollupCore, runtime::Runtime};
 use tezos_core::types::encoded::{ChainId, Encoded, OperationHash};
-use tezos_ctx::{ExecutorContext, GenericContext};
+use layered_store::{TezosContext, LayeredStore};
 use tezos_proto::batcher::apply_batch;
 use tezos_operation::operations::SignedOperation;
 
@@ -80,7 +80,7 @@ mod test {
     use hex;
     use host::rollup_core::Input;
     use mock_runtime::host::MockHost;
-    use tezos_ctx::{ExecutorContext, Result};
+    use layered_store::{TezosContext, Result};
 
     #[test]
     fn send_tez() -> Result<()> {

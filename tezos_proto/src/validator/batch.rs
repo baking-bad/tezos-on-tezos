@@ -1,14 +1,14 @@
 use tezos_core::types::encoded::{Encoded, OperationHash};
-use tezos_ctx::{ExecutorContext, GenericContext};
 use tezos_operation::operations::SignedOperation;
 
 use crate::{
     validator::operation::{validate_operation, ValidOperation, ValidatedOperation},
+    context::TezosContext,
     Result,
 };
 
 pub fn validate_batch(
-    context: &mut (impl GenericContext + ExecutorContext),
+    context: &mut impl TezosContext,
     batch_payload: Vec<(OperationHash, SignedOperation)>,
     atomic: bool,
 ) -> Result<Vec<ValidOperation>> {

@@ -6,11 +6,12 @@ use tezos_core::types::{
 };
 use tezos_michelson::micheline::Micheline;
 use tezos_rpc::models::operation::Operation;
+use layered_store::{StoreType, error::err_into, Result, internal_error};
 
-use crate::{internal_error, BatchReceipt, Head, Result};
+use crate::{context::batch::BatchReceipt, context::head::Head};
 
 #[derive(Debug, Clone, From, TryInto)]
-pub enum ContextNode {
+pub enum TezosStoreType {
     Head(Head),
     Int(i64),
     Operation(Operation),
@@ -23,8 +24,8 @@ pub enum ContextNode {
     Mutez(Mutez),
 }
 
-impl ContextNode {
-    pub fn to_vec(&self) -> Result<Vec<u8>> {
+impl StoreType for TezosStoreType {
+    fn to_vec(&self) -> Result<Vec<u8>> {
         let (prefix, payload) = match self {
             Self::Head(value) => (b'\x01', value.encode()?),
             Self::Int(value) => (b'\x02', value.encode()?),
@@ -40,7 +41,7 @@ impl ContextNode {
         Ok([vec![prefix], payload].concat())
     }
 
-    pub fn from_vec(value: Vec<u8>) -> Result<Self> {
+    fn from_vec(value: Vec<u8>) -> Result<Self> {
         match value.as_slice() {
             [b'\x01', bytes @ ..] => Head::decode(bytes),
             [b'\x02', bytes @ ..] => i64::decode(bytes),
@@ -52,28 +53,28 @@ impl ContextNode {
             [b'\x08', bytes @ ..] => Micheline::decode(bytes),
             [b'\x09', bytes @ ..] => Nat::decode(bytes),
             [b'\x0A', bytes @ ..] => Mutez::decode(bytes),
-            _ => Err(internal_error!(Encoding, "Invalid context node prefix")),
+            _ => Err(internal_error!("Invalid context value prefix")),
         }
     }
 }
 
-pub trait ContextNodeType: Clone {
+pub trait StoreValue: Clone {
     fn encode(&self) -> Result<Vec<u8>>;
-    fn decode(bytes: &[u8]) -> Result<ContextNode>;
+    fn decode(bytes: &[u8]) -> Result<TezosStoreType>;
 }
 
 macro_rules! context_node_type_core {
     ($ty: ty) => {
-        impl ContextNodeType for $ty {
-            fn decode(bytes: &[u8]) -> Result<ContextNode> {
+        impl StoreValue for $ty {
+            fn decode(bytes: &[u8]) -> Result<TezosStoreType> {
                 match Self::from_bytes(bytes) {
                     Ok(value) => Ok(value.into()),
-                    Err(error) => Err(error.into()),
+                    Err(error) => Err(err_into(error)),
                 }
             }
 
             fn encode(&self) -> Result<Vec<u8>> {
-                self.to_bytes().map_err(|e| e.into())
+                self.to_bytes().map_err(err_into)
             }
         }
     };
@@ -88,14 +89,14 @@ context_node_type_core!(Nat);
 
 macro_rules! context_node_type_rpc {
     ($ty: ty) => {
-        impl ContextNodeType for $ty {
-            fn decode(_bytes: &[u8]) -> Result<ContextNode> {
+        impl StoreValue for $ty {
+            fn decode(_bytes: &[u8]) -> Result<TezosStoreType> {
                 #[cfg(not(target_arch = "wasm32"))]
                 {
                     // This is a workaround to avoid floating point operations introduced by serde.
                     // Since we do not need RPC models deserialization inside the kernel,
                     // we can only enable that for tests and binaries that are not compiled to wasm.
-                    let value: $ty = serde_json_wasm::de::from_slice(_bytes)?;
+                    let value: $ty = serde_json_wasm::de::from_slice(_bytes).map_err(err_into)?;
                     return Ok(value.into());
                 }
                 #[cfg(target_arch = "wasm32")]
@@ -103,7 +104,7 @@ macro_rules! context_node_type_rpc {
             }
 
             fn encode(&self) -> Result<Vec<u8>> {
-                Ok(serde_json_wasm::ser::to_vec(self)?)
+                Ok(serde_json_wasm::ser::to_vec(self).map_err(err_into)?)
             }
         }
     };
@@ -112,15 +113,15 @@ macro_rules! context_node_type_rpc {
 context_node_type_rpc!(Operation);
 context_node_type_rpc!(BatchReceipt);
 
-impl ContextNodeType for i64 {
-    fn decode(bytes: &[u8]) -> Result<ContextNode> {
+impl StoreValue for i64 {
+    fn decode(bytes: &[u8]) -> Result<TezosStoreType> {
         if bytes.len() == 8 {
             let value = i64::from_be_bytes([
                 bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
             ]);
             Ok(value.into())
         } else {
-            Err(internal_error!(Encoding, ""))
+            Err(internal_error!("Failed to decode i64"))
         }
     }
 
@@ -129,13 +130,13 @@ impl ContextNodeType for i64 {
     }
 }
 
-impl ContextNodeType for Head {
-    fn decode(bytes: &[u8]) -> Result<ContextNode> {
-        let value: Head = serde_json_wasm::de::from_slice(bytes)?;
+impl StoreValue for Head {
+    fn decode(bytes: &[u8]) -> Result<TezosStoreType> {
+        let value: Head = serde_json_wasm::de::from_slice(bytes).map_err(err_into)?;
         Ok(value.into())
     }
 
     fn encode(&self) -> Result<Vec<u8>> {
-        Ok(serde_json_wasm::ser::to_vec(self)?)
+        Ok(serde_json_wasm::ser::to_vec(self).map_err(err_into)?)
     }
 }

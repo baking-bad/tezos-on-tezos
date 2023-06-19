@@ -7,17 +7,22 @@ use tezos_core::types::{
     },
     number::Nat,
 };
-use tezos_ctx::{
-    migrations::run_migrations, ExecutorContext, GenericContext, Head, InterpreterContext,
-};
 use tezos_michelson::micheline::Micheline;
 use tezos_operation::operations::{
     Entrypoint, OperationContent, Origination, Parameters, Reveal, Script, SignedOperation,
     Transaction, UnsignedOperation,
 };
 use tezos_rpc::models::operation::Operation;
+use michelson_vm::interpreter::InterpreterContext;
 
-use tezos_proto::batcher::apply_batch;
+use tezos_proto::{
+    batcher::apply_batch,
+    context::{
+        TezosContext,
+        head::Head,
+        migrations::run_migrations
+    }
+};
 
 pub struct Wallet {
     pub counter: u32,
@@ -72,7 +77,7 @@ pub struct Client<Context> {
     alias: Option<&'static str>,
 }
 
-impl<Context: GenericContext + ExecutorContext + InterpreterContext> Client<Context> {
+impl<Context: TezosContext + InterpreterContext> Client<Context> {
     pub fn new(context: Context) -> Self {
         Self {
             context,

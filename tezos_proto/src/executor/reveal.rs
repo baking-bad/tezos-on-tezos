@@ -1,14 +1,13 @@
 use tezos_core::types::encoded::Encoded;
-use tezos_ctx::ExecutorContext;
 use tezos_operation::operations::Reveal;
 use tezos_rpc::models::operation::operation_result::{
     operations::reveal::RevealOperationResult, OperationResultStatus,
 };
 
-use crate::{executor::result::ExecutionResult, executor::rpc_errors::RpcErrors, Result};
+use crate::{executor::result::ExecutionResult, executor::rpc_errors::RpcErrors, Result, context::TezosContext};
 
 pub fn execute_reveal(
-    context: &mut impl ExecutorContext,
+    context: &mut impl TezosContext,
     reveal: &Reveal,
     skip: bool,
 ) -> Result<ExecutionResult> {
@@ -49,15 +48,14 @@ pub fn execute_reveal(
 #[cfg(test)]
 mod test {
     use tezos_core::types::{encoded::PublicKey, mutez::Mutez, number::Nat};
-    use tezos_ctx::{EphemeralContext, ExecutorContext};
     use tezos_operation::operations::Reveal;
 
     use super::*;
-    use crate::Result;
+    use crate::{Result, context::TezosEphemeralContext};
 
     #[test]
     fn test_reveal_applied() -> Result<()> {
-        let mut context = EphemeralContext::new();
+        let mut context = TezosEphemeralContext::new();
 
         let address = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
         let public_key =

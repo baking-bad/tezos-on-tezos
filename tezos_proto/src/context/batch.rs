@@ -13,7 +13,7 @@ use tezos_rpc::models::{
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
-use crate::Config;
+use crate::config::Config;
 
 pub const ZERO_SIGNATURE: &str =
     "sigMzJ4GVAvXEd2RjsKGfG2H9QvqTSKCZsuB2KiHbZRGFz72XgF6KaKADznh674fQgBatxw3xdHqTtMHUZAGRprxy64wg1aq";

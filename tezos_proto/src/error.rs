@@ -2,37 +2,15 @@ use derive_more::{Display, Error};
 use std::backtrace::Backtrace;
 use tezos_core::types::mutez::Mutez;
 
-pub use chrono::ParseError as TimestampParsingError;
-pub use ibig::error::OutOfBoundsError as BigIntOutOfBoundsError;
-pub use ibig::error::ParseError as BigIntParsingError;
-pub use serde_json_wasm::de::Error as DeserializationError;
-pub use serde_json_wasm::ser::Error as SerializationError;
-pub use tezos_core::Error as TezosCoreError;
-pub use tezos_ctx::Error as ContextError;
-pub use tezos_michelson::Error as TezosMichelsonError;
-pub use tezos_operation::Error as TezosOperationError;
-pub use tezos_rpc::Error as TezosRpcError;
-pub use michelson_vm::Error as InterpreterError;
-
-#[derive(Debug, Display)]
-pub enum InternalKind {
-    Context,
-    Encoding,
-    Interpreter,
-    TezosEncoding,
-}
-
 #[derive(Debug)]
 pub struct InternalError {
-    pub kind: InternalKind,
     pub message: String,
     pub backtrace: Backtrace,
 }
 
 impl InternalError {
-    pub fn new(kind: InternalKind, message: String) -> Self {
+    pub fn new(message: String) -> Self {
         Self {
-            kind,
             message,
             backtrace: Backtrace::capture(),
         }
@@ -40,8 +18,8 @@ impl InternalError {
 
     pub fn format(&self) -> String {
         format!(
-            "{} error\n{}\nStacktrace:\n{}",
-            self.kind, self.message, self.backtrace
+            "Tezos proto error\n{}\nStacktrace:\n{}",
+            self.message, self.backtrace
         )
     }
 }
@@ -49,8 +27,7 @@ impl InternalError {
 impl std::fmt::Display for InternalError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!(
-            "{} error, {}",
-            self.kind,
+            "Tezos proto error, {}",
             self.message.replace("\n", " ")
         ))
     }
@@ -82,12 +59,9 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[macro_export]
 macro_rules! internal_error {
-    ($kind: ident, $($arg:tt)*) => {
+    ($($arg:tt)*) => {
         $crate::Error::Internal(
-            $crate::error::InternalError::new(
-                $crate::error::InternalKind::$kind,
-                format!($($arg)*)
-            )
+            $crate::error::InternalError::new(format!($($arg)*))
         )
     };
 }
@@ -96,27 +70,32 @@ macro_rules! impl_from_error {
     ($inner_err_ty: ty, $kind: ident) => {
         impl From<$inner_err_ty> for Error {
             fn from(error: $inner_err_ty) -> Self {
-                $crate::internal_error!($kind, "{:?}", error)
+                $crate::internal_error!("{:?}", error)
             }
         }
     };
 }
 
-impl_from_error!(ContextError, Context);
-impl_from_error!(TezosRpcError, TezosEncoding);
-impl_from_error!(TezosCoreError, TezosEncoding);
-impl_from_error!(TezosOperationError, TezosEncoding);
-impl_from_error!(TezosMichelsonError, TezosEncoding);
-impl_from_error!(SerializationError, Encoding);
-impl_from_error!(DeserializationError, Encoding);
-impl_from_error!(BigIntOutOfBoundsError, Encoding);
-impl_from_error!(BigIntParsingError, Encoding);
-impl_from_error!(TimestampParsingError, Encoding);
+impl_from_error!(tezos_rpc::Error, TezosEncoding);
+impl_from_error!(tezos_core::Error, TezosEncoding);
+impl_from_error!(tezos_operation::Error, TezosEncoding);
+impl_from_error!(tezos_michelson::Error, TezosEncoding);
+impl_from_error!(serde_json_wasm::ser::Error, Encoding);
+impl_from_error!(serde_json_wasm::de::Error, Encoding);
+impl_from_error!(ibig::error::OutOfBoundsError, Encoding);
+impl_from_error!(ibig::error::ParseError, Encoding);
+impl_from_error!(chrono::ParseError, Encoding);
 impl_from_error!(&str, Encoding);
 
-impl From<InterpreterError> for Error {
-    fn from(error: InterpreterError) -> Self {
-        internal_error!(Interpreter, "Caused by: {}", error)
+impl From<michelson_vm::Error> for Error {
+    fn from(error: michelson_vm::Error) -> Self {
+        internal_error!("> Michelson VM: {}", error)
+    }
+}
+
+impl From<layered_store::Error> for Error {
+    fn from(error: layered_store::Error) -> Self {
+        internal_error!("> Layered storage: {}", error)
     }
 }
 

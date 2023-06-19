@@ -2,7 +2,6 @@ use tezos_core::{
     internal::crypto::blake2b,
     types::encoded::{ContractAddress, ContractHash, Encoded, OperationHash},
 };
-use tezos_ctx::ExecutorContext;
 use tezos_operation::operations::Origination;
 use tezos_rpc::models::operation::{
     operation_result::operations::origination::OriginationOperationResult,
@@ -16,6 +15,7 @@ use crate::{
     executor::lazy_diff::LazyDiff,
     executor::result::ExecutionResult,
     executor::rpc_errors::RpcErrors,
+    context::TezosContext,
     Error, Result,
 };
 
@@ -27,7 +27,7 @@ pub fn originated_address(opg_hash: &OperationHash, index: i32) -> Result<Contra
 }
 
 pub fn execute_origination(
-    context: &mut (impl ExecutorContext + InterpreterContext),
+    context: &mut (impl TezosContext + InterpreterContext),
     origination: &Origination,
     hash: &OperationHash,
     origination_index: &mut i32,
@@ -97,7 +97,6 @@ pub fn execute_origination(
 #[cfg(test)]
 mod test {
     use tezos_core::types::mutez::Mutez;
-    use tezos_ctx::EphemeralContext;
     use tezos_michelson::michelson::{
         data::instructions::failwith,
         data::Unit,
@@ -106,11 +105,11 @@ mod test {
     use tezos_operation::operations::Script;
 
     use super::*;
-    use crate::Result;
+    use crate::{Result, context::TezosEphemeralContext};
 
     #[test]
     fn test_origination_applied() -> Result<()> {
-        let mut context = EphemeralContext::new();
+        let mut context = TezosEphemeralContext::new();
 
         let source = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
         context.set_balance(source, Mutez::from(1000000000u32))?;

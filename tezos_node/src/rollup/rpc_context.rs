@@ -1,12 +1,12 @@
 use log::debug;
 use reqwest::blocking::Client;
-use tezos_ctx::{ContextNode, EphemeralContext, GenericContext};
+use layered_store::{StoreType, EphemeralContext, LayeredStore};
 
 use crate::{rollup::rpc_client::StateResponse, Error, Result};
 
-fn err_into(e: impl std::fmt::Debug) -> tezos_ctx::Error {
-    tezos_ctx::Error::Internal(tezos_ctx::error::InternalError::new(
-        tezos_ctx::error::InternalKind::Store,
+fn err_into(e: impl std::fmt::Debug) -> layered_store::Error {
+    layered_store::Error::Internal(layered_store::error::InternalError::new(
+        layered_store::error::InternalKind::Store,
         format!("RPC context error: {:?}", e),
     ))
 }
@@ -28,7 +28,7 @@ impl RpcContext {
         }
     }
 
-    fn get_state_value(&self, key: String) -> Result<Option<ContextNode>> {
+    fn get_state_value(&self, key: String) -> Result<Option<StoreType>> {
         let res = self
             .client
             .get(format!(
@@ -42,7 +42,7 @@ impl RpcContext {
             match content {
                 Some(StateResponse::Value(value)) => {
                     let payload = hex::decode(value)?;
-                    Ok(Some(ContextNode::from_vec(payload)?))
+                    Ok(Some(StoreType::from_vec(payload)?))
                 }
                 Some(StateResponse::Errors(errors)) => {
                     let message = errors.first().unwrap().to_string();
@@ -58,12 +58,12 @@ impl RpcContext {
     }
 }
 
-impl GenericContext for RpcContext {
+impl LayeredStore for RpcContext {
     fn log(&self, msg: String) {
         debug!("{}", msg)
     }
 
-    fn has(&self, key: String) -> tezos_ctx::Result<bool> {
+    fn has(&self, key: String) -> layered_store::Result<bool> {
         match self.tmp_ctx.has(key.clone())? {
             true => return Ok(true),
             false => {
@@ -78,7 +78,7 @@ impl GenericContext for RpcContext {
         }
     }
 
-    fn get(&mut self, key: String) -> tezos_ctx::Result<Option<ContextNode>> {
+    fn get(&mut self, key: String) -> layered_store::Result<Option<StoreType>> {
         match self.tmp_ctx.get(key.clone())? {
             Some(val) => return Ok(Some(val)),
             None => {
@@ -90,7 +90,7 @@ impl GenericContext for RpcContext {
         self.get_state_value(key).map_err(err_into)
     }
 
-    fn set(&mut self, key: String, val: Option<ContextNode>) -> tezos_ctx::Result<()> {
+    fn set(&mut self, key: String, val: Option<StoreType>) -> layered_store::Result<()> {
         self.tmp_ctx.set(key, val)
     }
 
@@ -98,7 +98,7 @@ impl GenericContext for RpcContext {
         self.tmp_ctx.has_pending_changes()
     }
 
-    fn commit(&mut self) -> tezos_ctx::Result<()> {
+    fn commit(&mut self) -> layered_store::Result<()> {
         self.tmp_ctx.commit()
     }
 

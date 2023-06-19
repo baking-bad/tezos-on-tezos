@@ -108,8 +108,8 @@ impl_from_error!(reqwest::Error, Reqwest);
 impl_from_error!(ibig::error::ParseError, IBig);
 impl_from_error!(actix_web::rt::task::JoinError, Actix);
 
-impl From<tezos_ctx::Error> for Error {
-    fn from(error: tezos_ctx::Error) -> Self {
+impl From<layered_store::Error> for Error {
+    fn from(error: layered_store::Error) -> Self {
         internal_error!(Context, "Caused by: {}", error.format())
     }
 }

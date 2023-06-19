@@ -3,8 +3,8 @@ use log::debug;
 use std::cell::RefCell;
 use std::sync::Mutex;
 use tezos_core::types::encoded::{ChainId, Encoded, OperationHash};
-use tezos_ctx::{
-    migrations::run_migrations, ContextNode, EphemeralContext, ExecutorContext, GenericContext,
+use layered_store::{
+    migrations::run_migrations, StoreType, EphemeralContext, TezosContext, LayeredStore,
     Head,
 };
 use tezos_proto::{
@@ -72,7 +72,7 @@ impl RollupClient for RollupMockClient {
         Ok(())
     }
 
-    async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<ContextNode> {
+    async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<StoreType> {
         match &block_id {
             BlockId::Head => {}
             _ => unimplemented!("Can only access state at head level in the mockup mode"),

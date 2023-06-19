@@ -1,0 +1,18 @@
+[package]
+name = "layered_store"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+derive_more = "0.99"
+tezos-smart-rollup = { version = "0.2.0", optional = true, features = ["proto-nairobi"] }
+
+[dev-dependencies]
+tezos-smart-rollup-mock = { version = "0.2.0", features = ["proto-nairobi"] }
+
+[features]
+default = ["kernel"]
+kernel = ["dep:tezos-smart-rollup"]

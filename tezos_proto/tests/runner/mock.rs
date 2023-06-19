@@ -3,13 +3,16 @@ use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
 use tezos_core::types::encoded::Encoded;
-use tezos_ctx::EphemeralContext;
-use tezos_proto::executor::origination::originated_address;
 use tezos_michelson::micheline::Micheline;
+
+use tezos_proto::{
+    executor::origination::originated_address,
+    context::TezosEphemeralContext
+};
 
 use crate::runner::client::Client;
 
-pub type MockClient = Client<EphemeralContext>;
+pub type MockClient = Client<TezosEphemeralContext>;
 
 pub fn read_script(filename: &str) -> Micheline {
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -27,7 +30,7 @@ pub fn read_script(filename: &str) -> Micheline {
 
 impl MockClient {
     pub fn default() -> Self {
-        let mut client = Self::new(EphemeralContext::new());
+        let mut client = Self::new(TezosEphemeralContext::new());
         client.migrate().bake();
         client.import_wallet(
             "pytezos",

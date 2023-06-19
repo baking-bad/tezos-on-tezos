@@ -2,23 +2,15 @@ use derive_more::{Display, Error};
 use std::{backtrace::Backtrace, fmt::Display};
 use tezos_michelson::micheline::Micheline;
 
-#[derive(Debug, Display)]
-pub enum InternalKind {
-    Parsing,
-    Typechecking,
-}
-
 #[derive(Debug)]
 pub struct InternalError {
-    pub kind: InternalKind,
     pub message: String,
     pub backtrace: Backtrace,
 }
 
 impl InternalError {
-    pub fn new(kind: InternalKind, message: String) -> Self {
+    pub fn new(message: String) -> Self {
         Self {
-            kind,
             message,
             backtrace: Backtrace::capture(),
         }
@@ -26,8 +18,8 @@ impl InternalError {
 
     pub fn format(&self) -> String {
         format!(
-            "{} error\n{}\nStacktrace:\n{}",
-            self.kind, self.message, self.backtrace
+            "Interpreter error\n{}\nStacktrace:\n{}",
+            self.message, self.backtrace
         )
     }
 }
@@ -35,8 +27,7 @@ impl InternalError {
 impl Display for InternalError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!(
-            "{} error, {}",
-            self.kind,
+            "Interpreter error, {}",
             self.message.replace("\n", " ")
         ))
     }
@@ -99,12 +90,9 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[macro_export]
 macro_rules! internal_error {
-    ($kind: ident, $($arg:tt)*) => {
+    ($($arg:tt)*) => {
         $crate::Error::Internal(
-            $crate::error::InternalError::new(
-                $crate::error::InternalKind::$kind,
-                format!($($arg)*)
-            )
+            $crate::error::InternalError::new(format!($($arg)*))
         )
     };
 }
@@ -113,7 +101,6 @@ macro_rules! internal_error {
 macro_rules! err_mismatch {
     ($expected: expr, $found: expr) => {
         Err($crate::internal_error!(
-            Typechecking,
             "Expected: {}\nFound: {}",
             $expected,
             $found
@@ -124,16 +111,15 @@ macro_rules! err_mismatch {
 #[macro_export]
 macro_rules! err_unsupported {
     ($prim: expr) => {
-        Err($crate::internal_error!(Parsing, "`{}` unsupported", $prim))
+        Err($crate::internal_error!("`{}` unsupported", $prim))
     };
 }
 
-macro_rules! impl_parsing_error {
+macro_rules! impl_error {
     ($inner_err_ty: ty) => {
         impl From<$inner_err_ty> for Error {
             fn from(error: $inner_err_ty) -> Self {
                 $crate::internal_error!(
-                    Parsing,
                     "{} (caused by {})",
                     error.to_string(),
                     stringify!($inner_err_ty)
@@ -143,12 +129,12 @@ macro_rules! impl_parsing_error {
     };
 }
 
-impl_parsing_error!(tezos_core::Error);
-impl_parsing_error!(tezos_michelson::Error);
-impl_parsing_error!(ibig::error::ParseError);
-impl_parsing_error!(chrono::ParseError);
-impl_parsing_error!(serde_json_wasm::de::Error);
-impl_parsing_error!(tezos_ctx::Error);
+impl_error!(tezos_core::Error);
+impl_error!(tezos_michelson::Error);
+impl_error!(ibig::error::ParseError);
+impl_error!(chrono::ParseError);
+impl_error!(serde_json_wasm::de::Error);
+impl_error!(&str);
 
 impl From<ibig::error::OutOfBoundsError> for Error {
     fn from(_: ibig::error::OutOfBoundsError) -> Self {
@@ -170,4 +156,8 @@ impl Error {
             err => format!("{:#?}", err),
         }
     }
+}
+
+pub fn err_into(e: impl std::fmt::Debug) -> Error {
+    Error::Internal(InternalError::new(format!("{:?}", e)))
 }

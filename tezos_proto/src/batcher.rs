@@ -3,21 +3,24 @@ use tezos_core::{
     internal::crypto::blake2b,
     types::encoded::{BlockHash, BlockPayloadHash, Encoded, OperationHash, OperationListListHash},
 };
-use tezos_ctx::{
-    migrations::run_migrations, BatchHeader, BatchReceipt, ExecutorContext, GenericContext, Head,
-    InterpreterContext,
-};
 use tezos_operation::{
     block_header, internal::coder::operation_content_bytes_coder::OperationContentBytesCoder,
     operations::SignedOperation,
 };
 use tezos_rpc::models::operation::Operation as OperationReceipt;
+use michelson_vm::interpreter::InterpreterContext;
 
 use crate::{
-    constants::*,
+    config::*,
+    Result,
     executor::operation::execute_operation,
     validator::{batch::validate_batch, operation::ValidOperation},
-    Result,
+    context::{
+        TezosContext,
+        head::Head,
+        batch::{BatchHeader, BatchReceipt},
+        migrations::run_migrations
+    },
 };
 
 pub fn block_hash(header: BatchHeader) -> Result<BlockHash> {
@@ -45,7 +48,7 @@ fn naive_header(prev_head: Head, operations: &Vec<ValidOperation>) -> Result<Bat
 }
 
 pub fn apply_batch(
-    context: &mut (impl GenericContext + ExecutorContext + InterpreterContext),
+    context: &mut (impl TezosContext + InterpreterContext),
     prev_head: Head,
     batch_payload: Vec<(OperationHash, SignedOperation)>,
     atomic: bool,

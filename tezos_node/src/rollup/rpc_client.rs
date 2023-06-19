@@ -3,7 +3,7 @@ use log::debug;
 use reqwest::Client;
 use serde::Deserialize;
 use tezos_core::types::encoded::{ChainId, Encoded, SmartRollupAddress};
-use tezos_ctx::ContextNode;
+use layered_store::StoreType;
 use tezos_rpc::models::version::{
     AdditionalInfo, CommitInfo, NetworkVersion, Version, VersionInfo,
 };
@@ -184,7 +184,7 @@ impl RollupClient for RollupRpcClient {
         Ok(())
     }
 
-    async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<ContextNode> {
+    async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<StoreType> {
         let block_id = self.convert_block_id(block_id).await?;
         let res = self
             .client
@@ -200,7 +200,7 @@ impl RollupClient for RollupRpcClient {
             match content {
                 Some(StateResponse::Value(value)) => {
                     let payload = hex::decode(value)?;
-                    Ok(ContextNode::from_vec(payload)?)
+                    Ok(StoreType::from_vec(payload)?)
                 }
                 Some(StateResponse::Errors(errors)) => {
                     let message = errors.first().unwrap().to_string();

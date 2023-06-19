@@ -1,25 +1,15 @@
 use derive_more::{Display, Error};
 use std::backtrace::Backtrace;
-use tezos_proto::error::{Error as TezosProtoError, TezosCoreError, TezosOperationError};
-
-#[derive(Debug, Display)]
-pub enum InternalKind {
-    WasmHost,
-    TezosEncoding,
-    TezosProtocol,
-}
 
 #[derive(Debug)]
 pub struct InternalError {
-    pub kind: InternalKind,
     pub message: String,
     pub backtrace: Backtrace,
 }
 
 impl InternalError {
-    pub fn new(kind: InternalKind, message: String) -> Self {
+    pub fn new(message: String) -> Self {
         Self {
-            kind,
             message,
             backtrace: Backtrace::capture(),
         }
@@ -27,8 +17,8 @@ impl InternalError {
 
     pub fn format(&self) -> String {
         format!(
-            "{} error\n{}\nStacktrace:\n{}",
-            self.kind, self.message, self.backtrace
+            "Kernel internal error\n{}\nStacktrace:\n{}",
+            self.message, self.backtrace
         )
     }
 }
@@ -36,8 +26,7 @@ impl InternalError {
 impl std::fmt::Display for InternalError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!(
-            "{} error, {}",
-            self.kind,
+            "Kernel internal error, {}",
             self.message.replace("\n", " ")
         ))
     }
@@ -73,34 +62,31 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[macro_export]
 macro_rules! internal_error {
-    ($kind: ident, $($arg:tt)*) => {
+    ($($arg:tt)*) => {
         $crate::Error::Internal(
-            $crate::error::InternalError::new(
-                $crate::error::InternalKind::$kind,
-                format!($($arg)*)
-            )
+            $crate::error::InternalError::new(format!($($arg)*))
         )
     };
 }
 
 macro_rules! impl_from_error {
-    ($inner_err_ty: ty, $kind: ident) => {
+    ($inner_err_ty: ty) => {
         impl From<$inner_err_ty> for Error {
             fn from(error: $inner_err_ty) -> Self {
-                $crate::internal_error!($kind, "Caused by: {:?}", error)
+                $crate::internal_error!("Caused by: {:?}", error)
             }
         }
     };
 }
 
-impl_from_error!(TezosCoreError, TezosEncoding);
-impl_from_error!(TezosOperationError, TezosEncoding);
-impl_from_error!(host::runtime::RuntimeError, WasmHost);
-impl_from_error!(host::path::PathError, WasmHost);
+impl_from_error!(tezos_core::Error);
+impl_from_error!(tezos_operation::Error);
+impl_from_error!(host::runtime::RuntimeError);
+impl_from_error!(host::path::PathError);
 
-impl From<TezosProtoError> for Error {
-    fn from(error: TezosProtoError) -> Self {
-        internal_error!(TezosProtocol, "Caused by: {}", error)
+impl From<tezos_proto::Error> for Error {
+    fn from(error: tezos_proto::Error) -> Self {
+        internal_error!("Caused by: {}", error)
     }
 }
 

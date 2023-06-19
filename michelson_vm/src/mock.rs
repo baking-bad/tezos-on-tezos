@@ -5,8 +5,10 @@ use tezos_core::types::{
 };
 use tezos_michelson::micheline::{primitive_application, Micheline};
 use tezos_michelson::michelson::types::unit;
-use michelson_vm::{
-    interpreter::{InterpreterContext, OperationScope},
+
+use crate::{
+    Result,
+    interpreter::{OperationScope, InterpreterContext},
     trace_log,
 };
 
@@ -70,7 +72,7 @@ impl InterpreterContext for MockContext {
         &mut self,
         address: encoded::ContractAddress,
         value: Micheline,
-    ) -> tezos_ctx::Result<()> {
+    ) -> Result<()> {
         let key = address.into_string();
         self.contracts.insert(key, value);
         Ok(())
@@ -79,7 +81,7 @@ impl InterpreterContext for MockContext {
     fn get_contract_type(
         &mut self,
         address: &encoded::ContractAddress,
-    ) -> tezos_ctx::Result<Option<Micheline>> {
+    ) -> Result<Option<Micheline>> {
         let key = address.into_string();
         match self.contracts.get(&key) {
             Some(ty) => Ok(Some(ty.clone())),
@@ -87,7 +89,7 @@ impl InterpreterContext for MockContext {
         }
     }
 
-    fn allocate_big_map(&mut self, owner: encoded::ContractAddress) -> tezos_ctx::Result<i64> {
+    fn allocate_big_map(&mut self, owner: encoded::ContractAddress) -> Result<i64> {
         let counter = self.big_map_counter;
         self.big_map_counter += 1;
         trace_log!("Alloc", counter);
@@ -98,7 +100,7 @@ impl InterpreterContext for MockContext {
     fn get_big_map_owner(
         &mut self,
         ptr: i64,
-    ) -> tezos_ctx::Result<Option<encoded::ContractAddress>> {
+    ) -> Result<Option<encoded::ContractAddress>> {
         match self.big_maps.get(&ptr) {
             Some(owner) => Ok(Some(owner.clone())),
             None => Ok(None),
@@ -109,7 +111,7 @@ impl InterpreterContext for MockContext {
         &mut self,
         ptr: i64,
         key_hash: &encoded::ScriptExprHash,
-    ) -> tezos_ctx::Result<bool> {
+    ) -> Result<bool> {
         trace_log!("Has", key_hash.value());
         Ok(self
             .big_map_values
@@ -120,7 +122,7 @@ impl InterpreterContext for MockContext {
         &mut self,
         ptr: i64,
         key_hash: &encoded::ScriptExprHash,
-    ) -> tezos_ctx::Result<Option<Micheline>> {
+    ) -> Result<Option<Micheline>> {
         trace_log!("Get", key_hash.value());
         Ok(self
             .big_map_values
@@ -133,7 +135,7 @@ impl InterpreterContext for MockContext {
         ptr: i64,
         key_hash: encoded::ScriptExprHash,
         value: Option<Micheline>,
-    ) -> tezos_ctx::Result<()> {
+    ) -> Result<()> {
         trace_log!("Update", key_hash.value());
         let k = (ptr, key_hash.into_string());
         match value {

@@ -1,20 +1,21 @@
 use tezos_core::types::encoded::Encoded;
-use tezos_ctx::{ExecutorContext, GenericContext, InterpreterContext};
 use tezos_operation::operations::OperationContent;
 use tezos_rpc::models::operation::Operation as OperationReceipt;
+use michelson_vm::interpreter::InterpreterContext;
 
 use crate::{
-    constants::PROTOCOL,
+    config::PROTOCOL,
     error::{Error, Result},
     executor::{
         balance_updates::BalanceUpdates, origination::execute_origination, reveal::execute_reveal,
         transaction::execute_transaction,
     },
+    context::TezosContext,
     validator::operation::ValidOperation,
 };
 
 pub fn execute_operation(
-    context: &mut (impl GenericContext + ExecutorContext + InterpreterContext),
+    context: &mut (impl TezosContext + InterpreterContext),
     opg: &ValidOperation,
 ) -> Result<OperationReceipt> {
     context.check_no_pending_changes()?;
@@ -78,13 +79,15 @@ pub fn execute_operation(
 #[cfg(test)]
 mod test {
     use tezos_core::types::{mutez::Mutez, number::Nat};
-    use tezos_ctx::{EphemeralContext, ExecutorContext};
     use tezos_operation::operations::{SignedOperation, Transaction};
     use tezos_rpc::models::operation::{operation_result::OperationResultStatus, OperationContent};
 
     use super::*;
-    use crate::validator::operation::ValidOperation;
-    use crate::Result;
+    use crate::{
+        Result,
+        validator::operation::ValidOperation,
+        context::TezosEphemeralContext
+    };
 
     macro_rules! get_status {
         ($receipt: expr) => {
@@ -106,7 +109,7 @@ mod test {
 
     #[test]
     fn test_skipped_backtracked() -> Result<()> {
-        let mut context = EphemeralContext::new();
+        let mut context = TezosEphemeralContext::new();
 
         let source = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
         let destination = "tz1NEgotHhj4fkm8AcwquQqQBrQsAMRUg86c";
