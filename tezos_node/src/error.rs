@@ -97,7 +97,7 @@ impl_from_error!(tezos_rpc::Error, TezosRpc);
 impl_from_error!(tezos_core::Error, TezosCore);
 impl_from_error!(tezos_operation::Error, TezosOperation);
 impl_from_error!(tezos_michelson::Error, TezosMichelson);
-impl_from_error!(tezos_l2::Error, TezosProtocol);
+impl_from_error!(tezos_proto::Error, TezosProtocol);
 impl_from_error!(std::num::ParseIntError, StdNum);
 impl_from_error!(std::num::TryFromIntError, StdNum);
 impl_from_error!(serde_json::Error, SerdeJson);

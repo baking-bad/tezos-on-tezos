@@ -2836,7 +2836,7 @@ dependencies = [
  "tezos-operation",
  "tezos-rpc",
  "tezos_ctx",
- "tezos_l2",
+ "tezos_proto",
 ]
 
 [[package]]
@@ -3115,26 +3115,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tezos_l2"
-version = "0.1.0"
-dependencies = [
- "blake2",
- "chrono",
- "derive_more",
- "ed25519-dalek",
- "ibig",
- "michelson_vm",
- "serde",
- "serde-json-wasm",
- "serde_json",
- "tezos-core",
- "tezos-michelson",
- "tezos-operation",
- "tezos-rpc",
- "tezos_ctx",
-]
-
-[[package]]
 name = "tezos_node"
 version = "0.1.0"
 dependencies = [
@@ -3157,8 +3137,28 @@ dependencies = [
  "tezos-operation",
  "tezos-rpc",
  "tezos_ctx",
- "tezos_l2",
+ "tezos_proto",
  "tokio",
+]
+
+[[package]]
+name = "tezos_proto"
+version = "0.1.0"
+dependencies = [
+ "blake2",
+ "chrono",
+ "derive_more",
+ "ed25519-dalek",
+ "ibig",
+ "michelson_vm",
+ "serde",
+ "serde-json-wasm",
+ "serde_json",
+ "tezos-core",
+ "tezos-michelson",
+ "tezos-operation",
+ "tezos-rpc",
+ "tezos_ctx",
 ]
 
 [[package]]

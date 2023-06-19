@@ -1,7 +1,7 @@
 use actix_web::rt::task;
 use async_trait::async_trait;
 use tezos_core::types::encoded::{Encoded, OperationHash, Signature};
-use tezos_l2::{
+use tezos_proto::{
     executor::operation::execute_operation,
     validator::operation::{validate_operation, ValidatedOperation},
 };

@@ -7,7 +7,7 @@ use tezos_ctx::{
     migrations::run_migrations, ContextNode, EphemeralContext, ExecutorContext, GenericContext,
     Head,
 };
-use tezos_l2::{
+use tezos_proto::{
     batcher::apply_batch,
     executor::operation::execute_operation,
     validator::operation::{validate_operation, ValidatedOperation},

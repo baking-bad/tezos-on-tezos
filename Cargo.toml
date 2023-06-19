@@ -3,7 +3,7 @@ members = [
   "kernel",
   "installer",
   "dac_codec",
-  "tezos_l2",
+  "tezos_proto",
   "michelson_vm",
   "tezos_node",
   "tezos_ctx",
