@@ -8,7 +8,7 @@ use tezos_rpc::models::operation::{
     operation_result::operations::origination::OriginationOperationResult,
     operation_result::OperationResultStatus,
 };
-use tezos_vm::interpreter::InterpreterContext;
+use michelson_vm::interpreter::InterpreterContext;
 
 use crate::{
     executor::balance_updates::BalanceUpdates,

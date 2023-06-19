@@ -12,7 +12,7 @@ pub use tezos_ctx::Error as ContextError;
 pub use tezos_michelson::Error as TezosMichelsonError;
 pub use tezos_operation::Error as TezosOperationError;
 pub use tezos_rpc::Error as TezosRpcError;
-pub use tezos_vm::Error as InterpreterError;
+pub use michelson_vm::Error as InterpreterError;
 
 #[derive(Debug, Display)]
 pub enum InternalKind {

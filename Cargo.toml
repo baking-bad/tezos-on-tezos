@@ -4,7 +4,7 @@ members = [
   "installer",
   "dac_codec",
   "tezos_l2",
-  "tezos_vm",
+  "michelson_vm",
   "tezos_node",
   "tezos_ctx",
   "sapling_proto",

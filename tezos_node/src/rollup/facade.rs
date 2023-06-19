@@ -12,7 +12,7 @@ use tezos_rpc::models::{
     contract::{ContractEntrypoints, ContractInfo, ContractScript},
     operation::Operation,
 };
-use tezos_vm::entrypoints::collect_entrypoints;
+use michelson_vm::entrypoints::collect_entrypoints;
 
 use crate::{
     rollup::{BlockId, BlockProtocols, RollupClient, TezosFacade},

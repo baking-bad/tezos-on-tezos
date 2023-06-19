@@ -1785,6 +1785,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "michelson_vm"
+version = "0.1.0"
+dependencies = [
+ "blake2",
+ "chrono",
+ "derive_more",
+ "hex",
+ "ibig",
+ "once_cell",
+ "serde",
+ "serde-json-wasm",
+ "tezos-core",
+ "tezos-michelson",
+ "tezos_ctx",
+]
+
+[[package]]
 name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3106,6 +3123,7 @@ dependencies = [
  "derive_more",
  "ed25519-dalek",
  "ibig",
+ "michelson_vm",
  "serde",
  "serde-json-wasm",
  "serde_json",
@@ -3114,7 +3132,6 @@ dependencies = [
  "tezos-operation",
  "tezos-rpc",
  "tezos_ctx",
- "tezos_vm",
 ]
 
 [[package]]
@@ -3129,6 +3146,7 @@ dependencies = [
  "hex",
  "ibig",
  "log",
+ "michelson_vm",
  "reqwest",
  "serde",
  "serde_json",
@@ -3140,7 +3158,6 @@ dependencies = [
  "tezos-rpc",
  "tezos_ctx",
  "tezos_l2",
- "tezos_vm",
  "tokio",
 ]
 
@@ -3157,23 +3174,6 @@ dependencies = [
  "tezos_encoding",
  "tezos_encoding_derive",
  "time",
-]
-
-[[package]]
-name = "tezos_vm"
-version = "0.1.0"
-dependencies = [
- "blake2",
- "chrono",
- "derive_more",
- "hex",
- "ibig",
- "once_cell",
- "serde",
- "serde-json-wasm",
- "tezos-core",
- "tezos-michelson",
- "tezos_ctx",
 ]
 
 [[package]]

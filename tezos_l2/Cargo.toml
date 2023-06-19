@@ -7,7 +7,7 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-tezos_vm = { path = "../tezos_vm" }
+michelson_vm = { path = "../michelson_vm" }
 tezos_ctx = { path = "../tezos_ctx" }
 tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-core", default-features = false, features = ["ed25519"] }
 tezos_operation = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-operation", default-features = false, features = ["ed25519"] }

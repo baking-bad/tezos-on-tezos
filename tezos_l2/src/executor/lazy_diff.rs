@@ -6,7 +6,7 @@ use tezos_rpc::models::operation::operation_result::{
     },
     DiffAction,
 };
-use tezos_vm::types::BigMapDiff;
+use michelson_vm::types::BigMapDiff;
 
 use crate::Result;
 

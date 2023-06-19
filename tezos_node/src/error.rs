@@ -114,8 +114,8 @@ impl From<tezos_ctx::Error> for Error {
     }
 }
 
-impl From<tezos_vm::Error> for Error {
-    fn from(error: tezos_vm::Error) -> Self {
+impl From<michelson_vm::Error> for Error {
+    fn from(error: michelson_vm::Error) -> Self {
         internal_error!(Context, "Caused by: {}", error.format())
     }
 }

@@ -7,7 +7,7 @@ use tezos_ctx::{ExecutorContext, InterpreterContext};
 use tezos_operation::operations::{
     Entrypoint, OperationContent, Origination, Parameters, Transaction,
 };
-use tezos_vm::{
+use michelson_vm::{
     interpreter::OperationScope,
     script::{MichelsonScript, ScriptReturn},
     types::InternalContent,
@@ -17,7 +17,7 @@ use crate::{constants, Error, Result};
 
 #[derive(Debug, From)]
 pub enum ContractOutput {
-    Error(tezos_vm::Error),
+    Error(michelson_vm::Error),
     Return(ScriptReturn),
 }
 

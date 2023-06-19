@@ -10,7 +10,7 @@ fn save_vk(vk: &VerifyingKey<Bls12>, path: &Path) {
 }
 
 fn main() {
-    let target_dir = Path::new("./sapling/src");
+    let target_dir = Path::new("./sapling_proto/src");
     assert!(target_dir.exists() && target_dir.is_dir());
 
     let params_paths =
