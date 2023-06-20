@@ -2,8 +2,8 @@ use tezos_core::types::mutez::Mutez;
 use tezos_rpc::models::balance_update::{BalanceUpdate, Contract, Kind, Origin};
 
 use crate::{
-    context::{TezosContext, head::Head},
-    Result
+    context::{head::Head, TezosContext},
+    Result,
 };
 
 const SEED_ACCOUNTS: [&str; 8] = [

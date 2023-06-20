@@ -1,7 +1,7 @@
 mod runner;
 
-use runner::e2e::E2E;
 use michelson_vm::Result;
+use runner::e2e::E2E;
 
 #[test]
 fn e2e_cons_00() -> Result<()> {

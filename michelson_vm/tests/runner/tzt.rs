@@ -1,4 +1,14 @@
 use hex;
+use michelson_vm::typechecker::check_pair_len;
+use michelson_vm::{
+    interpreter::{Interpreter, InterpreterContext, LazyStorage, OperationScope},
+    mock::{default_scope, MockContext},
+    stack::Stack,
+    trace_enter, trace_exit,
+    types::big_map::get_key_hash,
+    types::{BigMapDiff, BigMapItem, MapItem, StackItem},
+    Error, Result,
+};
 use tezos_core::{
     internal::crypto::blake2b,
     types::encoded::{self, Encoded, ScriptExprHash},
@@ -10,20 +20,8 @@ use tezos_michelson::michelson::{
     data::Instruction,
     types::{Code, Type},
 };
-use michelson_vm::typechecker::check_pair_len;
-use michelson_vm::{
-    interpreter::{Interpreter, InterpreterContext, LazyStorage, OperationScope},
-    stack::Stack,
-    trace_enter, trace_exit,
-    types::big_map::get_key_hash,
-    types::{BigMapDiff, BigMapItem, MapItem, StackItem},
-    Error, Result,
-    mock::{default_scope, MockContext},
-};
 
-use crate::runner::{
-    micheline::read_from_file,
-};
+use crate::runner::micheline::read_from_file;
 
 pub struct TZT {
     input: Input,

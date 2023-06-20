@@ -1,6 +1,6 @@
+use layered_store::{error::err_into, EphemeralStore, LayeredStore, StoreType};
 use log::debug;
 use reqwest::blocking::Client;
-use layered_store::{EphemeralStore, StoreType, LayeredStore, error::err_into};
 use tezos_proto::context::TezosStoreType;
 
 use crate::{rollup::rpc_client::StateResponse, Error, Result};

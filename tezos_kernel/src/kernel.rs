@@ -1,8 +1,11 @@
-use tezos_smart_rollup::host::Runtime;
-use tezos_core::types::encoded::{ChainId, Encoded, OperationHash};
-use tezos_proto::{batcher::apply_batch, context::{CtxRef, TezosContext, TezosStoreType}};
-use tezos_operation::operations::SignedOperation;
 use layered_store::{kernel::KernelStore, LayeredStore};
+use tezos_core::types::encoded::{ChainId, Encoded, OperationHash};
+use tezos_operation::operations::SignedOperation;
+use tezos_proto::{
+    batcher::apply_batch,
+    context::{CtxRef, TezosContext, TezosStoreType},
+};
+use tezos_smart_rollup::host::Runtime;
 
 use crate::{
     inbox::{read_inbox, InboxMessage},
@@ -26,7 +29,9 @@ pub fn kernel_run<Host: Runtime>(host: &mut Host) {
                 // Origination level is the one before kernel is first time invoked
                 // We assume single rollup block per inbox block here
                 // Note that head level is the one prior to the current block
-                let expected: i32 = (inbox_level - metadata.origination_level - 2).try_into().unwrap();
+                let expected: i32 = (inbox_level - metadata.origination_level - 2)
+                    .try_into()
+                    .unwrap();
                 if head.level != expected {
                     break Err(Error::InconsistentHeadLevel {
                         expected,
@@ -80,10 +85,10 @@ mod test {
     use super::*;
 
     use hex;
-    use tezos_smart_rollup_mock::MockHost;
     use layered_store::kernel::KernelStore;
+    use tezos_data_encoding::enc::{BinResult, BinWriter};
     use tezos_proto::context::{CtxRef, TezosContext, TezosStoreType};
-    use tezos_data_encoding::enc::{BinWriter, BinResult};
+    use tezos_smart_rollup_mock::MockHost;
 
     struct ExternalMessage(Vec<u8>);
 
@@ -97,7 +102,7 @@ mod test {
         fn bin_write(&self, output: &mut Vec<u8>) -> BinResult {
             match output.write(self.0.as_slice()) {
                 Ok(_) => BinResult::Ok(()),
-                Err(err) => BinResult::Err(err.into())
+                Err(err) => BinResult::Err(err.into()),
             }
         }
     }

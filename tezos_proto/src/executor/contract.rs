@@ -1,4 +1,9 @@
 use derive_more::From;
+use michelson_vm::{
+    interpreter::{InterpreterContext, OperationScope},
+    script::{MichelsonScript, ScriptReturn},
+    types::InternalContent,
+};
 use tezos_core::types::{
     encoded::{Address, ContractAddress, Encoded},
     mutez::Mutez,
@@ -6,13 +11,8 @@ use tezos_core::types::{
 use tezos_operation::operations::{
     Entrypoint, OperationContent, Origination, Parameters, Transaction,
 };
-use michelson_vm::{
-    interpreter::{InterpreterContext, OperationScope},
-    script::{MichelsonScript, ScriptReturn},
-    types::InternalContent,
-};
 
-use crate::{config, Error, Result, context::TezosContext};
+use crate::{config, context::TezosContext, Error, Result};
 
 #[derive(Debug, From)]
 pub enum ContractOutput {

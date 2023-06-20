@@ -1,3 +1,4 @@
+use michelson_vm::interpreter::InterpreterContext;
 use tezos_core::{
     internal::coder::Encoder,
     internal::crypto::blake2b,
@@ -8,19 +9,18 @@ use tezos_operation::{
     operations::SignedOperation,
 };
 use tezos_rpc::models::operation::Operation as OperationReceipt;
-use michelson_vm::interpreter::InterpreterContext;
 
 use crate::{
     config::*,
-    Result,
+    context::{
+        batch::{BatchHeader, BatchReceipt},
+        head::Head,
+        migrations::run_migrations,
+        TezosContext,
+    },
     executor::operation::execute_operation,
     validator::{batch::validate_batch, operation::ValidOperation},
-    context::{
-        TezosContext,
-        head::Head,
-        batch::{BatchHeader, BatchReceipt},
-        migrations::run_migrations
-    },
+    Result,
 };
 
 pub fn block_hash(header: BatchHeader) -> Result<BlockHash> {

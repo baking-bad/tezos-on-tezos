@@ -1,3 +1,4 @@
+use michelson_vm::interpreter::InterpreterContext;
 use tezos_core::types::encoded::{Address, Encoded};
 use tezos_michelson::micheline::Micheline;
 use tezos_operation::operations::{OperationContent, Transaction};
@@ -5,15 +6,14 @@ use tezos_rpc::models::operation::{
     operation_result::operations::transaction::TransactionOperationResult,
     operation_result::OperationResultStatus,
 };
-use michelson_vm::interpreter::InterpreterContext;
 
 use crate::{
+    context::TezosContext,
     executor::balance_updates::BalanceUpdates,
     executor::contract::{execute_contract, expand_content, ContractOutput},
     executor::lazy_diff::LazyDiff,
     executor::result::ExecutionResult,
     executor::rpc_errors::RpcErrors,
-    context::TezosContext,
     Error, Result,
 };
 
@@ -123,7 +123,7 @@ mod test {
     use tezos_operation::operations::Transaction;
 
     use super::*;
-    use crate::{Result, context::TezosEphemeralContext};
+    use crate::{context::TezosEphemeralContext, Result};
 
     #[test]
     fn test_transaction_applied() -> Result<()> {

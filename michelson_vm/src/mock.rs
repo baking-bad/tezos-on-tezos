@@ -7,9 +7,8 @@ use tezos_michelson::micheline::{primitive_application, Micheline};
 use tezos_michelson::michelson::types::unit;
 
 use crate::{
-    Result,
-    interpreter::{OperationScope, InterpreterContext},
-    trace_log,
+    interpreter::{InterpreterContext, OperationScope},
+    trace_log, Result,
 };
 
 pub const CHAIN_ID: &str = "NetXP2FfcNxFANL";
@@ -97,21 +96,14 @@ impl InterpreterContext for MockContext {
         Ok(counter)
     }
 
-    fn get_big_map_owner(
-        &mut self,
-        ptr: i64,
-    ) -> Result<Option<encoded::ContractAddress>> {
+    fn get_big_map_owner(&mut self, ptr: i64) -> Result<Option<encoded::ContractAddress>> {
         match self.big_maps.get(&ptr) {
             Some(owner) => Ok(Some(owner.clone())),
             None => Ok(None),
         }
     }
 
-    fn has_big_map_value(
-        &mut self,
-        ptr: i64,
-        key_hash: &encoded::ScriptExprHash,
-    ) -> Result<bool> {
+    fn has_big_map_value(&mut self, ptr: i64, key_hash: &encoded::ScriptExprHash) -> Result<bool> {
         trace_log!("Has", key_hash.value());
         Ok(self
             .big_map_values

@@ -1,22 +1,18 @@
 use async_trait::async_trait;
+use layered_store::LayeredStore;
 use log::debug;
 use std::cell::RefCell;
 use std::sync::Mutex;
-use layered_store::LayeredStore;
 use tezos_core::types::encoded::{ChainId, Encoded, OperationHash};
+use tezos_operation::operations::SignedOperation;
 use tezos_proto::{
     batcher::apply_batch,
+    context::{
+        head::Head, migrations::run_migrations, TezosContext, TezosEphemeralContext, TezosStoreType,
+    },
     executor::operation::execute_operation,
     validator::operation::{validate_operation, ValidatedOperation},
-    context::{
-        migrations::run_migrations,
-        TezosStoreType,
-        TezosContext,
-        head::Head,
-        TezosEphemeralContext
-    }
 };
-use tezos_operation::operations::SignedOperation;
 use tezos_rpc::models::operation::Operation;
 use tezos_rpc::models::version::{
     AdditionalInfo, CommitInfo, NetworkVersion, Version, VersionInfo,

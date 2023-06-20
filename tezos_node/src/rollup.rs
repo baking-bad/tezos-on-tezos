@@ -14,18 +14,12 @@ use tezos_core::types::encoded::{
 use tezos_core::types::{mutez::Mutez, number::Nat};
 use tezos_michelson::micheline::Micheline;
 use tezos_operation::operations::SignedOperation;
+use tezos_proto::context::{batch::BatchReceipt, head::Head, TezosStoreType};
 use tezos_rpc::models::{
     block::{Block, FullHeader, Metadata},
     contract::{ContractEntrypoints, ContractInfo, ContractScript},
     operation::Operation,
     version::VersionInfo,
-};
-use tezos_proto::{
-    context::{
-        batch::BatchReceipt,
-        head::Head,
-        TezosStoreType
-    },
 };
 
 use crate::Result;

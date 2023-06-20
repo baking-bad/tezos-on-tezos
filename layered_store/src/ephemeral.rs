@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{LayeredStore, StoreType, Result};
+use crate::{LayeredStore, Result, StoreType};
 
 pub struct EphemeralStore<T: StoreType> {
     state: HashMap<String, T>,
@@ -101,17 +101,17 @@ impl<T: StoreType> LayeredStore<T> for EphemeralStore<T> {
 
 #[cfg(test)]
 mod test {
-    use crate::{ephemeral::EphemeralStore, LayeredStore, StoreType, Result};
-    
+    use crate::{ephemeral::EphemeralStore, LayeredStore, Result, StoreType};
+
     #[derive(Clone)]
     pub struct EphemeralStoreType {
-        pub value: i64
+        pub value: i64,
     }
 
     impl StoreType for EphemeralStoreType {
         fn from_vec(value: Vec<u8>) -> Result<Self> {
             Ok(Self {
-                value: i64::from_be_bytes(value.as_slice().try_into().unwrap())
+                value: i64::from_be_bytes(value.as_slice().try_into().unwrap()),
             })
         }
 

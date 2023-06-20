@@ -1,12 +1,12 @@
 use actix_web::rt::task;
 use async_trait::async_trait;
 use tezos_core::types::encoded::{Encoded, OperationHash, Signature};
+use tezos_operation::operations::{SignedOperation, UnsignedOperation};
 use tezos_proto::{
+    context::CtxRef,
     executor::operation::execute_operation,
     validator::operation::{validate_operation, ValidatedOperation},
-    context::CtxRef
 };
-use tezos_operation::operations::{SignedOperation, UnsignedOperation};
 use tezos_rpc::models::operation::Operation;
 
 use crate::{

@@ -1,3 +1,4 @@
+use michelson_vm::interpreter::InterpreterContext;
 use std::collections::HashMap;
 use tezos_core::internal::crypto::blake2b;
 use tezos_core::types::{
@@ -13,15 +14,10 @@ use tezos_operation::operations::{
     Transaction, UnsignedOperation,
 };
 use tezos_rpc::models::operation::Operation;
-use michelson_vm::interpreter::InterpreterContext;
 
 use tezos_proto::{
     batcher::apply_batch,
-    context::{
-        TezosContext,
-        head::Head,
-        migrations::run_migrations
-    }
+    context::{head::Head, migrations::run_migrations, TezosContext},
 };
 
 pub struct Wallet {

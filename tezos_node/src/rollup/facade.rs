@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use michelson_vm::entrypoints::collect_entrypoints;
 use std::collections::HashMap;
 use tezos_core::types::encoded::{
     Address, BlockHash, ContractAddress, Encoded, ImplicitAddress, OperationHash, PublicKey,
@@ -12,7 +13,6 @@ use tezos_rpc::models::{
     contract::{ContractEntrypoints, ContractInfo, ContractScript},
     operation::Operation,
 };
-use michelson_vm::entrypoints::collect_entrypoints;
 
 use crate::{
     rollup::{BlockId, BlockProtocols, RollupClient, TezosFacade},

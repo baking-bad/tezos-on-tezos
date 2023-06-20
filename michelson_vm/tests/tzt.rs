@@ -1,7 +1,7 @@
 mod runner;
 
-use runner::tzt::TZT;
 use michelson_vm::Result;
+use runner::tzt::TZT;
 
 #[test]
 fn tzt_sub_timestamp_int_00() -> Result<()> {

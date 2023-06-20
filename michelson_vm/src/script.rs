@@ -12,7 +12,7 @@ use crate::{
     stack::Stack,
     trace_enter, trace_exit,
     types::{BigMapDiff, InternalContent, PairItem, StackItem},
-    Error, Result
+    Error, Result,
 };
 
 #[derive(Clone, Debug)]
@@ -192,10 +192,8 @@ impl TryFrom<Sequence> for MichelsonScript {
         // - check if all types in storage are storable
         // - check if all types in parameter are passable
         Ok(Self {
-            parameter_type: param_ty
-                .ok_or(internal_error!("Missing section:\tparameter"))?,
-            storage_type: storage_ty
-                .ok_or(internal_error!("Missing section:\tstorage"))?,
+            parameter_type: param_ty.ok_or(internal_error!("Missing section:\tparameter"))?,
+            storage_type: storage_ty.ok_or(internal_error!("Missing section:\tstorage"))?,
             code: code_ty.ok_or(internal_error!("Missing section:\tcode"))?,
         })
     }

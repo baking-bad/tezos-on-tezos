@@ -103,7 +103,7 @@ pub async fn contract<T: TezosFacade>(
 mod test {
     use actix_web::{test, web::Data, App};
     use tezos_core::types::{encoded::PublicKey, mutez::Mutez, number::Nat};
-    use tezos_proto::context::{TezosContext, head::Head};
+    use tezos_proto::context::{head::Head, TezosContext};
     use tezos_rpc::models::contract::ContractInfo;
 
     use crate::{rollup::mock_client::RollupMockClient, services::config, Result};

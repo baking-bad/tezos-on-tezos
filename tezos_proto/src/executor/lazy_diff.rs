@@ -1,3 +1,4 @@
+use michelson_vm::types::BigMapDiff;
 use tezos_michelson::micheline::Micheline;
 use tezos_rpc::models::operation::operation_result::{
     lazy_storage_diff::{
@@ -6,7 +7,6 @@ use tezos_rpc::models::operation::operation_result::{
     },
     DiffAction,
 };
-use michelson_vm::types::BigMapDiff;
 
 use crate::Result;
 

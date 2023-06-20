@@ -1,12 +1,12 @@
-pub mod head;
 pub mod batch;
-pub mod migrations;
-pub mod types;
-pub mod tezos;
+pub mod head;
 pub mod interpreter;
+pub mod migrations;
+pub mod tezos;
+pub mod types;
 
 use core::ops::{Deref, DerefMut};
-use layered_store::{LayeredStore, EphemeralStore};
+use layered_store::{EphemeralStore, LayeredStore};
 
 pub use tezos::TezosContext;
 pub use types::TezosStoreType;

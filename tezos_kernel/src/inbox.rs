@@ -1,6 +1,6 @@
-use tezos_smart_rollup::host::Runtime;
 use tezos_core::types::encoded::{BlockHash, Encoded, OperationHash, Signature};
 use tezos_operation::operations::{SignedOperation, UnsignedOperation};
+use tezos_smart_rollup::host::Runtime;
 
 use crate::error::{Error, Result};
 

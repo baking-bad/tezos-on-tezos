@@ -1,3 +1,4 @@
+use michelson_vm::interpreter::InterpreterContext;
 use tezos_core::{
     internal::crypto::blake2b,
     types::encoded::{ContractAddress, ContractHash, Encoded, OperationHash},
@@ -7,15 +8,14 @@ use tezos_rpc::models::operation::{
     operation_result::operations::origination::OriginationOperationResult,
     operation_result::OperationResultStatus,
 };
-use michelson_vm::interpreter::InterpreterContext;
 
 use crate::{
+    context::TezosContext,
     executor::balance_updates::BalanceUpdates,
     executor::contract::{deploy_contract, ContractOutput},
     executor::lazy_diff::LazyDiff,
     executor::result::ExecutionResult,
     executor::rpc_errors::RpcErrors,
-    context::TezosContext,
     Error, Result,
 };
 
@@ -105,7 +105,7 @@ mod test {
     use tezos_operation::operations::Script;
 
     use super::*;
-    use crate::{Result, context::TezosEphemeralContext};
+    use crate::{context::TezosEphemeralContext, Result};
 
     #[test]
     fn test_origination_applied() -> Result<()> {

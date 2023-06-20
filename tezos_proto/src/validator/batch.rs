@@ -2,8 +2,8 @@ use tezos_core::types::encoded::{Encoded, OperationHash};
 use tezos_operation::operations::SignedOperation;
 
 use crate::{
-    validator::operation::{validate_operation, ValidOperation, ValidatedOperation},
     context::TezosContext,
+    validator::operation::{validate_operation, ValidOperation, ValidatedOperation},
     Result,
 };
 

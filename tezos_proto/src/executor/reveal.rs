@@ -4,7 +4,10 @@ use tezos_rpc::models::operation::operation_result::{
     operations::reveal::RevealOperationResult, OperationResultStatus,
 };
 
-use crate::{executor::result::ExecutionResult, executor::rpc_errors::RpcErrors, Result, context::TezosContext};
+use crate::{
+    context::TezosContext, executor::result::ExecutionResult, executor::rpc_errors::RpcErrors,
+    Result,
+};
 
 pub fn execute_reveal(
     context: &mut impl TezosContext,
@@ -51,7 +54,7 @@ mod test {
     use tezos_operation::operations::Reveal;
 
     use super::*;
-    use crate::{Result, context::TezosEphemeralContext};
+    use crate::{context::TezosEphemeralContext, Result};
 
     #[test]
     fn test_reveal_applied() -> Result<()> {

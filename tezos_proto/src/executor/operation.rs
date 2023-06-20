@@ -1,16 +1,16 @@
+use michelson_vm::interpreter::InterpreterContext;
 use tezos_core::types::encoded::Encoded;
 use tezos_operation::operations::OperationContent;
 use tezos_rpc::models::operation::Operation as OperationReceipt;
-use michelson_vm::interpreter::InterpreterContext;
 
 use crate::{
     config::PROTOCOL,
+    context::TezosContext,
     error::{Error, Result},
     executor::{
         balance_updates::BalanceUpdates, origination::execute_origination, reveal::execute_reveal,
         transaction::execute_transaction,
     },
-    context::TezosContext,
     validator::operation::ValidOperation,
 };
 
@@ -83,11 +83,7 @@ mod test {
     use tezos_rpc::models::operation::{operation_result::OperationResultStatus, OperationContent};
 
     use super::*;
-    use crate::{
-        Result,
-        validator::operation::ValidOperation,
-        context::TezosEphemeralContext
-    };
+    use crate::{context::TezosEphemeralContext, validator::operation::ValidOperation, Result};
 
     macro_rules! get_status {
         ($receipt: expr) => {

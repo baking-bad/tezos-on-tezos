@@ -1,4 +1,5 @@
 use derive_more::{From, TryInto};
+use layered_store::{error::err_into, internal_error, Result, StoreType};
 use tezos_core::types::{
     encoded::{ContractAddress, Encoded, OperationHash, PublicKey},
     mutez::Mutez,
@@ -6,7 +7,6 @@ use tezos_core::types::{
 };
 use tezos_michelson::micheline::Micheline;
 use tezos_rpc::models::operation::Operation;
-use layered_store::{StoreType, error::err_into, Result, internal_error};
 
 use crate::{context::batch::BatchReceipt, context::head::Head};
 

@@ -1,20 +1,15 @@
+use layered_store::{store_get, store_get_opt, store_unwrap, LayeredStore};
 use tezos_core::types::{
-    encoded::{PublicKey, Encoded},
+    encoded::{Encoded, PublicKey},
     mutez::Mutez,
     number::Nat,
 };
 use tezos_michelson::micheline::Micheline;
 use tezos_rpc::models::operation::Operation;
-use layered_store::{LayeredStore, store_get, store_get_opt, store_unwrap};
 
 use crate::{
-    context::{
-        head::Head,
-        batch::BatchReceipt,
-        TezosStoreType,
-        CtxRef
-    },
-    Result
+    context::{batch::BatchReceipt, head::Head, CtxRef, TezosStoreType},
+    Result,
 };
 
 pub trait TezosContext {

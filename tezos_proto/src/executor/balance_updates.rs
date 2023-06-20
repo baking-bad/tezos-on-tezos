@@ -1,7 +1,7 @@
 use tezos_core::types::mutez::Mutez;
 use tezos_rpc::models::balance_update::{BalanceUpdate, Contract, Kind, Origin};
 
-use crate::{Error, Result, context::TezosContext};
+use crate::{context::TezosContext, Error, Result};
 
 #[derive(Clone, Debug)]
 pub struct BalanceUpdates {
@@ -68,11 +68,7 @@ impl BalanceUpdates {
         Ok((src_balance, dst_balance))
     }
 
-    pub fn reserve(
-        context: &mut impl TezosContext,
-        source: &str,
-        amount: &Mutez,
-    ) -> Result<Mutez> {
+    pub fn reserve(context: &mut impl TezosContext, source: &str, amount: &Mutez) -> Result<Mutez> {
         let mut src_balance = context
             .get_balance(source)?
             .ok_or(Error::BalanceNotInitialized)?;

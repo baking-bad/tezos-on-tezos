@@ -1,13 +1,13 @@
 use async_trait::async_trait;
+use layered_store::StoreType;
 use log::debug;
 use reqwest::Client;
 use serde::Deserialize;
 use tezos_core::types::encoded::{ChainId, Encoded, SmartRollupAddress};
+use tezos_proto::context::TezosStoreType;
 use tezos_rpc::models::version::{
     AdditionalInfo, CommitInfo, NetworkVersion, Version, VersionInfo,
 };
-use tezos_proto::context::TezosStoreType;
-use layered_store::StoreType;
 
 use crate::{
     internal_error,

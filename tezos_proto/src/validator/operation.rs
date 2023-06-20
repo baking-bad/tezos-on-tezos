@@ -7,8 +7,8 @@ use tezos_core::types::{
 use tezos_operation::operations::{OperationContent, SignedOperation};
 
 use crate::{
-    executor::rpc_errors::{RpcError, RpcErrors},
     context::TezosContext,
+    executor::rpc_errors::{RpcError, RpcErrors},
     Error, Result,
 };
 
@@ -164,7 +164,7 @@ mod test {
     use tezos_operation::operations::{Reveal, SignedOperation, Transaction};
 
     use super::*;
-    use crate::{Result, context::TezosEphemeralContext};
+    use crate::{context::TezosEphemeralContext, Result};
 
     #[test]
     fn test_valid_tx() -> Result<()> {

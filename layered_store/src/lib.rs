@@ -1,12 +1,12 @@
-pub mod store;
-pub mod error;
 pub mod ephemeral;
+pub mod error;
+pub mod store;
 
 #[cfg(any(test, feature = "kernel"))]
 pub mod kernel;
 
 pub use crate::{
-    store::{LayeredStore, StoreType},
     ephemeral::EphemeralStore,
-    error::{Error, Result}
+    error::{Error, Result},
+    store::{LayeredStore, StoreType},
 };

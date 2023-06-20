@@ -1,9 +1,10 @@
-use tezos_smart_rollup::{host::{Runtime, RuntimeError}, storage::path::RefPath};
 use std::collections::{HashMap, HashSet};
-
-use crate::{
-    StoreType, LayeredStore, Result,
+use tezos_smart_rollup::{
+    host::{Runtime, RuntimeError},
+    storage::path::RefPath,
 };
+
+use crate::{LayeredStore, Result, StoreType};
 
 const TMP_PREFIX: &str = "/tmp";
 
@@ -15,7 +16,8 @@ macro_rules! str_to_path {
 
 pub struct KernelStore<'rt, Host, T>
 where
-    Host: Runtime, T: StoreType
+    Host: Runtime,
+    T: StoreType,
 {
     host: &'rt mut Host,
     state: HashMap<String, Option<T>>,
@@ -25,7 +27,8 @@ where
 
 impl<'rt, Host, T> KernelStore<'rt, Host, T>
 where
-    Host: Runtime, T: StoreType
+    Host: Runtime,
+    T: StoreType,
 {
     pub fn new(host: &'rt mut Host) -> Self {
         KernelStore {
@@ -39,7 +42,10 @@ where
     pub fn persist(&mut self) -> Result<()> {
         for (key, exists) in self.saved_state.drain() {
             if exists {
-                self.host.store_move(&str_to_path!([TMP_PREFIX, &key].concat().as_str()), &str_to_path!(&key))?;
+                self.host.store_move(
+                    &str_to_path!([TMP_PREFIX, &key].concat().as_str()),
+                    &str_to_path!(&key),
+                )?;
             } else {
                 self.host.store_delete(&str_to_path!(&key))?;
             }
@@ -54,7 +60,8 @@ where
 
 impl<'rt, Host, T> LayeredStore<T> for KernelStore<'rt, Host, T>
 where
-    Host: Runtime, T: StoreType
+    Host: Runtime,
+    T: StoreType,
 {
     fn log(&self, msg: String) {
         self.host.write_debug(msg.as_str())
@@ -71,7 +78,7 @@ where
 
         match self.host.store_has(&str_to_path!(&key))? {
             Some(_) => Ok(true),
-            None => Ok(false)
+            None => Ok(false),
         }
     }
 
@@ -117,7 +124,10 @@ where
 
             let exists = match val {
                 Some(val) => {
-                    self.host.store_write_all(&str_to_path!([TMP_PREFIX, &key].concat().as_str()), &val.to_vec()?)?;
+                    self.host.store_write_all(
+                        &str_to_path!([TMP_PREFIX, &key].concat().as_str()),
+                        &val.to_vec()?,
+                    )?;
                     true
                 }
                 None => false,
@@ -137,29 +147,29 @@ where
         self.state.clear();
         self.saved_state.clear();
         self.modified_keys.clear();
-        
+
         match self.host.store_delete(&str_to_path!(TMP_PREFIX)) {
-            Ok(()) => {},
-            Err(RuntimeError::PathNotFound) => {},
-            Err(err) => panic!("Failed to clear kernel storage: {}", err)
+            Ok(()) => {}
+            Err(RuntimeError::PathNotFound) => {}
+            Err(err) => panic!("Failed to clear kernel storage: {}", err),
         }
     }
 }
 
 #[cfg(test)]
 mod test {
+    use crate::{kernel::KernelStore, LayeredStore, Result, StoreType};
     use tezos_smart_rollup_mock::MockHost;
-    use crate::{LayeredStore, StoreType, Result, kernel::KernelStore};
 
     #[derive(Clone)]
     pub struct EphemeralStoreType {
-        pub value: i64
+        pub value: i64,
     }
 
     impl StoreType for EphemeralStoreType {
         fn from_vec(value: Vec<u8>) -> Result<Self> {
             Ok(Self {
-                value: i64::from_be_bytes(value.as_slice().try_into().unwrap())
+                value: i64::from_be_bytes(value.as_slice().try_into().unwrap()),
             })
         }
 
