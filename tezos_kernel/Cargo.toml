@@ -12,7 +12,6 @@ tezos_proto = { path = "../tezos_proto" }
 tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-core", default-features = false }
 tezos_operation = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-operation", default-features = false }
 tezos-smart-rollup = { version = "0.2.0", features = ["proto-nairobi"] }
-tezos-smart-rollup-panic-hook = { version = "0.2.0" }
 derive_more = "0.99"
 hex = "*"
 

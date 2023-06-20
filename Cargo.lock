@@ -3266,7 +3266,6 @@ dependencies = [
  "tezos-rpc",
  "tezos-smart-rollup 0.2.0",
  "tezos-smart-rollup-mock",
- "tezos-smart-rollup-panic-hook 0.2.0",
  "tezos_data_encoding 0.5.0",
  "tezos_proto",
 ]
