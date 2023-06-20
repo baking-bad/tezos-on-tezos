@@ -4,8 +4,9 @@ FROM tezos/tezos:${OCTEZ_TAG} AS octez
 FROM rust:slim-buster AS builder
 RUN apt update && apt install -y wget make libc-dev
 RUN rustup target add wasm32-unknown-unknown
-RUN make install
 WORKDIR /build
+COPY Makefile ./
+RUN make install
 COPY . .
 RUN make build-operator
 
