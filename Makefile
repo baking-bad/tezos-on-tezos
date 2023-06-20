@@ -4,6 +4,7 @@ TAG:=
 OCTEZ_TAG:=
 OCTEZ_PROTO:=
 NETWORK:=
+CARGO_BIN_PATH:=$$HOME/.cargo/bin
 
 env-mumbainet:
 ifeq ($(NETWORK), mumbainet)
@@ -36,7 +37,7 @@ endif
 
 install:
 	cargo install tezos-smart-rollup-installer
-	cd $$HOME/.cargo/bin \
+	cd $(CARGO_BIN_PATH) \
 		&& wget -c https://github.com/WebAssembly/binaryen/releases/download/version_111/binaryen-version_111-x86_64-linux.tar.gz -O - | tar -xzv binaryen-version_111/bin/wasm-opt --strip-components 2 \
 		&& wget -c https://github.com/WebAssembly/wabt/releases/download/1.0.31/wabt-1.0.31-ubuntu.tar.gz -O - | tar -xzv wabt-1.0.31/bin/wasm-strip wabt-1.0.31/bin/wasm2wat --strip-components 2
 

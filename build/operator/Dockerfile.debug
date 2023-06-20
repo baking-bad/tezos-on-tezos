@@ -14,7 +14,7 @@ RUN apt update && apt install -y wget make libc-dev
 RUN rustup target add wasm32-unknown-unknown
 WORKDIR /build
 COPY Makefile ./
-RUN make install
+RUN make install CARGO_BIN_PATH=/usr/local/cargo/bin
 COPY . .
 RUN make build-operator
 

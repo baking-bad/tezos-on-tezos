@@ -13,7 +13,6 @@ tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/i
 tezos_operation = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-operation", default-features = false }
 tezos-smart-rollup = { version = "0.2.0", features = ["proto-nairobi"] }
 derive_more = "0.99"
-hex = "*"
 
 [dev-dependencies]
 tezos_data_encoding = { version = "0.5" }
