@@ -1,17 +1,18 @@
-use host::{rollup_core::RawRollupCore, runtime::Runtime};
+use tezos_smart_rollup::host::Runtime;
 use tezos_core::types::encoded::{ChainId, Encoded, OperationHash};
-use layered_store::{TezosContext, LayeredStore};
-use tezos_proto::batcher::apply_batch;
+use tezos_proto::{batcher::apply_batch, context::{CtxRef, TezosContext, TezosStoreType}};
 use tezos_operation::operations::SignedOperation;
+use layered_store::{kernel::KernelStore, LayeredStore};
 
 use crate::{
-    context::PVMContext,
     inbox::{read_inbox, InboxMessage},
     Error, Result,
 };
 
-pub fn kernel_run<Host: RawRollupCore>(context: &mut PVMContext<Host>) {
-    let metadata = Runtime::reveal_metadata(context.as_mut()).expect("Failed to reveal metadata");
+pub fn kernel_run<Host: Runtime>(host: &mut Host) {
+    let mut context = CtxRef(KernelStore::<Host, TezosStoreType>::new(host));
+
+    let metadata = context.as_host().reveal_metadata();
     let mut head = context.get_head().expect("Failed to get head");
     head.chain_id =
         ChainId::from_bytes(&metadata.raw_rollup_address[..4]).expect("Failed to decode chain ID");
@@ -20,12 +21,12 @@ pub fn kernel_run<Host: RawRollupCore>(context: &mut PVMContext<Host>) {
 
     let mut batch_payload: Vec<(OperationHash, SignedOperation)> = Vec::new();
     let res: Result<()> = loop {
-        match read_inbox(context.as_mut(), &metadata.raw_rollup_address[..4]) {
+        match read_inbox(context.as_host(), &metadata.raw_rollup_address[..4]) {
             Ok(InboxMessage::BeginBlock(inbox_level)) => {
                 // Origination level is the one before kernel is first time invoked
                 // We assume single rollup block per inbox block here
                 // Note that head level is the one prior to the current block
-                let expected = inbox_level - metadata.origination_level - 2;
+                let expected: i32 = (inbox_level - metadata.origination_level - 2).try_into().unwrap();
                 if head.level != expected {
                     break Err(Error::InconsistentHeadLevel {
                         expected,
@@ -45,7 +46,7 @@ pub fn kernel_run<Host: RawRollupCore>(context: &mut PVMContext<Host>) {
                 batch_payload.push((hash, opg));
             }
             Ok(InboxMessage::EndBlock(_)) => {
-                match apply_batch(context, head.clone(), batch_payload, false) {
+                match apply_batch(&mut context, head.clone(), batch_payload, false) {
                     Ok(new_head) => {
                         head = new_head;
                         context.log(format!("Batch applied: {}", head));
@@ -74,42 +75,50 @@ pub fn kernel_run<Host: RawRollupCore>(context: &mut PVMContext<Host>) {
 
 #[cfg(test)]
 mod test {
+    use std::io::Write;
+
     use super::*;
-    use crate::context::PVMContext;
 
     use hex;
-    use host::rollup_core::Input;
-    use mock_runtime::host::MockHost;
-    use layered_store::{TezosContext, Result};
+    use tezos_smart_rollup_mock::MockHost;
+    use layered_store::kernel::KernelStore;
+    use tezos_proto::context::{CtxRef, TezosContext, TezosStoreType};
+    use tezos_data_encoding::enc::{BinWriter, BinResult};
+
+    struct ExternalMessage(Vec<u8>);
+
+    impl ExternalMessage {
+        pub fn from_hex(value: &str) -> Self {
+            Self(hex::decode(value).unwrap())
+        }
+    }
+
+    impl BinWriter for ExternalMessage {
+        fn bin_write(&self, output: &mut Vec<u8>) -> BinResult {
+            match output.write(self.0.as_slice()) {
+                Ok(_) => BinResult::Ok(()),
+                Err(err) => BinResult::Err(err.into())
+            }
+        }
+    }
 
     #[test]
     fn send_tez() -> Result<()> {
-        let mut context = PVMContext::new(MockHost::default());
-        // default rollup address is sr1V6huFSUBUujzubUCg9nNXqpzfG9t4XD1h
-        // chain_id is first 4 bytes (fceda8e6)
-        // 01 is inbox prefix for external messages
+        let mut host = MockHost::default();
+        let mut context = CtxRef(KernelStore::<MockHost, TezosStoreType>::new(&mut host));
+        // default rollup address is sr163Lv22CdE8QagCwf48PWDTquk6isQwv57Head
+        // chain_id is first 4 bytes (00000000)
         // the rest is the operation payload
-        let input = hex::decode(
-            "01fceda8e662fd30ac16979d9b88aca559e8fd8b97abd2519bebe09ad8a269d60df0b17ddc6b\
+        let message = ExternalMessage::from_hex(
+            "0000000062fd30ac16979d9b88aca559e8fd8b97abd2519bebe09ad8a269d60df0b17ddc6b\
             00e8b36c80efb51ec85a14562426049aa182a3ce38f902e18a18e807000017143f62ff9c2f41b30ee00b8c64d233fda43adf05\
             eb829cfd2e733ee9a8f44b6c00e8b36c80efb51ec85a14562426049aa182a3ce3800e28a18ab0b8102c0843d00006b82198cb1\
             79e8306c1bedd08f12dc863f32888600b2014573fd63d27895841ea6ca9d45e23e1e3b836298801b5e390b3b0a0b412003af89\
             c08e63b6d8cf6847300e627c4ce0882ce4e2b842295309de3a0bd6260f",
-        )
-        .unwrap();
-        let level = 1;
-        context.as_mut().as_mut().set_ready_for_input(level);
-        context.as_mut().as_mut().add_next_inputs(
-            level,
-            vec![
-                (Input::MessageData, b"\x00\x01".to_vec()),
-                (Input::MessageData, input),
-                (Input::MessageData, b"\x00\x02".to_vec()),
-            ]
-            .iter(),
         );
 
-        kernel_run(&mut context);
+        context.as_host().add_external(message);
+        context.as_host().run_level(kernel_run);
 
         let head = context.get_head()?;
         println!("{:?}", head);

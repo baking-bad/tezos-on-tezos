@@ -2,15 +2,19 @@ use async_trait::async_trait;
 use log::debug;
 use std::cell::RefCell;
 use std::sync::Mutex;
+use layered_store::LayeredStore;
 use tezos_core::types::encoded::{ChainId, Encoded, OperationHash};
-use layered_store::{
-    migrations::run_migrations, StoreType, EphemeralContext, TezosContext, LayeredStore,
-    Head,
-};
 use tezos_proto::{
     batcher::apply_batch,
     executor::operation::execute_operation,
     validator::operation::{validate_operation, ValidatedOperation},
+    context::{
+        migrations::run_migrations,
+        TezosStoreType,
+        TezosContext,
+        head::Head,
+        TezosEphemeralContext
+    }
 };
 use tezos_operation::operations::SignedOperation;
 use tezos_rpc::models::operation::Operation;
@@ -26,7 +30,7 @@ use crate::{
 const CHAIN_ID: &str = "NetXP2FfcNxFANL";
 
 pub struct RollupMockClient {
-    context: Mutex<RefCell<EphemeralContext>>,
+    context: Mutex<RefCell<TezosEphemeralContext>>,
     mempool: Mutex<RefCell<Vec<(OperationHash, SignedOperation)>>>,
 }
 
@@ -39,7 +43,7 @@ macro_rules! get_mut {
 impl Default for RollupMockClient {
     fn default() -> Self {
         Self {
-            context: Mutex::new(RefCell::new(EphemeralContext::new())),
+            context: Mutex::new(RefCell::new(TezosEphemeralContext::new())),
             mempool: Mutex::new(RefCell::new(Vec::new())),
         }
     }
@@ -58,7 +62,7 @@ impl RollupMockClient {
         Ok(())
     }
 
-    pub fn patch(&self, func: fn(&mut EphemeralContext) -> Result<()>) -> Result<()> {
+    pub fn patch(&self, func: fn(&mut TezosEphemeralContext) -> Result<()>) -> Result<()> {
         func(get_mut!(self.context))
     }
 }
@@ -72,12 +76,13 @@ impl RollupClient for RollupMockClient {
         Ok(())
     }
 
-    async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<StoreType> {
+    async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<TezosStoreType> {
         match &block_id {
             BlockId::Head => {}
             _ => unimplemented!("Can only access state at head level in the mockup mode"),
         };
         get_mut!(self.context)
+            .0
             .get(key.clone())?
             .ok_or(Error::KeyNotFound { key })
     }

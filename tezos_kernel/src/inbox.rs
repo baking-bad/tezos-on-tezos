@@ -1,8 +1,4 @@
-use host::{
-    input::Input,
-    rollup_core::{RawRollupCore, MAX_INPUT_MESSAGE_SIZE},
-    runtime::Runtime,
-};
+use tezos_smart_rollup::host::Runtime;
 use tezos_core::types::encoded::{BlockHash, Encoded, OperationHash, Signature};
 use tezos_operation::operations::{SignedOperation, UnsignedOperation};
 
@@ -38,15 +34,15 @@ impl TryFrom<&[u8]> for LevelInfo {
 }
 
 pub enum InboxMessage {
-    BeginBlock(i32),
-    EndBlock(i32),
+    BeginBlock(u32),
+    EndBlock(u32),
     LevelInfo(LevelInfo),
     L2Operation {
         hash: OperationHash,
         opg: SignedOperation,
     },
     NoMoreData,
-    Unknown(i32),
+    Unknown(u32),
 }
 
 pub fn parse_l2_operation<'a>(payload: &'a [u8], chain_prefix: &[u8]) -> Result<InboxMessage> {
@@ -71,16 +67,15 @@ pub fn parse_l2_operation<'a>(payload: &'a [u8], chain_prefix: &[u8]) -> Result<
     })
 }
 
-pub fn read_inbox(host: &mut impl RawRollupCore, chain_prefix: &[u8]) -> Result<InboxMessage> {
-    match host.read_input(MAX_INPUT_MESSAGE_SIZE) {
-        Ok(Some(Input::Message(message))) => match message.as_ref() {
+pub fn read_inbox(host: &mut impl Runtime, chain_prefix: &[u8]) -> Result<InboxMessage> {
+    match host.read_input() {
+        Ok(Some(message)) => match message.as_ref() {
             b"\x00\x01" => Ok(InboxMessage::BeginBlock(message.level)),
             b"\x00\x02" => Ok(InboxMessage::EndBlock(message.level)),
             [b'\x00', b'\x03', info @ ..] => Ok(InboxMessage::LevelInfo(info.try_into()?)),
             [b'\x01', payload @ ..] => parse_l2_operation(payload, chain_prefix),
             _ => Ok(InboxMessage::Unknown(message.id)),
         },
-        Ok(Some(Input::Slot(_message))) => todo!("handle slot message"),
         Ok(None) => Ok(InboxMessage::NoMoreData),
         Err(err) => Err(err.into()),
     }

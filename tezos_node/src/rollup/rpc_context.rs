@@ -1,20 +1,14 @@
 use log::debug;
 use reqwest::blocking::Client;
-use layered_store::{StoreType, EphemeralContext, LayeredStore};
+use layered_store::{EphemeralStore, StoreType, LayeredStore, error::err_into};
+use tezos_proto::context::TezosStoreType;
 
 use crate::{rollup::rpc_client::StateResponse, Error, Result};
-
-fn err_into(e: impl std::fmt::Debug) -> layered_store::Error {
-    layered_store::Error::Internal(layered_store::error::InternalError::new(
-        layered_store::error::InternalKind::Store,
-        format!("RPC context error: {:?}", e),
-    ))
-}
 
 pub struct RpcContext {
     base_url: String,
     client: Client,
-    tmp_ctx: EphemeralContext,
+    cache: EphemeralStore<TezosStoreType>,
     state_level: u32,
 }
 
@@ -22,13 +16,13 @@ impl RpcContext {
     pub fn new(base_url: String, state_level: u32) -> Self {
         Self {
             client: Client::new(),
-            tmp_ctx: EphemeralContext::new(),
+            cache: EphemeralStore::new(),
             base_url,
             state_level,
         }
     }
 
-    fn get_state_value(&self, key: String) -> Result<Option<StoreType>> {
+    fn get_state_value(&self, key: String) -> Result<Option<TezosStoreType>> {
         let res = self
             .client
             .get(format!(
@@ -42,7 +36,7 @@ impl RpcContext {
             match content {
                 Some(StateResponse::Value(value)) => {
                     let payload = hex::decode(value)?;
-                    Ok(Some(StoreType::from_vec(payload)?))
+                    Ok(Some(TezosStoreType::from_vec(payload)?))
                 }
                 Some(StateResponse::Errors(errors)) => {
                     let message = errors.first().unwrap().to_string();
@@ -58,16 +52,16 @@ impl RpcContext {
     }
 }
 
-impl LayeredStore for RpcContext {
+impl LayeredStore<TezosStoreType> for RpcContext {
     fn log(&self, msg: String) {
         debug!("{}", msg)
     }
 
     fn has(&self, key: String) -> layered_store::Result<bool> {
-        match self.tmp_ctx.has(key.clone())? {
+        match self.cache.has(key.clone())? {
             true => return Ok(true),
             false => {
-                if self.tmp_ctx.pending_removed(&key) {
+                if self.cache.pending_removed(&key) {
                     return Ok(false);
                 }
             }
@@ -78,11 +72,11 @@ impl LayeredStore for RpcContext {
         }
     }
 
-    fn get(&mut self, key: String) -> layered_store::Result<Option<StoreType>> {
-        match self.tmp_ctx.get(key.clone())? {
+    fn get(&mut self, key: String) -> layered_store::Result<Option<TezosStoreType>> {
+        match self.cache.get(key.clone())? {
             Some(val) => return Ok(Some(val)),
             None => {
-                if self.tmp_ctx.pending_removed(&key) {
+                if self.cache.pending_removed(&key) {
                     return Ok(None);
                 }
             }
@@ -90,23 +84,23 @@ impl LayeredStore for RpcContext {
         self.get_state_value(key).map_err(err_into)
     }
 
-    fn set(&mut self, key: String, val: Option<StoreType>) -> layered_store::Result<()> {
-        self.tmp_ctx.set(key, val)
+    fn set(&mut self, key: String, val: Option<TezosStoreType>) -> layered_store::Result<()> {
+        self.cache.set(key, val)
     }
 
     fn has_pending_changes(&self) -> bool {
-        self.tmp_ctx.has_pending_changes()
+        self.cache.has_pending_changes()
     }
 
     fn commit(&mut self) -> layered_store::Result<()> {
-        self.tmp_ctx.commit()
+        self.cache.commit()
     }
 
     fn rollback(&mut self) {
-        self.tmp_ctx.rollback()
+        self.cache.rollback()
     }
 
     fn clear(&mut self) {
-        self.tmp_ctx.clear()
+        self.cache.clear()
     }
 }

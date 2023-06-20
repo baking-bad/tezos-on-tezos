@@ -188,7 +188,7 @@ mod test {
         encoded::{Encoded, PublicKey},
         mutez::Mutez,
     };
-    use layered_store::{TezosContext, LayeredStore, Head};
+    use tezos_proto::context::{TezosContext, head::Head};
     use tezos_rpc::models::{error::RpcError, operation::Operation};
 
     use crate::{rollup::mock_client::RollupMockClient, services::config, Result};

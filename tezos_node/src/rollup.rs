@@ -24,7 +24,7 @@ use tezos_proto::{
     context::{
         batch::BatchReceipt,
         head::Head,
-        codec::TezosStoreType
+        TezosStoreType
     },
 };
 

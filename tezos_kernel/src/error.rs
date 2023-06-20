@@ -81,8 +81,8 @@ macro_rules! impl_from_error {
 
 impl_from_error!(tezos_core::Error);
 impl_from_error!(tezos_operation::Error);
-impl_from_error!(host::runtime::RuntimeError);
-impl_from_error!(host::path::PathError);
+impl_from_error!(tezos_smart_rollup::host::RuntimeError);
+impl_from_error!(tezos_smart_rollup::storage::path::PathError);
 
 impl From<tezos_proto::Error> for Error {
     fn from(error: tezos_proto::Error) -> Self {

@@ -13,30 +13,21 @@ macro_rules! str_to_path {
     };
 }
 
-pub struct KernelStore<Host, T>
+pub struct KernelStore<'rt, Host, T>
 where
     Host: Runtime, T: StoreType
 {
-    host: Host,
+    host: &'rt mut Host,
     state: HashMap<String, Option<T>>,
     modified_keys: HashSet<String>,
     saved_state: HashMap<String, bool>,
 }
 
-impl<Host, T> AsMut<Host> for KernelStore<Host, T>
+impl<'rt, Host, T> KernelStore<'rt, Host, T>
 where
     Host: Runtime, T: StoreType
 {
-    fn as_mut(&mut self) -> &mut Host {
-        &mut self.host
-    }
-}
-
-impl<Host, T> KernelStore<Host, T>
-where
-    Host: Runtime, T: StoreType
-{
-    pub fn new(host: Host) -> Self {
+    pub fn new(host: &'rt mut Host) -> Self {
         KernelStore {
             host,
             state: HashMap::new(),
@@ -55,9 +46,13 @@ where
         }
         Ok(())
     }
+
+    pub fn as_host(&mut self) -> &mut Host {
+        &mut self.host
+    }
 }
 
-impl<Host, T> LayeredStore<T> for KernelStore<Host, T>
+impl<'rt, Host, T> LayeredStore<T> for KernelStore<'rt, Host, T>
 where
     Host: Runtime, T: StoreType
 {
@@ -175,7 +170,8 @@ mod test {
 
     #[test]
     fn test_kernel_store() -> Result<()> {
-        let mut store: KernelStore<MockHost, EphemeralStoreType> = KernelStore::new(MockHost::default());
+        let mut host = MockHost::default();
+        let mut store: KernelStore<MockHost, EphemeralStoreType> = KernelStore::new(&mut host);
 
         assert!(store.get("/test".into())?.is_none());
 

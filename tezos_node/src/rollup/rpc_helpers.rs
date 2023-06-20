@@ -4,6 +4,7 @@ use tezos_core::types::encoded::{Encoded, OperationHash, Signature};
 use tezos_proto::{
     executor::operation::execute_operation,
     validator::operation::{validate_operation, ValidatedOperation},
+    context::CtxRef
 };
 use tezos_operation::operations::{SignedOperation, UnsignedOperation};
 use tezos_rpc::models::operation::Operation;
@@ -51,7 +52,7 @@ impl TezosHelpers for RollupRpcClient {
         let base_url = self.base_url.clone();
 
         task::spawn_blocking(move || -> Result<Operation> {
-            let mut context = RpcContext::new(base_url, state_level);
+            let mut context = CtxRef(RpcContext::new(base_url, state_level));
             let hash = operation.hash()?;
             let opg = match validate_operation(&mut context, operation, hash, true)? {
                 ValidatedOperation::Valid(opg) => opg,

@@ -3,10 +3,11 @@ use log::debug;
 use reqwest::Client;
 use serde::Deserialize;
 use tezos_core::types::encoded::{ChainId, Encoded, SmartRollupAddress};
-use layered_store::StoreType;
 use tezos_rpc::models::version::{
     AdditionalInfo, CommitInfo, NetworkVersion, Version, VersionInfo,
 };
+use tezos_proto::context::TezosStoreType;
+use layered_store::StoreType;
 
 use crate::{
     internal_error,
@@ -184,7 +185,7 @@ impl RollupClient for RollupRpcClient {
         Ok(())
     }
 
-    async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<StoreType> {
+    async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<TezosStoreType> {
         let block_id = self.convert_block_id(block_id).await?;
         let res = self
             .client
@@ -200,7 +201,7 @@ impl RollupClient for RollupRpcClient {
             match content {
                 Some(StateResponse::Value(value)) => {
                     let payload = hex::decode(value)?;
-                    Ok(StoreType::from_vec(payload)?)
+                    Ok(TezosStoreType::from_vec(payload)?)
                 }
                 Some(StateResponse::Errors(errors)) => {
                     let message = errors.first().unwrap().to_string();
