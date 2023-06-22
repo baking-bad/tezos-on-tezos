@@ -2883,6 +2883,9 @@ dependencies = [
  "tezos-smart-rollup-entrypoint",
  "tezos-smart-rollup-host",
  "tezos-smart-rollup-mock",
+ "tezos-smart-rollup-storage",
+ "tezos_crypto_rs",
+ "tezos_data_encoding",
 ]
 
 [[package]]
@@ -2940,6 +2943,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "25ef490a027929034fda6e56d185d89ef70149c5818d5fa7a03f348d6ba985a1"
 dependencies = [
  "tezos-smart-rollup-core",
+ "tezos_crypto_rs",
+ "tezos_data_encoding",
+ "thiserror",
 ]
 
 [[package]]
@@ -2963,6 +2969,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b878d9d2b185f01656efb5a313aa99abb334025adc146b09f21390fa523c1b30"
 dependencies = [
  "tezos-smart-rollup-core",
+]
+
+[[package]]
+name = "tezos-smart-rollup-storage"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1da8c5742aaad5aa439d25db85045f350b130b2309c8b3de762a221aba13af1"
+dependencies = [
+ "tezos-smart-rollup-core",
+ "tezos-smart-rollup-debug",
+ "tezos-smart-rollup-encoding",
+ "tezos-smart-rollup-host",
+ "thiserror",
 ]
 
 [[package]]
@@ -3232,9 +3251,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-attributes"
-version = "0.1.25"
+version = "0.1.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8803eee176538f94ae9a14b55b2804eb7e1441f8210b1c31290b3bccdccff73b"
+checksum = "5f4f31f56159e98206da9efd823404b79b6ef3143b4a7ab76e67b1751b25a4ab"
 dependencies = [
  "proc-macro2",
  "quote",

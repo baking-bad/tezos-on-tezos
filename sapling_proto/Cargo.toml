@@ -21,9 +21,4 @@ layered_store = { path = "../layered_store" }
 serde-json-wasm = { git = "https://github.com/CosmWasm/serde-json-wasm", branch = "main" }
 serde = { version = "1.0", features = ["derive"] }
 derive_more = "*"
-
-[dev-dependencies]
 hex = "*"
-
-[features]
-default = []
