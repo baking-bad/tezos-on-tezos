@@ -289,15 +289,15 @@ dependencies = [
 
 [[package]]
 name = "anstyle"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41ed9a86bf92ae6580e0a31281f65a1b1d867c0cc68d5346e2ae128dddfa6a7d"
+checksum = "3a30da5c5f2d5e72842e00bcb57657162cdabef0931f40e2deb9b4140440cecd"
 
 [[package]]
 name = "anstyle-parse"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e765fd216e48e067936442276d1d57399e37bce53c264d6fefbe298080cb57ee"
+checksum = "938874ff5980b03a87c5524b3ae5b59cf99b1d6bc836848df7bc5ada9643c333"
 dependencies = [
  "utf8parse",
 ]
@@ -332,12 +332,6 @@ name = "arrayref"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6b4930d2cb77ce62f89ee5d5289b4ac049559b1c45539271f5ed4fdc7db34545"
-
-[[package]]
-name = "arrayvec"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23b62fc65de8e4e7f52534fb52b0f3ed04746ae267519eef2a83941e8085068b"
 
 [[package]]
 name = "arrayvec"
@@ -398,7 +392,7 @@ version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9afceed28bac7f9f5a508bca8aeeff51cdfa4770c0b967ac55c621e2ddfd6171"
 dependencies = [
- "bitvec 1.0.1",
+ "bitvec",
  "blake2s_simd",
  "byteorder",
  "ff 0.13.0",
@@ -436,26 +430,14 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitvec"
-version = "0.19.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55f93d0ef3363c364d5976646a38f04cf67cfe1d4c8d160cdea02cab2c116b33"
-dependencies = [
- "funty 1.1.0",
- "radium 0.5.3",
- "tap",
- "wyz 0.2.0",
-]
-
-[[package]]
-name = "bitvec"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1bc2832c24239b0141d5674bb9174f9d68a8b5b3f2753311927c172ca46f7e9c"
 dependencies = [
- "funty 2.0.0",
- "radium 0.7.0",
+ "funty",
+ "radium",
  "tap",
- "wyz 0.5.1",
+ "wyz",
 ]
 
 [[package]]
@@ -474,7 +456,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c2f0dc9a68c6317d884f97cc36cf5a3d20ba14ce404227df55e1af708ab04bc"
 dependencies = [
  "arrayref",
- "arrayvec 0.7.4",
+ "arrayvec",
  "constant_time_eq",
 ]
 
@@ -485,7 +467,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6637f448b9e61dfadbdcbae9a885fadee1f3eaffb1f8d3c1965d3ade8bdfd44f"
 dependencies = [
  "arrayref",
- "arrayvec 0.7.4",
+ "arrayvec",
  "constant_time_eq",
 ]
 
@@ -680,9 +662,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.3.4"
+version = "4.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80672091db20273a15cf9fdd4e47ed43b5091ec9841bf4c6145c9dfbbcae09ed"
+checksum = "2686c4115cb0810d9a984776e197823d08ec94f176549a89a9efded477c456dc"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -691,9 +673,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.3.4"
+version = "4.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1458a1df40e1e2afebb7ab60ce55c1fa8f431146205aa5f4887e0b111c27636"
+checksum = "2e53afce1efce6ed1f633cf0e57612fe51db54a1ee4fd8f8503d078fe02d69ae"
 dependencies = [
  "anstream",
  "anstyle",
@@ -954,12 +936,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ed25519-compact"
-version = "2.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a3d382e8464107391c8706b4c14b087808ecb909f6c15c34114bc42e53a9e4c"
-
-[[package]]
 name = "ed25519-dalek"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1090,7 +1066,7 @@ version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ded41244b729663b1e574f1b4fb731469f69f79c17667b5d776b16cda0479449"
 dependencies = [
- "bitvec 1.0.1",
+ "bitvec",
  "rand_core 0.6.4",
  "subtle",
 ]
@@ -1154,12 +1130,6 @@ dependencies = [
  "num-integer",
  "num-traits",
 ]
-
-[[package]]
-name = "funty"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fed34cd105917e91daa4da6b3728c47b068749d6a62c59811f06ed2ac71d9da7"
 
 [[package]]
 name = "funty"
@@ -1301,8 +1271,8 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "126a150072b0c38c7b573fe3eaf0af944a7fed09e154071bf2436d3f016f7230"
 dependencies = [
- "arrayvec 0.7.4",
- "bitvec 1.0.1",
+ "arrayvec",
+ "bitvec",
  "ff 0.13.0",
  "group 0.13.0",
  "halo2_proofs",
@@ -1613,7 +1583,7 @@ version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8499f7a74008aafbecb2a2e608a3e13e4dd3e84df198b604451efe93f2de6e61"
 dependencies = [
- "bitvec 1.0.1",
+ "bitvec",
  "bls12_381",
  "ff 0.13.0",
  "group 0.13.0",
@@ -1632,7 +1602,7 @@ name = "layered_store"
 version = "0.1.0"
 dependencies = [
  "derive_more",
- "tezos-smart-rollup 0.2.0",
+ "tezos-smart-rollup",
  "tezos-smart-rollup-mock",
 ]
 
@@ -1643,19 +1613,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 dependencies = [
  "spin",
-]
-
-[[package]]
-name = "lexical-core"
-version = "0.7.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6607c62aa161d23d17a9072cc5da0be67cdfc89d3afb1e8d9c842bebc2525ffe"
-dependencies = [
- "arrayvec 0.5.2",
- "bitflags",
- "cfg-if",
- "ryu",
- "static_assertions",
 ]
 
 [[package]]
@@ -1867,19 +1824,6 @@ dependencies = [
 
 [[package]]
 name = "nom"
-version = "6.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7413f999671bd4745a7b624bd370a569fb6bc574b23c83a3c5ed2e453f3d5e2"
-dependencies = [
- "bitvec 0.19.6",
- "funty 1.1.0",
- "lexical-core",
- "memchr",
- "version_check",
-]
-
-[[package]]
-name = "nom"
 version = "7.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d273983c5a657a70a3e8f2a01329822f3b8c8172b73826411a55751e404a0a4a"
@@ -1971,9 +1915,9 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "openssl"
-version = "0.10.54"
+version = "0.10.55"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69b3f656a17a6cbc115b5c7a40c616947d213ba182135b014d6051b73ab6f019"
+checksum = "345df152bc43501c5eb9e4654ff05f794effb78d4efe3d53abc158baddc0703d"
 dependencies = [
  "bitflags",
  "cfg-if",
@@ -2003,9 +1947,9 @@ checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
 
 [[package]]
 name = "openssl-sys"
-version = "0.9.88"
+version = "0.9.90"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2ce0f250f34a308dcfdbb351f511359857d4ed2134ba715a4eadd46e1ffd617"
+checksum = "374533b0e45f3a7ced10fcaeccca020e66656bc03dac384f852e4e5a7a8104a6"
 dependencies = [
  "cc",
  "libc",
@@ -2026,7 +1970,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5f4e7a52f510cb8c39e639e662a353adbaf86025478af89ae54a0551f8ca35e2"
 dependencies = [
  "aes",
- "bitvec 1.0.1",
+ "bitvec",
  "blake2b_simd",
  "ff 0.13.0",
  "fpe",
@@ -2256,12 +2200,6 @@ checksum = "1b9ab9c7eadfd8df19006f1cf1a4aed13540ed5cbc047010ece5826e10825488"
 dependencies = [
  "proc-macro2",
 ]
-
-[[package]]
-name = "radium"
-version = "0.5.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "941ba9d78d8e2f7ce474c015eea4d9c6d25b6a3327f9832ee29a4de27f91bbb8"
 
 [[package]]
 name = "radium"
@@ -2521,7 +2459,7 @@ name = "sapling_kernel"
 version = "0.1.0"
 dependencies = [
  "sapling_proto",
- "tezos-smart-rollup 0.1.0",
+ "tezos-smart-rollup",
 ]
 
 [[package]]
@@ -2532,10 +2470,14 @@ dependencies = [
  "bellman",
  "blake2b_simd",
  "bls12_381",
+ "derive_more",
  "hex",
  "incrementalmerkletree",
  "jubjub",
+ "layered_store",
  "lazy_static",
+ "serde",
+ "serde-json-wasm",
  "zcash_note_encryption 0.4.0 (git+https://github.com/zcash/librustzcash)",
  "zcash_primitives",
  "zcash_proofs",
@@ -2931,42 +2873,17 @@ dependencies = [
 
 [[package]]
 name = "tezos-smart-rollup"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4443c6587cb107e2a53aae6897f82224700a1ec6712b6f4667c76e2a21977de3"
-dependencies = [
- "tezos-smart-rollup-core 0.1.0",
- "tezos-smart-rollup-debug 0.1.0",
- "tezos-smart-rollup-encoding 0.1.0",
- "tezos-smart-rollup-entrypoint 0.1.0",
- "tezos-smart-rollup-host 0.1.0",
- "tezos-smart-rollup-storage 0.1.0",
- "tezos_crypto_rs 0.4.4",
- "tezos_data_encoding 0.4.4",
-]
-
-[[package]]
-name = "tezos-smart-rollup"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4f497c89d8a143f20004142f9a0fa9232598ceaf438581b82a029cbc709decf9"
 dependencies = [
- "tezos-smart-rollup-core 0.2.0",
- "tezos-smart-rollup-debug 0.2.0",
- "tezos-smart-rollup-encoding 0.2.0",
- "tezos-smart-rollup-entrypoint 0.2.0",
- "tezos-smart-rollup-host 0.2.0",
+ "tezos-smart-rollup-core",
+ "tezos-smart-rollup-debug",
+ "tezos-smart-rollup-encoding",
+ "tezos-smart-rollup-entrypoint",
+ "tezos-smart-rollup-host",
  "tezos-smart-rollup-mock",
- "tezos-smart-rollup-storage 0.2.0",
- "tezos_crypto_rs 0.5.0",
- "tezos_data_encoding 0.5.0",
 ]
-
-[[package]]
-name = "tezos-smart-rollup-core"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "affae569ebcfb1c8c6eebc29a4cf7adb7d33cf27651d3342fda4dd5d19e86120"
 
 [[package]]
 name = "tezos-smart-rollup-core"
@@ -2976,41 +2893,12 @@ checksum = "01b2d125ad921cde4c586427bdfd25350568e652f0b1b5050745fecb3f4f2a91"
 
 [[package]]
 name = "tezos-smart-rollup-debug"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1cad3acd5dd1f0eb7d0888547897f4507030d420e70bad075fd78e974e38f1fe"
-dependencies = [
- "tezos-smart-rollup-core 0.1.0",
- "tezos-smart-rollup-host 0.1.0",
-]
-
-[[package]]
-name = "tezos-smart-rollup-debug"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0108861f0710f4b10917917cfdc92fa320e991790fde5dd0a1851954bb01cec0"
 dependencies = [
- "tezos-smart-rollup-core 0.2.0",
- "tezos-smart-rollup-host 0.2.0",
-]
-
-[[package]]
-name = "tezos-smart-rollup-encoding"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "605e9df63679da72195cd1b51e4caed1b2310e21c4be41f2a3d233e38892f87c"
-dependencies = [
- "hex",
- "nom 6.1.2",
- "num-bigint 0.3.3",
- "num-traits",
- "tezos-smart-rollup-core 0.1.0",
- "tezos-smart-rollup-host 0.1.0",
- "tezos_crypto_rs 0.4.4",
- "tezos_data_encoding 0.4.4",
- "tezos_data_encoding_derive 0.4.4",
- "thiserror",
- "time",
+ "tezos-smart-rollup-core",
+ "tezos-smart-rollup-host",
 ]
 
 [[package]]
@@ -3020,29 +2908,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a23e2fc8261bb77a0bd0dec5350b0688dc4e45f6a2ad5227f24b8d17dd589cf"
 dependencies = [
  "hex",
- "nom 7.1.3",
+ "nom",
  "num-bigint 0.3.3",
  "num-traits",
- "tezos-smart-rollup-core 0.2.0",
- "tezos-smart-rollup-host 0.2.0",
- "tezos_crypto_rs 0.5.0",
- "tezos_data_encoding 0.5.0",
- "tezos_data_encoding_derive 0.5.0",
+ "tezos-smart-rollup-core",
+ "tezos-smart-rollup-host",
+ "tezos_crypto_rs",
+ "tezos_data_encoding",
+ "tezos_data_encoding_derive",
  "thiserror",
  "time",
-]
-
-[[package]]
-name = "tezos-smart-rollup-entrypoint"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "541fcf52afbdd59726aca82cffd5de4986b295aef6ac485d69de9313f5689b21"
-dependencies = [
- "dlmalloc",
- "tezos-smart-rollup-core 0.1.0",
- "tezos-smart-rollup-debug 0.1.0",
- "tezos-smart-rollup-host 0.1.0",
- "tezos-smart-rollup-panic-hook 0.1.0",
 ]
 
 [[package]]
@@ -3052,21 +2927,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "07168b649bb867967cec5f14e942292af98b237b45c897a9aa57a86ff4c1d210"
 dependencies = [
  "dlmalloc",
- "tezos-smart-rollup-core 0.2.0",
- "tezos-smart-rollup-debug 0.2.0",
- "tezos-smart-rollup-host 0.2.0",
- "tezos-smart-rollup-panic-hook 0.2.0",
-]
-
-[[package]]
-name = "tezos-smart-rollup-host"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f0f14c6090a6bb4b85292906d56cabd19d9cee8ff0703311a47da55ec2b9ed9"
-dependencies = [
- "tezos-smart-rollup-core 0.1.0",
- "tezos_crypto_rs 0.4.4",
- "thiserror",
+ "tezos-smart-rollup-core",
+ "tezos-smart-rollup-debug",
+ "tezos-smart-rollup-host",
+ "tezos-smart-rollup-panic-hook",
 ]
 
 [[package]]
@@ -3075,10 +2939,7 @@ version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "25ef490a027929034fda6e56d185d89ef70149c5818d5fa7a03f348d6ba985a1"
 dependencies = [
- "tezos-smart-rollup-core 0.2.0",
- "tezos_crypto_rs 0.5.0",
- "tezos_data_encoding 0.5.0",
- "thiserror",
+ "tezos-smart-rollup-core",
 ]
 
 [[package]]
@@ -3088,20 +2949,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e09f8b60f4b8b3a126ad8f4e8b54c4045637a535fd2848e0d6c173736bb568c2"
 dependencies = [
  "hex",
- "tezos-smart-rollup-core 0.2.0",
- "tezos-smart-rollup-encoding 0.2.0",
- "tezos-smart-rollup-host 0.2.0",
- "tezos_crypto_rs 0.5.0",
- "tezos_data_encoding 0.5.0",
-]
-
-[[package]]
-name = "tezos-smart-rollup-panic-hook"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0639849d0b4ef9c537d1db276e1a800135e13ac49247171392f5a759119e3e9c"
-dependencies = [
- "tezos-smart-rollup-core 0.1.0",
+ "tezos-smart-rollup-core",
+ "tezos-smart-rollup-encoding",
+ "tezos-smart-rollup-host",
+ "tezos_crypto_rs",
+ "tezos_data_encoding",
 ]
 
 [[package]]
@@ -3110,58 +2962,7 @@ version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b878d9d2b185f01656efb5a313aa99abb334025adc146b09f21390fa523c1b30"
 dependencies = [
- "tezos-smart-rollup-core 0.2.0",
-]
-
-[[package]]
-name = "tezos-smart-rollup-storage"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "071b44d9235ba5a29bb101e6d418b5b33766550e3c1eb1ed5431e5b1da9be76b"
-dependencies = [
- "tezos-smart-rollup-core 0.1.0",
- "tezos-smart-rollup-debug 0.1.0",
- "tezos-smart-rollup-encoding 0.1.0",
- "tezos-smart-rollup-host 0.1.0",
- "thiserror",
-]
-
-[[package]]
-name = "tezos-smart-rollup-storage"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1da8c5742aaad5aa439d25db85045f350b130b2309c8b3de762a221aba13af1"
-dependencies = [
- "tezos-smart-rollup-core 0.2.0",
- "tezos-smart-rollup-debug 0.2.0",
- "tezos-smart-rollup-encoding 0.2.0",
- "tezos-smart-rollup-host 0.2.0",
- "thiserror",
-]
-
-[[package]]
-name = "tezos_crypto_rs"
-version = "0.4.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "451933adf818795c3a9b926c8e29ff3ca6cb12c067e6db4e0c1e583163df1f1c"
-dependencies = [
- "anyhow",
- "base58",
- "blst",
- "byteorder",
- "cryptoxide",
- "ed25519-compact",
- "hex",
- "libsecp256k1",
- "num-bigint 0.3.3",
- "num-traits",
- "p256",
- "rand 0.7.3",
- "serde",
- "strum",
- "strum_macros",
- "thiserror",
- "zeroize",
+ "tezos-smart-rollup-core",
 ]
 
 [[package]]
@@ -3191,53 +2992,21 @@ dependencies = [
 
 [[package]]
 name = "tezos_data_encoding"
-version = "0.4.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d51d212e9031c6c1bc1c1b998238691077dc91ba4fb801901fc7df4f43c279b2"
-dependencies = [
- "bit-vec",
- "hex",
- "lazy_static",
- "nom 6.1.2",
- "num-bigint 0.3.3",
- "num-traits",
- "serde",
- "tezos_crypto_rs 0.4.4",
- "tezos_data_encoding_derive 0.4.4",
- "thiserror",
-]
-
-[[package]]
-name = "tezos_data_encoding"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd4b9308fd63d0e5afad1bba42870d002f5f8f6a4d1f82b02096bed5ffedb17"
 dependencies = [
  "bit-vec",
- "bitvec 1.0.1",
+ "bitvec",
  "hex",
  "lazy_static",
- "nom 7.1.3",
+ "nom",
  "num-bigint 0.3.3",
  "num-traits",
  "serde",
- "tezos_crypto_rs 0.5.0",
- "tezos_data_encoding_derive 0.5.0",
+ "tezos_crypto_rs",
+ "tezos_data_encoding_derive",
  "thiserror",
-]
-
-[[package]]
-name = "tezos_data_encoding_derive"
-version = "0.4.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3e3aa1ee4bfaadd4f3509b96c21c3bf27200d72f3d7855e43d0ef2585aac685"
-dependencies = [
- "lazy_static",
- "once_cell",
- "parse-display",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
 ]
 
 [[package]]
@@ -3264,9 +3033,9 @@ dependencies = [
  "tezos-core",
  "tezos-operation",
  "tezos-rpc",
- "tezos-smart-rollup 0.2.0",
+ "tezos-smart-rollup",
  "tezos-smart-rollup-mock",
- "tezos_data_encoding 0.5.0",
+ "tezos_data_encoding",
  "tezos_proto",
 ]
 
@@ -3878,12 +3647,6 @@ dependencies = [
 
 [[package]]
 name = "wyz"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85e60b0d1b5f99db2556934e21937020776a5d31520bf169e851ac44e6420214"
-
-[[package]]
-name = "wyz"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "05f360fc0b24296329c78fda852a1e9ae82de9cf7b27dae4b7f62f118f77b9ed"
@@ -3952,7 +3715,7 @@ source = "git+https://github.com/zcash/librustzcash#06a7849cb789bd1344228fa04476
 dependencies = [
  "aes",
  "bip0039",
- "bitvec 1.0.1",
+ "bitvec",
  "blake2b_simd",
  "blake2s_simd",
  "bls12_381",

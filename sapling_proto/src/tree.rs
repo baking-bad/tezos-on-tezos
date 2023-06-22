@@ -1,10 +1,10 @@
 use anyhow::{bail, Result};
 use incrementalmerkletree::Hashable;
-use zcash_primitives::{merkle_tree::HashSer, sapling::Node};
+use zcash_primitives::merkle_tree::HashSer;
 
 use crate::{
     storage::{SaplingStorage, MAX_HEIGHT},
-    types::{Commitment, Hash},
+    types::{Commitment, CommitmentNode, Hash},
 };
 
 pub struct CommitmentTree {
@@ -28,14 +28,17 @@ impl CommitmentTree {
 
     pub fn get_root_at(
         &self,
-        storage: &impl SaplingStorage,
+        storage: &mut impl SaplingStorage,
         height: usize,
         path: usize,
-    ) -> Result<Node> {
+    ) -> Result<CommitmentNode> {
         if path <= self.dissect_path >> height {
-            storage.get_commitment(path)
+            let cm = storage
+                .get_commitment(path)?
+                .unwrap_or_else(|| CommitmentNode::empty_root(height.try_into().unwrap()));
+            Ok(cm)
         } else {
-            Ok(Node::empty_root(height.try_into().unwrap()))
+            Ok(CommitmentNode::empty_root(height.try_into().unwrap()))
         }
     }
 
@@ -54,7 +57,7 @@ impl CommitmentTree {
         position: usize,
         height: usize,
         path: usize,
-    ) -> Result<Node> {
+    ) -> Result<CommitmentNode> {
         if height > self.max_height {
             bail!(
                 "Height {} is greater than expected maximum {}",
@@ -73,8 +76,8 @@ impl CommitmentTree {
                 bail!("Unexpected number of commitments {}", commitments.len());
             }
 
-            let node = Node::from_cmu(&commitments[0]);
-            storage.add_commitment(node.clone(), path)?;
+            let node = CommitmentNode::from_cmu(&commitments[0]);
+            storage.set_commitment(node.clone(), path)?;
 
             Ok(node)
         } else {
@@ -105,7 +108,11 @@ impl CommitmentTree {
                 )
             };
 
-            Ok(Node::combine(height.try_into().unwrap(), &hl, &hr))
+            Ok(CommitmentNode::combine(
+                height.try_into().unwrap(),
+                &hl,
+                &hr,
+            ))
         }
     }
 
@@ -134,27 +141,31 @@ mod test {
     use anyhow::Result;
     use hex;
     use incrementalmerkletree::Hashable;
-    use zcash_primitives::sapling::Node;
 
-    use super::CommitmentTree;
-    use crate::storage::{NaiveStorage, MAX_HEIGHT};
-    use crate::types::Commitment;
+    use crate::{
+        storage::{SaplingEphemeralStorage, MAX_HEIGHT},
+        tree::CommitmentTree,
+        types::{Commitment, CommitmentNode},
+    };
 
     // https://rpc.tzkt.io/ghostnet/chains/main/blocks/head/context/raw/json/sapling/index/6055
 
     #[test]
     fn test_empty_tree() -> Result<()> {
-        let mut storage = NaiveStorage::new(8);
+        let mut storage = SaplingEphemeralStorage::new();
         let tree = CommitmentTree::new(0, MAX_HEIGHT);
         let root = tree.get_root_at(&mut storage, MAX_HEIGHT, 1)?;
 
-        assert_eq!(Node::empty_root(MAX_HEIGHT.try_into().unwrap()), root);
+        assert_eq!(
+            CommitmentNode::empty_root(MAX_HEIGHT.try_into().unwrap()),
+            root
+        );
         Ok(())
     }
 
     #[test]
     fn test_single_commitment() -> Result<()> {
-        let mut storage = NaiveStorage::new(8);
+        let mut storage = SaplingEphemeralStorage::new();
         let mut tree = CommitmentTree::new(0, MAX_HEIGHT);
 
         let cm = hex::decode("f1de6f589f17cda6e8811dd2fb5b2b78875d440de07f6964a2f06e4e26f99b25")?;

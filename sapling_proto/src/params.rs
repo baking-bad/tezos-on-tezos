@@ -15,9 +15,9 @@ pub struct SaplingParams {
 
 impl SaplingParams {
     pub fn zcash() -> Self {
-        let spend_vk = read_verifying_key(include_bytes!("./vk_spend.bin"))
+        let spend_vk = read_verifying_key(include_bytes!("./keys/spend.bin"))
             .expect("Failed to read spend verifying key");
-        let output_vk = read_verifying_key(include_bytes!("./vk_output.bin"))
+        let output_vk = read_verifying_key(include_bytes!("./keys/output.bin"))
             .expect("Failed to read spend output key");
         Self {
             spend_vk,

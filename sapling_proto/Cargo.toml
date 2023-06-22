@@ -17,6 +17,13 @@ bellman = { version = "0.14", default-features = false, features = ["groth16"] }
 zcash_note_encryption = { git = "https://github.com/zcash/librustzcash", package = "zcash_note_encryption", default-features = false }
 anyhow = "1.0"
 incrementalmerkletree = { version = "0.4", features = ["legacy-api"] }
+layered_store = { path = "../layered_store" }
+serde-json-wasm = { git = "https://github.com/CosmWasm/serde-json-wasm", branch = "main" }
+serde = { version = "1.0", features = ["derive"] }
+derive_more = "*"
 
 [dev-dependencies]
 hex = "*"
+
+[features]
+default = []

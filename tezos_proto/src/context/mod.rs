@@ -2,14 +2,14 @@ pub mod batch;
 pub mod head;
 pub mod interpreter;
 pub mod migrations;
+pub mod store;
 pub mod tezos;
-pub mod types;
 
 use core::ops::{Deref, DerefMut};
 use layered_store::{EphemeralStore, LayeredStore};
 
+pub use store::TezosStoreType;
 pub use tezos::TezosContext;
-pub use types::TezosStoreType;
 
 pub struct CtxRef<T>(pub T);
 

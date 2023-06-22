@@ -9,22 +9,8 @@ pub const MAX_OUTPUTS: usize = 2019;
 use crate::{
     params::ZCASH_PARAMS,
     storage::SaplingStorage,
-    types::{Ciphertext, Hash, Input, Output, SaplingTransaction, HASH_SIZE},
+    types::{Hash, Input, Output, SaplingTransaction, HASH_SIZE},
 };
-
-impl Ciphertext {
-    // Payload contains fixed length fields and a variable size memo.
-    // The fixed length things are diversifier, amount, rcm and a message
-    // authentication code and 4 bytes added by the encoding for the length
-    // of the variable length field memo.
-    pub fn get_memo_size(&self) -> usize {
-        const DIVERSIFIER_SIZE: usize = 11;
-        const AMOUNT_SIZE: usize = 8;
-        const RCM_SIZE: usize = 32;
-        const TAG_SIZE: usize = 16;
-        self.payload_enc.len() - (DIVERSIFIER_SIZE + AMOUNT_SIZE + RCM_SIZE + TAG_SIZE + 4)
-    }
-}
 
 pub fn get_sighash(payload: &Vec<u8>, anti_replay: &String) -> Result<Hash> {
     let mut blake2b = Params::new();
@@ -68,7 +54,7 @@ pub fn check_output(ctx: &mut SaplingVerificationContext, output: &Output) -> Re
 }
 
 pub fn validate_transaction(
-    storage: &impl SaplingStorage,
+    storage: &mut impl SaplingStorage,
     transaction: &SaplingTransaction,
     anti_replay: &String,
 ) -> Result<()> {
@@ -83,7 +69,7 @@ pub fn validate_transaction(
         bail!("Too many outputs: {}", transaction.outputs.len());
     }
 
-    if !storage.find_root(&transaction.root)? {
+    if !storage.has_root(&transaction.root)? {
         bail!("Transaction is expired (root = {:?})", transaction.root);
     }
 
@@ -100,7 +86,7 @@ pub fn validate_transaction(
 
     let anchor = bls12_381::Scalar::from_bytes(&transaction.root).unwrap();
     for (idx, input) in transaction.inputs.iter().enumerate() {
-        if !storage.find_nullifier(&input.nf)? {
+        if !storage.has_nullifier(&input.nf)? {
             bail!("Input #{} nullifier cannot be found", idx);
         }
 
@@ -133,7 +119,7 @@ mod test {
 
     use crate::{
         storage::{SaplingHead, SaplingStorage},
-        types::SaplingTransaction,
+        types::{Ciphertext, CommitmentNode, Hash, Nullifier, SaplingTransaction},
         validator::{get_sighash, validate_transaction},
     };
 
@@ -190,46 +176,35 @@ mod test {
     pub struct MockStorage {}
 
     impl SaplingStorage for MockStorage {
-        fn get_root(&self, _position: usize) -> Result<crate::types::Hash> {
+        fn get_root(&mut self, _position: usize) -> Result<Option<Hash>> {
             unimplemented!()
         }
 
-        fn add_ciphertext(
-            &mut self,
-            _ciphertext: crate::types::Ciphertext,
-            _position: usize,
-        ) -> Result<()> {
+        fn set_ciphertext(&mut self, _ciphertext: Ciphertext, _position: usize) -> Result<()> {
             unimplemented!()
         }
 
-        fn add_nullifier(
-            &mut self,
-            _nullifier: zcash_primitives::sapling::Nullifier,
-            _position: usize,
-        ) -> Result<()> {
+        fn set_nullifier(&mut self, _nullifier: Nullifier, _position: usize) -> Result<()> {
             unimplemented!()
         }
 
-        fn add_root(&mut self, _root: crate::types::Hash, _position: usize) -> Result<()> {
+        fn set_root(&mut self, _root: Hash, _position: usize) -> Result<()> {
             unimplemented!()
         }
 
-        fn find_nullifier(
-            &self,
-            _nullifier: &zcash_primitives::sapling::Nullifier,
-        ) -> Result<bool> {
+        fn has_nullifier(&self, _nullifier: &Nullifier) -> Result<bool> {
             Ok(true)
         }
 
-        fn find_root(&self, _root: &crate::types::Hash) -> Result<bool> {
+        fn has_root(&self, _root: &Hash) -> Result<bool> {
             Ok(true)
         }
 
-        fn get_ciphertext(&self, _position: usize) -> Result<crate::types::Ciphertext> {
+        fn get_ciphertext(&mut self, _position: usize) -> Result<Option<Ciphertext>> {
             unimplemented!()
         }
 
-        fn get_head(&self) -> Result<SaplingHead> {
+        fn get_head(&mut self) -> Result<SaplingHead> {
             Ok(SaplingHead {
                 commitments_size: 1,
                 memo_size: 8,
@@ -238,7 +213,7 @@ mod test {
             })
         }
 
-        fn get_nullifier(&self, _position: usize) -> Result<zcash_primitives::sapling::Nullifier> {
+        fn get_nullifier(&mut self, _position: usize) -> Result<Option<Nullifier>> {
             unimplemented!()
         }
 
@@ -246,15 +221,11 @@ mod test {
             unimplemented!()
         }
 
-        fn add_commitment(
-            &mut self,
-            _commitment: zcash_primitives::sapling::Node,
-            _path: usize,
-        ) -> Result<()> {
+        fn set_commitment(&mut self, _commitment: CommitmentNode, _path: usize) -> Result<()> {
             unimplemented!()
         }
 
-        fn get_commitment(&self, _path: usize) -> Result<zcash_primitives::sapling::Node> {
+        fn get_commitment(&mut self, _path: usize) -> Result<Option<CommitmentNode>> {
             unimplemented!()
         }
     }
@@ -307,8 +278,8 @@ mod test {
         let payload = hex::decode(SAPLING_TX_HEX)
             .map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e.to_string()))?;
 
-        let storage = MockStorage {};
-        let tx = SaplingTransaction::try_from(payload)?;
-        validate_transaction(&storage, &tx, &[CONTRACT_ADDRESS, CHAIN_ID].concat())
+        let mut storage = MockStorage {};
+        let tx = SaplingTransaction::try_from(payload.as_slice())?;
+        validate_transaction(&mut storage, &tx, &[CONTRACT_ADDRESS, CHAIN_ID].concat())
     }
 }

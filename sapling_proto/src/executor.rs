@@ -13,7 +13,7 @@ pub fn execute_transaction(
     let mut head = storage.get_head()?;
 
     for input in transaction.inputs.iter() {
-        storage.add_nullifier(input.nf.clone(), head.nullifiers_size)?;
+        storage.set_nullifier(input.nf.clone(), head.nullifiers_size)?;
         head.nullifiers_size += 1;
     }
 
@@ -22,13 +22,13 @@ pub fn execute_transaction(
 
     for output in transaction.outputs.iter() {
         commitments.push(output.cm);
-        storage.add_ciphertext(output.ciphertext.clone(), head.commitments_size)?;
+        storage.set_ciphertext(output.ciphertext.clone(), head.commitments_size)?;
         head.commitments_size += 1;
     }
 
     let root = tree.add_commitments(storage, &commitments)?;
 
-    storage.add_root(root, head.roots_pos)?;
+    storage.set_root(root, head.roots_pos)?;
     head.roots_pos = (head.roots_pos + 1) % MAX_ROOTS;
 
     storage.set_head(head)

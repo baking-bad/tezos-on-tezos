@@ -1,8 +1,11 @@
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
 
-use crate::types::{
-    Ciphertext, Commitment, Input, Nullifier, Output, Proof, PublicKey, SaplingTransaction,
-    Signature, ValueCommitment, NONCE_SIZE, PAYLOAD_OUT_SIZE,
+use crate::{
+    ciphertext::{NONCE_SIZE, PAYLOAD_OUT_SIZE},
+    types::{
+        Ciphertext, Commitment, Input, Nullifier, Output, Proof, PublicKey, SaplingTransaction,
+        Signature, ValueCommitment,
+    },
 };
 
 pub fn read_size<R: Read>(mut reader: R) -> io::Result<usize> {
@@ -15,19 +18,6 @@ pub fn read_bytes32<R: Read>(mut reader: R) -> io::Result<[u8; 32]> {
     let mut bytes = [0u8; 32];
     reader.read_exact(&mut bytes)?;
     Ok(bytes)
-}
-
-fn read_value_commitment<R: Read>(mut reader: R) -> io::Result<ValueCommitment> {
-    let bytes = read_bytes32(&mut reader)?;
-    let cv = ValueCommitment::from_bytes_not_small_order(&bytes);
-    if cv.is_none().into() {
-        Err(io::Error::new(
-            io::ErrorKind::InvalidInput,
-            "Invalid value commitment",
-        ))
-    } else {
-        Ok(cv.unwrap())
-    }
 }
 
 pub fn read_input<R: Read>(mut reader: R) -> io::Result<Input> {
@@ -78,6 +68,19 @@ pub fn read_cmu<R: Read>(mut reader: R) -> io::Result<Commitment> {
         .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "cmu not in field"))
 }
 
+pub fn read_value_commitment<R: Read>(mut reader: R) -> io::Result<ValueCommitment> {
+    let bytes = read_bytes32(&mut reader)?;
+    let cv = ValueCommitment::from_bytes_not_small_order(&bytes);
+    if cv.is_none().into() {
+        Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "Invalid value commitment",
+        ))
+    } else {
+        Ok(cv.unwrap())
+    }
+}
+
 pub fn read_payload_enc<R: Read>(mut reader: R) -> io::Result<Vec<u8>> {
     let payload_enc_size = read_size(&mut reader)?;
     let mut payload_enc = Vec::with_capacity(payload_enc_size);
@@ -108,6 +111,20 @@ pub fn read_ciphertext<R: Read>(mut reader: R) -> io::Result<Ciphertext> {
         payload_out,
         nonce_out,
     })
+}
+
+pub fn write_ciphertext<W: Write>(ciphertext: &Ciphertext, mut writer: W) -> io::Result<()> {
+    writer.write(ciphertext.cv.to_bytes().as_slice())?;
+    ciphertext.epk.write(&mut writer)?;
+
+    writer.write(&ciphertext.payload_enc.len().to_be_bytes()[4..])?;
+    writer.write(ciphertext.payload_enc.as_slice())?;
+
+    writer.write(ciphertext.nonce_enc.as_slice())?;
+    writer.write(ciphertext.payload_out.as_slice())?;
+    writer.write(ciphertext.nonce_out.as_slice())?;
+
+    Ok(())
 }
 
 pub fn read_output<R: Read>(mut reader: R) -> io::Result<Output> {
@@ -175,19 +192,29 @@ impl TryFrom<&[u8]> for SaplingTransaction {
     }
 }
 
-impl TryFrom<Vec<u8>> for SaplingTransaction {
+impl TryFrom<&[u8]> for Ciphertext {
     type Error = io::Error;
 
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-        Self::try_from(value.as_slice())
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        read_ciphertext(value)
+    }
+}
+
+impl TryInto<Vec<u8>> for &Ciphertext {
+    type Error = io::Error;
+
+    fn try_into(self) -> Result<Vec<u8>, Self::Error> {
+        let mut writer: Vec<u8> = Vec::new();
+        write_ciphertext(self, &mut writer)?;
+        Ok(writer)
     }
 }
 
 #[cfg(test)]
 mod test {
-    use std::io;
+    use std::{borrow::Borrow, io};
 
-    use crate::types::SaplingTransaction;
+    use crate::types::{Ciphertext, SaplingTransaction};
 
     // Generated using octez, as in https://tezos.gitlab.io/alpha/sapling.html#sandbox-tutorial
     // Decoded using `octez-codec decode sapling.transaction from sapling_transaction`
@@ -292,11 +319,35 @@ mod test {
         let payload = hex::decode(SAPLING_TX_HEX)
             .map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e.to_string()))?;
 
-        let tx = SaplingTransaction::try_from(payload)?;
+        let tx = SaplingTransaction::try_from(payload.as_slice())?;
         assert_eq!("", tx.bound_data.as_str(), "Expected empty bound data");
         assert_eq!(0, tx.balance, "Expected zero balance");
         assert_eq!(1, tx.inputs.len(), "Expected single input");
         assert_eq!(2, tx.outputs.len(), "Expected two outputs");
+        Ok(())
+    }
+
+    const CIPHERTEXT_HEX: &'static str = "\
+        3f0d39c7e0\
+        071712cd21d82d70079ea270c4d2ee26121db6c12f8b922f8af9909bf1a5e50d\
+        8364707f657cef0ac568ba9368afb1f7d1b4d77fff07bad9a3f96a0000004f0c\
+        4eab5d24f6c3c137a28428f2b4d2b33ab386f1fa1544ea5b0019e7479e362f92\
+        6dc2c878ea6c3015aecc01aaa531d1c08f55e8f49cb65c96c3f9089b8a66d121\
+        94147e16b95f2340eb5860beae21ed571a724ec5c9ec685b0e22adc2a7294375\
+        5fdfe1ebdff616882b096762e8bc996a899452b1132678b879d8f306c3dc3a17\
+        925b8c65e14de34023c22dc4bdba5dddee4def4cd25b5c2597582b754d982145\
+        ea29cfcb132cf2a35a7b41c17a90f83d675ed156159ea8e7acf58889e83e1b73\
+        ed59f5f954af127b0469e5c3216c";
+
+    #[test]
+    fn test_ciphertext_encode() -> std::io::Result<()> {
+        let payload = hex::decode(CIPHERTEXT_HEX)
+            .map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e.to_string()))?;
+
+        let ciphertext = Ciphertext::try_from(payload.as_slice())?;
+        let res: Vec<u8> = ciphertext.borrow().try_into()?;
+
+        assert_eq!(payload, res);
         Ok(())
     }
 }
