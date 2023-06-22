@@ -10,7 +10,7 @@ RUN git clone --single-branch --branch "$TEZOS_BRANCH" https://gitlab.com/tezos/
     && chmod +w octez-*
 
 FROM rust:slim-buster AS builder
-RUN apt update && apt install -y wget make libc-dev
+RUN apt update && apt install -y wget make libc-dev clang-dev
 RUN rustup target add wasm32-unknown-unknown
 WORKDIR /build
 COPY Makefile ./
