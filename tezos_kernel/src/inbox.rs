@@ -1,6 +1,10 @@
 use tezos_core::types::encoded::{BlockHash, Encoded, OperationHash, Signature};
 use tezos_operation::operations::{SignedOperation, UnsignedOperation};
-use tezos_smart_rollup::host::Runtime;
+use tezos_smart_rollup_host::{runtime::RuntimeError};
+use tezos_smart_rollup_core::{
+    SmartRollupCore,
+    smart_rollup_core::ReadInputMessageInfo
+};
 
 use crate::error::{Error, Result};
 
@@ -34,15 +38,15 @@ impl TryFrom<&[u8]> for LevelInfo {
 }
 
 pub enum InboxMessage {
-    BeginBlock(u32),
-    EndBlock(u32),
+    BeginBlock(i32),
+    EndBlock(i32),
     LevelInfo(LevelInfo),
     L2Operation {
         hash: OperationHash,
         opg: SignedOperation,
     },
     NoMoreData,
-    Unknown(u32),
+    Unknown(i32),
 }
 
 pub fn parse_l2_operation<'a>(payload: &'a [u8], chain_prefix: &[u8]) -> Result<InboxMessage> {
@@ -67,8 +71,54 @@ pub fn parse_l2_operation<'a>(payload: &'a [u8], chain_prefix: &[u8]) -> Result<
     })
 }
 
-pub fn read_inbox(host: &mut impl Runtime, chain_prefix: &[u8]) -> Result<InboxMessage> {
-    match host.read_input() {
+#[derive(Clone, Debug)]
+pub struct Message {
+    pub level: i32,
+    pub id: i32,
+    pub payload: Vec<u8>,
+}
+
+impl AsRef<[u8]> for Message {
+    fn as_ref(&self) -> &[u8] {
+        self.payload.as_slice()
+    }
+}
+
+pub fn read_input<Host: SmartRollupCore>(host: &mut Host) -> std::result::Result<Option<Message>, RuntimeError> {
+    use core::mem::MaybeUninit;
+    use tezos_smart_rollup_core::MAX_INPUT_MESSAGE_SIZE;
+
+    let mut buffer = Vec::with_capacity(MAX_INPUT_MESSAGE_SIZE);
+
+    let mut message_info = MaybeUninit::<ReadInputMessageInfo>::uninit();
+
+    let bytes_read = unsafe {
+        SmartRollupCore::read_input(
+            host,
+            message_info.as_mut_ptr(),
+            buffer.as_mut_ptr(),
+            MAX_INPUT_MESSAGE_SIZE,
+        )
+    };
+
+    let bytes_read = match tezos_smart_rollup_host::Error::wrap(bytes_read) {
+        Ok(0) => return Ok(None),
+        Ok(size) => size,
+        Err(e) => return Err(RuntimeError::HostErr(e)),
+    };
+
+    let ReadInputMessageInfo { level, id } = unsafe {
+        buffer.set_len(bytes_read);
+        message_info.assume_init()
+    };
+
+    let input = Message {level, id, payload: buffer };
+
+    Ok(Some(input))
+}
+
+pub fn read_inbox<Host: SmartRollupCore>(host: &mut Host, chain_prefix: &[u8]) -> Result<InboxMessage> {
+    match read_input(host) {
         Ok(Some(message)) => match message.as_ref() {
             b"\x00\x01" => Ok(InboxMessage::BeginBlock(message.level)),
             b"\x00\x02" => Ok(InboxMessage::EndBlock(message.level)),

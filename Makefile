@@ -43,7 +43,7 @@ install:
 
 
 build-kernel:
-	RUSTC_BOOTSTRAP=1 cargo build --package tezos_kernel --target wasm32-unknown-unknown --release -Z sparse-registry
+	RUSTC_BOOTSTRAP=1 cargo build --package tezos_kernel --target wasm32-unknown-unknown --release -Z sparse-registry -Z avoid-dev-deps
 	wasm-strip -o ./.bin/tezos_kernel.wasm ./target/wasm32-unknown-unknown/release/tezos_kernel.wasm
 	# wasm-opt -Oz -o ./.bin/tezos_kernel.wasm ./target/wasm32-unknown-unknown/release/tezos_kernel.wasm
 
@@ -55,7 +55,7 @@ build-installer:
 
 build-facade:
 	mkdir .bin || true
-	RUSTC_BOOTSTRAP=1 cargo build --package tezos_node --release -Z sparse-registry 
+	RUSTC_BOOTSTRAP=1 cargo build --package tezos_node --release -Z sparse-registry -Z avoid-dev-deps
 	cp ./target/release/tezos-node ./.bin/tezos-node
 
 build-operator:

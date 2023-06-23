@@ -8,11 +8,9 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 derive_more = "0.99"
-tezos-smart-rollup = { version = "0.2.0", optional = true, features = ["proto-nairobi"], default-features = false }
+tezos-smart-rollup-host = { version = "0.2.0", features = ["proto-nairobi"], default-features = false }
+tezos-smart-rollup-core = { version = "0.2.0", default-features = false }
 
 [dev-dependencies]
-tezos-smart-rollup-mock = { version = "0.2.0", features = ["proto-nairobi"] }
-
-[features]
-default = []
-kernel = ["dep:tezos-smart-rollup"]
+tezos-smart-rollup-host = { version = "0.2.0", features = ["proto-nairobi", "crypto"], default-features = false }
+tezos-smart-rollup-mock = { version = "0.2.0", features = ["proto-nairobi"], default-features = false }

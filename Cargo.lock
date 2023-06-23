@@ -1602,7 +1602,8 @@ name = "layered_store"
 version = "0.1.0"
 dependencies = [
  "derive_more",
- "tezos-smart-rollup",
+ "tezos-smart-rollup-core",
+ "tezos-smart-rollup-host",
  "tezos-smart-rollup-mock",
 ]
 
@@ -3053,6 +3054,9 @@ dependencies = [
  "tezos-operation",
  "tezos-rpc",
  "tezos-smart-rollup",
+ "tezos-smart-rollup-core",
+ "tezos-smart-rollup-entrypoint",
+ "tezos-smart-rollup-host",
  "tezos-smart-rollup-mock",
  "tezos_data_encoding",
  "tezos_proto",

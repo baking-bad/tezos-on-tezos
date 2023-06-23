@@ -56,7 +56,7 @@ macro_rules! internal_error {
 }
 
 macro_rules! impl_from_error {
-    ($inner_err_ty: ty, $kind: ident) => {
+    ($inner_err_ty: ty) => {
         impl From<$inner_err_ty> for Error {
             fn from(error: $inner_err_ty) -> Self {
                 $crate::internal_error!("{:?}", error)
@@ -65,10 +65,8 @@ macro_rules! impl_from_error {
     };
 }
 
-impl_from_error!(&str, Encoding);
-
-#[cfg(feature = "kernel")]
-impl_from_error!(tezos_smart_rollup::host::RuntimeError, TezosSmartRollup);
+impl_from_error!(&str);
+impl_from_error!(tezos_smart_rollup_host::runtime::RuntimeError);
 
 impl Error {
     pub fn format(&self) -> String {

@@ -1,12 +1,14 @@
 use std::collections::{HashMap, HashSet};
-use tezos_smart_rollup::{
-    host::{Runtime, RuntimeError},
-    storage::path::RefPath,
+use tezos_smart_rollup_core::SmartRollupCore;
+use tezos_smart_rollup_host::{
+    runtime::{Runtime, RuntimeError},
+    path::{RefPath, Path},
 };
 
 use crate::{LayeredStore, Result, StoreType};
 
 const TMP_PREFIX: &str = "/tmp";
+const MAX_FILE_CHUNK_SIZE: usize = 2048;
 
 macro_rules! str_to_path {
     ($key: expr) => {
@@ -16,7 +18,7 @@ macro_rules! str_to_path {
 
 pub struct KernelStore<'rt, Host, T>
 where
-    Host: Runtime,
+    Host: SmartRollupCore,
     T: StoreType,
 {
     host: &'rt mut Host,
@@ -27,7 +29,7 @@ where
 
 impl<'rt, Host, T> KernelStore<'rt, Host, T>
 where
-    Host: Runtime,
+    Host: SmartRollupCore,
     T: StoreType,
 {
     pub fn new(host: &'rt mut Host) -> Self {
@@ -58,13 +60,41 @@ where
     }
 }
 
+// Runtime::store_read_all is available with [alloc] feature enabled,
+// and it depends on the [crypto] feature we need to avoid
+// because of the deps bloat and issues with building blst crate
+fn store_read_all(host: &impl Runtime, path: &impl Path) -> std::result::Result<Vec<u8>, RuntimeError> {
+    let length = Runtime::store_value_size(host, path)?;
+
+    let mut buffer: Vec<u8> = Vec::with_capacity(length);
+    let mut offset: usize = 0;
+
+    while offset < length {
+        unsafe {
+            let buf_len = usize::min(offset + MAX_FILE_CHUNK_SIZE, length);
+            buffer.set_len(buf_len);
+        }
+        
+        let slice = &mut buffer[offset..];
+        let chunk_size = host.store_read_slice(path, offset, slice)?;
+
+        offset += chunk_size;
+    }
+
+    if offset != length {
+        return Err(RuntimeError::DecodingError)
+    }
+
+    Ok(buffer)
+}
+
 impl<'rt, Host, T> LayeredStore<T> for KernelStore<'rt, Host, T>
 where
-    Host: Runtime,
+    Host: SmartRollupCore,
     T: StoreType,
 {
     fn log(&self, msg: String) {
-        self.host.write_debug(msg.as_str())
+        Runtime::write_debug(self.host, msg.as_str())
     }
 
     fn has(&self, key: String) -> Result<bool> {
@@ -76,7 +106,7 @@ where
             return Ok(*has);
         }
 
-        match self.host.store_has(&str_to_path!(&key))? {
+        match Runtime::store_has(self.host, &str_to_path!(&key))? {
             Some(_) => Ok(true),
             None => Ok(false),
         }
@@ -93,7 +123,7 @@ where
             None => key.clone(),
         };
 
-        match self.host.store_read_all(&str_to_path!(&store_key)) {
+        match store_read_all(self.host, &str_to_path!(&store_key)) {
             Ok(bytes) => {
                 let val = T::from_vec(bytes)?;
                 self.state.insert(key, Some(val.clone()));
@@ -158,7 +188,9 @@ where
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use crate::{kernel::KernelStore, LayeredStore, Result, StoreType};
+
     use tezos_smart_rollup_mock::MockHost;
 
     #[derive(Clone)]
@@ -193,6 +225,32 @@ mod test {
         assert!(store.get("/test".into())?.is_some()); // cached again
         assert_eq!(42, store.get("/test".into())?.unwrap().value); // served from the cache
 
+        Ok(())
+    }
+
+    #[test]
+    fn store_read_all_above_max_file_chunk_size() -> Result<()> {
+        // The value read is formed of 3 chunks, two of the max chunk value and
+        // the last one being less than the max size.
+        const PATH: RefPath<'static> = RefPath::assert_from("/a/simple/path".as_bytes());
+        const VALUE_FIRST_CHUNK: [u8; MAX_FILE_CHUNK_SIZE] = [b'a'; MAX_FILE_CHUNK_SIZE];
+        const VALUE_SECOND_CHUNK: [u8; MAX_FILE_CHUNK_SIZE] = [b'b'; MAX_FILE_CHUNK_SIZE];
+        const VALUE_LAST_CHUNK: [u8; MAX_FILE_CHUNK_SIZE / 2] = [b'c'; MAX_FILE_CHUNK_SIZE / 2];
+
+        let mut host = MockHost::default();
+        
+        Runtime::store_write(&mut host, &PATH, &VALUE_FIRST_CHUNK, 0)?;
+        Runtime::store_write(&mut host, &PATH, &VALUE_SECOND_CHUNK, MAX_FILE_CHUNK_SIZE)?;
+        Runtime::store_write(&mut host, &PATH, &VALUE_LAST_CHUNK, 2 * MAX_FILE_CHUNK_SIZE)?;
+
+        let result = store_read_all(&host, &PATH)?;
+        
+        let mut expected: Vec<u8> = Vec::new();
+        expected.extend_from_slice(&VALUE_FIRST_CHUNK);
+        expected.extend_from_slice(&VALUE_SECOND_CHUNK);
+        expected.extend_from_slice(&VALUE_LAST_CHUNK);
+
+        assert_eq!(expected, result);
         Ok(())
     }
 }

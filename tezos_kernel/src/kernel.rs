@@ -5,17 +5,18 @@ use tezos_proto::{
     batcher::apply_batch,
     context::{CtxRef, TezosContext, TezosStoreType},
 };
-use tezos_smart_rollup::host::Runtime;
+use tezos_smart_rollup_host::runtime::Runtime;
+use tezos_smart_rollup_core::SmartRollupCore;
 
 use crate::{
     inbox::{read_inbox, InboxMessage},
     Error, Result,
 };
 
-pub fn kernel_run<Host: Runtime>(host: &mut Host) {
+pub fn kernel_run<Host: SmartRollupCore>(host: &mut Host) {
     let mut context = CtxRef(KernelStore::<Host, TezosStoreType>::new(host));
 
-    let metadata = context.as_host().reveal_metadata();
+    let metadata = Runtime::reveal_metadata(context.as_host());
     let mut head = context.get_head().expect("Failed to get head");
     head.chain_id =
         ChainId::from_bytes(&metadata.raw_rollup_address[..4]).expect("Failed to decode chain ID");
@@ -29,9 +30,7 @@ pub fn kernel_run<Host: Runtime>(host: &mut Host) {
                 // Origination level is the one before kernel is first time invoked
                 // We assume single rollup block per inbox block here
                 // Note that head level is the one prior to the current block
-                let expected: i32 = (inbox_level - metadata.origination_level - 2)
-                    .try_into()
-                    .unwrap();
+                let expected = inbox_level - metadata.origination_level as i32 - 2;
                 if head.level != expected {
                     break Err(Error::InconsistentHeadLevel {
                         expected,
