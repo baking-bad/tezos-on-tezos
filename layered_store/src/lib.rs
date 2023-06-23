@@ -1,7 +1,7 @@
 pub mod ephemeral;
 pub mod error;
-pub mod store;
 pub mod kernel;
+pub mod store;
 
 pub use crate::{
     ephemeral::EphemeralStore,

@@ -5,8 +5,8 @@ use tezos_proto::{
     batcher::apply_batch,
     context::{CtxRef, TezosContext, TezosStoreType},
 };
-use tezos_smart_rollup_host::runtime::Runtime;
 use tezos_smart_rollup_core::SmartRollupCore;
+use tezos_smart_rollup_host::runtime::Runtime;
 
 use crate::{
     inbox::{read_inbox, InboxMessage},

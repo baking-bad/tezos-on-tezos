@@ -1,10 +1,7 @@
 use tezos_core::types::encoded::{BlockHash, Encoded, OperationHash, Signature};
 use tezos_operation::operations::{SignedOperation, UnsignedOperation};
-use tezos_smart_rollup_host::{runtime::RuntimeError};
-use tezos_smart_rollup_core::{
-    SmartRollupCore,
-    smart_rollup_core::ReadInputMessageInfo
-};
+use tezos_smart_rollup_core::{smart_rollup_core::ReadInputMessageInfo, SmartRollupCore};
+use tezos_smart_rollup_host::runtime::RuntimeError;
 
 use crate::error::{Error, Result};
 
@@ -84,7 +81,9 @@ impl AsRef<[u8]> for Message {
     }
 }
 
-pub fn read_input<Host: SmartRollupCore>(host: &mut Host) -> std::result::Result<Option<Message>, RuntimeError> {
+pub fn read_input<Host: SmartRollupCore>(
+    host: &mut Host,
+) -> std::result::Result<Option<Message>, RuntimeError> {
     use core::mem::MaybeUninit;
     use tezos_smart_rollup_core::MAX_INPUT_MESSAGE_SIZE;
 
@@ -112,12 +111,19 @@ pub fn read_input<Host: SmartRollupCore>(host: &mut Host) -> std::result::Result
         message_info.assume_init()
     };
 
-    let input = Message {level, id, payload: buffer };
+    let input = Message {
+        level,
+        id,
+        payload: buffer,
+    };
 
     Ok(Some(input))
 }
 
-pub fn read_inbox<Host: SmartRollupCore>(host: &mut Host, chain_prefix: &[u8]) -> Result<InboxMessage> {
+pub fn read_inbox<Host: SmartRollupCore>(
+    host: &mut Host,
+    chain_prefix: &[u8],
+) -> Result<InboxMessage> {
     match read_input(host) {
         Ok(Some(message)) => match message.as_ref() {
             b"\x00\x01" => Ok(InboxMessage::BeginBlock(message.level)),

@@ -11,17 +11,13 @@ pub type Result<T> = std::result::Result<T, Error>;
 fn kernel_run(host: &mut impl Runtime) {
     loop {
         match host.read_input() {
-            Ok(Some(message)) => {
-                match InboxMessage::<MichelsonUnit>::parse(message.as_ref()) {
-                    Ok((_, InboxMessage::External(payload))) => {
-                        if let Ok(tx) = SaplingTransaction::try_from(payload) {
-                            
-                        }
-                    }
-                    Ok(_) => continue,
-                    Err(_) => continue,
+            Ok(Some(message)) => match InboxMessage::<MichelsonUnit>::parse(message.as_ref()) {
+                Ok((_, InboxMessage::External(payload))) => {
+                    if let Ok(tx) = SaplingTransaction::try_from(payload) {}
                 }
-            }
+                Ok(_) => continue,
+                Err(_) => continue,
+            },
             Ok(None) => return,
             Err(_) => continue,
         }

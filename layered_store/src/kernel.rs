@@ -1,8 +1,8 @@
 use std::collections::{HashMap, HashSet};
 use tezos_smart_rollup_core::SmartRollupCore;
 use tezos_smart_rollup_host::{
+    path::{Path, RefPath},
     runtime::{Runtime, RuntimeError},
-    path::{RefPath, Path},
 };
 
 use crate::{LayeredStore, Result, StoreType};
@@ -63,7 +63,10 @@ where
 // Runtime::store_read_all is available with [alloc] feature enabled,
 // and it depends on the [crypto] feature we need to avoid
 // because of the deps bloat and issues with building blst crate
-fn store_read_all(host: &impl Runtime, path: &impl Path) -> std::result::Result<Vec<u8>, RuntimeError> {
+fn store_read_all(
+    host: &impl Runtime,
+    path: &impl Path,
+) -> std::result::Result<Vec<u8>, RuntimeError> {
     let length = Runtime::store_value_size(host, path)?;
 
     let mut buffer: Vec<u8> = Vec::with_capacity(length);
@@ -74,7 +77,7 @@ fn store_read_all(host: &impl Runtime, path: &impl Path) -> std::result::Result<
             let buf_len = usize::min(offset + MAX_FILE_CHUNK_SIZE, length);
             buffer.set_len(buf_len);
         }
-        
+
         let slice = &mut buffer[offset..];
         let chunk_size = host.store_read_slice(path, offset, slice)?;
 
@@ -82,7 +85,7 @@ fn store_read_all(host: &impl Runtime, path: &impl Path) -> std::result::Result<
     }
 
     if offset != length {
-        return Err(RuntimeError::DecodingError)
+        return Err(RuntimeError::DecodingError);
     }
 
     Ok(buffer)
@@ -238,13 +241,13 @@ mod test {
         const VALUE_LAST_CHUNK: [u8; MAX_FILE_CHUNK_SIZE / 2] = [b'c'; MAX_FILE_CHUNK_SIZE / 2];
 
         let mut host = MockHost::default();
-        
+
         Runtime::store_write(&mut host, &PATH, &VALUE_FIRST_CHUNK, 0)?;
         Runtime::store_write(&mut host, &PATH, &VALUE_SECOND_CHUNK, MAX_FILE_CHUNK_SIZE)?;
         Runtime::store_write(&mut host, &PATH, &VALUE_LAST_CHUNK, 2 * MAX_FILE_CHUNK_SIZE)?;
 
         let result = store_read_all(&host, &PATH)?;
-        
+
         let mut expected: Vec<u8> = Vec::new();
         expected.extend_from_slice(&VALUE_FIRST_CHUNK);
         expected.extend_from_slice(&VALUE_SECOND_CHUNK);
