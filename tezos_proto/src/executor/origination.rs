@@ -109,7 +109,7 @@ mod test {
 
     #[test]
     fn test_origination_applied() -> Result<()> {
-        let mut context = TezosEphemeralContext::new();
+        let mut context = TezosEphemeralContext::default();
 
         let source = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
         context.set_balance(source, Mutez::from(1000000000u32))?;

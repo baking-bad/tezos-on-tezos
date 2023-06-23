@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use layered_store::LayeredStore;
+use layered_store::{ephemeral::EphemeralCopy, StoreType};
 use log::debug;
 use std::cell::RefCell;
 use std::sync::Mutex;
@@ -7,9 +7,7 @@ use tezos_core::types::encoded::{ChainId, Encoded, OperationHash};
 use tezos_operation::operations::SignedOperation;
 use tezos_proto::{
     batcher::apply_batch,
-    context::{
-        head::Head, migrations::run_migrations, TezosContext, TezosEphemeralContext, TezosStoreType,
-    },
+    context::{head::Head, migrations::run_migrations, TezosContext, TezosEphemeralContext},
     executor::operation::execute_operation,
     validator::operation::{validate_operation, ValidatedOperation},
 };
@@ -39,7 +37,7 @@ macro_rules! get_mut {
 impl Default for RollupMockClient {
     fn default() -> Self {
         Self {
-            context: Mutex::new(RefCell::new(TezosEphemeralContext::new())),
+            context: Mutex::new(RefCell::new(TezosEphemeralContext::default())),
             mempool: Mutex::new(RefCell::new(Vec::new())),
         }
     }
@@ -72,13 +70,12 @@ impl RollupClient for RollupMockClient {
         Ok(())
     }
 
-    async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<TezosStoreType> {
+    async fn store_get<T: StoreType>(&self, key: String, block_id: &BlockId) -> Result<T> {
         match &block_id {
             BlockId::Head => {}
             _ => unimplemented!("Can only access state at head level in the mockup mode"),
         };
         get_mut!(self.context)
-            .0
             .get(key.clone())?
             .ok_or(Error::KeyNotFound { key })
     }

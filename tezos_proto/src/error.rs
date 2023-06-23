@@ -53,6 +53,8 @@ pub enum Error {
     InvalidSignature,
     EmptyImplicitContract,
     CounterInThePast { counter: String },
+    BatchNotFound { hash: String },
+    OperationNotFound { hash: String },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -106,4 +108,8 @@ impl Error {
             err => format!("{:#?}", err),
         }
     }
+}
+
+pub fn err_into(e: impl std::fmt::Debug) -> Error {
+    Error::Internal(InternalError::new(format!("{:?}", e)))
 }

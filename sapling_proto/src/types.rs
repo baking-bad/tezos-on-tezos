@@ -1,11 +1,10 @@
+use crate::storage::Ciphertext;
 pub use zcash_primitives::sapling::{
     note::ExtractedNoteCommitment as Commitment,
     redjubjub::{PublicKey, Signature},
     value::ValueCommitment,
     Node as CommitmentNode, Nullifier,
 };
-
-pub use crate::ciphertext::Ciphertext;
 
 pub const HASH_SIZE: usize = 32;
 

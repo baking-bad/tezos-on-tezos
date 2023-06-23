@@ -118,8 +118,8 @@ mod test {
     };
 
     use crate::{
-        storage::{SaplingHead, SaplingStorage},
-        types::{Ciphertext, CommitmentNode, Hash, Nullifier, SaplingTransaction},
+        storage::{Ciphertext, SaplingHead, SaplingStorage},
+        types::{CommitmentNode, Hash, Nullifier, SaplingTransaction},
         validator::{get_sighash, validate_transaction},
     };
 

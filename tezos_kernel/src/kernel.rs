@@ -1,10 +1,7 @@
-use layered_store::{kernel::KernelStore, LayeredStore};
+use layered_store::{kernel::KernelHost, KernelStore};
 use tezos_core::types::encoded::{ChainId, Encoded, OperationHash};
 use tezos_operation::operations::SignedOperation;
-use tezos_proto::{
-    batcher::apply_batch,
-    context::{CtxRef, TezosContext, TezosStoreType},
-};
+use tezos_proto::{batcher::apply_batch, context::TezosContext};
 use tezos_smart_rollup_core::SmartRollupCore;
 use tezos_smart_rollup_host::runtime::Runtime;
 
@@ -14,7 +11,7 @@ use crate::{
 };
 
 pub fn kernel_run<Host: SmartRollupCore>(host: &mut Host) {
-    let mut context = CtxRef(KernelStore::<Host, TezosStoreType>::new(host));
+    let mut context = KernelStore::attach(host);
 
     let metadata = Runtime::reveal_metadata(context.as_host());
     let mut head = context.get_head().expect("Failed to get head");
@@ -67,7 +64,10 @@ pub fn kernel_run<Host: SmartRollupCore>(host: &mut Host) {
 
     match res {
         Ok(_) => {
-            context.persist().expect("Failed to persist changes");
+            context
+                .as_mut()
+                .persist()
+                .expect("Failed to persist changes");
             context.log(format!("Kernel yields"));
         }
         Err(err) => {
@@ -84,9 +84,9 @@ mod test {
     use super::*;
 
     use hex;
-    use layered_store::kernel::KernelStore;
+    use layered_store::{kernel::KernelHost, KernelStore};
     use tezos_data_encoding::enc::{BinResult, BinWriter};
-    use tezos_proto::context::{CtxRef, TezosContext, TezosStoreType};
+    use tezos_proto::context::TezosContext;
     use tezos_smart_rollup_mock::MockHost;
 
     struct ExternalMessage(Vec<u8>);
@@ -109,7 +109,7 @@ mod test {
     #[test]
     fn send_tez() -> Result<()> {
         let mut host = MockHost::default();
-        let mut context = CtxRef(KernelStore::<MockHost, TezosStoreType>::new(&mut host));
+        let mut context = KernelStore::<MockHost>::attach(&mut host);
         // default rollup address is sr163Lv22CdE8QagCwf48PWDTquk6isQwv57Head
         // chain_id is first 4 bytes (00000000)
         // the rest is the operation payload

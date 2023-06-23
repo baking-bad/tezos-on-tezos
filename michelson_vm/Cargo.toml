@@ -17,6 +17,7 @@ chrono = { version = "0.4", default-features = false }
 hex = "*"
 ibig = { version = "0.3", features = ["std", "num-traits"], default-features = false }
 once_cell = "*"
+layered_store = { path = "../layered_store", features = ["tezos"], default-features = false }
 
 [features]
 default = ["mock", "trace"]

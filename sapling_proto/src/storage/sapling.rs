@@ -1,10 +1,11 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use hex;
-use layered_store::LayeredStore;
+use layered_store::{LayeredStore, StoreBackend};
+use zcash_primitives::merkle_tree::HashSer;
 
 use crate::{
-    storage::{SaplingHead, SaplingStoreType},
-    types::{Ciphertext, CommitmentNode, Hash, Nullifier},
+    storage::{Ciphertext, SaplingHead},
+    types::{CommitmentNode, Hash, Nullifier},
 };
 
 pub trait SaplingStorage {
@@ -34,53 +35,39 @@ pub trait SaplingStorage {
     fn get_ciphertext(&mut self, position: usize) -> Result<Option<Ciphertext>>;
 }
 
-impl<T: LayeredStore<SaplingStoreType>> SaplingStorage for T {
+impl<Backend: StoreBackend> SaplingStorage for LayeredStore<Backend> {
     fn get_head(&mut self) -> Result<SaplingHead> {
-        let value = self
+        Ok(self
             .get("/head".into())?
-            .unwrap_or_else(|| SaplingHead::default().into());
-        value.try_into().map_err(|_| anyhow!("Unexpected variant"))
+            .unwrap_or_else(|| SaplingHead::default()))
     }
 
     fn set_head(&mut self, head: SaplingHead) -> Result<()> {
-        self.set("/head".into(), Some(head.into()))?;
-        Ok(())
+        Ok(self.set("/head".into(), Some(head))?)
     }
 
     fn set_root(&mut self, root: Hash, position: usize) -> Result<()> {
         if let Some(expired_root) = self.get_root(position)? {
-            self.set(format!("/roots/index/{}", hex::encode(expired_root)), None)?;
+            self.set::<Hash>(format!("/roots/index/{}", hex::encode(expired_root)), None)?;
         }
-        let value: SaplingStoreType = root.into();
-        self.set(format!("/roots/list/{}", position), Some(value.clone()))?;
-        self.set(format!("/roots/index/{}", hex::encode(root)), Some(value))?;
+        self.set(format!("/roots/list/{}", position), Some(root.clone()))?;
+        self.set(format!("/roots/index/{}", hex::encode(root)), Some(root))?;
         Ok(())
     }
 
     fn has_root(&self, root: &Hash) -> Result<bool> {
-        let res = self.has(format!("/roots/index/{}", hex::encode(root)))?;
-        Ok(res)
+        Ok(self.has(format!("/roots/index/{}", hex::encode(root)))?)
     }
 
     fn get_root(&mut self, position: usize) -> Result<Option<Hash>> {
-        match self.get(format!("/roots/list/{}", position))? {
-            Some(val) => val
-                .try_into()
-                .map_err(|_| anyhow!("Unexpected variant"))
-                .map(|v| Some(v)),
-            None => Ok(None),
-        }
+        Ok(self.get(format!("/roots/list/{}", position))?)
     }
 
     fn set_nullifier(&mut self, nullifier: Nullifier, position: usize) -> Result<()> {
-        let value: SaplingStoreType = nullifier.into();
-        self.set(
-            format!("/nullifiers/list/{}", position),
-            Some(value.clone()),
-        )?;
+        self.set(format!("/nullifiers/list/{}", position), Some(nullifier.0))?;
         self.set(
             format!("/nullifiers/index/{}", hex::encode(nullifier.0)),
-            Some(value),
+            Some(nullifier.0),
         )?;
         Ok(())
     }
@@ -90,45 +77,30 @@ impl<T: LayeredStore<SaplingStoreType>> SaplingStorage for T {
     }
 
     fn get_nullifier(&mut self, position: usize) -> Result<Option<Nullifier>> {
-        match self.get(format!("/nullifiers/list/{}", position))? {
-            Some(val) => val
-                .try_into()
-                .map_err(|_| anyhow!("Unexpected variant"))
-                .map(|v| Some(v)),
-            None => Ok(None),
-        }
+        Ok(self
+            .get(format!("/nullifiers/list/{}", position))?
+            .map(|nf| Nullifier(nf)))
     }
 
     fn set_commitment(&mut self, commitment: CommitmentNode, path: usize) -> Result<()> {
-        self.set(format!("/commitments/{}", path), Some(commitment.into()))?;
-        Ok(())
+        let mut cm = [0u8; 32];
+        commitment.write(cm.as_mut_slice())?;
+        Ok(self.set(format!("/commitments/{}", path), Some(cm))?)
     }
 
     fn get_commitment(&mut self, path: usize) -> Result<Option<CommitmentNode>> {
-        match self.get(format!("/commitments/{}", path))? {
-            Some(val) => val
-                .try_into()
-                .map_err(|_| anyhow!("Unexpected variant"))
-                .map(|v| Some(v)),
-            None => Ok(None),
+        if let Some(cm) = self.get::<[u8; 32]>(format!("/commitments/{}", path))? {
+            Ok(Some(CommitmentNode::read(cm.as_slice())?))
+        } else {
+            Ok(None)
         }
     }
 
     fn set_ciphertext(&mut self, ciphertext: Ciphertext, position: usize) -> Result<()> {
-        self.set(
-            format!("/ciphertexts/{}", position),
-            Some(ciphertext.into()),
-        )?;
-        Ok(())
+        Ok(self.set(format!("/ciphertexts/{}", position), Some(ciphertext))?)
     }
 
     fn get_ciphertext(&mut self, position: usize) -> Result<Option<Ciphertext>> {
-        match self.get(format!("/ciphertexts/{}", position))? {
-            Some(val) => val
-                .try_into()
-                .map_err(|_| anyhow!("Unexpected variant"))
-                .map(|v| Some(v)),
-            None => Ok(None),
-        }
+        Ok(self.get(format!("/ciphertexts/{}", position))?)
     }
 }

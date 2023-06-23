@@ -105,7 +105,7 @@ mod test {
 
     #[test]
     fn test_skipped_backtracked() -> Result<()> {
-        let mut context = TezosEphemeralContext::new();
+        let mut context = TezosEphemeralContext::default();
 
         let source = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
         let destination = "tz1NEgotHhj4fkm8AcwquQqQBrQsAMRUg86c";

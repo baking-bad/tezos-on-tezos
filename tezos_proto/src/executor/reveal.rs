@@ -58,7 +58,7 @@ mod test {
 
     #[test]
     fn test_reveal_applied() -> Result<()> {
-        let mut context = TezosEphemeralContext::new();
+        let mut context = TezosEphemeralContext::default();
 
         let address = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
         let public_key =

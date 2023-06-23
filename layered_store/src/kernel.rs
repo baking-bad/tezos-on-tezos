@@ -1,11 +1,11 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use tezos_smart_rollup_core::SmartRollupCore;
 use tezos_smart_rollup_host::{
     path::{Path, RefPath},
     runtime::{Runtime, RuntimeError},
 };
 
-use crate::{LayeredStore, Result, StoreType};
+use crate::{store::StoreBackend, LayeredStore, Result};
 
 const TMP_PREFIX: &str = "/tmp";
 const MAX_FILE_CHUNK_SIZE: usize = 2048;
@@ -16,28 +16,21 @@ macro_rules! str_to_path {
     };
 }
 
-pub struct KernelStore<'rt, Host, T>
-where
-    Host: SmartRollupCore,
-    T: StoreType,
-{
+pub struct KernelBackend<'rt, Host: SmartRollupCore> {
     host: &'rt mut Host,
-    state: HashMap<String, Option<T>>,
-    modified_keys: HashSet<String>,
     saved_state: HashMap<String, bool>,
 }
 
-impl<'rt, Host, T> KernelStore<'rt, Host, T>
-where
-    Host: SmartRollupCore,
-    T: StoreType,
-{
+pub trait KernelHost<'rt, Host: SmartRollupCore> {
+    fn attach(host: &'rt mut Host) -> Self;
+    fn as_host(&mut self) -> &mut Host;
+}
+
+impl<'rt, Host: SmartRollupCore> KernelBackend<'rt, Host> {
     pub fn new(host: &'rt mut Host) -> Self {
-        KernelStore {
+        KernelBackend {
             host,
-            state: HashMap::new(),
             saved_state: HashMap::new(),
-            modified_keys: HashSet::new(),
         }
     }
 
@@ -54,9 +47,15 @@ where
         }
         Ok(())
     }
+}
 
-    pub fn as_host(&mut self) -> &mut Host {
-        &mut self.host
+impl<'rt, Host: SmartRollupCore> KernelHost<'rt, Host> for LayeredStore<KernelBackend<'rt, Host>> {
+    fn attach(host: &'rt mut Host) -> Self {
+        Self::new(KernelBackend::new(host))
+    }
+
+    fn as_host(&mut self) -> &mut Host {
+        self.as_mut().host
     }
 }
 
@@ -91,21 +90,17 @@ fn store_read_all(
     Ok(buffer)
 }
 
-impl<'rt, Host, T> LayeredStore<T> for KernelStore<'rt, Host, T>
-where
-    Host: SmartRollupCore,
-    T: StoreType,
-{
-    fn log(&self, msg: String) {
-        Runtime::write_debug(self.host, msg.as_str())
+impl<'rt, Host: SmartRollupCore> StoreBackend for KernelBackend<'rt, Host> {
+    fn default() -> Self {
+        unimplemented!()
     }
 
-    fn has(&self, key: String) -> Result<bool> {
-        if self.state.contains_key(&key) {
-            return Ok(true);
-        }
+    fn log(&self, msg: &str) {
+        Runtime::write_debug(self.host, msg)
+    }
 
-        if let Some(has) = self.saved_state.get(&key) {
+    fn has(&self, key: &str) -> Result<bool> {
+        if let Some(has) = self.saved_state.get(key) {
             return Ok(*has);
         }
 
@@ -115,71 +110,36 @@ where
         }
     }
 
-    fn get(&mut self, key: String) -> Result<Option<T>> {
-        if let Some(val) = self.state.get(&key) {
-            return Ok(val.clone());
-        }
-
-        let store_key = match self.saved_state.get(&key) {
+    fn read(&self, key: &str) -> Result<Option<Vec<u8>>> {
+        let store_key = match self.saved_state.get(key) {
             Some(false) => return Ok(None),
             Some(true) => [TMP_PREFIX, &key].concat(),
-            None => key.clone(),
+            None => key.into(),
         };
 
         match store_read_all(self.host, &str_to_path!(&store_key)) {
-            Ok(bytes) => {
-                let val = T::from_vec(bytes)?;
-                self.state.insert(key, Some(val.clone()));
-                Ok(Some(val))
-            }
+            Ok(bytes) => Ok(Some(bytes)),
             Err(RuntimeError::PathNotFound) => Ok(None),
             Err(err) => Err(err.into()),
         }
     }
 
-    fn set(&mut self, key: String, val: Option<T>) -> Result<()> {
-        self.state.insert(key.clone(), val);
-        self.modified_keys.insert(key);
+    fn write(&mut self, key: &str, val: &[u8]) -> Result<()> {
+        self.host
+            .store_write_all(&str_to_path!([TMP_PREFIX, key].concat().as_str()), val)?;
+        self.saved_state.insert(key.into(), true);
         Ok(())
     }
 
-    fn has_pending_changes(&self) -> bool {
-        !self.modified_keys.is_empty()
-    }
-
-    fn commit(&mut self) -> Result<()> {
-        let modified_keys: Vec<String> = self.modified_keys.drain().collect();
-        for key in modified_keys {
-            let val = self
-                .state
-                .remove(&key)
-                .expect("Modified key must be in the pending state");
-
-            let exists = match val {
-                Some(val) => {
-                    self.host.store_write_all(
-                        &str_to_path!([TMP_PREFIX, &key].concat().as_str()),
-                        &val.to_vec()?,
-                    )?;
-                    true
-                }
-                None => false,
-            };
-            self.saved_state.insert(key, exists);
-        }
+    fn delete(&mut self, key: &str) -> Result<()> {
+        self.host
+            .store_delete(&str_to_path!([TMP_PREFIX, key].concat().as_str()))?;
+        self.saved_state.insert(key.into(), false);
         Ok(())
-    }
-
-    fn rollback(&mut self) {
-        for key in self.modified_keys.drain().into_iter() {
-            self.state.remove(&key);
-        }
     }
 
     fn clear(&mut self) {
-        self.state.clear();
         self.saved_state.clear();
-        self.modified_keys.clear();
 
         match self.host.store_delete(&str_to_path!(TMP_PREFIX)) {
             Ok(()) => {}
@@ -192,41 +152,23 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{kernel::KernelStore, LayeredStore, Result, StoreType};
+    use crate::{kernel::KernelBackend, Result};
 
     use tezos_smart_rollup_mock::MockHost;
-
-    #[derive(Clone)]
-    pub struct EphemeralStoreType {
-        pub value: i64,
-    }
-
-    impl StoreType for EphemeralStoreType {
-        fn from_vec(value: Vec<u8>) -> Result<Self> {
-            Ok(Self {
-                value: i64::from_be_bytes(value.as_slice().try_into().unwrap()),
-            })
-        }
-
-        fn to_vec(&self) -> Result<Vec<u8>> {
-            Ok(self.value.to_be_bytes().to_vec())
-        }
-    }
 
     #[test]
     fn test_kernel_store() -> Result<()> {
         let mut host = MockHost::default();
-        let mut store: KernelStore<MockHost, EphemeralStoreType> = KernelStore::new(&mut host);
+        let mut store: KernelBackend<MockHost> = KernelBackend::new(&mut host);
 
-        assert!(store.get("/test".into())?.is_none());
+        assert!(!store.has("/test")?);
 
-        store.set("/test".into(), Some(EphemeralStoreType { value: 42 }))?; // cached
-        store.commit()?; // write to tmp folder
-        store.persist()?; // move/delete permanently
-        store.clear(); // clean up
+        store.write("/test", b"deadbeef")?;
+        store.persist()?;
+        store.clear();
 
-        assert!(store.get("/test".into())?.is_some()); // cached again
-        assert_eq!(42, store.get("/test".into())?.unwrap().value); // served from the cache
+        assert!(store.has("/test")?);
+        assert_eq!(b"deadbeef".to_vec(), store.read("/test")?.unwrap());
 
         Ok(())
     }

@@ -1,40 +1,8 @@
 pub mod batch;
 pub mod head;
-pub mod interpreter;
 pub mod migrations;
 pub mod store;
 pub mod tezos;
 
-use core::ops::{Deref, DerefMut};
-use layered_store::{EphemeralStore, LayeredStore};
-
-pub use store::TezosStoreType;
 pub use tezos::TezosContext;
-
-pub struct CtxRef<T>(pub T);
-
-pub type TezosEphemeralContext = CtxRef<EphemeralStore<TezosStoreType>>;
-
-impl TezosEphemeralContext {
-    pub fn new() -> Self {
-        Self(EphemeralStore::<TezosStoreType>::new())
-    }
-
-    pub fn spawn(&self) -> Self {
-        Self(self.0.spawn())
-    }
-}
-
-impl<T: LayeredStore<TezosStoreType>> Deref for CtxRef<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T: LayeredStore<TezosStoreType>> DerefMut for CtxRef<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
+pub type TezosEphemeralContext = layered_store::EphemeralStore;

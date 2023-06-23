@@ -22,7 +22,7 @@ env_logger = "0.10.0"
 hex = "*"
 derive_more = "0.99"
 serde_json = "*"
-layered_store = { path = "../layered_store" }
+layered_store = { path = "../layered_store", default-features = false, features = ["tezos"] }
 tezos_proto = { path = "../tezos_proto" }
 michelson_vm = { path = "../michelson_vm" }
 tezos_rpc = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-rpc", default-features = false }

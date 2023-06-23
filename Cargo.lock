@@ -662,9 +662,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.3.5"
+version = "4.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2686c4115cb0810d9a984776e197823d08ec94f176549a89a9efded477c456dc"
+checksum = "6320c6d1c98b6981da7bb2dcecbd0be9dc98d42165fa8326b21000f7dbfde6d0"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -1602,6 +1602,8 @@ name = "layered_store"
 version = "0.1.0"
 dependencies = [
  "derive_more",
+ "tezos-core",
+ "tezos-michelson",
  "tezos-smart-rollup-core",
  "tezos-smart-rollup-host",
  "tezos-smart-rollup-mock",
@@ -1752,6 +1754,7 @@ dependencies = [
  "derive_more",
  "hex",
  "ibig",
+ "layered_store",
  "once_cell",
  "serde",
  "serde-json-wasm",

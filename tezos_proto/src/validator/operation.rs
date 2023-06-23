@@ -168,7 +168,7 @@ mod test {
 
     #[test]
     fn test_valid_tx() -> Result<()> {
-        let mut context = TezosEphemeralContext::new();
+        let mut context = TezosEphemeralContext::default();
 
         let address = "tz1V3dHSCJnWPRdzDmZGCZaTMuiTmbtPakmU";
         context.set_balance(address, Mutez::from(1000000000u32))?;
@@ -209,7 +209,7 @@ mod test {
 
     #[test]
     fn test_reveal_and_tx_batch() -> Result<()> {
-        let mut context = TezosEphemeralContext::new();
+        let mut context = TezosEphemeralContext::default();
 
         let address = ImplicitAddress::try_from("tz1Ng3bkhPwf6byrSWzBeBRTuaiKCQXzyRUK").unwrap();
         context.set_balance(&address.value(), Mutez::from(1000000000u32))?;

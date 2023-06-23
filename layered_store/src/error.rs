@@ -42,6 +42,7 @@ impl std::error::Error for InternalError {
 pub enum Error {
     Internal(InternalError),
     ContextUnstagedError,
+    DowncastingError,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -66,6 +67,8 @@ macro_rules! impl_from_error {
 }
 
 impl_from_error!(&str);
+
+#[cfg(any(test, feature = "kernel"))]
 impl_from_error!(tezos_smart_rollup_host::runtime::RuntimeError);
 
 impl Error {

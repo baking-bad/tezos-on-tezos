@@ -1,4 +1,4 @@
-use layered_store::{store_get, store_get_opt, store_unwrap, LayeredStore};
+use layered_store::{LayeredStore, StoreBackend};
 use tezos_core::types::{
     encoded::{Encoded, PublicKey},
     mutez::Mutez,
@@ -8,8 +8,9 @@ use tezos_michelson::micheline::Micheline;
 use tezos_rpc::models::operation::Operation;
 
 use crate::{
-    context::{batch::BatchReceipt, head::Head, CtxRef, TezosStoreType},
-    Result,
+    context::{batch::BatchReceipt, head::Head, store::OperationReceipt},
+    error::err_into,
+    Error, Result,
 };
 
 pub trait TezosContext {
@@ -33,71 +34,82 @@ pub trait TezosContext {
     fn check_no_pending_changes(&self) -> Result<()>;
     fn commit(&mut self) -> Result<()>;
     fn rollback(&mut self);
-    fn log(&mut self, msg: String);
+    fn log(&self, msg: String);
 }
 
-impl<T: LayeredStore<TezosStoreType>> TezosContext for CtxRef<T> {
+impl<Backend: StoreBackend> TezosContext for LayeredStore<Backend> {
     fn get_head(&mut self) -> Result<Head> {
-        store_get!(self, Head::default(), "/head")
+        match self.get("/head".into()) {
+            Ok(Some(head)) => Ok(head),
+            Ok(None) => Ok(Head::default()),
+            Err(err) => Err(err_into(err)),
+        }
     }
 
     fn set_head(&mut self, head: Head) -> Result<()> {
-        self.set("/head".into(), Some(head.into()))?;
-        Ok(())
+        self.set("/head".into(), Some(head)).map_err(err_into)
     }
 
     fn get_balance(&mut self, address: &str) -> Result<Option<Mutez>> {
-        store_get_opt!(self, "/context/contracts/{}/balance", address)
+        self.get(format!("/context/contracts/{}/balance", address))
+            .map_err(err_into)
     }
 
     fn set_balance(&mut self, address: &str, balance: Mutez) -> Result<()> {
         self.set(
             format!("/context/contracts/{}/balance", address),
-            Some(balance.into()),
-        )?;
-        Ok(())
+            Some(balance),
+        )
+        .map_err(err_into)
     }
 
     fn get_counter(&mut self, address: &str) -> Result<Nat> {
-        store_get!(self, 0u32.into(), "/context/contracts/{}/counter", address)
+        match self.get(format!("/context/contracts/{}/counter", address)) {
+            Ok(Some(value)) => Ok(value),
+            Ok(None) => Ok(Nat::from_integer(0)),
+            Err(err) => Err(err_into(err)),
+        }
     }
 
     fn set_counter(&mut self, address: &str, counter: Nat) -> Result<()> {
         self.set(
             format!("/context/contracts/{}/counter", address),
-            Some(counter.into()),
-        )?;
-        Ok(())
+            Some(counter),
+        )
+        .map_err(err_into)
     }
 
     fn get_public_key(&mut self, address: &str) -> Result<Option<PublicKey>> {
-        store_get_opt!(self, "/context/contracts/{}/pubkey", address)
+        self.get(format!("/context/contracts/{}/pubkey", address))
+            .map_err(err_into)
     }
 
     fn set_public_key(&mut self, address: &str, public_key: PublicKey) -> Result<()> {
         // NOTE: Underscores are not allowed in path (host restriction)
         self.set(
             format!("/context/contracts/{}/pubkey", address),
-            Some(public_key.into()),
-        )?;
-        Ok(())
+            Some(public_key),
+        )
+        .map_err(err_into)
     }
 
     fn has_public_key(&self, address: &str) -> Result<bool> {
-        let res = self.has(format!("/context/contracts/{}/pubkey", address))?;
-        Ok(res)
+        self.has(format!("/context/contracts/{}/pubkey", address))
+            .map_err(err_into)
     }
 
     fn set_batch_receipt(&mut self, receipt: BatchReceipt) -> Result<()> {
         self.set(
             format!("/batches/{}", receipt.hash.value()).into(),
-            Some(receipt.into()),
-        )?;
-        Ok(())
+            Some(receipt),
+        )
+        .map_err(err_into)
     }
 
     fn get_batch_receipt(&mut self, hash: &str) -> Result<BatchReceipt> {
-        store_unwrap!(self, "/batches/{}", hash)
+        self.get(format!("/batches/{}", hash))
+            .map_err(err_into)?
+            .ok_or(Error::BatchNotFound { hash: hash.into() })
     }
 
     fn set_operation_receipt(&mut self, receipt: Operation) -> Result<()> {
@@ -106,38 +118,39 @@ impl<T: LayeredStore<TezosStoreType>> TezosContext for CtxRef<T> {
                 "/operations/{}",
                 receipt.hash.as_ref().expect("Operation hash").value()
             ),
-            Some(receipt.into()),
-        )?;
-        Ok(())
+            Some(OperationReceipt(receipt)),
+        )
+        .map_err(err_into)
     }
 
     fn get_operation_receipt(&mut self, hash: &str) -> Result<Operation> {
-        store_unwrap!(self, "/operations/{}", hash)
+        self.get::<OperationReceipt>(format!("/operations/{}", hash))
+            .map_err(err_into)?
+            .ok_or(Error::OperationNotFound { hash: hash.into() })
+            .map(|receipt| receipt.0)
     }
 
     fn get_contract_code(&mut self, address: &str) -> Result<Option<Micheline>> {
-        store_get_opt!(self, "/context/contracts/{}/code", address)
+        self.get(format!("/context/contracts/{}/code", address))
+            .map_err(err_into)
     }
 
     fn set_contract_code(&mut self, address: &str, code: Micheline) -> Result<()> {
-        // TODO: support splitting into chunks (generic read/write loop)
-        self.set(
-            format!("/context/contracts/{}/code", address),
-            Some(code.into()),
-        )?;
-        Ok(())
+        self.set(format!("/context/contracts/{}/code", address), Some(code))
+            .map_err(err_into)
     }
 
     fn get_contract_storage(&mut self, address: &str) -> Result<Option<Micheline>> {
-        store_get_opt!(self, "/context/contracts/{}/storage", address)
+        self.get(format!("/context/contracts/{}/storage", address))
+            .map_err(err_into)
     }
 
     fn set_contract_storage(&mut self, address: &str, storage: Micheline) -> Result<()> {
         self.set(
             format!("/context/contracts/{}/storage", address),
-            Some(storage.into()),
-        )?;
-        Ok(())
+            Some(storage),
+        )
+        .map_err(err_into)
     }
 
     fn check_no_pending_changes(&self) -> Result<()> {
@@ -149,15 +162,14 @@ impl<T: LayeredStore<TezosStoreType>> TezosContext for CtxRef<T> {
     }
 
     fn commit(&mut self) -> Result<()> {
-        self.0.commit()?;
-        Ok(())
+        LayeredStore::commit(self).map_err(err_into)
     }
 
     fn rollback(&mut self) {
-        self.0.rollback()
+        LayeredStore::rollback(self)
     }
 
-    fn log(&mut self, msg: String) {
-        self.0.log(msg)
+    fn log(&self, msg: String) {
+        LayeredStore::log(&self, msg)
     }
 }

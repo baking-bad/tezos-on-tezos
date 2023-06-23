@@ -152,7 +152,7 @@ mod test {
 
     #[test]
     fn test_empty_tree() -> Result<()> {
-        let mut storage = SaplingEphemeralStorage::new();
+        let mut storage = SaplingEphemeralStorage::default();
         let tree = CommitmentTree::new(0, MAX_HEIGHT);
         let root = tree.get_root_at(&mut storage, MAX_HEIGHT, 1)?;
 
@@ -165,7 +165,7 @@ mod test {
 
     #[test]
     fn test_single_commitment() -> Result<()> {
-        let mut storage = SaplingEphemeralStorage::new();
+        let mut storage = SaplingEphemeralStorage::default();
         let mut tree = CommitmentTree::new(0, MAX_HEIGHT);
 
         let cm = hex::decode("f1de6f589f17cda6e8811dd2fb5b2b78875d440de07f6964a2f06e4e26f99b25")?;

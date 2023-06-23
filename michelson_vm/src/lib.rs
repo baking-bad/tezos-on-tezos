@@ -5,6 +5,7 @@ pub mod instructions;
 pub mod interpreter;
 pub mod script;
 pub mod stack;
+pub mod store;
 pub mod tracer;
 pub mod typechecker;
 pub mod types;
@@ -12,7 +13,12 @@ pub mod types;
 #[cfg(any(test, feature = "mock"))]
 pub mod mock;
 
-pub use error::{Error, Result};
+pub use {
+    error::{Error, Result},
+    interpreter::{InterpreterContext, OperationScope},
+    script::MichelsonScript,
+    stack::Stack,
+};
 
 #[cfg(feature = "trace")]
 pub use tracer::{trace_err, trace_init, trace_into, trace_log, trace_ret, trace_stack};

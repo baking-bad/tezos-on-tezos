@@ -27,7 +27,7 @@ pub fn read_script(filename: &str) -> Micheline {
 
 impl MockClient {
     pub fn default() -> Self {
-        let mut client = Self::new(TezosEphemeralContext::new());
+        let mut client = Self::new(TezosEphemeralContext::default());
         client.migrate().bake();
         client.import_wallet(
             "pytezos",

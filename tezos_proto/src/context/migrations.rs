@@ -54,7 +54,7 @@ mod test {
 
     #[test]
     fn test_seed_acconuts() -> Result<()> {
-        let mut context = TezosEphemeralContext::new();
+        let mut context = TezosEphemeralContext::default();
 
         let head = context.get_head()?;
         assert_eq!(-1, head.level);

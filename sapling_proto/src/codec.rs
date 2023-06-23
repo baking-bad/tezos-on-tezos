@@ -1,10 +1,10 @@
 use std::io::{self, Read, Write};
 
 use crate::{
-    ciphertext::{NONCE_SIZE, PAYLOAD_OUT_SIZE},
+    storage::ciphertext::{Ciphertext, NONCE_SIZE, PAYLOAD_OUT_SIZE},
     types::{
-        Ciphertext, Commitment, Input, Nullifier, Output, Proof, PublicKey, SaplingTransaction,
-        Signature, ValueCommitment,
+        Commitment, Input, Nullifier, Output, Proof, PublicKey, SaplingTransaction, Signature,
+        ValueCommitment,
     },
 };
 
@@ -214,7 +214,7 @@ impl TryInto<Vec<u8>> for &Ciphertext {
 mod test {
     use std::{borrow::Borrow, io};
 
-    use crate::types::{Ciphertext, SaplingTransaction};
+    use crate::{storage::Ciphertext, types::SaplingTransaction};
 
     // Generated using octez, as in https://tezos.gitlab.io/alpha/sapling.html#sandbox-tutorial
     // Decoded using `octez-codec decode sapling.transaction from sapling_transaction`
