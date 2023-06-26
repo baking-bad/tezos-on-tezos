@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{store::StoreBackend, LayeredStore, Result};
 
 pub struct EphemeralBackend {
-    state: HashMap<String, Vec<u8>>,
+    pub(super) state: HashMap<String, Vec<u8>>,
 }
 
 impl EphemeralBackend {

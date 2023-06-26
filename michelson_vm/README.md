@@ -1,6 +1,6 @@
 # Michelson VM
 
-This is the MVP of a Michelson interpreter written in Rust.
+This is a Michelson interpreter written in Rust.
 
 ## About
 The purpose of this crate is to provide a standalone, lightweight, and WASM-friendly implementation of the Michelson VM. The applications can vary including educational projects, developer tools, but the initial goal is to use it in a Tezos L2 solution.
@@ -12,13 +12,8 @@ The purpose of this crate is to provide a standalone, lightweight, and WASM-frie
 - [ ] Tickets
 - [ ] Missing hash functions (`SHA3`, `KECCAK`)
 - [ ] Internal originations
-
-### Not implemented
-Non-supported Michelson features:
-* Sapling
-* Global constants
-* Chest
-* Rollups :D
+- [ ] Sapling
+- [ ] Global constants?
 
 ### Known differences
 Although the intention is to be as close to the reference implementation as possible, there are still edge cases where Rust-based interpreter behaves differently. In particular:
@@ -41,7 +36,7 @@ Both suites were converted to an intermediary Micheline representation:
 Michelson is a stack-based language, thus in order to run Michelson code you will need a stack:
 
 ```rust
-use michelson_vm::stack::Stack;
+use michelson_vm::Stack;
 
 let mut stack = Stack::new();
 ```
@@ -53,7 +48,7 @@ Depending on the instruction kind, you might need some additional information:
 
 Operation scope is a struct you need to fill:
 ```rust
-pub struct michelson_vm::interpreter::OperationScope {
+pub struct michelson_vm::OperationScope {
     pub chain_id: ChainId,
     pub source: ImplicitAddress,
     pub sender: Address,
@@ -70,7 +65,7 @@ pub struct michelson_vm::interpreter::OperationScope {
 
 InterpreterContext is a public trait you need to implement:
 ```rust
-pub trait layered_store::InterpreterContext {
+pub trait michelson_vm::InterpreterContext {
     fn get_contract_type(&self, address: &ContractAddress) -> Result<Option<Micheline>>;
     fn set_contract_type(&mut self, address: ContractAddress, value: Micheline) -> Result<()>;
     fn allocate_big_map(&mut self, owner: ContractAddress) -> Result<i64>;
@@ -113,7 +108,7 @@ Another case is when you have a fully-fledged Michelson script with parameter/st
 
 Michelson script is also constructed out of a Micheline expression:
 ```rust
-use michelson_vm::script::MichelsonScript;
+use michelson_vm::MichelsonScript;
 
 let micheline: Micheline = serde_json_wasm::from_slice(data.as_slice())?;
 let script = MichelsonScript::try_from(micheline)?;
@@ -126,7 +121,7 @@ let result = script.execute(&scope, &mut context)?;
 
 In the result you will get a structure containing new storage, BigMap diffs, and a list of internal operations:
 ```rust
-pub struct michelson_vm::script::ScriptReturn {
+pub struct michelson_vm::ScriptReturn {
     pub storage: Micheline,
     pub operations: Vec<InternalContent>,
     pub big_map_diff: Vec<BigMapDiff>,
@@ -138,7 +133,7 @@ pub struct michelson_vm::script::ScriptReturn {
 It can be hard to spot a typechecking/parsing/runtime error when executing Michelson code, that's when tracer comes in handy!  
 In order to enable traces add `trace` feature to the crate import in your Cargo file:
 ```toml
-michelson_vm = { git = "https://github.com/baking-bad/tezos-on-tezos, package = "vm", features = ["trace"] }
+michelson_vm = { git = "https://github.com/baking-bad/tezos-on-tezos", features = ["trace"] }
 ```
 
 Or if you troubleshoot this crate, you can run any test with trace feature enabled and `RUST_LIB_BACKTRACE` flag set:
@@ -150,4 +145,4 @@ You will see a beautiful output:
 
 ![trace](https://i.imgur.com/EGew4G1.png?)
 
-Also note, that `vm::Error` has a special method `print` that will write to stdout all the error details plus backtrace if it exists.
+Also note, that `michelson_vm::Error` has a special method `print` that will write to stdout all the error details plus backtrace if it exists.

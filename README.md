@@ -2,14 +2,13 @@
 
 Optimistic rollup enabled with Tezos VM running on top of Tezos L1.
 
-**IMPORTANT: THIS IS AN EARLY BETA, DO NOT RUN THIS CODE IN THE MAINNET**
+**IMPORTANT: NOT STABLE YET, DO NOT RUN THIS CODE IN PRODUCTION**
 
 ## About
 
-The goal of this project is to create PoC of a permissioned application-specific rollup enabled with Tezos (Michelson) VM.  
-Aside from the pure research interest there might be long-term advantages of such solution:
+The goal of this project is to create permissioned application-specific Tezos-compatible rollup that has:
 * Reduced operational costs (contract automation, oracles)
-* Custom MEV-resistant techniques
+* Custom MEV-resistant solution
 * Chain-native tokenomics
 * Feeless experience
 * Contract wallets as first-class citizens (account abstraction)
@@ -52,43 +51,6 @@ Your feedback is extremely valuable, and we also expect lots of bugs at early st
 * [Discord](https://discord.com/invite/RcPGSdcVSx) server
 * [Telegram](https://t.me/baking_bad_chat) chat
 * [Slack](https://tezos-dev.slack.com/archives/CV5NX7F2L) channel
-
-## Roadmap
-
-- [x] MVP Tezos-compatible kernel supporting plain transactions and public key reveals
-- [x] Installer kernel
-- [x] DAC encoding tool
-- [x] Docker image with SCORU node, installer, and encoded Tez kernel
-- [x] Run TZ rollup in Mondaynet, prepare setup scripts
-- [x] Troubleshoot kernel using REPL, get rid of `f64`
-- [x] Implement internal batch workflow
-- [x] Support origination operation kind
-- [x] Implement a minimal viable Michelson interpreter
-- [x] Interact with the kernel via inbox and access rollup state via RPC
-- [x] Support contract calls and internal transactions
-- [x] Tezos RPC facade node
-- [x] Deploy a periodic testnet
-- [x] Add support to BCD
-- [x] Permanent testnet
-- [ ] Add missing Michelson features necessary to onboard first dapps
-- [ ] Increase test coverage
-- [ ] Spam-prevention mechanism
-- [ ] Configurable gas/storage metering
-- [ ] Sequencer fees
-- [ ] Micheline (de)serialization derive macros
-- [ ] WASM smart contracts
-## Limitations
-
-Current design is intentionally simplified to speed up development while having a minimal necessary functional to operate.
-* No gas/storage metering (although it can be incorporated rather easily)
-* No money burning
-* Non-sequential account counters
-* Only 3 manager operations supported: transaction, reveal, origination
-* Branch is currently not validated (infinite TTL)
-* BigMaps cannot be copied/removed, but can be moved (Rust-like semantics)
-* No temporary BigMap allocations
-* Several Michelson features are not supported
-* Only wallet/indexer RPC endpoints are exposed
 
 ## Installation
 

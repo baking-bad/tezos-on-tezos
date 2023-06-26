@@ -31,6 +31,7 @@ pub fn default_scope() -> OperationScope {
     }
 }
 
+// TODO: use layered_store::EphemeralStore instead
 pub struct MockContext {
     pub big_map_counter: i64,
     pub big_maps: HashMap<i64, encoded::ContractAddress>,

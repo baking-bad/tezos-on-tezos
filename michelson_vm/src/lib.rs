@@ -16,7 +16,7 @@ pub mod mock;
 pub use {
     error::{Error, Result},
     interpreter::{InterpreterContext, OperationScope},
-    script::MichelsonScript,
+    script::{MichelsonScript, ScriptReturn},
     stack::Stack,
 };
 
