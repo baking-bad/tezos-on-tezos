@@ -22,10 +22,13 @@ impl StoreType for i64 {
 
 impl StoreType for [u8; 32] {
     fn from_bytes(bytes: &[u8]) -> Result<Self> {
-        if bytes.len() == 4 {
+        if bytes.len() == 32 {
             Self::try_from(bytes).map_err(err_into)
         } else {
-            Err(internal_error!("Invalid byte length"))
+            Err(internal_error!(
+                "Invalid byte length: {} (expected 32)",
+                bytes.len()
+            ))
         }
     }
 

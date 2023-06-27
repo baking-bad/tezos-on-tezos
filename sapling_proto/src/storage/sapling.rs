@@ -37,6 +37,9 @@ pub trait SaplingStorage {
     // Position is relative number of the leaf, starts from 0, actually it's [Path] - 2 ^ [MAX_HEIGHT]
     fn set_ciphertext(&mut self, ciphertext: Ciphertext, position: usize) -> Result<()>;
     fn get_ciphertext(&mut self, position: usize) -> Result<Option<Ciphertext>>;
+
+    fn commit(&mut self) -> Result<()>;
+    fn rollback(&mut self);
 }
 
 impl<Backend: StoreBackend> SaplingStorage for LayeredStore<Backend> {
@@ -106,5 +109,13 @@ impl<Backend: StoreBackend> SaplingStorage for LayeredStore<Backend> {
 
     fn get_ciphertext(&mut self, position: usize) -> Result<Option<Ciphertext>> {
         Ok(self.get(format!("/ciphertexts/{}", position))?)
+    }
+
+    fn commit(&mut self) -> Result<()> {
+        Ok(LayeredStore::commit(self)?)
+    }
+
+    fn rollback(&mut self) {
+        LayeredStore::rollback(self);
     }
 }

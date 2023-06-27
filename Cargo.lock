@@ -2468,8 +2468,17 @@ checksum = "f91339c0467de62360649f8d3e185ca8de4224ff281f66000de5eb2a77a79041"
 name = "sapling_kernel"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "derive_more",
+ "hex",
+ "kernel_io",
  "sapling_proto",
  "tezos-smart-rollup",
+ "tezos-smart-rollup-core",
+ "tezos-smart-rollup-entrypoint",
+ "tezos-smart-rollup-host",
+ "tezos-smart-rollup-mock",
+ "tezos_data_encoding",
 ]
 
 [[package]]

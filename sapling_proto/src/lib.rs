@@ -4,6 +4,7 @@
 
 pub mod codec;
 pub mod executor;
+pub mod formatter;
 pub mod params;
 pub mod storage;
 pub mod tree;

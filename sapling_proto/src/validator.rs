@@ -11,8 +11,10 @@ pub const MAX_INPUTS: usize = 5208;
 pub const MAX_OUTPUTS: usize = 2019;
 
 use crate::{
+    formatter::Formatter,
     params::ZCASH_PARAMS,
     storage::SaplingStorage,
+    tree::CommitmentTree,
     types::{Hash, Input, Output, SaplingTransaction, HASH_SIZE},
 };
 
@@ -73,8 +75,17 @@ pub fn validate_transaction(
         bail!("Too many outputs: {}", transaction.outputs.len());
     }
 
-    if !storage.has_root(&transaction.root)? {
-        bail!("Transaction is expired (root = {:?})", transaction.root);
+    if head.commitments_size == 0 {
+        if transaction.root != CommitmentTree::empty_root() {
+            bail!("Unexpected zero root: {}", transaction.root.to_string())
+        }
+    } else {
+        if !storage.has_root(&transaction.root)? {
+            bail!(
+                "Transaction is expired (root = {:?})",
+                transaction.root.to_string()
+            );
+        }
     }
 
     // Mind the order (first outputs, then inputs) — it influences the final PK for verifying binding sig
@@ -230,6 +241,14 @@ mod test {
         }
 
         fn get_commitment(&mut self, _path: usize) -> Result<Option<CommitmentNode>> {
+            unimplemented!()
+        }
+
+        fn commit(&mut self) -> Result<()> {
+            Ok(())
+        }
+
+        fn rollback(&mut self) {
             unimplemented!()
         }
     }

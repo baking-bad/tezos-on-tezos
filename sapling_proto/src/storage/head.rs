@@ -9,8 +9,8 @@ pub const DEFAULT_MEMO_SIZE: usize = 8;
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SaplingHead {
     pub roots_pos: usize,
-    pub nullifiers_size: usize,
-    pub commitments_size: usize,
+    pub nullifiers_size: usize,  // FIXME: bigint
+    pub commitments_size: usize, // FIXME: bigint
     pub memo_size: usize,
 }
 

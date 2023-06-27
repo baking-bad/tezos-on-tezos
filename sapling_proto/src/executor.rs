@@ -32,8 +32,10 @@ pub fn execute_transaction(
 
     let root = tree.add_commitments(storage, &commitments)?;
 
-    storage.set_root(root, head.roots_pos)?;
+    // Starting from position 1, because at the very beginning there's empty root at position 0
     head.roots_pos = (head.roots_pos + 1) % MAX_ROOTS;
+    storage.set_root(root, head.roots_pos)?;
 
-    storage.set_head(head)
+    storage.set_head(head)?;
+    storage.commit()
 }

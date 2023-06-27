@@ -30,6 +30,14 @@ impl CommitmentTree {
         }
     }
 
+    pub fn empty_root() -> Hash {
+        let root = CommitmentNode::empty_root(MAX_HEIGHT.try_into().unwrap());
+        let mut hash = [0u8; 32];
+        root.write(hash.as_mut_slice())
+            .expect("Failed to serialize root");
+        hash
+    }
+
     pub fn get_root_at(
         &self,
         storage: &mut impl SaplingStorage,
