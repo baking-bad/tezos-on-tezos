@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: MIT
 
 pub mod error;
-pub mod inbox;
 pub mod kernel;
+pub mod payload;
 
 pub use error::{Error, Result};
 

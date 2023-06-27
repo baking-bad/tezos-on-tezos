@@ -9,9 +9,7 @@ This storage abstraction is intended for use in kernel protocol implementations 
 The cache value type is restricted by the `StoreType` trait requiring you to implement serialization/deserialization for every stored type. There are builtin implementations for some basic types (`i64`, `[u8; 32]`, to be extended) and also for several Tezos-specific types (enabled by `tezos` feature) provided by `tezos_core` and `tezos_michelson` crates.
 
 ### Store backend
-There is an ephemeral backend `EphemeralBackend` (and `EphemeralStore` alias for `LayeredStore<EphemeralBackend>`) for testing and stateless modes, and also a generic implementation of a kernel backend (enabled by `kernel` feature) that holds a mutable reference to an instance implementing `Host: SmartRollupCore`.
-
-Kernel backend introduces another transactional layer: data is first stored under the `/tmp` root and then you can either discard changes by calling `clear` or save them with `persist`. A typical workflow is when you use `commit/rollback` for handling individual transactions, and `persist/clear` for batches.
+Layered store supports multiple backends, in order to add new one you need to implement the `StoreBackend` trait. There is a builtin `EphemeralBackend` (and `EphemeralStore` alias for `LayeredStore<EphemeralBackend>`) for testing and stateless modes.
 
 ## Usage
 When you need a persistent storage in your kernel protocol:

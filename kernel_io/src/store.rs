@@ -2,14 +2,13 @@
 //
 // SPDX-License-Identifier: MIT
 
+use layered_store::{error::err_into, LayeredStore, Result, StoreBackend};
 use std::collections::HashMap;
 use tezos_smart_rollup_core::SmartRollupCore;
 use tezos_smart_rollup_host::{
     path::{Path, RefPath},
     runtime::{Runtime, RuntimeError},
 };
-
-use crate::{store::StoreBackend, LayeredStore, Result};
 
 const TMP_PREFIX: &str = "/tmp";
 const MAX_FILE_CHUNK_SIZE: usize = 2048;
@@ -25,7 +24,7 @@ pub struct KernelBackend<'rt, Host: SmartRollupCore> {
     saved_state: HashMap<String, bool>,
 }
 
-pub trait KernelHost<'rt, Host: SmartRollupCore> {
+pub trait KernelBackendAsHost<'rt, Host: SmartRollupCore> {
     fn attach(host: &'rt mut Host) -> Self;
     fn as_host(&mut self) -> &mut Host;
 }
@@ -41,19 +40,25 @@ impl<'rt, Host: SmartRollupCore> KernelBackend<'rt, Host> {
     pub fn persist(&mut self) -> Result<()> {
         for (key, exists) in self.saved_state.drain() {
             if exists {
-                self.host.store_move(
-                    &str_to_path!([TMP_PREFIX, &key].concat().as_str()),
-                    &str_to_path!(&key),
-                )?;
+                self.host
+                    .store_move(
+                        &str_to_path!([TMP_PREFIX, &key].concat().as_str()),
+                        &str_to_path!(&key),
+                    )
+                    .map_err(err_into)?;
             } else {
-                self.host.store_delete(&str_to_path!(&key))?;
+                self.host
+                    .store_delete(&str_to_path!(&key))
+                    .map_err(err_into)?;
             }
         }
         Ok(())
     }
 }
 
-impl<'rt, Host: SmartRollupCore> KernelHost<'rt, Host> for LayeredStore<KernelBackend<'rt, Host>> {
+impl<'rt, Host: SmartRollupCore> KernelBackendAsHost<'rt, Host>
+    for LayeredStore<KernelBackend<'rt, Host>>
+{
     fn attach(host: &'rt mut Host) -> Self {
         Self::new(KernelBackend::new(host))
     }
@@ -108,7 +113,7 @@ impl<'rt, Host: SmartRollupCore> StoreBackend for KernelBackend<'rt, Host> {
             return Ok(*has);
         }
 
-        match Runtime::store_has(self.host, &str_to_path!(&key))? {
+        match Runtime::store_has(self.host, &str_to_path!(&key)).map_err(err_into)? {
             Some(_) => Ok(true),
             None => Ok(false),
         }
@@ -124,20 +129,22 @@ impl<'rt, Host: SmartRollupCore> StoreBackend for KernelBackend<'rt, Host> {
         match store_read_all(self.host, &str_to_path!(&store_key)) {
             Ok(bytes) => Ok(Some(bytes)),
             Err(RuntimeError::PathNotFound) => Ok(None),
-            Err(err) => Err(err.into()),
+            Err(err) => Err(err_into(err)),
         }
     }
 
     fn write(&mut self, key: &str, val: &[u8]) -> Result<()> {
         self.host
-            .store_write_all(&str_to_path!([TMP_PREFIX, key].concat().as_str()), val)?;
+            .store_write_all(&str_to_path!([TMP_PREFIX, key].concat().as_str()), val)
+            .map_err(err_into)?;
         self.saved_state.insert(key.into(), true);
         Ok(())
     }
 
     fn delete(&mut self, key: &str) -> Result<()> {
         self.host
-            .store_delete(&str_to_path!([TMP_PREFIX, key].concat().as_str()))?;
+            .store_delete(&str_to_path!([TMP_PREFIX, key].concat().as_str()))
+            .map_err(err_into)?;
         self.saved_state.insert(key.into(), false);
         Ok(())
     }
@@ -156,7 +163,7 @@ impl<'rt, Host: SmartRollupCore> StoreBackend for KernelBackend<'rt, Host> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{kernel::KernelBackend, Result};
+    use crate::Result;
 
     use tezos_smart_rollup_mock::MockHost;
 

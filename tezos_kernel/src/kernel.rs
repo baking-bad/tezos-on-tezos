@@ -2,17 +2,17 @@
 //
 // SPDX-License-Identifier: MIT
 
-use layered_store::{kernel::KernelHost, KernelStore};
-use tezos_core::types::encoded::{ChainId, Encoded, OperationHash};
+use tezos_core::types::encoded::{ChainId, OperationHash, Encoded};
 use tezos_operation::operations::SignedOperation;
 use tezos_proto::{batcher::apply_batch, context::TezosContext};
 use tezos_smart_rollup_core::SmartRollupCore;
 use tezos_smart_rollup_host::runtime::Runtime;
-
-use crate::{
+use kernel_io::{
     inbox::{read_inbox, InboxMessage},
-    Error, Result,
+    KernelStore, KernelStoreAsHost,
 };
+
+use crate::{payload::TezosPayload, Error, Result};
 
 pub fn kernel_run<Host: SmartRollupCore>(host: &mut Host) {
     let mut context = KernelStore::attach(host);
@@ -41,12 +41,8 @@ pub fn kernel_run<Host: SmartRollupCore>(host: &mut Host) {
             }
             Ok(InboxMessage::LevelInfo(info)) => {
                 head.timestamp = info.predecessor_timestamp;
-                context.log(format!(
-                    "L1 predecessor block: {}",
-                    info.predecessor.value()
-                ))
             }
-            Ok(InboxMessage::L2Operation { hash, opg }) => {
+            Ok(InboxMessage::Payload(TezosPayload::Operation { hash, opg })) => {
                 context.log(format!("Operation pending: {}", &hash.value()));
                 batch_payload.push((hash, opg));
             }
@@ -61,6 +57,7 @@ pub fn kernel_run<Host: SmartRollupCore>(host: &mut Host) {
                 }
             }
             Ok(InboxMessage::NoMoreData) => break Ok(()),
+            Ok(InboxMessage::Foreign(id)) => context.log(format!("Foreign message #{}", id)),
             Ok(InboxMessage::Unknown(id)) => context.log(format!("Unknown message #{}", id)),
             Err(err) => context.log(err.to_string()),
         }
@@ -88,7 +85,7 @@ mod test {
     use super::*;
 
     use hex;
-    use layered_store::{kernel::KernelHost, KernelStore};
+    use kernel_io::{KernelStore, KernelStoreAsHost};
     use tezos_data_encoding::enc::{BinResult, BinWriter};
     use tezos_proto::context::TezosContext;
     use tezos_smart_rollup_mock::MockHost;

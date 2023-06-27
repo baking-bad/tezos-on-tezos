@@ -72,9 +72,6 @@ macro_rules! impl_from_error {
 
 impl_from_error!(&str);
 
-#[cfg(any(test, feature = "kernel"))]
-impl_from_error!(tezos_smart_rollup_host::runtime::RuntimeError);
-
 impl Error {
     pub fn format(&self) -> String {
         match self {

@@ -12,17 +12,10 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 derive_more = "0.99"
-tezos-smart-rollup-host = { version = "0.2.0", optional = true, features = ["proto-nairobi"], default-features = false }
-tezos-smart-rollup-core = { version = "0.2.0", optional = true, default-features = false }
 tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", optional = true, branch = "feat/ibig-drop-in", package = "tezos-core", default-features = false, features = ["ed25519"] }
 tezos_michelson = { git = "https://github.com/m-kus/tezos-rust-sdk", optional = true, branch = "feat/ibig-drop-in", package = "tezos-michelson", default-features = false }
 
-[dev-dependencies]
-tezos-smart-rollup-host = { version = "0.2.0", features = ["proto-nairobi", "crypto"], default-features = false }
-tezos-smart-rollup-mock = { version = "0.2.0", features = ["proto-nairobi"], default-features = false }
-
 [features]
-default = ["kernel", "tezos"]
-testing = ["kernel", "tezos"]
-kernel = ["dep:tezos-smart-rollup-host", "dep:tezos-smart-rollup-core"]
+default = ["tezos"]
+testing = ["tezos"]
 tezos = ["dep:tezos_core", "dep:tezos_michelson"]

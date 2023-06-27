@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+#
+# SPDX-License-Identifier: MIT
+
+[package]
+name = "kernel_io"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+derive_more = "0.99"
+layered_store = { path = "../layered_store", features = ["tezos"], default-features = false }
+tezos-smart-rollup-host = { version = "0.2.0", features = ["proto-nairobi"], default-features = false }
+tezos-smart-rollup-core = { version = "0.2.0", default-features = false }
+tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", ranch = "feat/ibig-drop-in", package = "tezos-core", default-features = false }
+
+[dev-dependencies]
+tezos-smart-rollup-host = { version = "0.2.0", features = ["proto-nairobi", "crypto"], default-features = false }
+tezos-smart-rollup-mock = { version = "0.2.0", features = ["proto-nairobi"], default-features = false }
