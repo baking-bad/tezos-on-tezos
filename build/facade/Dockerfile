@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+#
+# SPDX-License-Identifier: MIT
+
 FROM rust:alpine3.16 AS builder
 RUN apk add --no-cache musl-dev openssl-dev
 WORKDIR /build

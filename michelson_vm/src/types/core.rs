@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use hex;
 use std::fmt::Display;
 use std::ops::{Add, BitAnd, BitOr, BitXor, Not};

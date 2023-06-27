@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use layered_store::{LayeredStore, StoreBackend};
 use tezos_core::types::encoded::{ContractAddress, Encoded, ScriptExprHash};
 use tezos_michelson::micheline::Micheline;

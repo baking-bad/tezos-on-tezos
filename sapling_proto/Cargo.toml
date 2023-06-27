@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+#
+# SPDX-License-Identifier: MIT
+
 [package]
 name = "sapling_proto"
 version = "0.1.0"

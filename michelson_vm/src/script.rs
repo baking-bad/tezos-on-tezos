@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use tezos_michelson::micheline::{primitive_application, sequence, sequence::Sequence, Micheline};
 use tezos_michelson::michelson::{
     data::Instruction,

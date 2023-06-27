@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use hex;
 use michelson_vm::typechecker::check_pair_len;
 use michelson_vm::{

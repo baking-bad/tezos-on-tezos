@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+#
+# SPDX-License-Identifier: MIT
+
 ARG OCTEZ_TAG=v17.0-rc1
 FROM tezos/tezos:${OCTEZ_TAG} AS octez
 

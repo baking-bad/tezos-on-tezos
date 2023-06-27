@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use crate::storage::Ciphertext;
 pub use zcash_primitives::sapling::{
     note::ExtractedNoteCommitment as Commitment,

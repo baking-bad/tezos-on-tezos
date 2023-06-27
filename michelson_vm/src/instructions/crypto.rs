@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use tezos_core::{
     internal::crypto::blake2b,
     types::encoded::{Encoded, ImplicitAddress, PublicKey},

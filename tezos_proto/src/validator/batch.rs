@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use tezos_core::types::encoded::{Encoded, OperationHash};
 use tezos_operation::operations::SignedOperation;
 

@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use derive_more::{Display, Error};
 use std::{backtrace::Backtrace, fmt::Display};
 use tezos_michelson::micheline::Micheline;

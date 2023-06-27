@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use actix_web::web::Data;
 use std::time::Duration;
 use tezos_node::{launch_node, rollup::mock_client::RollupMockClient, rollup::RollupClient};

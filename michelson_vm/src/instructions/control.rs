@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use tezos_michelson::michelson::data::instructions::{
     Cast, Dip, FailWith, If, IfCons, IfLeft, IfNone, Iter, Loop, LoopLeft, Map, Sequence,
 };

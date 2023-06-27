@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use tezos_michelson::michelson::{
     data::instructions::{Car, Cdr, Left, None, Pair, Right, Some, Unit, Unpair},
     data::Nat,

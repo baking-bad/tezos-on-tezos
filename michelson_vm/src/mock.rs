@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use std::collections::HashMap;
 use tezos_core::types::{
     encoded::{self, Encoded},

@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
 use derive_more::{Display, Error};
 use std::backtrace::Backtrace;

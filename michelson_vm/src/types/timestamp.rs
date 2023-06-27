@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use chrono::{DateTime, NaiveDateTime, SecondsFormat, Utc};
 use ibig::IBig;
 use std::fmt::Display;

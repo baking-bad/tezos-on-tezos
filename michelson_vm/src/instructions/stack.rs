@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use std::borrow::Borrow;
 
 use tezos_michelson::michelson::data::instructions::{Dig, Drop, Dug, Dup, Push, Swap};

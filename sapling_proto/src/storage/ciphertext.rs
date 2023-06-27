@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use zcash_primitives::sapling::{redjubjub::PublicKey, value::ValueCommitment};
 
 pub const PAYLOAD_OUT_SIZE: usize = 80;

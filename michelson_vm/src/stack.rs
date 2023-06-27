@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use std::collections::VecDeque;
 
 use crate::{trace_log, trace_stack, types::StackItem, Error, Result};

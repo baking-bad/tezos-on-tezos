@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use ibig::ops::Abs;
 use ibig::{IBig, UBig};
 use std::fmt::Display;

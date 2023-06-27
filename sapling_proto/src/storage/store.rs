@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use layered_store::{error::err_into, Result, StoreType};
 
 use crate::storage::{Ciphertext, SaplingHead};

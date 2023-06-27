@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use anyhow::{bail, Result};
 use incrementalmerkletree::Hashable;
 use zcash_primitives::merkle_tree::HashSer;

@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use tezos_core::types::encoded::{BlockHash, Encoded, OperationHash, Signature};
 use tezos_operation::operations::{SignedOperation, UnsignedOperation};
 use tezos_smart_rollup_core::{smart_rollup_core::ReadInputMessageInfo, SmartRollupCore};

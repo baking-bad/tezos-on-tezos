@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use michelson_vm::{
     interpreter::OperationScope,
     mock::{default_scope, MockContext},

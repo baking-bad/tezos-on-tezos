@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use michelson_vm::interpreter::InterpreterContext;
 use tezos_core::types::encoded::Encoded;
 use tezos_operation::operations::OperationContent;

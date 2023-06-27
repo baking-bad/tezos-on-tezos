@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use tezos_core::types::{mutez::Mutez, number::Nat};
 pub use tezos_rpc::models::error::RpcError;
 

@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use tezos_core::types::encoded;
 use tezos_michelson::michelson::data::instructions::{
     Amount, Balance, ChainId, Level, Now, SelfAddress, Sender, Source,

@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use async_trait::async_trait;
 use michelson_vm::entrypoints::collect_entrypoints;
 use std::collections::HashMap;

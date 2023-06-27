@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use serde::{Deserialize, Serialize};
 use tezos_core::types::encoded::{BlockHash, ChainId, Encoded, OperationHash};
 

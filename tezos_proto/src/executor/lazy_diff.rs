@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use michelson_vm::types::BigMapDiff;
 use tezos_michelson::micheline::Micheline;
 use tezos_rpc::models::operation::operation_result::{

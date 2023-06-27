@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use sapling_proto::{
     executor::execute_transaction, types::SaplingTransaction, validator::validate_transaction,
 };

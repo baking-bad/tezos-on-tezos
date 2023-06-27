@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use crate::{error::err_into, internal_error, Result, StoreType};
 
 impl StoreType for i64 {

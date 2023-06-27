@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 /// Ported from https://gitlab.com/tezos/tezos/-/blob/master/tezt/tests/manager_operations.ml
 mod runner;
 

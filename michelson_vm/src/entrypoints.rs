@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use std::collections::HashMap;
 use tezos_michelson::micheline::{primitive_application::PrimitiveApplication, Micheline};
 use tezos_michelson::michelson::types::Type;

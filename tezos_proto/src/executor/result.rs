@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use derive_more::{From, TryInto};
 use tezos_core::types::encoded::{Address, Encoded};
 use tezos_operation::operations::{Origination, Reveal, Transaction};
