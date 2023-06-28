@@ -26,3 +26,6 @@ serde-json-wasm = { git = "https://github.com/CosmWasm/serde-json-wasm", branch 
 serde = { version = "1.0", features = ["derive"] }
 derive_more = "*"
 hex = "*"
+
+[dev-dependencies]
+mockall = "*"

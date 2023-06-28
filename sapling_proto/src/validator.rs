@@ -126,6 +126,8 @@ pub fn validate_transaction(
 mod test {
     use anyhow::Result;
     use hex;
+    use mockall::predicate::*;
+    use mockall::*;
     use std::io;
     use zcash_primitives::{
         constants::SPENDING_KEY_GENERATOR,
@@ -188,68 +190,23 @@ mod test {
         b0f5aefcdc43ecfc65a9046b730c000000000000000069a1f12aea9ef4019a05\
         9e69e70d6317c35d936d3ea61181f9fa9fa297fe092f00000000";
 
-    pub struct MockStorage {}
-
-    impl SaplingStorage for MockStorage {
-        fn get_root(&mut self, _position: usize) -> Result<Option<Hash>> {
-            unimplemented!()
-        }
-
-        fn set_ciphertext(&mut self, _ciphertext: Ciphertext, _position: usize) -> Result<()> {
-            unimplemented!()
-        }
-
-        fn set_nullifier(&mut self, _nullifier: Nullifier, _position: usize) -> Result<()> {
-            unimplemented!()
-        }
-
-        fn set_root(&mut self, _root: Hash, _position: usize) -> Result<()> {
-            unimplemented!()
-        }
-
-        fn has_nullifier(&self, _nullifier: &Nullifier) -> Result<bool> {
-            Ok(true)
-        }
-
-        fn has_root(&self, _root: &Hash) -> Result<bool> {
-            Ok(true)
-        }
-
-        fn get_ciphertext(&mut self, _position: usize) -> Result<Option<Ciphertext>> {
-            unimplemented!()
-        }
-
-        fn get_head(&mut self) -> Result<SaplingHead> {
-            Ok(SaplingHead {
-                commitments_size: 1,
-                memo_size: 8,
-                nullifiers_size: 0,
-                roots_pos: 1,
-            })
-        }
-
-        fn get_nullifier(&mut self, _position: usize) -> Result<Option<Nullifier>> {
-            unimplemented!()
-        }
-
-        fn set_head(&mut self, _head: SaplingHead) -> Result<()> {
-            unimplemented!()
-        }
-
-        fn set_commitment(&mut self, _commitment: CommitmentNode, _path: usize) -> Result<()> {
-            unimplemented!()
-        }
-
-        fn get_commitment(&mut self, _path: usize) -> Result<Option<CommitmentNode>> {
-            unimplemented!()
-        }
-
-        fn commit(&mut self) -> Result<()> {
-            Ok(())
-        }
-
-        fn rollback(&mut self) {
-            unimplemented!()
+    mock! {
+        Storage {}
+        impl SaplingStorage for Storage {
+            fn set_head(&mut self, head: SaplingHead) -> Result<()>;
+            fn get_head(&mut self) -> Result<SaplingHead>;
+            fn set_root(&mut self, root: Hash, position: usize) -> Result<()>;
+            fn has_root(&self, root: &Hash) -> Result<bool>;
+            fn get_root(&mut self, position: usize) -> Result<Option<Hash>>;
+            fn set_nullifier(&mut self, nullifier: Nullifier, position: usize) -> Result<()>;
+            fn has_nullifier(&self, nullifier: &Nullifier) -> Result<bool>;
+            fn get_nullifier(&mut self, position: usize) -> Result<Option<Nullifier>>;
+            fn set_commitment(&mut self, commitment: CommitmentNode, path: usize) -> Result<()>;
+            fn get_commitment(&mut self, path: usize) -> Result<Option<CommitmentNode>>;
+            fn set_ciphertext(&mut self, ciphertext: Ciphertext, position: usize) -> Result<()>;
+            fn get_ciphertext(&mut self, position: usize) -> Result<Option<Ciphertext>>;
+            fn commit(&mut self) -> Result<()>;
+            fn rollback(&mut self);
         }
     }
 
@@ -301,7 +258,19 @@ mod test {
         let payload = hex::decode(SAPLING_TX_HEX)
             .map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e.to_string()))?;
 
-        let mut storage = MockStorage {};
+        let mut storage = MockStorage::new();
+        storage.expect_get_head().returning(|| {
+            Ok(SaplingHead {
+                commitments_size: 1,
+                memo_size: 8,
+                nullifiers_size: 0,
+                roots_pos: 1,
+            })
+        });
+        storage.expect_has_root().returning(|_| Ok(true));
+        storage.expect_has_nullifier().returning(|_| Ok(true));
+        storage.expect_commit().returning(|| Ok(()));
+
         let tx = SaplingTransaction::try_from(payload.as_slice())?;
         validate_transaction(&mut storage, &tx, &[CONTRACT_ADDRESS, CHAIN_ID].concat())
     }
