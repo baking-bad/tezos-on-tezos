@@ -76,6 +76,7 @@ pub fn validate_transaction(
     }
 
     if head.commitments_size == 0 {
+        // TODO: replace this with the initial migration where very first root is written to storage
         if transaction.root != CommitmentTree::empty_root() {
             bail!("Unexpected zero root: {}", transaction.root.to_string())
         }

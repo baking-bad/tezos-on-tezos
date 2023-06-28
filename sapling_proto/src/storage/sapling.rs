@@ -55,37 +55,40 @@ impl<Backend: StoreBackend> SaplingStorage for LayeredStore<Backend> {
 
     fn set_root(&mut self, root: Hash, position: u64) -> Result<()> {
         if let Some(expired_root) = self.get_root(position)? {
-            self.set::<Hash>(format!("/roots/index/{}", hex::encode(expired_root)), None)?;
+            self.set::<Hash>(format!("/roots_hashed/{}", hex::encode(expired_root)), None)?;
         }
-        self.set(format!("/roots/list/{}", position), Some(root.clone()))?;
-        self.set(format!("/roots/index/{}", hex::encode(root)), Some(root))?;
+        self.set(format!("/roots/{}", position), Some(root.clone()))?;
+        self.set(format!("/roots_hashed/{}", hex::encode(root)), Some(root))?;
         Ok(())
     }
 
     fn has_root(&self, root: &Hash) -> Result<bool> {
-        Ok(self.has(format!("/roots/index/{}", hex::encode(root)))?)
+        Ok(self.has(format!("/roots_hashed/{}", hex::encode(root)))?)
     }
 
     fn get_root(&mut self, position: u64) -> Result<Option<Hash>> {
-        Ok(self.get(format!("/roots/list/{}", position))?)
+        Ok(self.get(format!("/roots/{}", position))?)
     }
 
     fn set_nullifier(&mut self, nullifier: Nullifier, position: u64) -> Result<()> {
-        self.set(format!("/nullifiers/list/{}", position), Some(nullifier.0))?;
         self.set(
-            format!("/nullifiers/index/{}", hex::encode(nullifier.0)),
+            format!("/nullifiers_ordered/{}", position),
+            Some(nullifier.0),
+        )?;
+        self.set(
+            format!("/nullifiers_hashed/{}", hex::encode(nullifier.0)),
             Some(nullifier.0),
         )?;
         Ok(())
     }
 
     fn has_nullifier(&self, nullifier: &Nullifier) -> Result<bool> {
-        Ok(self.has(format!("/nullifiers/index/{}", hex::encode(nullifier.0)))?)
+        Ok(self.has(format!("/nullifiers_hashed/{}", hex::encode(nullifier.0)))?)
     }
 
     fn get_nullifier(&mut self, position: u64) -> Result<Option<Nullifier>> {
         Ok(self
-            .get(format!("/nullifiers/list/{}", position))?
+            .get(format!("/nullifiers_ordered/{}", position))?
             .map(|nf| Nullifier(nf)))
     }
 

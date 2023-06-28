@@ -161,7 +161,8 @@ Rollup data is persisted meaning that you can restart the container without data
 $ operator run_node
 ```
 
-Runs rollup node in synchronous mode, with logs being printed to stdout.
+Runs rollup node in synchronous mode, with logs being printed to stdout.  
+Also RPC is available at `127.0.0.1:8932` on your host machine.
 
 ## Facade
 

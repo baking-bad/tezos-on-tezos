@@ -83,15 +83,12 @@ impl CommitmentTree {
             return self.get_root_at(storage, height, path);
         }
 
-        if height == 0 {
+        let node = if height == 0 {
             if commitments.len() != 1 {
                 bail!("Unexpected number of commitments {}", commitments.len());
             }
 
-            let node = CommitmentNode::from_cmu(&commitments[0]);
-            storage.set_commitment(node.clone(), path)?;
-
-            Ok(node)
+            CommitmentNode::from_cmu(&commitments[0])
         } else {
             // We know that the tree is append only
             // In case of a single commitment it's safe to assume all right-side branches are uncommitted
@@ -120,12 +117,11 @@ impl CommitmentTree {
                 )
             };
 
-            Ok(CommitmentNode::combine(
-                height.try_into().unwrap(),
-                &hl,
-                &hr,
-            ))
-        }
+            CommitmentNode::combine(height.try_into().unwrap(), &hl, &hr)
+        };
+
+        storage.set_commitment(node.clone(), path)?;
+        Ok(node)
     }
 
     pub fn add_commitments(
