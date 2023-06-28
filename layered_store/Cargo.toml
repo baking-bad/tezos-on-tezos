@@ -16,6 +16,6 @@ tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", optional = true,
 tezos_michelson = { git = "https://github.com/m-kus/tezos-rust-sdk", optional = true, branch = "feat/ibig-drop-in", package = "tezos-michelson", default-features = false }
 
 [features]
-default = ["tezos"]
+default = []
 testing = ["tezos"]
 tezos = ["dep:tezos_core", "dep:tezos_michelson"]

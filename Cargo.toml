@@ -15,6 +15,10 @@ members = [
   "kernel_io"
 ]
 
+[patch.crates-io]
+# FIXME: use "custom" feature to avoid unexpected behavior
+getrandom = { git = "https://github.com/m-kus/getrandom", branch = "patch/0.2" }
+
 [profile.release]
 lto = true
 opt-level = 'z'

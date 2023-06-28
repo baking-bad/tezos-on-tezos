@@ -22,11 +22,15 @@ impl Ciphertext {
     // The fixed length things are diversifier, amount, rcm and a message
     // authentication code and 4 bytes added by the encoding for the length
     // of the variable length field memo.
-    pub fn get_memo_size(&self) -> usize {
+    pub fn get_memo_size(&self) -> u8 {
         const DIVERSIFIER_SIZE: usize = 11;
         const AMOUNT_SIZE: usize = 8;
         const RCM_SIZE: usize = 32;
         const TAG_SIZE: usize = 16;
-        self.payload_enc.len() - (DIVERSIFIER_SIZE + AMOUNT_SIZE + RCM_SIZE + TAG_SIZE + 4)
+        let memo_size =
+            self.payload_enc.len() - (DIVERSIFIER_SIZE + AMOUNT_SIZE + RCM_SIZE + TAG_SIZE + 4);
+        memo_size
+            .try_into()
+            .expect("Memo size cannot be larger than 256")
     }
 }

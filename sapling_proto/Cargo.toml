@@ -11,20 +11,17 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+layered_store = { path = "../layered_store", default-features = false }
 zcash_proofs = { git = "https://github.com/zcash/librustzcash", package = "zcash_proofs", default-features = false }
-zcash_primitives = { git = "https://github.com/zcash/librustzcash", package = "zcash_primitives", default-features = false, features = ["temporary-zcashd"] }
-jubjub = "0.10"
+zcash_primitives = { git = "https://github.com/zcash/librustzcash", package = "zcash_primitives", default-features = false }
+zcash_note_encryption = { git = "https://github.com/zcash/librustzcash", package = "zcash_note_encryption", default-features = false }
+incrementalmerkletree = { version = "0.4", features = ["legacy-api"] }
 bls12_381 = "0.8"
-lazy_static = "*"
 blake2b_simd = "1.0.1"
 bellman = { version = "0.14", default-features = false, features = ["groth16"] }
-zcash_note_encryption = { git = "https://github.com/zcash/librustzcash", package = "zcash_note_encryption", default-features = false }
 anyhow = "1.0"
-incrementalmerkletree = { version = "0.4", features = ["legacy-api"] }
-layered_store = { path = "../layered_store" }
-serde-json-wasm = { git = "https://github.com/CosmWasm/serde-json-wasm", branch = "main" }
-serde = { version = "1.0", features = ["derive"] }
 derive_more = "*"
+lazy_static = "*"
 hex = "*"
 
 [dev-dependencies]

@@ -2,7 +2,5 @@
 .github
 .gitignore
 .tezos-client
-.logs
 target
-test
 *.env

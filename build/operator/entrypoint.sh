@@ -33,7 +33,7 @@ import_key() {
     fi
 }
 
-launch_rollup() {
+run_node() {
     import_key
 
     if [ ! -f "$rollup_dir/config.json" ]; then
@@ -56,12 +56,18 @@ launch_rollup() {
     TEZOS_LOG='* -> info' TEZOS_EVENTS_CONFIG=$LOG_CONFIG exec octez-smart-rollup-node --endpoint "$endpoint" -d "$client_dir" run --data-dir "$rollup_dir" --rpc-addr "0.0.0.0"
 }
 
-originate_rollup() {
+deploy_rollup() {
     import_key
 
     if [ -f "$rollup_dir/config.json" ]; then
         echo "Found existing rollup config"
-        exit 0
+        if [ "$1" == "--force" ]; then
+            echo "Overriding with new kernel"
+            rm -r "$rollup_dir/*"
+            octez-client --endpoint "$endpoint" forget all smart rollups --force
+        else
+            exit 0
+        fi
     fi
    
     if [ ! -f "/root/kernel.wasm" ]; then
@@ -70,49 +76,55 @@ originate_rollup() {
     fi
     kernel="$(xxd -p "/root/kernel.wasm" | tr -d '\n')"
     
-    octez-client --endpoint "$endpoint" originate smart rollup tot from operator of kind wasm_2_0_0 of type bytes with kernel "$kernel" --burn-cap 999 --force | tee originate.out
+    octez-client --endpoint "$endpoint" originate smart rollup "rollup" from operator of kind wasm_2_0_0 of type bytes with kernel "$kernel" --burn-cap 999 --force | tee originate.out
     operator_address=$(octez-client --endpoint "$endpoint" show address "operator" 2>&1 | grep Hash | grep -oE "tz.*")
-    octez-smart-rollup-node --base-dir "$client_dir" init operator config for tot with operators "$operator_address" --data-dir "$rollup_dir"
+    octez-smart-rollup-node --base-dir "$client_dir" init operator config for "rollup" with operators "$operator_address" --data-dir "$rollup_dir"
 }
 
-generate_keypair() {
+generate_key() {
     octez-client --endpoint "$endpoint" gen keys "operator"
     operator_address=$(octez-client --endpoint "$endpoint" show address "operator" 2>&1 | grep Hash | grep -oE "tz.*")
     echo "Top up the balance for $operator_address on $faucet"
 }
 
-populate_inbox() {
-    octez-client --endpoint "$endpoint" send smart rollup message "file:$@" from operator
+account_info() {
+    octez-client --endpoint "$endpoint" show address "operator"
+    octez-client --endpoint "$endpoint" get balance for "operator"
+    echo "Top up the balance on $faucet"
+}
+
+send_message() {
+    octez-client --endpoint "$endpoint" send smart rollup message hex:"[\"$1\"]" from operator
 }
 
 case $command in
-    rollup-node)
-        launch_rollup
+    run_node)
+        run_node
         ;;
-    originate-rollup)
-        originate_rollup
+    deploy_rollup)
+        deploy_rollup $@
         ;;
-    generate-keypair)
-        generate_keypair
+    generate_key)
+        generate_key
         ;;
-    wasm-repl)
-        octez-wasm-repl $@
+    account_info)
+        account_info
         ;;
-    populate-inbox)
-        populate_inbox $@
+    send_message)
+        send_message $@
         ;;
     *)
         cat <<EOF
 Available commands:
 
 Daemons:
-- rollup-node --debug
+- run_node
 
 Commands:
-  - originate-rollup
-  - generate-keypair
-  - wasm-repl [kernel.wasm] --inputs [inputs.json]
-  - populate-inbox [messages.json]
+  - account_info
+  - generate_key
+  - deploy_rollup --force
+  - send_message [hex string]
 
 EOF
         ;;

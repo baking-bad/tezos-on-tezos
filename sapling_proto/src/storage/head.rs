@@ -2,20 +2,18 @@
 //
 // SPDX-License-Identifier: MIT
 
-use serde::{Deserialize, Serialize};
+pub const DEFAULT_MEMO_SIZE: u8 = 8;
 
-pub const DEFAULT_MEMO_SIZE: usize = 8;
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SaplingHead {
-    pub roots_pos: usize,
-    pub nullifiers_size: usize,  // FIXME: bigint
-    pub commitments_size: usize, // FIXME: bigint
-    pub memo_size: usize,
+    pub roots_pos: u64,
+    pub nullifiers_size: u64,  // FIXME: bigint
+    pub commitments_size: u64, // FIXME: bigint
+    pub memo_size: u8,
 }
 
 impl SaplingHead {
-    pub fn new(memo_size: usize) -> Self {
+    pub fn new(memo_size: u8) -> Self {
         Self {
             roots_pos: 0,
             nullifiers_size: 0,

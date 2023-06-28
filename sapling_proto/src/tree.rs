@@ -12,13 +12,13 @@ use crate::{
 };
 
 pub struct CommitmentTree {
-    pub max_height: usize,
-    pub dissect_path: usize,
-    pub commitments_size: usize,
+    pub max_height: u8,
+    pub dissect_path: u64,
+    pub commitments_size: u64,
 }
 
 impl CommitmentTree {
-    pub fn new(commitments_size: usize, max_height: usize) -> Self {
+    pub fn new(commitments_size: u64, max_height: u8) -> Self {
         Self {
             dissect_path: if commitments_size > 0 {
                 (1 << max_height) + commitments_size
@@ -41,16 +41,16 @@ impl CommitmentTree {
     pub fn get_root_at(
         &self,
         storage: &mut impl SaplingStorage,
-        height: usize,
-        path: usize,
+        height: u8,
+        path: u64,
     ) -> Result<CommitmentNode> {
         if path <= self.dissect_path >> height {
             let cm = storage
                 .get_commitment(path)?
-                .unwrap_or_else(|| CommitmentNode::empty_root(height.try_into().unwrap()));
+                .unwrap_or_else(|| CommitmentNode::empty_root(height.into()));
             Ok(cm)
         } else {
-            Ok(CommitmentNode::empty_root(height.try_into().unwrap()))
+            Ok(CommitmentNode::empty_root(height.into()))
         }
     }
 
@@ -66,9 +66,9 @@ impl CommitmentTree {
         &self,
         storage: &mut impl SaplingStorage,
         commitments: &[Commitment],
-        position: usize,
-        height: usize,
-        path: usize,
+        position: u64,
+        height: u8,
+        path: u64,
     ) -> Result<CommitmentNode> {
         if height > self.max_height {
             bail!(
@@ -102,7 +102,7 @@ impl CommitmentTree {
 
             // Recall that position is the index of first commitment related to the left-most leaf of the given subtree
             let (hl, hr) = if position < level_pos {
-                let (cml, cmr) = Self::split_at(commitments, level_pos - position);
+                let (cml, cmr) = Self::split_at(commitments, (level_pos - position) as usize);
                 (
                     self.add_commitments_at(storage, cml, position, height, path << 1)?,
                     self.add_commitments_at(storage, cmr, 0, height, (path << 1) + 1)?,
@@ -140,7 +140,7 @@ impl CommitmentTree {
             MAX_HEIGHT,
             1,
         )?;
-        self.commitments_size += commitments.len();
+        self.commitments_size += commitments.len() as u64;
 
         let mut root: Hash = Hash::default();
         res.write(root.as_mut_slice())?;

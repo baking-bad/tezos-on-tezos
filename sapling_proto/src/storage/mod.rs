@@ -7,8 +7,8 @@ pub mod head;
 pub mod sapling;
 pub mod store;
 
-pub const MAX_ROOTS: usize = 120;
-pub const MAX_HEIGHT: usize = 32;
+pub const MAX_ROOTS: u64 = 120;
+pub const MAX_HEIGHT: u8 = 32;
 
 pub use ciphertext::Ciphertext;
 pub use head::SaplingHead;

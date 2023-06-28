@@ -1,9 +1,0 @@
-# SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
-#
-# SPDX-License-Identifier: MIT
-
-FROM rust:slim-buster
-COPY ./.bin/tezos-node /usr/bin/tezos-node
-ENV RUST_BACKTRACE=1
-ENV RUST_LOG=debug
-ENTRYPOINT [ "/usr/bin/tezos-node" ]

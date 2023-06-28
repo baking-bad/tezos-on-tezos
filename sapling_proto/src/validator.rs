@@ -195,16 +195,16 @@ mod test {
         impl SaplingStorage for Storage {
             fn set_head(&mut self, head: SaplingHead) -> Result<()>;
             fn get_head(&mut self) -> Result<SaplingHead>;
-            fn set_root(&mut self, root: Hash, position: usize) -> Result<()>;
+            fn set_root(&mut self, root: Hash, position: u64) -> Result<()>;
             fn has_root(&self, root: &Hash) -> Result<bool>;
-            fn get_root(&mut self, position: usize) -> Result<Option<Hash>>;
-            fn set_nullifier(&mut self, nullifier: Nullifier, position: usize) -> Result<()>;
+            fn get_root(&mut self, position: u64) -> Result<Option<Hash>>;
+            fn set_nullifier(&mut self, nullifier: Nullifier, position: u64) -> Result<()>;
             fn has_nullifier(&self, nullifier: &Nullifier) -> Result<bool>;
-            fn get_nullifier(&mut self, position: usize) -> Result<Option<Nullifier>>;
-            fn set_commitment(&mut self, commitment: CommitmentNode, path: usize) -> Result<()>;
-            fn get_commitment(&mut self, path: usize) -> Result<Option<CommitmentNode>>;
-            fn set_ciphertext(&mut self, ciphertext: Ciphertext, position: usize) -> Result<()>;
-            fn get_ciphertext(&mut self, position: usize) -> Result<Option<Ciphertext>>;
+            fn get_nullifier(&mut self, position: u64) -> Result<Option<Nullifier>>;
+            fn set_commitment(&mut self, commitment: CommitmentNode, path: u64) -> Result<()>;
+            fn get_commitment(&mut self, path: u64) -> Result<Option<CommitmentNode>>;
+            fn set_ciphertext(&mut self, ciphertext: Ciphertext, position: u64) -> Result<()>;
+            fn get_ciphertext(&mut self, position: u64) -> Result<Option<Ciphertext>>;
             fn commit(&mut self) -> Result<()>;
             fn rollback(&mut self);
         }

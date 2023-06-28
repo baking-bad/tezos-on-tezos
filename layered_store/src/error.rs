@@ -71,6 +71,7 @@ macro_rules! impl_from_error {
 }
 
 impl_from_error!(&str);
+impl_from_error!(std::io::Error);
 
 impl Error {
     pub fn format(&self) -> String {
