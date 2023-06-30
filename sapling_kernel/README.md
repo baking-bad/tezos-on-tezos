@@ -77,18 +77,18 @@ operator send_message %TX_HEX%
 ```
 
 Now, let's validate the kernel state:
-1. General info (number of commitments, nullifiers, roots)
-    `https://rpc.tzkt.io/ghostnet/chains/main/blocks/head/context/raw/json/sapling/index/6055/`
-    `http://localhost:8932/global/block/head/durable/wasm_2_0_0/value?key=/head` (see `SaplingHead` struct layout)
-2. Ciphertexts
-    `https://rpc.tzkt.io/ghostnet/chains/main/blocks/head/context/raw/json/sapling/index/6055/ciphertexts/0`
-    `http://localhost:8932/global/block/head/durable/wasm_2_0_0/value?key=/ciphertexts/0` (see `Ciphertext` struct layout)
-3. Commitments
-    `https://rpc.tzkt.io/ghostnet/chains/main/blocks/head/context/raw/json/sapling/index/6055/commitments/4294967296`
-    `http://localhost:8932/global/block/head/durable/wasm_2_0_0/value?key=/commitments/4294967296`
-4. Nullifiers
-    `https://rpc.tzkt.io/ghostnet/chains/main/blocks/head/context/raw/json/sapling/index/6055/nullifiers_ordered/0`
-    `http://localhost:8932/global/block/head/durable/wasm_2_0_0/value?key=/nullifiers_ordered/0`
-5. Roots
-    `https://rpc.tzkt.io/ghostnet/chains/main/blocks/head/context/raw/json/sapling/index/6055/roots/1`
-    `http://localhost:8932/global/block/head/durable/wasm_2_0_0/value?key=/roots/1`
+1. General info (number of commitments, nullifiers, roots) -> see `SaplingHead` struct layout  
+    https://rpc.tzkt.io/ghostnet/chains/main/blocks/head/context/raw/json/sapling/index/6055/
+    http://localhost:8932/global/block/head/durable/wasm_2_0_0/value?key=/head
+2. Ciphertexts -> see `Ciphertext` struct layout  
+    https://rpc.tzkt.io/ghostnet/chains/main/blocks/head/context/raw/json/sapling/index/6055/ciphertexts/0`
+    http://localhost:8932/global/block/head/durable/wasm_2_0_0/value?key=/ciphertexts/0
+3. Commitments  
+    https://rpc.tzkt.io/ghostnet/chains/main/blocks/head/context/raw/json/sapling/index/6055/commitments/4294967296`
+    http://localhost:8932/global/block/head/durable/wasm_2_0_0/value?key=/commitments/4294967296
+4. Nullifiers  
+    https://rpc.tzkt.io/ghostnet/chains/main/blocks/head/context/raw/json/sapling/index/6055/nullifiers_ordered/0`
+    http://localhost:8932/global/block/head/durable/wasm_2_0_0/value?key=/nullifiers_ordered/0
+5. Roots  
+    https://rpc.tzkt.io/ghostnet/chains/main/blocks/head/context/raw/json/sapling/index/6055/roots/1
+    http://localhost:8932/global/block/head/durable/wasm_2_0_0/value?key=/roots/1

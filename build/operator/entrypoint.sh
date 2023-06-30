@@ -63,7 +63,7 @@ deploy_rollup() {
         echo "Found existing rollup config"
         if [ "$1" == "--force" ]; then
             echo "Overriding with new kernel"
-            rm -r "$rollup_dir/*"
+            rm -rf "$rollup_dir/*"
             octez-client --endpoint "$endpoint" forget all smart rollups --force
         else
             exit 0

@@ -105,7 +105,7 @@ jobs:
       NETWORK: nairobinet
     steps:
       - name: Deploy rollup
-        run: docker run -v "/var/run/docker.sock":"/var/run/docker.sock" -e OPERATOR_KEY=${{ secrets.OPERATOR_KEY }} ${{ needs.build.outputs.operator }} deploy_rollup | tee originate.out
+        run: docker run -v "/var/run/docker.sock":"/var/run/docker.sock" -e NETWORK=${{ env.NETWORK }} -e OPERATOR_KEY=${{ secrets.OPERATOR_KEY }} ${{ needs.build.outputs.operator }} deploy_rollup | tee originate.out
 
       - name: Extract rollup address
         run: |
