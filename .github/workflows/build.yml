@@ -97,7 +97,7 @@ jobs:
           labels: ${{ steps.meta-tezos-facade.outputs.labels }}
 
   deploy:
-    if: ${{ !contains(github.event.head_commit.message, '[skip-deploy]') }}
+    if: (github.event_name == 'pull_request' && github.event.pull_request.draft == false) || (github.event_name == 'push' && github.ref == 'refs/heads/master')
     name: Deploy Tezos rollup to testnet
     needs: build
     runs-on: ubuntu-latest
