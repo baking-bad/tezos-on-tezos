@@ -64,7 +64,7 @@ pub fn parse_l2_operation<'a>(payload: &'a [u8], chain_prefix: &[u8]) -> Result<
         &payload[CHAIN_ID_SIZE..payload.len() - SIGNATURE_SIZE],
     )?;
     let signature = Signature::from_bytes(&payload[payload.len() - SIGNATURE_SIZE..])?;
-    let hash = SignedOperation::operation_hash(payload)?;
+    let hash = SignedOperation::operation_hash(&payload[CHAIN_ID_SIZE..])?;
     Ok(InboxMessage::L2Operation {
         hash,
         opg: SignedOperation::from(unsigned_op, signature),
