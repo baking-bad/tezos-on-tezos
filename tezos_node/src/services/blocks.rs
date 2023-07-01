@@ -4,7 +4,6 @@ use actix_web::{
     HttpResponse, Responder, Result,
 };
 use chrono::NaiveDateTime;
-use log::debug;
 use serde::{Deserialize, Serialize};
 use tezos_core::types::encoded::{BlockHash, ContextHash, OperationListListHash};
 use tokio::sync::mpsc::channel;
@@ -41,12 +40,8 @@ pub struct HeaderShell {
     pub protocol_data: Option<String>,
 }
 
-async fn get_block_id<T: TezosFacade>(
-    client: &Data<T>,
-    block_id: &str,
-) -> Result<BlockId> {
-    let value = match block_id.try_into()
-    {
+async fn get_block_id<T: TezosFacade>(client: &Data<T>, block_id: &str) -> Result<BlockId> {
+    let value = match block_id.try_into() {
         Ok(block_id) => block_id,
         Err(_) => {
             let hash = &block_id[0..51];
@@ -74,9 +69,7 @@ pub async fn block_header<T: TezosFacade>(
     path: Path<(String,)>,
 ) -> Result<impl Responder> {
     let block_id = get_block_id(&client, path.0.as_str()).await?;
-    let value = client
-        .get_block_header(&block_id)
-        .await?;
+    let value = client.get_block_header(&block_id).await?;
     Ok(json_response!(value))
 }
 
@@ -85,9 +78,7 @@ pub async fn block_header_shell<T: TezosFacade>(
     path: Path<(String,)>,
 ) -> Result<impl Responder> {
     let block_id = get_block_id(&client, path.0.as_str()).await?;
-    let full_header = client
-        .get_block_header(&block_id)
-        .await?;
+    let full_header = client.get_block_header(&block_id).await?;
     let value = HeaderShell {
         hash: Option::None,
         level: full_header.level,
