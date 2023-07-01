@@ -3,9 +3,9 @@ use actix_web::{
     web::{Data, Json, Path, Query},
     Responder, Result,
 };
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize};
 use tezos_core::types::{
-    encoded::{Address, BlockHash, ImplicitAddress, PublicKey},
+    encoded::{Address, BlockHash, ImplicitAddress, PublicKey, Signature},
     mutez::Mutez,
     number::Nat,
 };
@@ -102,6 +102,7 @@ pub enum RequestContent {
 pub struct OperationRequest {
     pub branch: BlockHash,
     pub contents: Vec<RequestContent>,
+    pub signature: Option<Signature>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -122,6 +123,13 @@ pub struct SimulateOperationRequest {
 #[derive(Deserialize)]
 pub struct SimulateOperationQueryParams {
     successor_level: Option<bool>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct OperationResponse {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub signature: Option<Signature>,
+    pub contents: Vec<tezos_rpc::models::operation::OperationContent>,
 }
 
 impl TryInto<OperationContent> for RequestContent {
@@ -148,7 +156,7 @@ impl TryInto<SignedOperation> for OperationRequest {
         Ok(SignedOperation {
             branch: self.branch,
             contents: contents?,
-            signature: ZERO_SIGNATURE.try_into().unwrap(),
+            signature: self.signature.unwrap_or(ZERO_SIGNATURE.try_into().unwrap()),
         })
     }
 }
@@ -179,7 +187,15 @@ pub async fn simulate_operation<T: TezosHelpers>(
             request.0.operation.try_into()?,
         )
         .await?;
-    Ok(json_response!(value))
+    let response = OperationResponse {
+        signature: value.signature,
+        contents: value
+            .contents
+            .into_iter()
+            .map(|c| c.try_into().unwrap())
+            .collect(),
+    };
+    Ok(json_response!(response))
 }
 
 pub async fn preapply_operations<T: TezosHelpers>(
@@ -192,7 +208,15 @@ pub async fn preapply_operations<T: TezosHelpers>(
     let value = client
         .simulate_operation(&path.0.as_str().try_into()?, operation)
         .await?;
-    Ok(json_response!(vec![value]))
+    let response = OperationResponse {
+        signature: value.signature,
+        contents: value
+            .contents
+            .into_iter()
+            .map(|c| c.try_into().unwrap())
+            .collect(),
+    };
+    Ok(json_response!(vec![response]))
 }
 
 pub async fn forge_operation<T: TezosHelpers>(
@@ -221,7 +245,11 @@ mod test {
     use tezos_ctx::{ExecutorContext, GenericContext, Head};
     use tezos_rpc::models::{error::RpcError, operation::Operation};
 
-    use crate::{rollup::mock_client::RollupMockClient, services::config, Result};
+    use crate::{
+        rollup::mock_client::RollupMockClient,
+        services::{config, helpers::OperationResponse},
+        Result,
+    };
 
     #[actix_web::test]
     async fn test_forge_operation() -> Result<()> {
@@ -409,11 +437,8 @@ mod test {
             }))
             .to_request();
 
-        let res: Operation = test::call_and_read_body_json(&app, req).await;
-        assert_eq!(
-            res.hash.unwrap().into_string(),
-            "opU1Dyi8Y3RsKo5GWJbtL1y2aM5m5CpftgqUeZXcZTt8LLNtJc9"
-        );
+        let res: OperationResponse = test::call_and_read_body_json(&app, req).await;
+        assert_eq!(res.contents.len(), 1);
         Ok(())
     }
 }

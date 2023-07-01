@@ -5,15 +5,14 @@ OCTEZ_TAG:=
 OCTEZ_PROTO:=
 NETWORK:=
 
-env-mumbainet:
-ifeq ($(NETWORK), mumbainet)
-	@echo "NETWORK is already set to 'mumbainet'"
+env-nairobinet:
+ifeq ($(NETWORK), nairobinet)
+	@echo "NETWORK is already set to 'nairobinet'"
 else
-#	$(eval OCTEZ_TAG := $(shell curl -s https://teztnets.xyz/teztnets.json | jq -r ".mumbainet.git_ref"))
 	$(eval OCTEZ_TAG := v17.0)
-	$(eval OCTEZ_PROTO := $(shell curl -s https://teztnets.xyz/teztnets.json | jq -r ".mumbainet.last_baking_daemon"))
-	$(eval NETWORK := mumbainet)
-	$(eval TAG := mumbai)
+	$(eval OCTEZ_PROTO := $(shell curl -s https://teztnets.xyz/teztnets.json | jq -r ".nairobinet.last_baking_daemon"))
+	$(eval NETWORK := nairobinet)
+	$(eval TAG := nairobi)
 	@echo "OCTEZ_TAG is now set to: $(OCTEZ_TAG)"
 	@echo "OCTEZ_PROTO is now set to: $(OCTEZ_PROTO)"
 	@echo "NETWORK is now set to: $(NETWORK)"
@@ -119,13 +118,13 @@ debug: env-mondaynet
 shell-monday: env-mondaynet
 	$(MAKE) operator-shell TAG=$(TAG)
 
-shell-mumbai: env-mumbainet
+shell-nairobi: env-nairobinet
 	$(MAKE) operator-shell TAG=$(TAG)
 
 image-operator-monday: env-mondaynet
 	$(MAKE) image-operator TAG=$(TAG) OCTEZ_TAG=$(OCTEZ_TAG) OCTEZ_PROTO=$(OCTEZ_PROTO) NETWORK=$(NETWORK)
 
-image-operator-mumbai: env-mumbainet
+image-operator-nairobi: env-nairobinet
 	$(MAKE) image-operator TAG=$(TAG) OCTEZ_TAG=$(OCTEZ_TAG) OCTEZ_PROTO=$(OCTEZ_PROTO) NETWORK=$(NETWORK)
 
 operator-monday: env-mondaynet
@@ -134,7 +133,7 @@ operator-monday: env-mondaynet
 	$(MAKE) originate-rollup TAG=$(TAG)
 	$(MAKE) rollup-node TAG=$(TAG)
 
-operator-mumbai: env-mumbainet
+operator-nairobi: env-nairobinet
 	$(MAKE) build-operator
 	$(MAKE) image-operator TAG=$(TAG) OCTEZ_TAG=$(OCTEZ_TAG) OCTEZ_PROTO=$(OCTEZ_PROTO) NETWORK=$(NETWORK)
 	$(MAKE) originate-rollup TAG=$(TAG)
