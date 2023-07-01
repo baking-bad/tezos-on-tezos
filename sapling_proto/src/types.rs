@@ -38,7 +38,7 @@ pub struct SaplingTransaction {
     pub outputs: Vec<Output>,
     pub binding_sig: Signature,
     pub balance: i64,
-    pub root: Hash, // aka "anchor"
-    pub bound_data: String,
+    pub root: Hash,          // aka "anchor"
+    pub bound_data: Vec<u8>, // packed arbitrary Micheline expression
     pub sig_payload: Vec<u8>,
 }

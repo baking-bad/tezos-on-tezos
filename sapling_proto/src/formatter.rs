@@ -25,6 +25,12 @@ impl Formatter for &[u8] {
     }
 }
 
+impl Formatter for Vec<u8> {
+    fn sprintf(&self, indent: usize, output: &mut String) {
+        self.as_slice().sprintf(indent, output);
+    }
+}
+
 impl Formatter for Hash {
     fn sprintf(&self, indent: usize, output: &mut String) {
         self.as_slice().sprintf(indent, output);
@@ -163,11 +169,8 @@ impl Formatter for SaplingTransaction {
         ));
         output.push_str(&format!("\n{}root: ", " ".repeat(indent + 2)));
         self.root.sprintf(0, output);
-        output.push_str(&format!(
-            "\n{}bound_data: {}",
-            " ".repeat(indent + 2),
-            self.bound_data
-        ));
+        output.push_str(&format!("\n{}bound_data: ", " ".repeat(indent + 2)));
+        self.bound_data.sprintf(0, output);
         output.push_str(&format!("\n{}}}", " ".repeat(indent)));
     }
 }

@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: MIT
 
 use anyhow::Result;
-use hex;
 use layered_store::{LayeredStore, StoreBackend};
 use zcash_primitives::merkle_tree::HashSer;
 
 use crate::{
+    formatter::Formatter,
     storage::{Ciphertext, SaplingHead},
     types::{CommitmentNode, Hash, Nullifier},
 };
@@ -38,6 +38,7 @@ pub trait SaplingStorage {
     fn set_ciphertext(&mut self, ciphertext: Ciphertext, position: u64) -> Result<()>;
     fn get_ciphertext(&mut self, position: u64) -> Result<Option<Ciphertext>>;
 
+    fn check_no_pending_changes(&self) -> Result<()>;
     fn commit(&mut self) -> Result<()>;
     fn rollback(&mut self);
 }
@@ -55,15 +56,18 @@ impl<Backend: StoreBackend> SaplingStorage for LayeredStore<Backend> {
 
     fn set_root(&mut self, root: Hash, position: u64) -> Result<()> {
         if let Some(expired_root) = self.get_root(position)? {
-            self.set::<Hash>(format!("/roots_hashed/{}", hex::encode(expired_root)), None)?;
+            self.set::<Hash>(format!("/roots_hashed/{}", expired_root.to_string()), None)?;
         }
         self.set(format!("/roots/{}", position), Some(root.clone()))?;
-        self.set(format!("/roots_hashed/{}", hex::encode(root)), Some(root))?;
+        self.set(
+            format!("/roots_hashed/{}", root.to_string()),
+            Some(position),
+        )?;
         Ok(())
     }
 
     fn has_root(&self, root: &Hash) -> Result<bool> {
-        Ok(self.has(format!("/roots_hashed/{}", hex::encode(root)))?)
+        Ok(self.has(format!("/roots_hashed/{}", root.to_string()))?)
     }
 
     fn get_root(&mut self, position: u64) -> Result<Option<Hash>> {
@@ -76,14 +80,14 @@ impl<Backend: StoreBackend> SaplingStorage for LayeredStore<Backend> {
             Some(nullifier.0),
         )?;
         self.set(
-            format!("/nullifiers_hashed/{}", hex::encode(nullifier.0)),
-            Some(nullifier.0),
+            format!("/nullifiers_hashed/{}", nullifier.to_string()),
+            Some(position),
         )?;
         Ok(())
     }
 
     fn has_nullifier(&self, nullifier: &Nullifier) -> Result<bool> {
-        Ok(self.has(format!("/nullifiers_hashed/{}", hex::encode(nullifier.0)))?)
+        Ok(self.has(format!("/nullifiers_hashed/{}", nullifier.to_string()))?)
     }
 
     fn get_nullifier(&mut self, position: u64) -> Result<Option<Nullifier>> {
@@ -112,6 +116,14 @@ impl<Backend: StoreBackend> SaplingStorage for LayeredStore<Backend> {
 
     fn get_ciphertext(&mut self, position: u64) -> Result<Option<Ciphertext>> {
         Ok(self.get(format!("/ciphertexts/{}", position))?)
+    }
+
+    fn check_no_pending_changes(&self) -> Result<()> {
+        if self.has_pending_changes() {
+            Err(layered_store::Error::ContextUnstagedError.into())
+        } else {
+            Ok(())
+        }
     }
 
     fn commit(&mut self) -> Result<()> {

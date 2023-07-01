@@ -122,11 +122,11 @@ mod test {
             c08e63b6d8cf6847300e627c4ce0882ce4e2b842295309de3a0bd6260f",
         );
 
+        context.as_host().run_level(|_| {}); // Add StartOfLevel & InfoPerLevel
         context.as_host().add_external(message);
         context.as_host().run_level(kernel_run);
 
         let head = context.get_head()?;
-        println!("{:?}", head);
         assert_eq!(0, head.level);
         assert_eq!(1, head.operations.len());
 

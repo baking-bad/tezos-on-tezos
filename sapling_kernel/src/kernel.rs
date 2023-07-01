@@ -9,7 +9,7 @@ use kernel_io::{
 use sapling_proto::{
     executor::execute_transaction,
     formatter::Formatter,
-    storage::{SaplingHead, SaplingStorage},
+    storage::{run_migrations, SaplingHead, SaplingStorage},
     types::SaplingTransaction,
     validator::validate_transaction,
 };
@@ -38,7 +38,11 @@ pub fn kernel_run<Host: SmartRollupCore>(host: &mut Host) {
 
     let res: Result<()> = loop {
         match read_inbox(context.as_host(), b"") {
-            Ok(InboxMessage::BeginBlock(_)) => {}
+            Ok(InboxMessage::BeginBlock(_)) => {
+                if let Err(err) = run_migrations(&mut context, &head) {
+                    break Err(err.into());
+                }
+            }
             Ok(InboxMessage::LevelInfo(_)) => {}
             Ok(InboxMessage::Payload(SaplingPayload::Transaction(tx))) => {
                 context.log(format!("Transaction pending: {}", tx.to_string()));
@@ -131,11 +135,11 @@ mod test {
              6cbc45359daa54f9b5493e00000000",
         );
 
+        context.as_host().run_level(|_| {}); // Add StartOfLevel & InfoPerLevel
         context.as_host().add_external(message);
         context.as_host().run_level(kernel_run);
 
         let head = context.get_head()?;
-        println!("{}", head.to_string());
         assert_eq!(1, head.commitments_size);
         assert_eq!(0, head.nullifiers_size);
         assert_eq!(1, head.roots_pos);

@@ -14,6 +14,8 @@ pub fn execute_transaction(
     storage: &mut impl SaplingStorage,
     transaction: &SaplingTransaction,
 ) -> Result<()> {
+    storage.check_no_pending_changes()?;
+
     let mut head = storage.get_head()?;
 
     for input in transaction.inputs.iter() {
