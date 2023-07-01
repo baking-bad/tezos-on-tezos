@@ -29,6 +29,8 @@ Assuming your rollup node is running at `http://localhost:8932`, access the stor
 
 This is a modified version of https://tezos.gitlab.io/alpha/sapling.html#sandbox-tutorial that uses existing contract in the Ghostnet.
 
+### Generate Sapling transactions & state
+
 ```sh
 # generate new key
 octez-client gen keys bootstrap1
@@ -65,16 +67,39 @@ octez-client sapling submit sapling_transaction from bootstrap1 using KT1PwYL1B8
 octez-client sapling unshield 10 from bob to bootstrap1 using KT1PwYL1B8hagFeCcByAcsN3KTQHmJFfDwnj --burn-cap 1
 ```
 
+### Replay all generated transactions
+
 Now let's send all transaction payloads to the rollup and check that its state is in sync with the sapling state of our contract in Ghostnet.
+
+Setting everything ready:
+
+```sh
+make run-sapling-operator
+# inside operator container
+$ operator deploy_rollup
+```
 
 The easiest way to do that is to open the contract page on [TzKT](https://ghostnet.tzkt.io/KT1PwYL1B8hagFeCcByAcsN3KTQHmJFfDwnj), open raw payload for every operation in the list, and copy sapling transaction bytes (in hex).
 
 Next, for each sapling transaction we need to send an external message to our rollup:
 
 ```sh
-# In the operator shell
-operator send_message %TX_HEX%
+# In the operator container
+$ operator send_message %TX_HEX%
 ```
+
+**NOTE**: due to the inbox message limitation (currently 2KB) some transactions might be truncated.
+
+Finally, run the rollup node to execute the transactions:
+
+```sh
+# In the operator container
+$ operator run_node
+```
+
+### Compare states
+
+Check the logs to wait for the moment when all transactions are handled.  
 
 Now, let's validate the kernel state:
 1. General info (number of commitments, nullifiers, roots) -> see `SaplingHead` struct layout  
