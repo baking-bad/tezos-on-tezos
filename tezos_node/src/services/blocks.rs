@@ -4,6 +4,7 @@ use actix_web::{
     HttpResponse, Responder, Result,
 };
 use chrono::NaiveDateTime;
+use log::debug;
 use serde::{Deserialize, Serialize};
 use tezos_core::types::encoded::{BlockHash, ContextHash, OperationListListHash};
 use tokio::sync::mpsc::channel;
@@ -25,6 +26,8 @@ pub struct BootstrapInfo {
 
 #[derive(Serialize, Deserialize)]
 pub struct HeaderShell {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hash: Option<BlockHash>,
     pub level: i32,
     pub proto: u8,
     pub predecessor: BlockHash,
@@ -34,13 +37,35 @@ pub struct HeaderShell {
     pub operations_hash: OperationListListHash,
     pub fitness: Vec<String>,
     pub context: ContextHash,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub protocol_data: Option<String>,
+}
+
+async fn get_block_id<T: TezosFacade>(
+    client: &Data<T>,
+    block_id: &str,
+) -> Result<BlockId> {
+    let value = match block_id.try_into()
+    {
+        Ok(block_id) => block_id,
+        Err(_) => {
+            let hash = &block_id[0..51];
+            let offset_str = block_id.trim_start_matches(format!("{}{}", hash, "~").as_str());
+            let offset = i32::from_str_radix(offset_str, 10).unwrap();
+            let header = client.get_block_header(&hash.try_into()?).await?;
+            let target_level = header.level - offset;
+            BlockId::Level(target_level.try_into().unwrap())
+        }
+    };
+    Ok(value)
 }
 
 pub async fn block_hash<T: TezosFacade>(
     client: Data<T>,
     path: Path<(String,)>,
 ) -> Result<impl Responder> {
-    let value = client.get_block_hash(&path.0.as_str().try_into()?).await?;
+    let block_id = get_block_id(&client, path.0.as_str()).await?;
+    let value = client.get_block_hash(&block_id).await?;
     Ok(json_response!(value))
 }
 
@@ -48,8 +73,9 @@ pub async fn block_header<T: TezosFacade>(
     client: Data<T>,
     path: Path<(String,)>,
 ) -> Result<impl Responder> {
+    let block_id = get_block_id(&client, path.0.as_str()).await?;
     let value = client
-        .get_block_header(&path.0.as_str().try_into()?)
+        .get_block_header(&block_id)
         .await?;
     Ok(json_response!(value))
 }
@@ -58,10 +84,12 @@ pub async fn block_header_shell<T: TezosFacade>(
     client: Data<T>,
     path: Path<(String,)>,
 ) -> Result<impl Responder> {
+    let block_id = get_block_id(&client, path.0.as_str()).await?;
     let full_header = client
-        .get_block_header(&path.0.as_str().try_into()?)
+        .get_block_header(&block_id)
         .await?;
     let value = HeaderShell {
+        hash: Option::None,
         level: full_header.level,
         proto: full_header.proto,
         predecessor: full_header.predecessor,
@@ -70,6 +98,7 @@ pub async fn block_header_shell<T: TezosFacade>(
         operations_hash: full_header.operations_hash,
         fitness: full_header.fitness,
         context: full_header.context,
+        protocol_data: Option::None,
     };
     Ok(json_response!(value))
 }
@@ -126,12 +155,17 @@ pub async fn heads_main<T: TezosFacade + 'static>(client: Data<T>) -> Result<imp
         let mut last_level = 0;
 
         loop {
+            if tx.is_closed() {
+                break;
+            }
+
             let full_header = client.get_block_header(&BlockId::Head).await.unwrap();
 
             if last_level != full_header.level {
                 last_level = full_header.level;
 
                 let header = HeaderShell {
+                    hash: Some(full_header.hash),
                     level: full_header.level,
                     proto: full_header.proto,
                     predecessor: full_header.predecessor,
@@ -140,6 +174,7 @@ pub async fn heads_main<T: TezosFacade + 'static>(client: Data<T>) -> Result<imp
                     operations_hash: full_header.operations_hash,
                     fitness: full_header.fitness,
                     context: full_header.context,
+                    protocol_data: Some("".to_string()),
                 };
 
                 let header_json = serde_json::to_string(&header).unwrap();

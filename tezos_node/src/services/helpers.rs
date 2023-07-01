@@ -381,7 +381,7 @@ mod test {
         let res: Operation = test::call_and_read_body_json(&app, req).await;
         assert_eq!(
             res.hash.unwrap().into_string(),
-            "oooHiZmTVQFVe48pqX2BqnywnH6PWDKUquYoPjtVkihLRpGQHZd"
+            "ooDLM1HCkn7kD9yNYDaickE6yB8re3hege7WVKYhUBMg33BFsUq"
         );
         Ok(())
     }
