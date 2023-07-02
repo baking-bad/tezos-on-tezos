@@ -2383,6 +2383,7 @@ dependencies = [
  "env_logger",
  "hex",
  "ibig",
+ "local-channel",
  "log",
  "reqwest",
  "serde",
@@ -2397,7 +2398,6 @@ dependencies = [
  "tezos_l2",
  "tezos_vm",
  "tokio",
- "tokio-stream",
 ]
 
 [[package]]
@@ -2531,17 +2531,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbae76ab933c85776efabc971569dd6119c580d8f5d448769dec1764bf796ef2"
 dependencies = [
  "native-tls",
- "tokio",
-]
-
-[[package]]
-name = "tokio-stream"
-version = "0.1.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "397c988d37662c7dda6d2208364a706264bf3d6138b11d436cbac0ad38832842"
-dependencies = [
- "futures-core",
- "pin-project-lite",
  "tokio",
 ]
 

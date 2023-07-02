@@ -30,11 +30,12 @@ tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/i
 tezos_operation = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-operation", default-features = false, features = ["ed25519"] }
 tezos_michelson = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-michelson", default-features = false }
 tezos_contract = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-contract", default-features = false }
-tokio = { version = "1.25.0", features = ["process", "macros"] }
 chrono = { version = "0.4", default-features = false }
 ibig = { version = "0.3", features = ["std", "num-traits"], default-features = false }
-tokio-stream = "0.1.14"
+local-channel = "0.1.3"
+
 
 [dev-dependencies]
+tokio = { version = "1.25.0", features = ["process", "macros"] }
 static_init = "1.0.3"
 tezos_rpc = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-rpc", features = ["http"] }

@@ -6,8 +6,8 @@ use actix_web::{
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use tezos_core::types::encoded::{BlockHash, ContextHash, OperationListListHash};
-use tokio::sync::mpsc::channel;
-use tokio_stream::wrappers::ReceiverStream;
+//use tokio::sync::mpsc::channel;
+//use tokio_stream::wrappers::ReceiverStream;
 
 use crate::{
     json_response,
@@ -139,17 +139,15 @@ pub async fn bootstrap_info<T: TezosFacade>(client: Data<T>) -> Result<impl Resp
     Ok(json_response!(value))
 }
 
-pub async fn heads_main<T: TezosFacade + 'static>(client: Data<T>) -> Result<impl Responder> {
-    let (tx, rx) = channel::<Result<Bytes>>(1);
+pub async fn heads_main<T: TezosFacade + 'static + Send + Sync>(
+    client: Data<T>,
+) -> Result<impl Responder> {
+    let (tx, rx) = local_channel::mpsc::channel::<Result<Bytes>>();
 
-    tokio::task::spawn_local(async move {
+    actix_web::rt::spawn(async move {
         let mut last_level = 0;
 
         loop {
-            if tx.is_closed() {
-                break;
-            }
-
             let full_header = client.get_block_header(&BlockId::Head).await.unwrap();
 
             if last_level != full_header.level {
@@ -171,20 +169,18 @@ pub async fn heads_main<T: TezosFacade + 'static>(client: Data<T>) -> Result<imp
                 let header_json = serde_json::to_string(&header).unwrap();
                 let header_bytes = Bytes::from(header_json);
 
-                if let Err(_) = tx.send(Ok(header_bytes)).await {
+                if let Err(_) = tx.send(Ok(header_bytes)) {
                     break;
                 }
             }
 
-            tokio::time::sleep(std::time::Duration::from_millis(1000)).await;
+            actix_web::rt::time::sleep(std::time::Duration::from_millis(1000)).await;
         }
     });
 
-    let body_stream = ReceiverStream::new(rx);
-
     let response = HttpResponse::Ok()
         .insert_header((header::CONTENT_TYPE, "application/json"))
-        .streaming(body_stream);
+        .streaming(rx);
 
     Ok(response)
 }
