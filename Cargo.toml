@@ -7,6 +7,8 @@ members = [
   "tezos_vm",
   "tezos_node",
   "tezos_ctx",
+  "michelson_derive",
+  "michelson_interop"
 ]
 
 [profile.release]
