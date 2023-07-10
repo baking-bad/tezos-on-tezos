@@ -2,16 +2,16 @@
 
 use std::hash::Hash;
 use tezos_core::types::{
-    encoded::{Address, ChainId, Key, ImplicitAddress, Signature, Encoded},
+    encoded::{Address, ChainId, Encoded, ImplicitAddress, Key, Signature},
     mutez::Mutez,
     number::{Int, Nat},
 };
 use tezos_michelson::michelson::{
-    types::{Type, self},
-    data::{Data},
+    data::Data,
+    types::{self, Type},
 };
 
-use crate::{Error, Result, MichelsonInterop};
+use crate::{Error, MichelsonInterop, Result};
 
 pub type Ticket<T: MichelsonInterop + Hash + Eq> = (Address, T, Nat);
 
@@ -22,24 +22,24 @@ macro_rules! impl_for_encoded {
                 let ty = types::$fn::new(None);
                 match field_name {
                     Some(name) => ty.with_field_annotation(name),
-                    None => ty.into()
-                }   
+                    None => ty.into(),
+                }
             }
-        
+
             fn to_michelson(&self) -> Result<Data> {
                 Ok(Data::String(self.into_string().try_into()?))
             }
-        
+
             fn from_michelson(data: Data) -> Result<Self> {
                 match data {
-                    Data::String(value) => {
-                        Ok(Self::try_from(value.clone().into_string())?)
-                    },
+                    Data::String(value) => Ok(Self::try_from(value.clone().into_string())?),
                     Data::Bytes(value) => {
                         let bytes: Vec<u8> = (&value).into();
                         Ok(Self::from_bytes(bytes.as_slice())?)
-                    },
-                    _ => Err(Error::TypeMismatch { message: format!("Expected {}, got {:?}", stringify!($fn), data) })
+                    }
+                    _ => Err(Error::TypeMismatch {
+                        message: format!("Expected {}, got {:?}", stringify!($fn), data),
+                    }),
                 }
             }
         }
@@ -57,7 +57,7 @@ impl MichelsonInterop for Mutez {
         let ty = types::Mutez::new(None);
         match field_name {
             Some(name) => ty.with_field_annotation(name),
-            None => ty.into()
+            None => ty.into(),
         }
     }
 
@@ -68,7 +68,9 @@ impl MichelsonInterop for Mutez {
     fn from_michelson(data: Data) -> Result<Self> {
         match data {
             Data::Int(value) => Ok((&value).try_into()?),
-            _ => Err(Error::TypeMismatch { message: format!("Expected int (mutez), got {:?}", data) })
+            _ => Err(Error::TypeMismatch {
+                message: format!("Expected int (mutez), got {:?}", data),
+            }),
         }
     }
 }
@@ -78,8 +80,8 @@ impl MichelsonInterop for Int {
         let ty = types::Int::new(None);
         match field_name {
             Some(name) => ty.with_field_annotation(name),
-            None => ty.into()
-        }   
+            None => ty.into(),
+        }
     }
 
     fn to_michelson(&self) -> Result<Data> {
@@ -89,7 +91,9 @@ impl MichelsonInterop for Int {
     fn from_michelson(data: Data) -> Result<Self> {
         match data {
             Data::Int(value) => Ok(value.clone()),
-            _ => Err(Error::TypeMismatch { message: format!("Expected int, got {:?}", data) })
+            _ => Err(Error::TypeMismatch {
+                message: format!("Expected int, got {:?}", data),
+            }),
         }
     }
 }
@@ -99,8 +103,8 @@ impl MichelsonInterop for Nat {
         let ty = types::Nat::new(None);
         match field_name {
             Some(name) => ty.with_field_annotation(name),
-            None => ty.into()
-        }   
+            None => ty.into(),
+        }
     }
 
     fn to_michelson(&self) -> Result<Data> {
@@ -111,7 +115,9 @@ impl MichelsonInterop for Nat {
         match data {
             Data::Int(value) => Ok(value.try_into()?),
             Data::Nat(value) => Ok(value.clone()),
-            _ => Err(Error::TypeMismatch { message: format!("Expected int, got {:?}", data) })
+            _ => Err(Error::TypeMismatch {
+                message: format!("Expected int, got {:?}", data),
+            }),
         }
     }
 }

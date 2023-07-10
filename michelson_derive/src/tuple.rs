@@ -1,7 +1,7 @@
 use find_crate::find_crate;
-use proc_macro2::{TokenStream, Span};
-use syn::{parse::Parse, punctuated::Punctuated, Ident, Result, Token};
+use proc_macro2::{Span, TokenStream};
 use quote::quote;
+use syn::{parse::Parse, punctuated::Punctuated, Ident, Result, Token};
 
 pub struct Idents(pub Punctuated<Ident, Token![,]>);
 
@@ -12,40 +12,30 @@ impl Parse for Idents {
 }
 
 pub fn expand_michelson_tuple(idents: Idents) -> TokenStream {
-    let indices = idents.0
+    let indices = idents
+        .0
         .clone()
         .into_iter()
         .enumerate()
         .map(|(idx, _)| format!("{}", idx).parse::<TokenStream>().unwrap());
 
-    let generics = idents.0
-        .clone()
-        .into_iter()
-        .map(|ident| {
-            quote! { #ident: MichelsonInterop }
-        });
+    let generics = idents.0.clone().into_iter().map(|ident| {
+        quote! { #ident: MichelsonInterop }
+    });
 
-    let types = idents.0
-        .clone()
-        .into_iter();
+    let types = idents.0.clone().into_iter();
 
-    let inner_types = idents.0
-        .clone()
-        .into_iter()
-        .map(|ident| {
-            quote! { #ident::michelson_type(None) }
-        });
+    let inner_types = idents.0.clone().into_iter().map(|ident| {
+        quote! { #ident::michelson_type(None) }
+    });
 
-    let values = idents.0
-        .clone()
-        .into_iter()
-        .map(|ident| {
-            quote! { #ident::from_michelson(pair.values.remove(0))? }
-        });
+    let values = idents.0.clone().into_iter().map(|ident| {
+        quote! { #ident::from_michelson(pair.values.remove(0))? }
+    });
 
     let crate_name = match find_crate(|s| s == "michelson_interop") {
         Ok(pkg) => pkg.name,
-        Err(_) => "crate".into()
+        Err(_) => "crate".into(),
     };
     let michelson_interop = Ident::new(&crate_name, Span::call_site());
 
@@ -56,10 +46,10 @@ pub fn expand_michelson_tuple(idents: Idents) -> TokenStream {
                 match field_name {
                     Some(name) => ty.with_field_annotation(name),
                     None => ty.into()
-                }   
+                }
             }
 
-            fn to_michelson(&self) -> Result<data::Data> {           
+            fn to_michelson(&self) -> Result<data::Data> {
                 Ok(data::pair(vec![ #( self.#indices.to_michelson()? ),* ]))
             }
 

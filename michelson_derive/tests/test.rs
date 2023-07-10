@@ -1,5 +1,5 @@
-use std::collections::{HashSet, HashMap};
-use michelson_interop::{MichelsonInterop, hashset, hashmap};
+use michelson_interop::{hashmap, hashset, MichelsonInterop};
+use std::collections::{HashMap, HashSet};
 use tezos_vm::formatter::Formatter;
 
 #[derive(Debug, PartialEq, Eq, Hash, MichelsonInterop)]
@@ -32,9 +32,15 @@ fn test_michelson_record() {
             data: vec![0u8, 1u8, 2u8],
             none: (),
         },
-        list: vec![InnerType { data: vec![], none: () }],
-        set: hashset![InnerType { data: vec![], none: () }],
-        map: hashmap!{ "hello".into() => true, "world".into() => false },
+        list: vec![InnerType {
+            data: vec![],
+            none: (),
+        }],
+        set: hashset![InnerType {
+            data: vec![],
+            none: ()
+        }],
+        map: hashmap! { "hello".into() => true, "world".into() => false },
     };
 
     let res = src.to_michelson().expect("Failed to serialize");
@@ -56,16 +62,40 @@ fn test_michelson_tuple() {
         TupleType::michelson_type(None).format()
     );
 
-    let src = TupleType(
-        "Hello".into(),
-        false,
-        (vec![42u8], ())
-    );
+    let src = TupleType("Hello".into(), false, (vec![42u8], ()));
 
     let res = src.to_michelson().expect("Failed to serialize");
     println!("Serialized: {}", res.format());
 
     let dst = TupleType::from_michelson(res).expect("Failed to deserialize");
+    println!("Deserialized: {:#?}", dst);
+
+    assert_eq!(src, dst);
+}
+
+#[derive(Debug, PartialEq, MichelsonInterop)]
+enum EnumType {
+    Default,
+    Entry1(Vec<u8>, String),
+    Entry2 { flag: bool, list: Vec<bool> },
+}
+
+#[test]
+fn test_michelson_or() {
+    println!(
+        "Michelson type: {}",
+        EnumType::michelson_type(None).format()
+    );
+
+    let src = EnumType::Entry2 {
+        flag: true,
+        list: vec![false],
+    };
+
+    let res = src.to_michelson().expect("Failed to serialize");
+    println!("Serialized: {}", res.format());
+
+    let dst = EnumType::from_michelson(res).expect("Failed to deserialize");
     println!("Deserialized: {:#?}", dst);
 
     assert_eq!(src, dst);

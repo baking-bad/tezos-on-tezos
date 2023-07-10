@@ -45,12 +45,10 @@ impl std::error::Error for InternalError {
 #[derive(Debug, Display, Error)]
 pub enum Error {
     Internal(InternalError),
-    TypeMismatch {
-        message: String
-    },
-    CastError {
-        message: String
-    }
+    TypeMismatch { message: String },
+    CastError { message: String },
+    InvalidEnumSize,
+    InvalidEnumVariant { index: usize },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

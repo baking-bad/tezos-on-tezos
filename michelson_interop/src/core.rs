@@ -1,9 +1,9 @@
 use tezos_michelson::michelson::{
-    types::{Type, self},
-    data::{Data, self},
+    data::{self, Data},
+    types::{self, Type},
 };
 
-use crate::{Error, Result, MichelsonInterop};
+use crate::{Error, MichelsonInterop, Result};
 
 pub type Bytes = Vec<u8>;
 
@@ -12,8 +12,8 @@ impl MichelsonInterop for () {
         let ty = types::Unit::new(None);
         match field_name {
             Some(name) => ty.with_field_annotation(name),
-            None => ty.into()
-        }   
+            None => ty.into(),
+        }
     }
 
     fn to_michelson(&self) -> Result<Data> {
@@ -23,7 +23,9 @@ impl MichelsonInterop for () {
     fn from_michelson(data: Data) -> Result<Self> {
         match data {
             Data::Unit(_) => Ok(()),
-            _ => Err(Error::TypeMismatch { message: format!("Expected unit, got {:?}", data) })
+            _ => Err(Error::TypeMismatch {
+                message: format!("Expected unit, got {:?}", data),
+            }),
         }
     }
 }
@@ -33,14 +35,14 @@ impl MichelsonInterop for bool {
         let ty = types::Bool::new(None);
         match field_name {
             Some(name) => ty.with_field_annotation(name),
-            None => ty.into()
-        }   
+            None => ty.into(),
+        }
     }
 
     fn to_michelson(&self) -> Result<Data> {
         match self {
             true => Ok(data::r#true()),
-            false => Ok(data::r#false())
+            false => Ok(data::r#false()),
         }
     }
 
@@ -48,7 +50,9 @@ impl MichelsonInterop for bool {
         match data {
             Data::True(_) => Ok(true),
             Data::False(_) => Ok(false),
-            _ => Err(Error::TypeMismatch { message: format!("Expected bool, got {:?}", data) })
+            _ => Err(Error::TypeMismatch {
+                message: format!("Expected bool, got {:?}", data),
+            }),
         }
     }
 }
@@ -58,8 +62,8 @@ impl MichelsonInterop for String {
         let ty = types::String::new(None);
         match field_name {
             Some(name) => ty.with_field_annotation(name),
-            None => ty.into()
-        }   
+            None => ty.into(),
+        }
     }
 
     fn to_michelson(&self) -> Result<Data> {
@@ -69,7 +73,9 @@ impl MichelsonInterop for String {
     fn from_michelson(data: Data) -> Result<Self> {
         match data {
             Data::String(value) => Ok(value.clone().into_string()),
-            _ => Err(Error::TypeMismatch { message: format!("Expected string, got {:?}", data) })
+            _ => Err(Error::TypeMismatch {
+                message: format!("Expected string, got {:?}", data),
+            }),
         }
     }
 }
@@ -79,8 +85,8 @@ impl MichelsonInterop for Bytes {
         let ty = types::Bytes::new(None);
         match field_name {
             Some(name) => ty.with_field_annotation(name),
-            None => ty.into()
-        }   
+            None => ty.into(),
+        }
     }
 
     fn to_michelson(&self) -> Result<data::Data> {
@@ -91,7 +97,9 @@ impl MichelsonInterop for Bytes {
     fn from_michelson(data: Data) -> Result<Self> {
         match data {
             data::Data::Bytes(bytes) => Ok((&bytes).into()),
-            _ => Err(Error::TypeMismatch { message: format!("Expected bytes, got {:?}", data) })
+            _ => Err(Error::TypeMismatch {
+                message: format!("Expected bytes, got {:?}", data),
+            }),
         }
     }
 }

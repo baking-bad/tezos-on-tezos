@@ -1440,6 +1440,7 @@ name = "michelson_derive"
 version = "0.1.0"
 dependencies = [
  "find-crate",
+ "heck 0.3.3",
  "michelson_interop",
  "proc-macro2",
  "quote",

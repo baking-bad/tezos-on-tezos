@@ -1,17 +1,17 @@
+pub mod adt;
 pub mod core;
+pub mod domain;
 pub mod error;
 pub mod generic;
-pub mod domain;
-pub mod adt;
 
 use tezos_michelson::michelson::{data::Data, types::Type};
 
 pub use michelson_derive::MichelsonInterop;
 
 pub use crate::{
-    error::{Error, Result},
     core::Bytes,
-    domain::Ticket
+    domain::Ticket,
+    error::{Error, Result},
 };
 
 pub trait MichelsonInterop: Sized {

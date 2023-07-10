@@ -1,11 +1,11 @@
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use tezos_michelson::michelson::{
-    types::{Type, self},
-    data::{Data, self},
+    data::{self, Data},
+    types::{self, Type},
 };
 
-use crate::{Error, Result, MichelsonInterop};
+use crate::{Error, MichelsonInterop, Result};
 
 #[macro_export]
 macro_rules! hashset {
@@ -35,29 +35,26 @@ impl<T: MichelsonInterop> MichelsonInterop for Vec<T> {
         let ty = types::List::new(inner_ty, None);
         match field_name {
             Some(name) => ty.with_field_annotation(name),
-            None => ty.into()
-        }   
+            None => ty.into(),
+        }
     }
 
     fn to_michelson(&self) -> Result<data::Data> {
-        let elements: Result<Vec<Data>> = self
-            .into_iter()
-            .map(|elt| elt.to_michelson())
-            .collect();
+        let elements: Result<Vec<Data>> = self.into_iter().map(|elt| elt.to_michelson()).collect();
         let list: data::Sequence = data::sequence(elements?);
         Ok(list.into())
     }
 
     fn from_michelson(data: Data) -> Result<Self> {
         match data {
-            data::Data::Sequence(seq) => {
-                seq
-                    .into_values()
-                    .into_iter()
-                    .map(|elt| T::from_michelson(elt))
-                    .collect()
-            },
-            _ => Err(Error::TypeMismatch { message: format!("Expected sequence, got {:?}", data) })
+            data::Data::Sequence(seq) => seq
+                .into_values()
+                .into_iter()
+                .map(|elt| T::from_michelson(elt))
+                .collect(),
+            _ => Err(Error::TypeMismatch {
+                message: format!("Expected sequence, got {:?}", data),
+            }),
         }
     }
 }
@@ -68,29 +65,26 @@ impl<T: MichelsonInterop + Hash + Eq> MichelsonInterop for HashSet<T> {
         let ty = types::Set::new(inner_ty, None);
         match field_name {
             Some(name) => ty.with_field_annotation(name),
-            None => ty.into()
-        }   
+            None => ty.into(),
+        }
     }
 
     fn to_michelson(&self) -> Result<data::Data> {
-        let elements: Result<Vec<Data>> = self
-            .into_iter()
-            .map(|elt| elt.to_michelson())
-            .collect();
+        let elements: Result<Vec<Data>> = self.into_iter().map(|elt| elt.to_michelson()).collect();
         let list: data::Sequence = data::sequence(elements?);
         Ok(list.into())
     }
 
     fn from_michelson(data: Data) -> Result<Self> {
         match data {
-            data::Data::Sequence(seq) => {
-                seq
-                    .into_values()
-                    .into_iter()
-                    .map(|elt| T::from_michelson(elt))
-                    .collect()
-            },
-            _ => Err(Error::TypeMismatch { message: format!("Expected sequence, got {:?}", data) })
+            data::Data::Sequence(seq) => seq
+                .into_values()
+                .into_iter()
+                .map(|elt| T::from_michelson(elt))
+                .collect(),
+            _ => Err(Error::TypeMismatch {
+                message: format!("Expected sequence, got {:?}", data),
+            }),
         }
     }
 }
@@ -102,8 +96,8 @@ impl<K: MichelsonInterop + Hash + Eq, V: MichelsonInterop> MichelsonInterop for 
         let ty = types::Map::new(key_ty, val_ty, None);
         match field_name {
             Some(name) => ty.with_field_annotation(name),
-            None => ty.into()
-        }   
+            None => ty.into(),
+        }
     }
 
     fn to_michelson(&self) -> Result<data::Data> {
@@ -127,13 +121,19 @@ impl<K: MichelsonInterop + Hash + Eq, V: MichelsonInterop> MichelsonInterop for 
                             let k = K::from_michelson(*elt.key)?;
                             let v = V::from_michelson(*elt.value)?;
                             res.insert(k, v);
-                        },
-                        _ => return Err(Error::TypeMismatch { message: format!("Expected elt, got {:?}", item) })
+                        }
+                        _ => {
+                            return Err(Error::TypeMismatch {
+                                message: format!("Expected elt, got {:?}", item),
+                            })
+                        }
                     }
                 }
                 Ok(res)
-            },
-            _ => Err(Error::TypeMismatch { message: format!("Expected sequence, got {:?}", data) })
+            }
+            _ => Err(Error::TypeMismatch {
+                message: format!("Expected sequence, got {:?}", data),
+            }),
         }
     }
 }
