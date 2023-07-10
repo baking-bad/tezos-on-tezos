@@ -1,5 +1,9 @@
-use michelson_interop::{hashmap, hashset, MichelsonInterop};
+use michelson_interop::{hashmap, hashset, MichelsonInterop, Ticket};
 use std::collections::{HashMap, HashSet};
+use tezos_core::types::{
+    encoded::{Address, ChainId},
+    mutez::Mutez,
+};
 use tezos_vm::formatter::Formatter;
 
 #[derive(Debug, PartialEq, Eq, Hash, MichelsonInterop)]
@@ -96,6 +100,41 @@ fn test_michelson_or() {
     println!("Serialized: {}", res.format());
 
     let dst = EnumType::from_michelson(res).expect("Failed to deserialize");
+    println!("Deserialized: {:#?}", dst);
+
+    assert_eq!(src, dst);
+}
+
+#[derive(Debug, PartialEq, MichelsonInterop)]
+struct DomainType {
+    inline: (ChainId, Address, Mutez),
+    ticket: Option<Ticket<()>>,
+}
+
+#[test]
+fn test_michelson_domain() {
+    println!(
+        "Michelson type: {}",
+        DomainType::michelson_type(None).format()
+    );
+
+    let src = DomainType {
+        inline: (
+            "NetXnHfVqm9iesp".try_into().unwrap(),
+            "tz1V16tR1LMKRernkmXzngkfznmEcTGXwDuk".try_into().unwrap(),
+            100u32.try_into().unwrap(),
+        ),
+        ticket: Some((
+            "tz1V16tR1LMKRernkmXzngkfznmEcTGXwDuk".try_into().unwrap(),
+            (),
+            42u64.into(),
+        )),
+    };
+
+    let res = src.to_michelson().expect("Failed to serialize");
+    println!("Serialized: {}", res.format());
+
+    let dst = DomainType::from_michelson(res).expect("Failed to deserialize");
     println!("Deserialized: {:#?}", dst);
 
     assert_eq!(src, dst);

@@ -138,6 +138,34 @@ impl<K: MichelsonInterop + Hash + Eq, V: MichelsonInterop> MichelsonInterop for 
     }
 }
 
+impl<T: MichelsonInterop> MichelsonInterop for Option<T> {
+    fn michelson_type(field_name: Option<String>) -> Type {
+        let inner_ty = T::michelson_type(None);
+        let ty = types::Option::new(inner_ty, None);
+        match field_name {
+            Some(name) => ty.with_field_annotation(name),
+            None => ty.into(),
+        }
+    }
+
+    fn to_michelson(&self) -> Result<data::Data> {
+        match self {
+            Some(inner) => Ok(data::some(inner.to_michelson()?)),
+            None => Ok(data::none()),
+        }
+    }
+
+    fn from_michelson(data: Data) -> Result<Self> {
+        match data {
+            data::Data::Some(inner) => Ok(Some(T::from_michelson(*inner.value)?)),
+            data::Data::None(_) => Ok(None),
+            _ => Err(Error::TypeMismatch {
+                message: format!("Expected option, got {:?}", data),
+            }),
+        }
+    }
+}
+
 michelson_derive::michelson_tuple!(A, B);
 michelson_derive::michelson_tuple!(A, B, C);
 michelson_derive::michelson_tuple!(A, B, C, D);

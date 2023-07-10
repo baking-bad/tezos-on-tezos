@@ -213,13 +213,9 @@ fn expand_michelson_or(name: Ident, data: DataEnum) -> TokenStream {
 }
 
 pub fn expand_michelson_interop(input: syn::DeriveInput) -> TokenStream {
-    let res = match input.data {
+    match input.data {
         syn::Data::Enum(data) => expand_michelson_or(input.ident, data),
         syn::Data::Struct(data) => expand_michelson_pair(input.ident, data),
         syn::Data::Union(_) => unimplemented!("Unions are not supported"),
-    };
-
-    println!("{}", res.to_string());
-
-    res
+    }
 }
