@@ -1,10 +1,14 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 #![allow(type_alias_bounds)]
 
+use chrono::DateTime;
 use std::hash::Hash;
 use tezos_core::types::{
     encoded::{Address, ChainId, Encoded, ImplicitAddress, Key, Signature},
-    mutez::Mutez,
-    number::{Int, Nat},
+    number::Nat,
 };
 use tezos_michelson::michelson::{
     data::Data,
@@ -52,9 +56,9 @@ impl_for_encoded!(Key, Key);
 impl_for_encoded!(ImplicitAddress, KeyHash);
 impl_for_encoded!(Signature, Signature);
 
-impl MichelsonInterop for Mutez {
+impl MichelsonInterop for i64 {
     fn michelson_type(field_name: Option<String>) -> Type {
-        let ty = types::Mutez::new(None);
+        let ty = types::Timestamp::new(None);
         match field_name {
             Some(name) => ty.with_field_annotation(name),
             None => ty.into(),
@@ -62,61 +66,15 @@ impl MichelsonInterop for Mutez {
     }
 
     fn to_michelson(&self) -> Result<Data> {
-        Ok(Data::Int(self.try_into()?))
+        Ok(Data::Int(self.clone().into()))
     }
 
     fn from_michelson(data: Data) -> Result<Self> {
         match data {
-            Data::Int(value) => Ok((&value).try_into()?),
+            Data::Int(value) => Ok(value.to_integer()?),
+            Data::String(value) => Ok(DateTime::parse_from_rfc3339(value.to_str())?.timestamp()),
             _ => Err(Error::TypeMismatch {
-                message: format!("Expected int (mutez), got {:?}", data),
-            }),
-        }
-    }
-}
-
-impl MichelsonInterop for Int {
-    fn michelson_type(field_name: Option<String>) -> Type {
-        let ty = types::Int::new(None);
-        match field_name {
-            Some(name) => ty.with_field_annotation(name),
-            None => ty.into(),
-        }
-    }
-
-    fn to_michelson(&self) -> Result<Data> {
-        Ok(Data::Int(self.clone()))
-    }
-
-    fn from_michelson(data: Data) -> Result<Self> {
-        match data {
-            Data::Int(value) => Ok(value.clone()),
-            _ => Err(Error::TypeMismatch {
-                message: format!("Expected int, got {:?}", data),
-            }),
-        }
-    }
-}
-
-impl MichelsonInterop for Nat {
-    fn michelson_type(field_name: Option<String>) -> Type {
-        let ty = types::Nat::new(None);
-        match field_name {
-            Some(name) => ty.with_field_annotation(name),
-            None => ty.into(),
-        }
-    }
-
-    fn to_michelson(&self) -> Result<Data> {
-        Ok(Data::Int(self.into()))
-    }
-
-    fn from_michelson(data: Data) -> Result<Self> {
-        match data {
-            Data::Int(value) => Ok(value.try_into()?),
-            Data::Nat(value) => Ok(value.clone()),
-            _ => Err(Error::TypeMismatch {
-                message: format!("Expected int, got {:?}", data),
+                message: format!("Expected unix time or rfc3339, got {:?}", data),
             }),
         }
     }

@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use find_crate::find_crate;
 use proc_macro2::{Span, TokenStream};
 use quote::quote;

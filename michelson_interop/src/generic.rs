@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use tezos_michelson::michelson::{
@@ -71,6 +75,7 @@ impl<T: MichelsonInterop + Hash + Eq> MichelsonInterop for HashSet<T> {
 
     fn to_michelson(&self) -> Result<data::Data> {
         let elements: Result<Vec<Data>> = self.into_iter().map(|elt| elt.to_michelson()).collect();
+        // TODO: sort elements
         let list: data::Sequence = data::sequence(elements?);
         Ok(list.into())
     }

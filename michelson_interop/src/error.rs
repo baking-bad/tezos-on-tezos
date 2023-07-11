@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use derive_more::{Display, Error};
 use std::backtrace::Backtrace;
 
@@ -49,6 +53,7 @@ pub enum Error {
     CastError { message: String },
     InvalidEnumSize,
     InvalidEnumVariant { index: usize },
+    MutezOverflow,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -74,3 +79,4 @@ macro_rules! impl_from_error {
 
 impl_from_error!(tezos_core::Error);
 impl_from_error!(tezos_michelson::Error);
+impl_from_error!(chrono::ParseError);

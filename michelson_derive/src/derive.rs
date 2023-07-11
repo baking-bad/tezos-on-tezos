@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use heck::SnakeCase;
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -34,33 +38,36 @@ fn expand_field_ident(ident: Option<Ident>, idx: usize, prefix: TokenStream) -> 
     res.parse::<TokenStream>().unwrap()
 }
 
-fn expand_struct_inner_types(fields: Fields) -> Vec<TokenStream> {
-    let res: Vec<TokenStream> = fields
+fn expand_struct_inner_types(fields: Fields, root_name: TokenStream) -> Vec<TokenStream> {
+    let is_root = fields.len() == 1;
+    fields
         .into_iter()
         .map(|field| {
             let field_type = expand_field_type(field.ty);
-            let field_name = match field.ident {
-                Some(ident) => {
-                    let string = ident.to_string();
+            let field_name = match (is_root, field.ident) {
+                (true, Some(ident)) => unimplemented!("Conflicting field name: %{}", ident),
+                (true, None) => root_name.clone(),
+                (false, Some(ident)) => {
+                    let string: String = ident.to_string();
                     quote! { Some(#string.into()) }
                 }
-                None => quote! { None },
+                (false, None) => quote! { None },
             };
             quote! { #field_type::michelson_type(#field_name) }
         })
-        .collect();
-    if res.len() == 1 {
-        unimplemented!("Single struct field is not allowed")
-    }
-    res
+        .collect()
 }
 
-fn expand_struct_michelson_type(fields: Fields, field_name: TokenStream) -> TokenStream {
+fn expand_struct_michelson_type(fields: Fields, root_name: TokenStream) -> TokenStream {
     match fields {
-        Fields::Unit => quote! { michelson_interop::adt::create_unit(#field_name) },
+        Fields::Unit => quote! { michelson_interop::adt::create_unit(#root_name) },
         _ => {
-            let inner_types = expand_struct_inner_types(fields);
-            quote! { michelson_interop::adt::create_pair(vec![#( #inner_types ),*], #field_name) }
+            let inner_types = expand_struct_inner_types(fields, root_name.clone());
+            if inner_types.len() == 1 {
+                quote! { #( #inner_types )* }
+            } else {
+                quote! { michelson_interop::adt::create_pair(vec![#( #inner_types ),*], #root_name) }
+            }
         }
     }
 }
@@ -73,12 +80,17 @@ fn expand_struct_to_michelson(fields: Fields, prefix: TokenStream) -> TokenStrea
                 let field_ident = expand_field_ident(field.ident, idx, prefix.clone());
                 quote! { #field_ident.to_michelson()? }
             });
-            quote! { tezos_michelson::michelson::data::pair(vec![#( #inner_data ),*]) }
+            if inner_data.len() == 1 {
+                quote! { #( #inner_data )* }
+            } else {
+                quote! { tezos_michelson::michelson::data::pair(vec![#( #inner_data ),*]) }
+            }
         }
     }
 }
 
 fn expand_struct_from_michelson(fields: Fields, constructor: TokenStream) -> TokenStream {
+    let is_root = fields.len() == 1;
     let michelson_type = expand_struct_michelson_type(fields.clone(), quote! {None});
     match fields {
         Fields::Unit => quote! {
@@ -86,6 +98,9 @@ fn expand_struct_from_michelson(fields: Fields, constructor: TokenStream) -> Tok
             #constructor
         },
         Fields::Named(_) => {
+            if is_root {
+                unimplemented!("Struct with a single named field is not allowed");
+            }
             let inner_values = fields.into_iter().map(|field| {
                 let field_type = expand_field_type(field.ty);
                 let field_ident = field.ident.unwrap();
@@ -99,11 +114,19 @@ fn expand_struct_from_michelson(fields: Fields, constructor: TokenStream) -> Tok
         Fields::Unnamed(_) => {
             let inner_values = fields.into_iter().map(|field| {
                 let field_type = expand_field_type(field.ty);
-                quote! { #field_type::from_michelson(pair.values.remove(0))? }
+                if is_root {
+                    quote! { #field_type::from_michelson(data)? }
+                } else {
+                    quote! { #field_type::from_michelson(pair.values.remove(0))? }
+                }
             });
-            quote! {
-                let mut pair = michelson_interop::adt::flatten_pair(#michelson_type, data)?;
-                #constructor ( #( #inner_values ),* )
+            if is_root {
+                quote! { #constructor ( #( #inner_values )* ) }
+            } else {
+                quote! {
+                    let mut pair = michelson_interop::adt::flatten_pair(#michelson_type, data)?;
+                    #constructor ( #( #inner_values ),* )
+                }
             }
         }
     }
@@ -169,6 +192,9 @@ fn expand_variant_from_michelson(variant: Variant, enum_ident: Ident, index: usi
 
 fn expand_michelson_or(name: Ident, data: DataEnum) -> TokenStream {
     let total = data.variants.len();
+    if total < 2 {
+        unimplemented!("Enum must have at least two variants");
+    }
 
     let inner_types = data.variants.clone().into_iter().map(|variant| {
         let field_name = variant.ident.to_string().to_snake_case();
@@ -213,9 +239,11 @@ fn expand_michelson_or(name: Ident, data: DataEnum) -> TokenStream {
 }
 
 pub fn expand_michelson_interop(input: syn::DeriveInput) -> TokenStream {
-    match input.data {
+    let res = match input.data {
         syn::Data::Enum(data) => expand_michelson_or(input.ident, data),
         syn::Data::Struct(data) => expand_michelson_pair(input.ident, data),
         syn::Data::Union(_) => unimplemented!("Unions are not supported"),
-    }
+    };
+    // println!("{}", res);
+    res
 }

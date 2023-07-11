@@ -1,8 +1,13 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use michelson_interop::{hashmap, hashset, MichelsonInterop, Ticket};
 use std::collections::{HashMap, HashSet};
 use tezos_core::types::{
     encoded::{Address, ChainId},
     mutez::Mutez,
+    number::Nat,
 };
 use tezos_vm::formatter::Formatter;
 
@@ -135,6 +140,47 @@ fn test_michelson_domain() {
     println!("Serialized: {}", res.format());
 
     let dst = DomainType::from_michelson(res).expect("Failed to deserialize");
+    println!("Deserialized: {:#?}", dst);
+
+    assert_eq!(src, dst);
+}
+
+#[derive(Debug, PartialEq, MichelsonInterop)]
+enum TokenKind {
+    FA1(Nat),
+    FA2(Nat),
+}
+
+#[derive(Debug, PartialEq, MichelsonInterop)]
+struct TokenType {
+    token_metadata: HashMap<Nat, (Nat, HashMap<String, Vec<u8>>)>,
+    token_kind: TokenKind,
+    time: i64,
+}
+
+#[test]
+fn test_michelson_token() {
+    println!(
+        "Michelson type: {}",
+        TokenType::michelson_type(None).format()
+    );
+
+    let src = TokenType {
+        token_metadata: hashmap! {
+            0u64.into() => (
+                0u64.into(), hashmap! {
+                    "".into() => vec![0u8]
+                }
+            )
+        },
+        token_kind: TokenKind::FA1(2u32.into()),
+        time: 12345678,
+    };
+
+    let res = src.to_michelson().expect("Failed to serialize");
+    println!("Serialized: {}", res.format());
+
+    let dst = TokenType::from_michelson(res).expect("Failed to deserialize");
     println!("Deserialized: {:#?}", dst);
 
     assert_eq!(src, dst);

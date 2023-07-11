@@ -1,8 +1,13 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 pub mod adt;
 pub mod core;
 pub mod domain;
 pub mod error;
 pub mod generic;
+pub mod numeric;
 
 use tezos_michelson::michelson::{data::Data, types::Type};
 
