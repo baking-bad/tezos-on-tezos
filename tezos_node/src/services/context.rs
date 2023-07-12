@@ -1,10 +1,14 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use actix_web::{
     http::StatusCode,
     web::{Data, Path},
     HttpResponse, Responder, Result,
 };
 use tezos_core::types::encoded::ScriptExprHash;
-use tezos_ctx::Config;
+use tezos_proto::config::Config;
 
 use crate::{json_response, rollup::TezosFacade, Error};
 

@@ -1,20 +1,25 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 pub mod block_id;
 pub mod facade;
 pub mod mock_client;
+pub mod rpc_backend;
 pub mod rpc_client;
-pub mod rpc_context;
 pub mod rpc_helpers;
 
 use async_trait::async_trait;
+use layered_store::StoreType;
 use serde::Serialize;
 use tezos_core::types::encoded::{
     Address, BlockHash, ChainId, ContractAddress, Encoded, ImplicitAddress, OperationHash,
     ProtocolHash, PublicKey, ScriptExprHash,
 };
 use tezos_core::types::{mutez::Mutez, number::Nat};
-use tezos_ctx::{BatchReceipt, ContextNode, Head};
 use tezos_michelson::micheline::Micheline;
 use tezos_operation::operations::SignedOperation;
+use tezos_proto::context::{batch::BatchReceipt, head::Head, store::OperationReceipt};
 use tezos_rpc::models::{
     block::{Block, FullHeader, Metadata},
     contract::{ContractEntrypoints, ContractInfo, ContractScript},
@@ -28,25 +33,21 @@ pub use block_id::BlockId;
 #[async_trait]
 pub trait RollupClient {
     async fn initialize(&mut self) -> Result<()>;
-    async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<ContextNode>;
+    async fn store_get<T: StoreType>(&self, key: String, block_id: &BlockId) -> Result<T>;
     async fn get_chain_id(&self) -> Result<ChainId>;
     async fn get_version(&self) -> Result<VersionInfo>;
     async fn is_chain_synced(&self) -> Result<bool>;
     async fn inject_batch(&self, messages: Vec<Vec<u8>>) -> Result<()>;
 
     async fn get_batch_head(&self, block_id: &BlockId) -> Result<Head> {
-        let head: Head = self
-            .get_state_value("/head".into(), block_id)
-            .await?
-            .try_into()?;
+        let head: Head = self.store_get("/head".into(), block_id).await?;
         Ok(head)
     }
 
     async fn get_batch_level(&self, hash: &BlockHash) -> Result<i32> {
         let receipt: BatchReceipt = self
-            .get_state_value(format!("/batches/{}", hash.value()), &BlockId::Head)
-            .await?
-            .try_into()?;
+            .store_get(format!("/batches/{}", hash.value()), &BlockId::Head)
+            .await?;
         Ok(receipt.header.level)
     }
 
@@ -56,18 +57,16 @@ pub trait RollupClient {
             _ => self.get_batch_head(block_id).await?.hash,
         };
         let receipt: BatchReceipt = self
-            .get_state_value(format!("/batches/{}", hash.value()), &BlockId::Head)
-            .await?
-            .try_into()?;
+            .store_get(format!("/batches/{}", hash.value()), &BlockId::Head)
+            .await?;
         Ok(receipt)
     }
 
     async fn get_operation_receipt(&self, hash: &OperationHash) -> Result<Operation> {
-        let receipt: Operation = self
-            .get_state_value(format!("/operations/{}", hash.value()), &BlockId::Head)
-            .await?
-            .try_into()?;
-        Ok(receipt)
+        let receipt: OperationReceipt = self
+            .store_get(format!("/operations/{}", hash.value()), &BlockId::Head)
+            .await?;
+        Ok(receipt.0)
     }
 }
 

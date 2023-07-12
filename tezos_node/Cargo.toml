@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+#
+# SPDX-License-Identifier: MIT
+
 [package]
 name = "tezos_node"
 version = "0.1.0"
@@ -22,9 +26,9 @@ env_logger = "0.10.0"
 hex = "*"
 derive_more = "0.99"
 serde_json = "*"
-tezos_ctx = { path = "../tezos_ctx" }
-tezos_l2 = { path = "../tezos_l2" }
-tezos_vm = { path = "../tezos_vm" }
+layered_store = { path = "../layered_store", default-features = false, features = ["tezos"] }
+tezos_proto = { path = "../tezos_proto" }
+michelson_vm = { path = "../michelson_vm" }
 tezos_rpc = { git = "https://github.com/baking-bad/tezos-rust-sdk", branch = "develop", package = "tezos-rpc", default-features = false }
 tezos_core = { git = "https://github.com/baking-bad/tezos-rust-sdk", branch = "develop", package = "tezos-core", default-features = false, features = ["ed25519"] }
 tezos_operation = { git = "https://github.com/baking-bad/tezos-rust-sdk", branch = "develop", package = "tezos-operation", default-features = false, features = ["ed25519"] }

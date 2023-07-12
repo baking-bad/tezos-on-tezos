@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use actix_web::{
     web::{Data, Path},
     Responder, Result,
@@ -63,7 +67,11 @@ pub async fn block<T: TezosFacade>(
 mod test {
     use actix_web::{test, web::Data, App};
     use tezos_core::types::encoded::{BlockHash, Encoded};
-    use tezos_ctx::{BatchHeader, BatchReceipt, ExecutorContext, Head};
+    use tezos_proto::context::{
+        batch::{BatchHeader, BatchReceipt},
+        head::Head,
+        TezosContext,
+    };
     use tezos_rpc::models::block::FullHeader;
 
     use crate::{rollup::mock_client::RollupMockClient, services::config, Result};

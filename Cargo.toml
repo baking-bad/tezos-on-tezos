@@ -1,15 +1,25 @@
+# SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+#
+# SPDX-License-Identifier: MIT
+
 [workspace]
 members = [
-  "kernel",
-  "installer",
-  "dac_codec",
-  "tezos_l2",
-  "tezos_vm",
+  "tezos_proto",
+  "tezos_kernel",
   "tezos_node",
-  "tezos_ctx",
+  "michelson_vm",
   "michelson_derive",
-  "michelson_interop"
+  "michelson_interop",
+  "layered_store",
+  "sapling_proto",
+  "sapling_kernel",
+  "zcash_params",
+  "kernel_io"
 ]
+
+[patch.crates-io]
+# FIXME: use "custom" feature to avoid unexpected behavior
+getrandom = { git = "https://github.com/baking-bad/getrandom", branch = "patch/0.2" }
 
 [profile.release]
 lto = true

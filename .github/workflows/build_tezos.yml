@@ -1,0 +1,122 @@
+name: Build & deploy Tezos operator
+
+on:
+  push:
+    branches:
+      - 'master'
+    tags:
+      - '*.*.*'
+  pull_request:
+    branches:
+      - 'master'
+
+jobs:
+  build:
+    name: Build and push docker images
+    runs-on: ubuntu-latest
+    env:
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+      DOCKER_REGISTRY: ghcr.io
+      DOCKER_IMAGE_BASE: ${{ github.repository_owner }}
+    outputs:
+      operator: ${{ steps.meta-tezos-operator.outputs.tags }}
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Log in to the registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tezos operator tags & labels
+        id: meta-tezos-operator
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_BASE }}/tezos-operator
+
+      - name: Tezos operator build & push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: build/operator/Dockerfile
+#          file: build/operator/Dockerfile.debug
+          build-args: |
+            OCTEZ_TAG=v17.1
+            OCTEZ_PROTO=PtNairob
+            PACKAGE=tezos_kernel
+#            TEZOS_BRANCH=ole@wasmer-instance-leak
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: ${{ steps.meta-tezos-operator.outputs.tags }}
+          labels: ${{ steps.meta-tezos-operator.outputs.labels }}
+
+      - name: Tezos facade tags & labels
+        id: meta-tezos-facade
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_BASE }}/tezos-facade
+
+      - name: Facade build & push
+        if: ${{ !contains(github.event.head_commit.message, '[skip-build-facade]') }}
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: build/facade/Dockerfile
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: ${{ steps.meta-tezos-facade.outputs.tags }}
+          labels: ${{ steps.meta-tezos-facade.outputs.labels }}
+
+  deploy:
+    if: (github.event_name == 'pull_request' && github.event.pull_request.draft == false) || (github.event_name == 'push' && github.ref == 'refs/heads/master')
+    name: Deploy Tezos rollup to testnet
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      NETWORK: nairobinet
+    steps:
+      - name: Deploy rollup
+        run: docker run -v "/var/run/docker.sock":"/var/run/docker.sock" -e NETWORK=${{ env.NETWORK }} -e OPERATOR_KEY=${{ secrets.OPERATOR_KEY }} ${{ needs.build.outputs.operator }} deploy_rollup | tee originate.out
+
+      - name: Extract rollup address
+        run: |
+          ROLLUP_ADDRESS=$(cat originate.out | grep -oE "sr1[a-zA-Z0-9]{33}" | uniq | tr -d '\n')
+          echo "ROLLUP_ADDRESS=$ROLLUP_ADDRESS" >> $GITHUB_ENV
+
+      - name: Update PR with the deployment link
+        if: github.event_name == 'pull_request'
+        uses: edumserrano/find-create-or-update-comment@v1
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-includes: '<!-- pr-rollup-deployment -->'
+          comment-author: 'github-actions[bot]'
+          body: |
+            <!-- pr-rollup-deployment -->
+            Deployed at [${{ env.ROLLUP_ADDRESS }}](https://${{ env.NETWORK }}.tzkt.io/${{ env.ROLLUP_ADDRESS }})
+          edit-mode: replace
+          reactions: rocket
+
+      - name: Create GitHub deployment
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: altinukshini/deployment-action@releases/v1
+        id: deployment
+        with:
+          token: "${{ github.token }}"
+          environment: ${{ env.NETWORK }}
+
+      - name: Update deployment status
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: altinukshini/deployment-status@releases/v1
+        with:
+          token: "${{ github.token }}"
+          state: "success"
+          environment_url: https://${{ env.NETWORK }}.tzkt.io/${{ env.ROLLUP_ADDRESS }}
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}

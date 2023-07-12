@@ -22,4 +22,4 @@ heck = "0.3"
 [dev-dependencies]
 trybuild = "1.0.42"
 michelson_interop = { path = "../michelson_interop" }
-tezos_vm = { path = "../tezos_vm" }
+michelson_vm = { path = "../michelson_vm" }

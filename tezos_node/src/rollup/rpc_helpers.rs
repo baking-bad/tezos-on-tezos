@@ -1,21 +1,27 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use actix_web::rt::task;
 use async_trait::async_trait;
+use layered_store::LayeredStore;
 use tezos_core::types::encoded::{Encoded, OperationHash, Signature};
-use tezos_l2::{
+use tezos_operation::operations::{SignedOperation, UnsignedOperation};
+use tezos_proto::{
     executor::operation::execute_operation,
     validator::operation::{validate_operation, ValidatedOperation},
 };
-use tezos_operation::operations::{SignedOperation, UnsignedOperation};
 use tezos_rpc::models::operation::Operation;
 
 use crate::{
     rollup::{
-        block_id::BlockId, rpc_client::RollupRpcClient, rpc_context::RpcContext, RollupClient,
+        block_id::BlockId, rpc_backend::RpcBackend, rpc_client::RollupRpcClient, RollupClient,
         TezosHelpers,
     },
     Error, Result,
 };
 
+// TODO: reuse from kernel?
 pub fn parse_operation(payload: &[u8]) -> Result<(OperationHash, SignedOperation)> {
     const SIGNATURE_SIZE: usize = 64;
     if payload.len() < SIGNATURE_SIZE {
@@ -51,7 +57,7 @@ impl TezosHelpers for RollupRpcClient {
         let base_url = self.base_url.clone();
 
         task::spawn_blocking(move || -> Result<Operation> {
-            let mut context = RpcContext::new(base_url, state_level);
+            let mut context = LayeredStore::new(RpcBackend::new(base_url, state_level));
             let hash = operation.hash()?;
             let opg = match validate_operation(&mut context, operation, hash, true)? {
                 ValidatedOperation::Valid(opg) => opg,

@@ -1,0 +1,29 @@
+# SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+#
+# SPDX-License-Identifier: MIT
+
+[package]
+name = "tezos_kernel"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+derive_more = "0.99"
+kernel_io = { path = "../kernel_io" }
+tezos_proto = { path = "../tezos_proto" }
+tezos_core = { git = "https://github.com/baking-bad/tezos-rust-sdk", branch = "develop", package = "tezos-core", default-features = false }
+tezos_operation = { git = "https://github.com/baking-bad/tezos-rust-sdk", branch = "develop", package = "tezos-operation", default-features = false }
+tezos-smart-rollup-host = { version = "0.2.0", features = ["proto-nairobi"], default-features = false }
+# TODO: feature enable "panic-hook-abort"
+tezos-smart-rollup-entrypoint = { version = "0.2.0", features = ["panic-hook", "std", "panic-hook-debug"], default-features = false }
+tezos-smart-rollup-core = { version = "0.2.0", default-features = false }
+
+[dev-dependencies]
+tezos_data_encoding = { version = "0.5" }
+tezos-smart-rollup = { version = "0.2.0", features = ["proto-nairobi", "panic-hook", "crypto"] }
+tezos-smart-rollup-mock = { version = "0.2.0", features = ["proto-nairobi"] }
+tezos_rpc = { git = "https://github.com/baking-bad/tezos-rust-sdk", branch = "develop", package = "tezos-rpc", default-features = false }
+hex = "*"

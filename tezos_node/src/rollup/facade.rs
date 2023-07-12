@@ -1,4 +1,9 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use async_trait::async_trait;
+use michelson_vm::entrypoints::collect_entrypoints;
 use std::collections::HashMap;
 use tezos_core::types::encoded::{
     Address, BlockHash, ContractAddress, Encoded, ImplicitAddress, OperationHash, PublicKey,
@@ -12,7 +17,6 @@ use tezos_rpc::models::{
     contract::{ContractEntrypoints, ContractInfo, ContractScript},
     operation::Operation,
 };
-use tezos_vm::entrypoints::collect_entrypoints;
 
 use crate::{
     rollup::{BlockId, BlockProtocols, RollupClient, TezosFacade},
@@ -48,13 +52,13 @@ impl<T: RollupClient + Sync + Send> TezosFacade for T {
 
     async fn get_contract_balance(&self, block_id: &BlockId, address: &Address) -> Result<Mutez> {
         let balance: Mutez = match self
-            .get_state_value(
+            .store_get(
                 format!("/context/contracts/{}/balance", address.value()),
                 block_id,
             )
             .await
         {
-            Ok(val) => val.try_into()?,
+            Ok(val) => val,
             Err(Error::KeyNotFound { key: _ }) => 0u32.into(),
             Err(err) => return Err(err),
         };
@@ -67,13 +71,13 @@ impl<T: RollupClient + Sync + Send> TezosFacade for T {
         address: &ImplicitAddress,
     ) -> Result<Nat> {
         let counter: Nat = match self
-            .get_state_value(
+            .store_get(
                 format!("/context/contracts/{}/counter", address.value()),
                 block_id,
             )
             .await
         {
-            Ok(val) => val.try_into()?,
+            Ok(val) => val,
             Err(Error::KeyNotFound { key: _ }) => 0u32.into(),
             Err(err) => return Err(err),
         };
@@ -86,13 +90,13 @@ impl<T: RollupClient + Sync + Send> TezosFacade for T {
         address: &ImplicitAddress,
     ) -> Result<Option<PublicKey>> {
         let pubkey: Option<PublicKey> = match self
-            .get_state_value(
+            .store_get(
                 format!("/context/contracts/{}/pubkey", address.value()),
                 block_id,
             )
             .await
         {
-            Ok(val) => Some(val.try_into()?),
+            Ok(val) => Some(val),
             Err(Error::KeyNotFound { key: _ }) => None,
             Err(err) => return Err(err),
         };
@@ -105,12 +109,11 @@ impl<T: RollupClient + Sync + Send> TezosFacade for T {
         address: &ContractAddress,
     ) -> Result<Micheline> {
         let script: Micheline = self
-            .get_state_value(
+            .store_get(
                 format!("/context/contracts/{}/code", address.value()),
                 block_id,
             )
-            .await?
-            .try_into()?;
+            .await?;
         Ok(script)
     }
 
@@ -120,12 +123,11 @@ impl<T: RollupClient + Sync + Send> TezosFacade for T {
         address: &ContractAddress,
     ) -> Result<Micheline> {
         let storage: Micheline = self
-            .get_state_value(
+            .store_get(
                 format!("/context/contracts/{}/storage", address.value()),
                 block_id,
             )
-            .await?
-            .try_into()?;
+            .await?;
         Ok(storage)
     }
 
@@ -168,12 +170,11 @@ impl<T: RollupClient + Sync + Send> TezosFacade for T {
         address: &ContractAddress,
     ) -> Result<ContractEntrypoints> {
         let value: Micheline = self
-            .get_state_value(
+            .store_get(
                 format!("/context/contracts/{}/entrypoints", address.value()),
                 block_id,
             )
-            .await?
-            .try_into()?;
+            .await?;
 
         let param_type: Type = value.try_into()?;
         let mut entrypoints: HashMap<String, Type> = HashMap::new();
@@ -194,7 +195,7 @@ impl<T: RollupClient + Sync + Send> TezosFacade for T {
         key_hash: &ScriptExprHash,
     ) -> Result<Micheline> {
         let value: Micheline = self
-            .get_state_value(
+            .store_get(
                 format!(
                     "/context/bigmaps/{}/values/{}",
                     big_map_id,
@@ -202,8 +203,7 @@ impl<T: RollupClient + Sync + Send> TezosFacade for T {
                 ),
                 block_id,
             )
-            .await?
-            .try_into()?;
+            .await?;
         Ok(value)
     }
 

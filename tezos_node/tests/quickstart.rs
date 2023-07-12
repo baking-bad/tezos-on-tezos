@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use serde_json::json;
 use static_init::dynamic;
 use std::path::PathBuf;
@@ -6,11 +10,11 @@ use std::time::Duration;
 use tezos_contract::ContractFetcher;
 use tezos_core::types::encoded::{Encoded, ImplicitAddress, OperationHash, SecretKey};
 use tezos_core::types::number::Nat;
-use tezos_l2::executor::origination::originated_address;
 use tezos_michelson::michelson::data;
 use tezos_operation::operations::{
     OperationContent, Origination, Reveal, Script, Transaction, UnsignedOperation,
 };
+use tezos_proto::executor::origination::originated_address;
 use tezos_rpc::{client::TezosRpc, http::default::HttpClient, Result};
 use tokio::time::sleep;
 

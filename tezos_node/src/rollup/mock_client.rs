@@ -1,18 +1,20 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use async_trait::async_trait;
+use layered_store::{ephemeral::EphemeralCopy, StoreType};
 use log::debug;
 use std::cell::RefCell;
 use std::sync::Mutex;
 use tezos_core::types::encoded::{ChainId, Encoded, OperationHash};
-use tezos_ctx::{
-    migrations::run_migrations, ContextNode, EphemeralContext, ExecutorContext, GenericContext,
-    Head,
-};
-use tezos_l2::{
+use tezos_operation::operations::SignedOperation;
+use tezos_proto::{
     batcher::apply_batch,
+    context::{head::Head, migrations::run_migrations, TezosContext, TezosEphemeralContext},
     executor::operation::execute_operation,
     validator::operation::{validate_operation, ValidatedOperation},
 };
-use tezos_operation::operations::SignedOperation;
 use tezos_rpc::models::operation::Operation;
 use tezos_rpc::models::version::{
     AdditionalInfo, CommitInfo, NetworkVersion, Version, VersionInfo,
@@ -26,7 +28,7 @@ use crate::{
 const CHAIN_ID: &str = "NetXP2FfcNxFANL";
 
 pub struct RollupMockClient {
-    context: Mutex<RefCell<EphemeralContext>>,
+    context: Mutex<RefCell<TezosEphemeralContext>>,
     mempool: Mutex<RefCell<Vec<(OperationHash, SignedOperation)>>>,
 }
 
@@ -39,7 +41,7 @@ macro_rules! get_mut {
 impl Default for RollupMockClient {
     fn default() -> Self {
         Self {
-            context: Mutex::new(RefCell::new(EphemeralContext::new())),
+            context: Mutex::new(RefCell::new(TezosEphemeralContext::default())),
             mempool: Mutex::new(RefCell::new(Vec::new())),
         }
     }
@@ -58,7 +60,7 @@ impl RollupMockClient {
         Ok(())
     }
 
-    pub fn patch(&self, func: fn(&mut EphemeralContext) -> Result<()>) -> Result<()> {
+    pub fn patch(&self, func: fn(&mut TezosEphemeralContext) -> Result<()>) -> Result<()> {
         func(get_mut!(self.context))
     }
 }
@@ -72,7 +74,7 @@ impl RollupClient for RollupMockClient {
         Ok(())
     }
 
-    async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<ContextNode> {
+    async fn store_get<T: StoreType>(&self, key: String, block_id: &BlockId) -> Result<T> {
         match &block_id {
             BlockId::Head => {}
             _ => unimplemented!("Can only access state at head level in the mockup mode"),

@@ -21,10 +21,11 @@ Currently up to 6 fields, extend if you need more:
 
 #### Structs
 
-Structs vave to have 0 (Unit) or at least 2 fields:
+Structs are allowed to have no fields (Unit), single unnamed field, or two and more named/unnamed fields.
 
 - `struct S {}` -> `unit`
 - `struct S ()` -> `unit`
+- `struct (A)` -> `a`
 - `struct (A, B)` -> `pair a b`
 - `struct { a: A, b: B }` -> `pair (a %a) (b %b)` (named tuple)
 
@@ -32,7 +33,7 @@ Nested pairs are always expanded to right combs.
 
 #### Enums
 
-Unit, newtype, and struct variants are supported (but only with >2 fields).
+Unit, newtype (one and more unnamed fields), and struct variants are supported (two and more named fields).
 
 ```rust
 enum E {

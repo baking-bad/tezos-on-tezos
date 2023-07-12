@@ -3,13 +3,13 @@
 // SPDX-License-Identifier: MIT
 
 use michelson_interop::{hashmap, hashset, MichelsonInterop, Ticket};
+use michelson_vm::formatter::Formatter;
 use std::collections::{HashMap, HashSet};
 use tezos_core::types::{
     encoded::{Address, ChainId},
     mutez::Mutez,
     number::Nat,
 };
-use tezos_vm::formatter::Formatter;
 
 #[derive(Debug, PartialEq, Eq, Hash, MichelsonInterop)]
 struct InnerType {
