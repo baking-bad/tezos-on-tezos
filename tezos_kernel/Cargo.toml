@@ -25,5 +25,5 @@ tezos-smart-rollup-core = { version = "0.2.0", default-features = false }
 tezos_data_encoding = { version = "0.5" }
 tezos-smart-rollup = { version = "0.2.0", features = ["proto-nairobi", "panic-hook", "crypto"] }
 tezos-smart-rollup-mock = { version = "0.2.0", features = ["proto-nairobi"] }
-tezos_rpc = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-rpc", default-features = false }
+tezos_rpc = { git = "https://github.com/baking-bad/tezos-rust-sdk", branch = "develop", package = "tezos-rpc", default-features = false }
 hex = "*"

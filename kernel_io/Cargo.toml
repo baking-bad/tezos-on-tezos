@@ -15,7 +15,7 @@ derive_more = "0.99"
 layered_store = { path = "../layered_store", features = ["tezos"], default-features = false }
 tezos-smart-rollup-host = { version = "0.2.0", features = ["proto-nairobi"], default-features = false }
 tezos-smart-rollup-core = { version = "0.2.0", default-features = false }
-tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-core", default-features = false }
+tezos_core = { git = "https://github.com/baking-bad/tezos-rust-sdk", branch = "develop", package = "tezos-core", default-features = false }
 
 [dev-dependencies]
 tezos-smart-rollup-host = { version = "0.2.0", features = ["proto-nairobi", "crypto"], default-features = false }

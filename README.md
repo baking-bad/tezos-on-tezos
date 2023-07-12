@@ -242,7 +242,7 @@ Known issues:
 - `getrandom` (does not compile since version 0.2.10) => use patched version
     ```toml
     [patch.crates-io]
-    getrandom = { git = "https://github.com/m-kus/getrandom", branch = "patch/0.2" }
+    getrandom = { git = "https://github.com/baking-bad/getrandom", branch = "patch/0.2" }
     ```
 
 ### `float instructions are forbidden`

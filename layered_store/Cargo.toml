@@ -12,8 +12,8 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 derive_more = "0.99"
-tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", optional = true, branch = "feat/ibig-drop-in", package = "tezos-core", default-features = false, features = ["ed25519"] }
-tezos_michelson = { git = "https://github.com/m-kus/tezos-rust-sdk", optional = true, branch = "feat/ibig-drop-in", package = "tezos-michelson", default-features = false }
+tezos_core = { git = "https://github.com/baking-bad/tezos-rust-sdk", optional = true, branch = "develop", package = "tezos-core", default-features = false, features = ["ed25519"] }
+tezos_michelson = { git = "https://github.com/baking-bad/tezos-rust-sdk", optional = true, branch = "develop", package = "tezos-michelson", default-features = false }
 
 [features]
 default = []

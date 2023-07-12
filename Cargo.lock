@@ -1048,6 +1048,15 @@ dependencies = [
 [[package]]
 name = "equihash"
 version = "0.2.0"
+source = "git+https://github.com/zcash/librustzcash?tag=zcash_primitives-0.12.0#f9cacc5b21fe29797ed3083e27cff9f5abbfe503"
+dependencies = [
+ "blake2b_simd",
+ "byteorder",
+]
+
+[[package]]
+name = "equihash"
+version = "0.2.0"
 source = "git+https://github.com/zcash/librustzcash#4d5dc28ab18a020f46a87c1b76d0bf7883ae55c7"
 dependencies = [
  "blake2b_simd",
@@ -1073,6 +1082,14 @@ checksum = "aa68f1b12764fab894d2755d2518754e71b4fd80ecfb822714a1206c2aab39bf"
 dependencies = [
  "cc",
  "libc",
+]
+
+[[package]]
+name = "f4jumble"
+version = "0.1.0"
+source = "git+https://github.com/zcash/librustzcash?tag=zcash_primitives-0.12.0#f9cacc5b21fe29797ed3083e27cff9f5abbfe503"
+dependencies = [
+ "blake2b_simd",
 ]
 
 [[package]]
@@ -1275,7 +1292,7 @@ dependencies = [
 [[package]]
 name = "getrandom"
 version = "0.2.10"
-source = "git+https://github.com/m-kus/getrandom?branch=patch/0.2#d543bafa73e9884a06c475ee978bb040a6c46d9e"
+source = "git+https://github.com/baking-bad/getrandom?branch=patch/0.2#d543bafa73e9884a06c475ee978bb040a6c46d9e"
 dependencies = [
  "cfg-if",
  "libc",
@@ -1677,7 +1694,7 @@ version = "0.1.0"
 dependencies = [
  "derive_more",
  "layered_store",
- "tezos-core 0.1.3 (git+https://github.com/m-kus/tezos-rust-sdk?branch=feat/ibig-drop-in)",
+ "tezos-core",
  "tezos-smart-rollup-core",
  "tezos-smart-rollup-host",
  "tezos-smart-rollup-mock",
@@ -1703,8 +1720,8 @@ name = "layered_store"
 version = "0.1.0"
 dependencies = [
  "derive_more",
- "tezos-core 0.1.3 (git+https://github.com/m-kus/tezos-rust-sdk?branch=feat/ibig-drop-in)",
- "tezos-michelson 0.1.3 (git+https://github.com/m-kus/tezos-rust-sdk?branch=feat/ibig-drop-in)",
+ "tezos-core",
+ "tezos-michelson",
 ]
 
 [[package]]
@@ -1854,8 +1871,8 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.25",
- "tezos-core 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
- "tezos-michelson 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
+ "tezos-core",
+ "tezos-michelson",
  "trybuild",
 ]
 
@@ -1868,8 +1885,8 @@ dependencies = [
  "ibig",
  "michelson_derive",
  "num-traits",
- "tezos-core 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
- "tezos-michelson 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
+ "tezos-core",
+ "tezos-michelson",
 ]
 
 [[package]]
@@ -1884,8 +1901,8 @@ dependencies = [
  "layered_store",
  "once_cell",
  "serde-json-wasm",
- "tezos-core 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
- "tezos-michelson 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
+ "tezos-core",
+ "tezos-michelson",
 ]
 
 [[package]]
@@ -2691,8 +2708,8 @@ dependencies = [
  "layered_store",
  "lazy_static",
  "mockall",
- "zcash_note_encryption 0.4.0 (git+https://github.com/zcash/librustzcash)",
- "zcash_primitives",
+ "zcash_note_encryption 0.4.0 (git+https://github.com/zcash/librustzcash?tag=zcash_note_encryption-0.4.0)",
+ "zcash_primitives 0.12.0 (git+https://github.com/zcash/librustzcash?tag=zcash_primitives-0.12.0)",
  "zcash_proofs",
 ]
 
@@ -3020,35 +3037,16 @@ source = "git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop#ecb380
 dependencies = [
  "async-trait",
  "derive_more",
- "tezos-core 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
- "tezos-michelson 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
- "tezos-operation 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
- "tezos-rpc 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
+ "tezos-core",
+ "tezos-michelson",
+ "tezos-operation",
+ "tezos-rpc",
 ]
 
 [[package]]
 name = "tezos-core"
 version = "0.1.3"
 source = "git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop#ecb380b8887e94b01837da905f962aeb12dd904d"
-dependencies = [
- "blake2",
- "bs58 0.4.0",
- "cfg-if",
- "derive_more",
- "ed25519-dalek 1.0.1",
- "hex",
- "ibig",
- "lazy_static",
- "num-integer",
- "num-traits",
- "regex",
- "serde",
-]
-
-[[package]]
-name = "tezos-core"
-version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=feat/ibig-drop-in#2e49beaf36a6af78a1ed97decfee403d614525c5"
 dependencies = [
  "blake2",
  "bs58 0.4.0",
@@ -3077,23 +3075,7 @@ dependencies = [
  "num-traits",
  "regex",
  "serde",
- "tezos-core 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
-]
-
-[[package]]
-name = "tezos-michelson"
-version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=feat/ibig-drop-in#2e49beaf36a6af78a1ed97decfee403d614525c5"
-dependencies = [
- "chrono",
- "derive_more",
- "hex",
- "lazy_static",
- "num-integer",
- "num-traits",
- "regex",
- "serde",
- "tezos-core 0.1.3 (git+https://github.com/m-kus/tezos-rust-sdk?branch=feat/ibig-drop-in)",
+ "tezos-core",
 ]
 
 [[package]]
@@ -3106,22 +3088,8 @@ dependencies = [
  "hex",
  "num-derive",
  "num-traits",
- "tezos-core 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
- "tezos-michelson 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
-]
-
-[[package]]
-name = "tezos-operation"
-version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=feat/ibig-drop-in#2e49beaf36a6af78a1ed97decfee403d614525c5"
-dependencies = [
- "chrono",
- "derive_more",
- "hex",
- "num-derive",
- "num-traits",
- "tezos-core 0.1.3 (git+https://github.com/m-kus/tezos-rust-sdk?branch=feat/ibig-drop-in)",
- "tezos-michelson 0.1.3 (git+https://github.com/m-kus/tezos-rust-sdk?branch=feat/ibig-drop-in)",
+ "tezos-core",
+ "tezos-michelson",
 ]
 
 [[package]]
@@ -3134,23 +3102,9 @@ dependencies = [
  "derive_more",
  "reqwest",
  "serde",
- "tezos-core 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
- "tezos-michelson 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
- "tezos-operation 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
-]
-
-[[package]]
-name = "tezos-rpc"
-version = "0.1.3"
-source = "git+https://github.com/m-kus/tezos-rust-sdk?branch=feat/ibig-drop-in#2e49beaf36a6af78a1ed97decfee403d614525c5"
-dependencies = [
- "async-trait",
- "chrono",
- "derive_more",
- "serde",
- "tezos-core 0.1.3 (git+https://github.com/m-kus/tezos-rust-sdk?branch=feat/ibig-drop-in)",
- "tezos-michelson 0.1.3 (git+https://github.com/m-kus/tezos-rust-sdk?branch=feat/ibig-drop-in)",
- "tezos-operation 0.1.3 (git+https://github.com/m-kus/tezos-rust-sdk?branch=feat/ibig-drop-in)",
+ "tezos-core",
+ "tezos-michelson",
+ "tezos-operation",
 ]
 
 [[package]]
@@ -3331,9 +3285,9 @@ dependencies = [
  "derive_more",
  "hex",
  "kernel_io",
- "tezos-core 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
- "tezos-operation 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
- "tezos-rpc 0.1.3 (git+https://github.com/m-kus/tezos-rust-sdk?branch=feat/ibig-drop-in)",
+ "tezos-core",
+ "tezos-operation",
+ "tezos-rpc",
  "tezos-smart-rollup",
  "tezos-smart-rollup-core",
  "tezos-smart-rollup-entrypoint",
@@ -3362,10 +3316,10 @@ dependencies = [
  "serde_json",
  "static_init",
  "tezos-contract",
- "tezos-core 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
- "tezos-michelson 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
- "tezos-operation 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
- "tezos-rpc 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
+ "tezos-core",
+ "tezos-michelson",
+ "tezos-operation",
+ "tezos-rpc",
  "tezos_proto",
  "tokio",
 ]
@@ -3384,10 +3338,10 @@ dependencies = [
  "serde",
  "serde-json-wasm",
  "serde_json",
- "tezos-core 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
- "tezos-michelson 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
- "tezos-operation 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
- "tezos-rpc 0.1.3 (git+https://github.com/baking-bad/tezos-rust-sdk?branch=develop)",
+ "tezos-core",
+ "tezos-michelson",
+ "tezos-operation",
+ "tezos-rpc",
 ]
 
 [[package]]
@@ -3938,12 +3892,32 @@ dependencies = [
 [[package]]
 name = "zcash_address"
 version = "0.3.0"
+source = "git+https://github.com/zcash/librustzcash?tag=zcash_primitives-0.12.0#f9cacc5b21fe29797ed3083e27cff9f5abbfe503"
+dependencies = [
+ "bech32",
+ "bs58 0.5.0",
+ "f4jumble 0.1.0 (git+https://github.com/zcash/librustzcash?tag=zcash_primitives-0.12.0)",
+ "zcash_encoding 0.2.0 (git+https://github.com/zcash/librustzcash?tag=zcash_primitives-0.12.0)",
+]
+
+[[package]]
+name = "zcash_address"
+version = "0.3.0"
 source = "git+https://github.com/zcash/librustzcash#4d5dc28ab18a020f46a87c1b76d0bf7883ae55c7"
 dependencies = [
  "bech32",
  "bs58 0.5.0",
- "f4jumble",
- "zcash_encoding",
+ "f4jumble 0.1.0 (git+https://github.com/zcash/librustzcash)",
+ "zcash_encoding 0.2.0 (git+https://github.com/zcash/librustzcash)",
+]
+
+[[package]]
+name = "zcash_encoding"
+version = "0.2.0"
+source = "git+https://github.com/zcash/librustzcash?tag=zcash_primitives-0.12.0#f9cacc5b21fe29797ed3083e27cff9f5abbfe503"
+dependencies = [
+ "byteorder",
+ "nonempty",
 ]
 
 [[package]]
@@ -3971,7 +3945,7 @@ dependencies = [
 [[package]]
 name = "zcash_note_encryption"
 version = "0.4.0"
-source = "git+https://github.com/zcash/librustzcash#4d5dc28ab18a020f46a87c1b76d0bf7883ae55c7"
+source = "git+https://github.com/zcash/librustzcash?tag=zcash_note_encryption-0.4.0#80adb54e264eb5de362c6b1c3bae76737fc27252"
 dependencies = [
  "chacha20",
  "chacha20poly1305",
@@ -3992,7 +3966,7 @@ dependencies = [
 [[package]]
 name = "zcash_primitives"
 version = "0.12.0"
-source = "git+https://github.com/zcash/librustzcash#4d5dc28ab18a020f46a87c1b76d0bf7883ae55c7"
+source = "git+https://github.com/zcash/librustzcash?tag=zcash_primitives-0.12.0#f9cacc5b21fe29797ed3083e27cff9f5abbfe503"
 dependencies = [
  "aes",
  "bip0039",
@@ -4001,7 +3975,7 @@ dependencies = [
  "blake2s_simd",
  "bls12_381",
  "byteorder",
- "equihash",
+ "equihash 0.2.0 (git+https://github.com/zcash/librustzcash?tag=zcash_primitives-0.12.0)",
  "ff 0.13.0",
  "fpe",
  "group 0.13.0",
@@ -4016,8 +3990,40 @@ dependencies = [
  "rand_core 0.6.4",
  "sha2 0.10.7",
  "subtle",
- "zcash_address",
- "zcash_encoding",
+ "zcash_address 0.3.0 (git+https://github.com/zcash/librustzcash?tag=zcash_primitives-0.12.0)",
+ "zcash_encoding 0.2.0 (git+https://github.com/zcash/librustzcash?tag=zcash_primitives-0.12.0)",
+ "zcash_note_encryption 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "zcash_primitives"
+version = "0.12.0"
+source = "git+https://github.com/zcash/librustzcash#4d5dc28ab18a020f46a87c1b76d0bf7883ae55c7"
+dependencies = [
+ "aes",
+ "bip0039",
+ "bitvec",
+ "blake2b_simd",
+ "blake2s_simd",
+ "bls12_381",
+ "byteorder",
+ "equihash 0.2.0 (git+https://github.com/zcash/librustzcash)",
+ "ff 0.13.0",
+ "fpe",
+ "group 0.13.0",
+ "hex",
+ "incrementalmerkletree",
+ "jubjub",
+ "lazy_static",
+ "memuse",
+ "nonempty",
+ "orchard",
+ "rand 0.8.5",
+ "rand_core 0.6.4",
+ "sha2 0.10.7",
+ "subtle",
+ "zcash_address 0.3.0 (git+https://github.com/zcash/librustzcash)",
+ "zcash_encoding 0.2.0 (git+https://github.com/zcash/librustzcash)",
  "zcash_note_encryption 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -4040,7 +4046,7 @@ dependencies = [
  "redjubjub",
  "tracing",
  "xdg",
- "zcash_primitives",
+ "zcash_primitives 0.12.0 (git+https://github.com/zcash/librustzcash)",
 ]
 
 [[package]]

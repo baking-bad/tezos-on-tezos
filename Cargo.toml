@@ -19,7 +19,7 @@ members = [
 
 [patch.crates-io]
 # FIXME: use "custom" feature to avoid unexpected behavior
-getrandom = { git = "https://github.com/m-kus/getrandom", branch = "patch/0.2" }
+getrandom = { git = "https://github.com/baking-bad/getrandom", branch = "patch/0.2" }
 
 [profile.release]
 lto = true
