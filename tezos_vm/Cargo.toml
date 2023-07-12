@@ -8,8 +8,8 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 tezos_ctx = { path = "../tezos_ctx" }
-tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-core", default-features = false, features = ["ed25519"] }
-tezos_michelson = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-michelson", default-features = false }
+tezos_core = { git = "https://github.com/baking-bad/tezos-rust-sdk", branch = "develop", package = "tezos-core", default-features = false, features = ["ed25519"] }
+tezos_michelson = { git = "https://github.com/baking-bad/tezos-rust-sdk", branch = "develop", package = "tezos-michelson", default-features = false }
 serde-json-wasm = { git = "https://github.com/CosmWasm/serde-json-wasm", branch = "main" }
 serde = { version = "1.0", features = ["derive"] }
 derive_more = "0.99"

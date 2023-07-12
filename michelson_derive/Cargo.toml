@@ -1,0 +1,25 @@
+# SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+#
+# SPDX-License-Identifier: MIT
+
+[package]
+name = "michelson_derive"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+tezos_michelson = { git = "https://github.com/baking-bad/tezos-rust-sdk", branch = "develop", package = "tezos-michelson", default-features = false }
+tezos_core = { git = "https://github.com/baking-bad/tezos-rust-sdk", branch = "develop", package = "tezos-core", default-features = false }
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = "2.0.21"
+find-crate = "0.6.3"
+heck = "0.3"
+
+[dev-dependencies]
+trybuild = "1.0.42"
+michelson_interop = { path = "../michelson_interop" }
+tezos_vm = { path = "../tezos_vm" }
