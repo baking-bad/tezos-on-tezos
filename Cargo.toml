@@ -8,6 +8,8 @@ members = [
   "tezos_kernel",
   "tezos_node",
   "michelson_vm",
+  "michelson_derive",
+  "michelson_interop",
   "layered_store",
   "sapling_proto",
   "sapling_kernel",
