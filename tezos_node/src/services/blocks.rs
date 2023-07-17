@@ -139,7 +139,7 @@ pub async fn bootstrap_info<T: TezosFacade>(client: Data<T>) -> Result<impl Resp
 }
 
 pub async fn heads_main<T: TezosFacade>(client: Data<T>) -> Result<impl Responder> {
-    let rx = client.get_heads_main_receiver().await.unwrap();
+    let rx = client.get_heads_main_channel().await.unwrap();
     let body_stream = ReceiverStream::new(rx);
 
     let response = HttpResponse::Ok()

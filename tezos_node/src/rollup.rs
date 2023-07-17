@@ -38,9 +38,9 @@ pub trait RollupClient: Sync + Send {
     async fn get_version(&self) -> Result<VersionInfo>;
     async fn is_chain_synced(&self) -> Result<bool>;
     async fn inject_batch(&self, messages: Vec<Vec<u8>>) -> Result<()>;
-    fn get_long_poll_receiver(&self) -> Result<Receiver<Result<Bytes>>>;
-    fn get_live_blocks(&self) -> Result<Arc<Mutex<VecDeque<BlockHash>>>>;
-    async fn broadcast_to_long_polls(&self, data: Bytes) -> Result<()>;
+    fn get_ttl_blocks(&self) -> Result<Arc<Mutex<VecDeque<BlockHash>>>>;
+    fn create_channel(&self) -> Result<Receiver<Result<Bytes>>>;
+    async fn broadcast_to_channels(&self, data: Bytes) -> Result<()>;
 
     async fn get_batch_head(&self, block_id: &BlockId) -> Result<Head> {
         let head: Head = self
@@ -149,7 +149,7 @@ pub trait TezosFacade {
     async fn get_operation(&self, block_id: &BlockId, pass: i32, index: i32) -> Result<Operation>;
     async fn get_operation_list(&self, block_id: &BlockId, pass: i32) -> Result<Vec<Operation>>;
     async fn get_operation_list_list(&self, block_id: &BlockId) -> Result<Vec<Vec<Operation>>>;
-    async fn get_heads_main_receiver(&self) -> Result<Receiver<Result<Bytes>>>;
+    async fn get_heads_main_channel(&self) -> Result<Receiver<Result<Bytes>>>;
 }
 
 #[async_trait]

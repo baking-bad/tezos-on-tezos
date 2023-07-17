@@ -130,16 +130,16 @@ impl RollupClient for RollupMockClient {
         unreachable!()
     }
 
-    fn get_long_poll_receiver(&self) -> Result<Receiver<Result<Bytes>>> {
+    fn create_channel(&self) -> Result<Receiver<Result<Bytes>>> {
         self.get_long_poll_receiver()
     }
 
-    fn get_live_blocks(&self) -> Result<Arc<Mutex<VecDeque<BlockHash>>>> {
+    fn get_ttl_blocks(&self) -> Result<Arc<Mutex<VecDeque<BlockHash>>>> {
         Ok(Arc::clone(&self.live_blocks))
     }
 
-    async fn broadcast_to_long_polls(&self, data: Bytes) -> Result<()> {
-        return self.broadcast_to_long_polls(data).await;
+    async fn broadcast_to_channels(&self, data: Bytes) -> Result<()> {
+        return self.broadcast_to_channels(data).await;
     }
 }
 

@@ -281,14 +281,14 @@ impl<T: RollupClient + Send + Sync> TezosFacade for T {
     }
 
     async fn get_live_blocks(&self, _block_id: &BlockId) -> Result<VecDeque<BlockHash>> {
-        let live_blocks_ptr = self.get_live_blocks().unwrap();
+        let live_blocks_ptr = self.get_ttl_blocks().unwrap();
         let live_blocks = live_blocks_ptr.lock().unwrap();
         // TODO: remove hashes after block_id?
         //let block_hash = self.get_block_hash(block_id).await.unwrap();
         Ok(live_blocks.clone())
     }
 
-    async fn get_heads_main_receiver(&self) -> Result<Receiver<Result<Bytes>>> {
-        self.get_long_poll_receiver()
+    async fn get_heads_main_channel(&self) -> Result<Receiver<Result<Bytes>>> {
+        self.create_channel()
     }
 }
