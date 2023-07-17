@@ -41,6 +41,7 @@ pub trait RollupClient: Sync + Send {
     fn get_ttl_blocks(&self) -> Result<Arc<Mutex<VecDeque<BlockHash>>>>;
     fn create_channel(&self) -> Result<Receiver<Result<Bytes>>>;
     async fn broadcast_to_channels(&self, data: Bytes) -> Result<()>;
+    fn channels_count(&self) -> usize;
 
     async fn get_batch_head(&self, block_id: &BlockId) -> Result<Head> {
         let head: Head = self

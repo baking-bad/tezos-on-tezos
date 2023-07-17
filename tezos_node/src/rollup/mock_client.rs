@@ -31,8 +31,8 @@ const CHAIN_ID: &str = "NetXP2FfcNxFANL";
 pub struct RollupMockClient {
     context: Mutex<RefCell<EphemeralContext>>,
     mempool: Mutex<RefCell<Vec<(OperationHash, SignedOperation)>>>,
-    live_blocks: Arc<Mutex<VecDeque<BlockHash>>>,
-    long_polls: Arc<Mutex<Vec<Sender<Result<Bytes>>>>>,
+    ttl_blocks: Arc<Mutex<VecDeque<BlockHash>>>,
+    channels: Arc<Mutex<Vec<Sender<Result<Bytes>>>>>,
 }
 
 macro_rules! get_mut {
@@ -48,8 +48,8 @@ impl Default for RollupMockClient {
         Self {
             context: Mutex::new(RefCell::new(EphemeralContext::new())),
             mempool: Mutex::new(RefCell::new(Vec::new())),
-            live_blocks: Arc::new(Mutex::new(VecDeque::with_capacity(MAX_TTL_BLOCKS_COUNT))),
-            long_polls: Arc::new(Mutex::new(Vec::new())),
+            ttl_blocks: Arc::new(Mutex::new(VecDeque::with_capacity(MAX_TTL_BLOCKS_COUNT))),
+            channels: Arc::new(Mutex::new(Vec::new())),
         }
     }
 }
@@ -69,14 +69,6 @@ impl RollupMockClient {
 
     pub fn patch(&self, func: fn(&mut EphemeralContext) -> Result<()>) -> Result<()> {
         func(get_mut!(self.context))
-    }
-
-    pub fn get_long_poll_receiver(&self) -> Result<Receiver<Result<Bytes>>> {
-        const LONG_POLL_CHANNEL_SIZE: usize = 1;
-        let (tx, rx) = channel::<Result<Bytes>>(LONG_POLL_CHANNEL_SIZE);
-        let mut long_polls = self.long_polls.lock().unwrap();
-        long_polls.push(tx);
-        Ok(rx)
     }
 }
 
@@ -131,15 +123,41 @@ impl RollupClient for RollupMockClient {
     }
 
     fn create_channel(&self) -> Result<Receiver<Result<Bytes>>> {
-        self.get_long_poll_receiver()
+        const LONG_POLL_CHANNEL_SIZE: usize = 1;
+        let (tx, rx) = channel::<Result<Bytes>>(LONG_POLL_CHANNEL_SIZE);
+        let mut channels = self.channels.lock().unwrap();
+        channels.push(tx);
+        Ok(rx)
     }
 
     fn get_ttl_blocks(&self) -> Result<Arc<Mutex<VecDeque<BlockHash>>>> {
-        Ok(Arc::clone(&self.live_blocks))
+        Ok(Arc::clone(&self.ttl_blocks))
     }
 
     async fn broadcast_to_channels(&self, data: Bytes) -> Result<()> {
-        return self.broadcast_to_channels(data).await;
+        let mut channels = self.channels.lock().unwrap();
+        let mut i = 0;
+        while i < channels.len() {
+            if channels[i].is_closed() {
+                channels.remove(i);
+                continue;
+            }
+
+            let value = data.clone();
+            if let Err(_) = channels[i].try_send(Ok(value)) {
+                channels.remove(i);
+                continue;
+            }
+
+            i += 1;
+        }
+
+        Ok(())
+    }
+
+    fn channels_count(&self) -> usize {
+        let channels_ptr = self.channels.lock().unwrap();
+        channels_ptr.len()
     }
 }
 

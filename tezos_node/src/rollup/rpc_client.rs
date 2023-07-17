@@ -175,35 +175,6 @@ impl RollupRpcClient {
             }
         }
     }
-
-    pub fn create_channel(&self) -> Result<Receiver<Result<Bytes>>> {
-        const LONG_POLL_CHANNEL_SIZE: usize = 1;
-        let (tx, rx) = channel::<Result<Bytes>>(LONG_POLL_CHANNEL_SIZE);
-        let mut channels = self.channels.lock().unwrap();
-        channels.push(tx);
-        Ok(rx)
-    }
-
-    pub async fn broadcast_to_channels(&self, data: Bytes) -> Result<()> {
-        let mut channels = self.channels.lock().unwrap();
-        let mut i = 0;
-        while i < channels.len() {
-            if channels[i].is_closed() {
-                channels.remove(i);
-                continue;
-            }
-
-            let value = data.clone();
-            if let Err(_) = channels[i].try_send(Ok(value)) {
-                channels.remove(i);
-                continue;
-            }
-
-            i += 1;
-        }
-
-        Ok(())
-    }
 }
 
 #[async_trait]
@@ -317,7 +288,11 @@ impl RollupClient for RollupRpcClient {
     }
 
     fn create_channel(&self) -> Result<Receiver<Result<Bytes>>> {
-        self.create_channel()
+        const LONG_POLL_CHANNEL_SIZE: usize = 1;
+        let (tx, rx) = channel::<Result<Bytes>>(LONG_POLL_CHANNEL_SIZE);
+        let mut channels = self.channels.lock().unwrap();
+        channels.push(tx);
+        Ok(rx)
     }
 
     fn get_ttl_blocks(&self) -> Result<Arc<Mutex<VecDeque<BlockHash>>>> {
@@ -325,7 +300,29 @@ impl RollupClient for RollupRpcClient {
     }
 
     async fn broadcast_to_channels(&self, data: Bytes) -> Result<()> {
-        return self.broadcast_to_channels(data).await;
+        let mut channels = self.channels.lock().unwrap();
+        let mut i = 0;
+        while i < channels.len() {
+            if channels[i].is_closed() {
+                channels.remove(i);
+                continue;
+            }
+
+            let value = data.clone();
+            if let Err(_) = channels[i].try_send(Ok(value)) {
+                channels.remove(i);
+                continue;
+            }
+
+            i += 1;
+        }
+
+        Ok(())
+    }
+
+    fn channels_count(&self) -> usize {
+        let channels_ptr = self.channels.lock().unwrap();
+        channels_ptr.len()
     }
 }
 
@@ -342,11 +339,8 @@ pub fn run_block_updater<T: RollupClient + 'static>(client: &Data<T>) -> () {
             let timestamp = Utc::now().timestamp();
             let head = client.get_batch_receipt(&BlockId::Head).await.unwrap();
             let head_timestamp = head.header.timestamp;
-            debug!("ts: {}, head.ts: {}, head.level: {}, d: {}", timestamp, head_timestamp, head.header.level, timestamp - head_timestamp);
-            //debug!("Start to fill TTL blocks on level: {}", head.header.level);
 
             if curr_level == head.header.level {
-                debug!("Old level received {}", head.header.level);
                 sleep(Duration::from_secs(BLOCK_DELAY_SEC as u64)).await;
                 continue;
             }
@@ -354,43 +348,49 @@ pub fn run_block_updater<T: RollupClient + 'static>(client: &Data<T>) -> () {
             curr_level = std::cmp::max(curr_level, head.header.level - MAX_TTL_BLOCKS_COUNT);
 
             while curr_level < head.header.level {
-                let batch_head = client
-                    .get_batch_head(&BlockId::Level(curr_level.try_into().unwrap()))
+                let batch_receipt = client
+                    .get_batch_receipt(&BlockId::Level(curr_level.try_into().unwrap()))
                     .await
                     .unwrap();
 
-                let ttl_blocks_ptr = client.get_ttl_blocks().unwrap();
-                let mut ttl_blocks: std::sync::MutexGuard<'_, VecDeque<BlockHash>> =
-                    ttl_blocks_ptr.lock().unwrap();
+                {
+                    let ttl_blocks_ptr = client.get_ttl_blocks().unwrap();
+                    let mut ttl_blocks: std::sync::MutexGuard<'_, VecDeque<BlockHash>> =
+                        ttl_blocks_ptr.lock().unwrap();
 
-                if ttl_blocks.len() == MAX_TTL_BLOCKS_COUNT as usize {
-                    ttl_blocks.pop_front();
+                    if ttl_blocks.len() == MAX_TTL_BLOCKS_COUNT as usize {
+                        ttl_blocks.pop_front();
+                    }
+                    ttl_blocks.push_back(batch_receipt.hash.clone());
                 }
-                ttl_blocks.push_back(batch_head.hash);
 
                 curr_level += 1;
-            }
 
-            let full_header: FullHeader = head.into();
+                if client.channels_count() == 0 {
+                    continue;
+                }
 
-            let header = HeaderShell {
-                hash: Some(full_header.hash),
-                level: full_header.level,
-                proto: full_header.proto,
-                predecessor: full_header.predecessor,
-                timestamp: full_header.timestamp,
-                validation_pass: full_header.validation_pass,
-                operations_hash: full_header.operations_hash,
-                fitness: full_header.fitness,
-                context: full_header.context,
-                protocol_data: Some("".to_string()),
-            };
+                let full_header: FullHeader = batch_receipt.into();
 
-            let header_json = serde_json::to_string(&header).unwrap();
-            let header_bytes = Bytes::from(header_json);
+                let header = HeaderShell {
+                    hash: Some(full_header.hash),
+                    level: full_header.level,
+                    proto: full_header.proto,
+                    predecessor: full_header.predecessor,
+                    timestamp: full_header.timestamp,
+                    validation_pass: full_header.validation_pass,
+                    operations_hash: full_header.operations_hash,
+                    fitness: full_header.fitness,
+                    context: full_header.context,
+                    protocol_data: Some("".to_string()),
+                };
 
-            if let Err(_) = client.broadcast_to_channels(header_bytes).await {
-                debug!("Error while broadcast header to long polls clients");
+                let header_json = serde_json::to_string(&header).unwrap();
+                let header_bytes = Bytes::from(header_json);
+
+                if let Err(_) = client.broadcast_to_channels(header_bytes).await {
+                    debug!("Error while broadcast header to long polls clients");
+                }
             }
 
             let next_block_timestamp = head_timestamp + BLOCK_INTERVAL_SEC + BLOCK_DELAY_SEC;
