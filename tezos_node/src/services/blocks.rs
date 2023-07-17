@@ -1,13 +1,12 @@
 use actix_web::{
     http::header,
-    web::{Bytes, Data, Path},
+    web::{Data, Path},
     HttpResponse, Responder, Result,
 };
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use tezos_core::types::encoded::{BlockHash, ContextHash, OperationListListHash};
-//use tokio::sync::mpsc::channel;
-//use tokio_stream::wrappers::ReceiverStream;
+use tokio_stream::wrappers::ReceiverStream;
 
 use crate::{
     json_response,
@@ -139,48 +138,13 @@ pub async fn bootstrap_info<T: TezosFacade>(client: Data<T>) -> Result<impl Resp
     Ok(json_response!(value))
 }
 
-pub async fn heads_main<T: TezosFacade + 'static + Send + Sync>(
-    client: Data<T>,
-) -> Result<impl Responder> {
-    let (tx, rx) = local_channel::mpsc::channel::<Result<Bytes>>();
-
-    actix_web::rt::spawn(async move {
-        let mut last_level = 0;
-
-        loop {
-            let full_header = client.get_block_header(&BlockId::Head).await.unwrap();
-
-            if last_level != full_header.level {
-                last_level = full_header.level;
-
-                let header = HeaderShell {
-                    hash: Some(full_header.hash),
-                    level: full_header.level,
-                    proto: full_header.proto,
-                    predecessor: full_header.predecessor,
-                    timestamp: full_header.timestamp,
-                    validation_pass: full_header.validation_pass,
-                    operations_hash: full_header.operations_hash,
-                    fitness: full_header.fitness,
-                    context: full_header.context,
-                    protocol_data: Some("".to_string()),
-                };
-
-                let header_json = serde_json::to_string(&header).unwrap();
-                let header_bytes = Bytes::from(header_json);
-
-                if let Err(_) = tx.send(Ok(header_bytes)) {
-                    break;
-                }
-            }
-
-            actix_web::rt::time::sleep(std::time::Duration::from_millis(1000)).await;
-        }
-    });
+pub async fn heads_main<T: TezosFacade>(client: Data<T>) -> Result<impl Responder> {
+    let rx = client.get_heads_main_receiver().await.unwrap();
+    let body_stream = ReceiverStream::new(rx);
 
     let response = HttpResponse::Ok()
         .insert_header((header::CONTENT_TYPE, "application/json"))
-        .streaming(rx);
+        .streaming(body_stream);
 
     Ok(response)
 }

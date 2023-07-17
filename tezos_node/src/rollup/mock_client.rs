@@ -1,8 +1,10 @@
+use actix_web::web::Bytes;
 use async_trait::async_trait;
 use log::debug;
-use std::cell::RefCell;
+use std::collections::VecDeque;
 use std::sync::Mutex;
-use tezos_core::types::encoded::{ChainId, Encoded, OperationHash};
+use std::{cell::RefCell, sync::Arc};
+use tezos_core::types::encoded::{BlockHash, ChainId, Encoded, OperationHash};
 use tezos_ctx::{
     migrations::run_migrations, ContextNode, EphemeralContext, ExecutorContext, GenericContext,
     Head,
@@ -17,6 +19,7 @@ use tezos_rpc::models::operation::Operation;
 use tezos_rpc::models::version::{
     AdditionalInfo, CommitInfo, NetworkVersion, Version, VersionInfo,
 };
+use tokio::sync::mpsc::{channel, Receiver, Sender};
 
 use crate::{
     rollup::{rpc_helpers::parse_operation, BlockId, RollupClient, TezosHelpers},
@@ -28,6 +31,8 @@ const CHAIN_ID: &str = "NetXP2FfcNxFANL";
 pub struct RollupMockClient {
     context: Mutex<RefCell<EphemeralContext>>,
     mempool: Mutex<RefCell<Vec<(OperationHash, SignedOperation)>>>,
+    live_blocks: Arc<Mutex<VecDeque<BlockHash>>>,
+    long_polls: Arc<Mutex<Vec<Sender<Result<Bytes>>>>>,
 }
 
 macro_rules! get_mut {
@@ -36,11 +41,15 @@ macro_rules! get_mut {
     };
 }
 
+const MAX_TTL_BLOCKS_COUNT: usize = 60;
+
 impl Default for RollupMockClient {
     fn default() -> Self {
         Self {
             context: Mutex::new(RefCell::new(EphemeralContext::new())),
             mempool: Mutex::new(RefCell::new(Vec::new())),
+            live_blocks: Arc::new(Mutex::new(VecDeque::with_capacity(MAX_TTL_BLOCKS_COUNT))),
+            long_polls: Arc::new(Mutex::new(Vec::new())),
         }
     }
 }
@@ -60,6 +69,14 @@ impl RollupMockClient {
 
     pub fn patch(&self, func: fn(&mut EphemeralContext) -> Result<()>) -> Result<()> {
         func(get_mut!(self.context))
+    }
+
+    pub fn get_long_poll_receiver(&self) -> Result<Receiver<Result<Bytes>>> {
+        const LONG_POLL_CHANNEL_SIZE: usize = 1;
+        let (tx, rx) = channel::<Result<Bytes>>(LONG_POLL_CHANNEL_SIZE);
+        let mut long_polls = self.long_polls.lock().unwrap();
+        long_polls.push(tx);
+        Ok(rx)
     }
 }
 
@@ -111,6 +128,18 @@ impl RollupClient for RollupMockClient {
 
     async fn inject_batch(&self, _messages: Vec<Vec<u8>>) -> Result<()> {
         unreachable!()
+    }
+
+    fn get_long_poll_receiver(&self) -> Result<Receiver<Result<Bytes>>> {
+        self.get_long_poll_receiver()
+    }
+
+    fn get_live_blocks(&self) -> Result<Arc<Mutex<VecDeque<BlockHash>>>> {
+        Ok(Arc::clone(&self.live_blocks))
+    }
+
+    async fn broadcast_to_long_polls(&self, data: Bytes) -> Result<()> {
+        return self.broadcast_to_long_polls(data).await;
     }
 }
 

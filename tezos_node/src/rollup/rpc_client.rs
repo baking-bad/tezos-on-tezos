@@ -1,16 +1,28 @@
+use std::{
+    collections::VecDeque,
+    sync::{Arc, Mutex},
+};
+
+use actix_web::web::{Bytes, Data};
 use async_trait::async_trait;
 use log::debug;
 use reqwest::Client;
 use serde::Deserialize;
-use tezos_core::types::encoded::{ChainId, Encoded, SmartRollupAddress};
+use tezos_core::types::encoded::{BlockHash, ChainId, Encoded, SmartRollupAddress};
 use tezos_ctx::ContextNode;
-use tezos_rpc::models::version::{
-    AdditionalInfo, CommitInfo, NetworkVersion, Version, VersionInfo,
+use tezos_rpc::models::{
+    block::FullHeader,
+    version::{AdditionalInfo, CommitInfo, NetworkVersion, Version, VersionInfo},
+};
+use tokio::{
+    sync::mpsc::{channel, Receiver, Sender},
+    time::{sleep, Duration},
 };
 
 use crate::{
     internal_error,
     rollup::{BlockId, RollupClient},
+    services::blocks::HeaderShell,
     Error, Result,
 };
 
@@ -53,7 +65,11 @@ pub struct RollupRpcClient {
     client: Client,
     chain_id: Option<ChainId>,
     origination_level: Option<u32>,
+    live_blocks: Arc<Mutex<VecDeque<BlockHash>>>,
+    long_polls: Arc<Mutex<Vec<Sender<Result<Bytes>>>>>,
 }
+
+const MAX_TTL_BLOCKS_COUNT: i32 = 60;
 
 impl RollupRpcClient {
     pub fn new(endpoint: &str) -> Self {
@@ -62,6 +78,10 @@ impl RollupRpcClient {
             client: Client::new(),
             origination_level: None,
             chain_id: None,
+            live_blocks: Arc::new(Mutex::new(VecDeque::with_capacity(
+                MAX_TTL_BLOCKS_COUNT as usize,
+            ))),
+            long_polls: Arc::new(Mutex::new(Vec::new())),
         }
     }
 
@@ -154,6 +174,35 @@ impl RollupRpcClient {
             }
         }
     }
+
+    pub fn get_long_poll_receiver(&self) -> Result<Receiver<Result<Bytes>>> {
+        const LONG_POLL_CHANNEL_SIZE: usize = 1;
+        let (tx, rx) = channel::<Result<Bytes>>(LONG_POLL_CHANNEL_SIZE);
+        let mut long_polls = self.long_polls.lock().unwrap();
+        long_polls.push(tx);
+        Ok(rx)
+    }
+
+    pub async fn broadcast_to_long_polls(&self, data: Bytes) -> Result<()> {
+        let mut long_polls = self.long_polls.lock().unwrap();
+        let mut i = 0;
+        while i < long_polls.len() {
+            if long_polls[i].is_closed() {
+                long_polls.remove(i);
+                continue;
+            }
+
+            let value = data.clone();
+            if let Err(_) = long_polls[i].try_send(Ok(value)) {
+                long_polls.remove(i);
+                continue;
+            }
+
+            i += 1;
+        }
+
+        Ok(())
+    }
 }
 
 #[async_trait]
@@ -181,6 +230,7 @@ impl RollupClient for RollupRpcClient {
             "Rollup origination level: {}",
             self.origination_level.as_ref().unwrap()
         );
+
         Ok(())
     }
 
@@ -264,4 +314,75 @@ impl RollupClient for RollupRpcClient {
             })
         }
     }
+
+    fn get_long_poll_receiver(&self) -> Result<Receiver<Result<Bytes>>> {
+        self.get_long_poll_receiver()
+    }
+
+    fn get_live_blocks(&self) -> Result<Arc<Mutex<VecDeque<BlockHash>>>> {
+        Ok(Arc::clone(&self.live_blocks))
+    }
+
+    async fn broadcast_to_long_polls(&self, data: Bytes) -> Result<()> {
+        return self.broadcast_to_long_polls(data).await;
+    }
+}
+
+pub fn run_block_updater<T: RollupClient + 'static>(client: &Data<T>) -> () {
+    let client = client.clone();
+    tokio::spawn(async move {
+        // TODO: wait chain sync?
+        let mut curr_level = 0;
+
+        loop {
+            let head = client.get_batch_receipt(&BlockId::Head).await.unwrap();
+            debug!("Start to fill TTL blocks on level: {}", head.header.level);
+
+            curr_level = std::cmp::max(curr_level, head.header.level - MAX_TTL_BLOCKS_COUNT);
+
+            while curr_level < head.header.level {
+                let batch_head = client
+                    .get_batch_head(&BlockId::Level(curr_level.try_into().unwrap()))
+                    .await
+                    .unwrap();
+
+                let live_blocks_ptr = client.get_live_blocks().unwrap();
+                let mut live_blocks: std::sync::MutexGuard<'_, VecDeque<BlockHash>> =
+                    live_blocks_ptr.lock().unwrap();
+
+                if live_blocks.len() == MAX_TTL_BLOCKS_COUNT as usize {
+                    live_blocks.pop_front();
+                }
+                live_blocks.push_back(batch_head.hash);
+
+                curr_level += 1;
+            }
+
+            let full_header: FullHeader = head.into();
+
+            let header = HeaderShell {
+                hash: Some(full_header.hash),
+                level: full_header.level,
+                proto: full_header.proto,
+                predecessor: full_header.predecessor,
+                timestamp: full_header.timestamp,
+                validation_pass: full_header.validation_pass,
+                operations_hash: full_header.operations_hash,
+                fitness: full_header.fitness,
+                context: full_header.context,
+                protocol_data: Some("".to_string()),
+            };
+
+            let header_json = serde_json::to_string(&header).unwrap();
+            let header_bytes = Bytes::from(header_json);
+
+            if let Err(_) = client.broadcast_to_long_polls(header_bytes).await {
+                debug!("Error while broadcast header to long polls clients");
+            }
+
+            // TODO: calculate next block timestamp using head.header.timestamp and current time
+            const TIME_BETWEEN_BLOCKS_IN_SEC: u64 = 8;
+            sleep(Duration::from_secs(TIME_BETWEEN_BLOCKS_IN_SEC)).await;
+        }
+    });
 }

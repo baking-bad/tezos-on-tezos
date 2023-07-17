@@ -32,9 +32,7 @@ macro_rules! json_response {
     };
 }
 
-pub fn config<T: RollupClient + TezosFacade + TezosHelpers + 'static + Send + Sync>(
-    cfg: &mut ServiceConfig,
-) {
+pub fn config<T: RollupClient + TezosFacade + TezosHelpers + 'static>(cfg: &mut ServiceConfig) {
     cfg.route("/version", get().to(version::<T>))
         .route("/chains/main/chain_id", get().to(chain_id::<T>))
         .route(

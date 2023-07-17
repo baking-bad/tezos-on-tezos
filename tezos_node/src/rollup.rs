@@ -5,6 +5,10 @@ pub mod rpc_client;
 pub mod rpc_context;
 pub mod rpc_helpers;
 
+use std::collections::VecDeque;
+use std::sync::{Arc, Mutex};
+
+use actix_web::web::Bytes;
 use async_trait::async_trait;
 use serde::Serialize;
 use tezos_core::types::encoded::{
@@ -21,18 +25,22 @@ use tezos_rpc::models::{
     operation::Operation,
     version::VersionInfo,
 };
+use tokio::sync::mpsc::Receiver;
 
 use crate::Result;
 pub use block_id::BlockId;
 
 #[async_trait]
-pub trait RollupClient {
+pub trait RollupClient: Sync + Send {
     async fn initialize(&mut self) -> Result<()>;
     async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<ContextNode>;
     async fn get_chain_id(&self) -> Result<ChainId>;
     async fn get_version(&self) -> Result<VersionInfo>;
     async fn is_chain_synced(&self) -> Result<bool>;
     async fn inject_batch(&self, messages: Vec<Vec<u8>>) -> Result<()>;
+    fn get_long_poll_receiver(&self) -> Result<Receiver<Result<Bytes>>>;
+    fn get_live_blocks(&self) -> Result<Arc<Mutex<VecDeque<BlockHash>>>>;
+    async fn broadcast_to_long_polls(&self, data: Bytes) -> Result<()>;
 
     async fn get_batch_head(&self, block_id: &BlockId) -> Result<Head> {
         let head: Head = self
@@ -84,7 +92,7 @@ pub trait TezosFacade {
     async fn get_block_header(&self, block_id: &BlockId) -> Result<FullHeader>;
     async fn get_block_metadata(&self, block_id: &BlockId) -> Result<Metadata>;
     async fn get_block_protocols(&self, block_id: &BlockId) -> Result<BlockProtocols>;
-    async fn get_live_blocks(&self, block_id: &BlockId) -> Result<Vec<BlockHash>>;
+    async fn get_live_blocks(&self, block_id: &BlockId) -> Result<VecDeque<BlockHash>>;
     async fn get_contract(&self, block_id: &BlockId, address: &Address) -> Result<ContractInfo>;
     async fn get_contract_balance(&self, block_id: &BlockId, address: &Address) -> Result<Mutez>;
     async fn get_contract_counter(
@@ -141,6 +149,7 @@ pub trait TezosFacade {
     async fn get_operation(&self, block_id: &BlockId, pass: i32, index: i32) -> Result<Operation>;
     async fn get_operation_list(&self, block_id: &BlockId, pass: i32) -> Result<Vec<Operation>>;
     async fn get_operation_list_list(&self, block_id: &BlockId) -> Result<Vec<Vec<Operation>>>;
+    async fn get_heads_main_receiver(&self) -> Result<Receiver<Result<Bytes>>>;
 }
 
 #[async_trait]

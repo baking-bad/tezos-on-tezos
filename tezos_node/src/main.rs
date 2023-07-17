@@ -34,5 +34,8 @@ async fn main() -> std::io::Result<()> {
 
     let data = Data::new(client);
     let host = Data::new(rpc_host);
+
+    tezos_node::rollup::rpc_client::run_block_updater(&data);
+
     launch_node::<RollupRpcClient>(data, &args.rpc_addr, args.port, host).await
 }
