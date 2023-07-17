@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use actix_web::{error::ResponseError, http::StatusCode, HttpResponse};
 use derive_more::{Display, Error};
 use std::backtrace::Backtrace;
@@ -97,7 +101,7 @@ impl_from_error!(tezos_rpc::Error, TezosRpc);
 impl_from_error!(tezos_core::Error, TezosCore);
 impl_from_error!(tezos_operation::Error, TezosOperation);
 impl_from_error!(tezos_michelson::Error, TezosMichelson);
-impl_from_error!(tezos_l2::Error, TezosProtocol);
+impl_from_error!(tezos_proto::Error, TezosProtocol);
 impl_from_error!(std::num::ParseIntError, StdNum);
 impl_from_error!(std::num::TryFromIntError, StdNum);
 impl_from_error!(serde_json::Error, SerdeJson);
@@ -108,14 +112,14 @@ impl_from_error!(reqwest::Error, Reqwest);
 impl_from_error!(ibig::error::ParseError, IBig);
 impl_from_error!(actix_web::rt::task::JoinError, Actix);
 
-impl From<tezos_ctx::Error> for Error {
-    fn from(error: tezos_ctx::Error) -> Self {
+impl From<layered_store::Error> for Error {
+    fn from(error: layered_store::Error) -> Self {
         internal_error!(Context, "Caused by: {}", error.format())
     }
 }
 
-impl From<tezos_vm::Error> for Error {
-    fn from(error: tezos_vm::Error) -> Self {
+impl From<michelson_vm::Error> for Error {
+    fn from(error: michelson_vm::Error) -> Self {
         internal_error!(Context, "Caused by: {}", error.format())
     }
 }

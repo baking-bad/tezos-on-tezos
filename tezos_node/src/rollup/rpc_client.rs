@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use std::{
     collections::VecDeque,
     sync::{Arc, Mutex},
@@ -5,12 +9,12 @@ use std::{
 
 use actix_web::web::{Bytes, Data};
 use async_trait::async_trait;
+use layered_store::StoreType;
 use chrono::Utc;
 use log::debug;
 use reqwest::Client;
 use serde::Deserialize;
 use tezos_core::types::encoded::{BlockHash, ChainId, Encoded, SmartRollupAddress};
-use tezos_ctx::ContextNode;
 use tezos_rpc::models::{
     block::FullHeader,
     version::{AdditionalInfo, CommitInfo, NetworkVersion, Version, VersionInfo},
@@ -86,6 +90,7 @@ impl RollupRpcClient {
         }
     }
 
+    // FIXME: too much copypaste in the following several methods
     pub async fn get_rollup_address(&self) -> Result<SmartRollupAddress> {
         let res = self
             .client
@@ -206,7 +211,8 @@ impl RollupClient for RollupRpcClient {
         Ok(())
     }
 
-    async fn get_state_value(&self, key: String, block_id: &BlockId) -> Result<ContextNode> {
+    // Code duplication
+    async fn store_get<T: StoreType>(&self, key: String, block_id: &BlockId) -> Result<T> {
         let block_id = self.convert_block_id(block_id).await?;
         let res = self
             .client
@@ -222,7 +228,7 @@ impl RollupClient for RollupRpcClient {
             match content {
                 Some(StateResponse::Value(value)) => {
                     let payload = hex::decode(value)?;
-                    Ok(ContextNode::from_vec(payload)?)
+                    Ok(StoreType::from_bytes(payload.as_slice())?)
                 }
                 Some(StateResponse::Errors(errors)) => {
                     let message = errors.first().unwrap().to_string();

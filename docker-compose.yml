@@ -1,11 +1,17 @@
+# SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+#
+# SPDX-License-Identifier: MIT
+
 version: "3.8"
 services:
   operator:
-    image: ghcr.io/baking-bad/tz-rollup-operator:${TAG}
-    command: rollup-node
+    image: tot/operator:${TAG}
+    command: run_node
     restart: "no"
     env_file:
-      - local.env
+      - .env
+      # TAG e.g. tezos_kernel_v17.1
+      # NETWORK e.g. nairobinet
       # ROLLUP_ADDRESS e.g. sr1...
       # OPERATOR_KEY e.g. unencrypted:edsk...
     ports:
@@ -14,7 +20,7 @@ services:
       - internal
 
   facade:
-    image: ghcr.io/baking-bad/tz-rollup-facade:latest
+    image: tot/facade:latest
     command: --endpoint http://operator:8932 --rpc-addr "0.0.0.0"
     restart: always
     ports:

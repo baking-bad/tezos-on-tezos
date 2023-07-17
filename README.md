@@ -2,14 +2,13 @@
 
 Optimistic rollup enabled with Tezos VM running on top of Tezos L1.
 
-**IMPORTANT: THIS IS AN EARLY BETA, DO NOT RUN THIS CODE IN THE MAINNET**
+**IMPORTANT: NOT STABLE YET, DO NOT RUN THIS CODE IN PRODUCTION**
 
 ## About
 
-The goal of this project is to create PoC of a permissioned application-specific rollup enabled with Tezos (Michelson) VM.  
-Aside from the pure research interest there might be long-term advantages of such solution:
+The goal of this project is to create permissioned application-specific Tezos-compatible rollup that has:
 * Reduced operational costs (contract automation, oracles)
-* Custom MEV-resistant techniques
+* Custom MEV-resistant solution
 * Chain-native tokenomics
 * Feeless experience
 * Contract wallets as first-class citizens (account abstraction)
@@ -53,43 +52,6 @@ Your feedback is extremely valuable, and we also expect lots of bugs at early st
 * [Telegram](https://t.me/baking_bad_chat) chat
 * [Slack](https://tezos-dev.slack.com/archives/CV5NX7F2L) channel
 
-## Roadmap
-
-- [x] MVP Tezos-compatible kernel supporting plain transactions and public key reveals
-- [x] Installer kernel
-- [x] DAC encoding tool
-- [x] Docker image with SCORU node, installer, and encoded Tez kernel
-- [x] Run TZ rollup in Mondaynet, prepare setup scripts
-- [x] Troubleshoot kernel using REPL, get rid of `f64`
-- [x] Implement internal batch workflow
-- [x] Support origination operation kind
-- [x] Implement a minimal viable Michelson interpreter
-- [x] Interact with the kernel via inbox and access rollup state via RPC
-- [x] Support contract calls and internal transactions
-- [x] Tezos RPC facade node
-- [x] Deploy a periodic testnet
-- [x] Add support to BCD
-- [x] Permanent testnet
-- [ ] Add missing Michelson features necessary to onboard first dapps
-- [ ] Increase test coverage
-- [ ] Spam-prevention mechanism
-- [ ] Configurable gas/storage metering
-- [ ] Sequencer fees
-- [ ] Micheline (de)serialization derive macros
-- [ ] WASM smart contracts
-## Limitations
-
-Current design is intentionally simplified to speed up development while having a minimal necessary functional to operate.
-* No gas/storage metering (although it can be incorporated rather easily)
-* No money burning
-* Non-sequential account counters
-* Only 3 manager operations supported: transaction, reveal, origination
-* Branch is currently not validated (infinite TTL)
-* BigMaps cannot be copied/removed, but can be moved (Rust-like semantics)
-* No temporary BigMap allocations
-* Several Michelson features are not supported
-* Only wallet/indexer RPC endpoints are exposed
-
 ## Installation
 
 Install Rust toolchain:
@@ -107,68 +69,127 @@ Install build dependencies:
 make install
 ```
 
-## Build
+## How to build
 
-To build the kernel and its installer:
+### Binaries
+
+#### Kernel
+
+Create wasm file for the payload kernel:
+
 ```
-make build-operator
+make build-kernel PACKAGE=tezos_kernel
 ```
 
-Then you can create a local docker image, depending on target network:
-- `make image-operator-monday`
-- `make image-operator-mumbai`
+#### Installer
 
-Other options are not in the Makefile, but you can add them yourself, the difference is mainly in Octez binaries shipped together with the kernel.
+Convert payload kernel into 4kb pages and create a boot wasm file:
 
-To build a facade node and its docker image:
+```
+make build-installer PACKAGE=tezos_kernel
+```
+
+#### Facade node
+
+Create a binary for the facade node:
+
 ```
 make build-facade
+```
+
+### Docker images
+
+Creates local images out of the pre-built artifacts.
+
+### Rollup node
+
+Requires installer kernel and generated pages.  
+Note the environment file included in the Makefile, that exposes `OCTEZ_TAG`, `OCTEZ_PROTO`.
+
+```
+make image-operator PACKAGE=tezos_kernel
+```
+
+### Facade node
+
+```
 make image-facade
 ```
 
 ## How to run
 
-Run `make generate-keypair` to initialize a Tezos L1 account, and top it up using https://teztnets.xyz faucet, depending on the network you are going to use.
+Note the environment file included in the Makefile, that exposes target `NETWORK`.
 
 ### Operator
 
-Build kernel and its installer, then originate a new rollup, and run a rollup node.  
-Depending on the target L1 network run one of:
-- `make operator-monday`
-- `make operator-mumbai`
-
-Other options are not in the Makefile, but you can add them yourself based on the existing ones.
-
-Note that every time you run this target a new rollup will be deployed, so make sure you have enough funds for a 10k bond. Use [faucet](https://teztnets.xyz/) to top up your account.
-
-In order to just run operator with an existing rollup:
+Depending on the target package run:
 
 ```
-make rollup-node TAG=monday
+make run-tezos-operator
 ```
 
-### Facade
+You will end up inside the docker container shell.  
+Every time you call this target, kernel and docker image will be rebuilt.
 
-The following target will build the facade node and run it with default arguments:
+#### Generate new keys
+
+For convenience, your local .tezos-client folder is mapped into the container in order to preserve the keys. Upon the first launch you need to create new keypair, in order to do that inside the operator shell:
 
 ```
-make facade
+$ operator generate_key
 ```
 
-### Docker compose
+#### Check account info
+
+If you already have a key, check it's balance: it should be at least 10k tez to operate a rollup, otherwise top up the balance from the faucet. To get your account address:
+
+```
+$ operator account_info
+```
+
+#### Originate rollup
+
+```
+$ operator deploy_rollup
+```
+
+Rollup data is persisted meaning that you can restart the container without data loss. If you try to call this command again it will tell you that there's an existing rollup configuration. Use `--force` flag to remove all data and originate a new one.
+
+#### Run rollup node
+
+```
+$ operator run_node
+```
+
+Runs rollup node in synchronous mode, with logs being printed to stdout.  
+Also RPC is available at `127.0.0.1:8932` on your host machine.
+
+## Facade
+
+Run tezos node binary with debug logs enabled:
+
+```
+$ make run-facade
+```
+
+Every time you call this target tezos node binary will be rebuilt.
+
+## Docker compose
 
 Once you have both operator and facade images built, you can run them together with compose.
 
-First, create a `local.env` file with two environment variables:
+First, create a `.env` file with four environment variables:
 ```
+TAG=<operator image tag>
+NETWORK=<destination network name>
 ROLLUP_ADDRESS=<sr rollup address from node logs>
 OPERATOR_KEY=unencrypted:<edsk private key from .tezos-client folder>
 ```
 
-Then run docker-compose specifying the image tag, e.g.:
+Then run docker-compose:
 
 ```
-TAG=monday docker-compose up -d
+docker-compose up -d
 ```
 
 ## How to test
@@ -195,7 +216,7 @@ jupyter notebook
 
 Build kernel in debug mode, create docker image, and run REPL:
 ```
-make debug
+make debug-kernel PACKAGE=tezos_kernel
 ```
 
 Populate rollup inbox:
@@ -214,6 +235,15 @@ Make sure kernel state is updated:
 ```
 
 ## Troubleshooting
+
+### Unsupported target `wasm32-unknown-unknown`
+
+Known issues:
+- `getrandom` (does not compile since version 0.2.10) => use patched version
+    ```toml
+    [patch.crates-io]
+    getrandom = { git = "https://github.com/baking-bad/getrandom", branch = "patch/0.2" }
+    ```
 
 ### `float instructions are forbidden`
 

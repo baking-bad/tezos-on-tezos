@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use actix_web::{
     error::ErrorInternalServerError,
     web::{Data, Json, Path, Query},
@@ -242,7 +246,7 @@ mod test {
         encoded::{Encoded, PublicKey},
         mutez::Mutez,
     };
-    use tezos_ctx::{ExecutorContext, GenericContext, Head};
+    use tezos_proto::context::{head::Head, TezosContext};
     use tezos_rpc::models::{error::RpcError, operation::Operation};
 
     use crate::{

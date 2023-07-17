@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+#
+# SPDX-License-Identifier: MIT
+
 [package]
 name = "tezos_node"
 version = "0.1.0"
@@ -22,14 +26,14 @@ env_logger = "0.10.0"
 hex = "*"
 derive_more = "0.99"
 serde_json = "*"
-tezos_ctx = { path = "../tezos_ctx" }
-tezos_l2 = { path = "../tezos_l2" }
-tezos_vm = { path = "../tezos_vm" }
-tezos_rpc = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-rpc", default-features = false }
-tezos_core = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-core", default-features = false, features = ["ed25519"] }
-tezos_operation = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-operation", default-features = false, features = ["ed25519"] }
-tezos_michelson = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-michelson", default-features = false }
-tezos_contract = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-contract", default-features = false }
+layered_store = { path = "../layered_store", default-features = false, features = ["tezos"] }
+tezos_proto = { path = "../tezos_proto" }
+michelson_vm = { path = "../michelson_vm" }
+tezos_rpc = { git = "https://github.com/baking-bad/tezos-rust-sdk", branch = "develop", package = "tezos-rpc", default-features = false }
+tezos_core = { git = "https://github.com/baking-bad/tezos-rust-sdk", branch = "develop", package = "tezos-core", default-features = false, features = ["ed25519"] }
+tezos_operation = { git = "https://github.com/baking-bad/tezos-rust-sdk", branch = "develop", package = "tezos-operation", default-features = false, features = ["ed25519"] }
+tezos_michelson = { git = "https://github.com/baking-bad/tezos-rust-sdk", branch = "develop", package = "tezos-michelson", default-features = false }
+tezos_contract = { git = "https://github.com/baking-bad/tezos-rust-sdk", branch = "develop", package = "tezos-contract", default-features = false }
 chrono = { version = "0.4", default-features = false }
 ibig = { version = "0.3", features = ["std", "num-traits"], default-features = false }
 tokio = { version = "1.25.0", features = ["process", "macros"] }
@@ -37,4 +41,4 @@ tokio-stream = "0.1.14"
 
 [dev-dependencies]
 static_init = "1.0.3"
-tezos_rpc = { git = "https://github.com/m-kus/tezos-rust-sdk", branch = "feat/ibig-drop-in", package = "tezos-rpc", features = ["http"] }
+tezos_rpc = { git = "https://github.com/baking-bad/tezos-rust-sdk", branch = "develop", package = "tezos-rpc", features = ["http"] }

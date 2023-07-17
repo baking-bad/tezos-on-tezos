@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 Baking Bad <hello@bakingbad.dev>
+//
+// SPDX-License-Identifier: MIT
+
 use actix_web::web::Data;
 use clap::Parser;
 use tezos_node::{launch_node, rollup::rpc_client::RollupRpcClient, rollup::RollupClient};

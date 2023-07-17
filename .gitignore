@@ -1,9 +1,9 @@
-.bin
 .tezos-client
 .ipynb_checkpoints
 .python-version
 .logs
+bin
 target
-tez_kernel/target
+tezos_kernel/target
 boot_kernel/target
-*.env
+.env
