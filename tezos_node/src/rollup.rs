@@ -9,6 +9,10 @@ pub mod rpc_backend;
 pub mod rpc_client;
 pub mod rpc_helpers;
 
+use std::collections::VecDeque;
+use std::sync::{Arc, Mutex};
+
+use actix_web::web::Bytes;
 use async_trait::async_trait;
 use layered_store::StoreType;
 use serde::Serialize;
@@ -26,18 +30,23 @@ use tezos_rpc::models::{
     operation::Operation,
     version::VersionInfo,
 };
+use tokio::sync::mpsc::Receiver;
 
 use crate::Result;
 pub use block_id::BlockId;
 
 #[async_trait]
-pub trait RollupClient {
+pub trait RollupClient: Sync + Send {
     async fn initialize(&mut self) -> Result<()>;
     async fn store_get<T: StoreType>(&self, key: String, block_id: &BlockId) -> Result<T>;
     async fn get_chain_id(&self) -> Result<ChainId>;
     async fn get_version(&self) -> Result<VersionInfo>;
     async fn is_chain_synced(&self) -> Result<bool>;
     async fn inject_batch(&self, messages: Vec<Vec<u8>>) -> Result<()>;
+    fn get_ttl_blocks(&self) -> Result<Arc<Mutex<VecDeque<BlockHash>>>>;
+    fn create_channel(&self) -> Result<Receiver<Result<Bytes>>>;
+    async fn broadcast_to_channels(&self, data: Bytes) -> Result<()>;
+    fn channels_count(&self) -> usize;
 
     async fn get_batch_head(&self, block_id: &BlockId) -> Result<Head> {
         let head: Head = self.store_get("/head".into(), block_id).await?;
@@ -83,7 +92,7 @@ pub trait TezosFacade {
     async fn get_block_header(&self, block_id: &BlockId) -> Result<FullHeader>;
     async fn get_block_metadata(&self, block_id: &BlockId) -> Result<Metadata>;
     async fn get_block_protocols(&self, block_id: &BlockId) -> Result<BlockProtocols>;
-    async fn get_live_blocks(&self, block_id: &BlockId) -> Result<Vec<BlockHash>>;
+    async fn get_live_blocks(&self, block_id: &BlockId) -> Result<VecDeque<BlockHash>>;
     async fn get_contract(&self, block_id: &BlockId, address: &Address) -> Result<ContractInfo>;
     async fn get_contract_balance(&self, block_id: &BlockId, address: &Address) -> Result<Mutez>;
     async fn get_contract_counter(
@@ -140,6 +149,7 @@ pub trait TezosFacade {
     async fn get_operation(&self, block_id: &BlockId, pass: i32, index: i32) -> Result<Operation>;
     async fn get_operation_list(&self, block_id: &BlockId, pass: i32) -> Result<Vec<Operation>>;
     async fn get_operation_list_list(&self, block_id: &BlockId) -> Result<Vec<Vec<Operation>>>;
+    async fn get_heads_main_channel(&self) -> Result<Receiver<Result<Bytes>>>;
 }
 
 #[async_trait]

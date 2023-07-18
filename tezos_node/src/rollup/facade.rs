@@ -2,9 +2,10 @@
 //
 // SPDX-License-Identifier: MIT
 
+use actix_web::web::Bytes;
 use async_trait::async_trait;
 use michelson_vm::entrypoints::collect_entrypoints;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use tezos_core::types::encoded::{
     Address, BlockHash, ContractAddress, Encoded, ImplicitAddress, OperationHash, PublicKey,
     ScriptExprHash,
@@ -17,6 +18,7 @@ use tezos_rpc::models::{
     contract::{ContractEntrypoints, ContractInfo, ContractScript},
     operation::Operation,
 };
+use tokio::sync::mpsc::Receiver;
 
 use crate::{
     rollup::{BlockId, BlockProtocols, RollupClient, TezosFacade},
@@ -24,7 +26,7 @@ use crate::{
 };
 
 #[async_trait]
-impl<T: RollupClient + Sync + Send> TezosFacade for T {
+impl<T: RollupClient + Send + Sync> TezosFacade for T {
     async fn get_block_hash(&self, block_id: &BlockId) -> Result<BlockHash> {
         match block_id {
             BlockId::Hash(hash) => Ok(hash.clone()),
@@ -278,9 +280,15 @@ impl<T: RollupClient + Sync + Send> TezosFacade for T {
         })
     }
 
-    async fn get_live_blocks(&self, block_id: &BlockId) -> Result<Vec<BlockHash>> {
-        let receipt = self.get_batch_receipt(block_id).await?;
-        // TODO: ttl blocks
-        Ok(vec![receipt.header.predecessor])
+    async fn get_live_blocks(&self, _block_id: &BlockId) -> Result<VecDeque<BlockHash>> {
+        let live_blocks_ptr = self.get_ttl_blocks().unwrap();
+        let live_blocks = live_blocks_ptr.lock().unwrap();
+        // TODO: remove hashes after block_id?
+        //let block_hash = self.get_block_hash(block_id).await.unwrap();
+        Ok(live_blocks.clone())
+    }
+
+    async fn get_heads_main_channel(&self) -> Result<Receiver<Result<Bytes>>> {
+        self.create_channel()
     }
 }

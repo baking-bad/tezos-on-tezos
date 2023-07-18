@@ -15,9 +15,10 @@ use crate::services::{
     context::{big_map_value, big_map_value_normalized, constants, delegate, delegates},
     contracts::{
         contract, contract_balance, contract_counter, contract_delegate, contract_entrypoints,
-        contract_public_key, contract_script, contract_script_normalized, contract_storage,
+        contract_public_key, contract_raw_json_bytes_stub, contract_script,
+        contract_script_normalized, contract_storage,
     },
-    helpers::{forge_operation, preapply_operations, run_operation},
+    helpers::{forge_operation, preapply_operations, run_operation, simulate_operation},
     operations::{
         operation, operation_hash, operation_hash_list, operation_hash_list_list, operation_list,
         operation_list_list,
@@ -25,6 +26,8 @@ use crate::services::{
     shell::{chain_id, inject_operation, is_bootstrapped, pending_operations, version},
 };
 use actix_web::web::{get, post, ServiceConfig};
+
+use self::blocks::{block_header_shell, bootstrap_info, heads_main};
 
 #[macro_export]
 macro_rules! json_response {
@@ -50,6 +53,10 @@ pub fn config<T: RollupClient + TezosFacade + TezosHelpers + 'static>(cfg: &mut 
             post().to(run_operation::<T>),
         )
         .route(
+            "/chains/main/blocks/{block_id}/helpers/scripts/simulate_operation",
+            post().to(simulate_operation::<T>),
+        )
+        .route(
             "/chains/main/blocks/{block_id}/helpers/forge/operations",
             post().to(forge_operation::<T>),
         )
@@ -66,6 +73,10 @@ pub fn config<T: RollupClient + TezosFacade + TezosHelpers + 'static>(cfg: &mut 
             get().to(block_header::<T>),
         )
         .route(
+            "/chains/main/blocks/{block_id}/header/shell",
+            get().to(block_header_shell::<T>),
+        )
+        .route(
             "/chains/main/blocks/{block_id}/metadata",
             get().to(block_metadata::<T>),
         )
@@ -78,6 +89,8 @@ pub fn config<T: RollupClient + TezosFacade + TezosHelpers + 'static>(cfg: &mut 
             get().to(live_blocks::<T>),
         )
         .route("/chains/main/blocks/{block_id}", get().to(block::<T>))
+        .route("/monitor/bootstrapped", get().to(bootstrap_info::<T>))
+        .route("/monitor/heads/main", get().to(heads_main::<T>))
         .route(
             "/chains/main/blocks/{block_id}/context/delegates",
             get().to(delegates),
@@ -133,6 +146,18 @@ pub fn config<T: RollupClient + TezosFacade + TezosHelpers + 'static>(cfg: &mut 
         .route(
             "/chains/main/blocks/{block_id}/context/contracts/{contract_id}",
             get().to(contract::<T>),
+        )
+        .route(
+            "/chains/main/blocks/{block_id}/context/raw/json/contracts/index/{contract_id}/used_bytes",
+            get().to(contract_raw_json_bytes_stub::<T>),
+        )
+        .route(
+            "/chains/main/blocks/{block_id}/context/raw/json/contracts/index/{contract_id}/paid_bytes",
+            get().to(contract_raw_json_bytes_stub::<T>),
+        )
+        .route(
+            "/chains/main/blocks/{block_id}/context/raw/json/big_maps/index/0/total_bytes",
+            get().to(contract_raw_json_bytes_stub::<T>),
         )
         .route(
             "/chains/main/blocks/{block_id}/operations/{pass}/{index}",

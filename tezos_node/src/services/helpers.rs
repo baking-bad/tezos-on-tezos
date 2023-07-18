@@ -4,12 +4,12 @@
 
 use actix_web::{
     error::ErrorInternalServerError,
-    web::{Data, Json, Path},
+    web::{Data, Json, Path, Query},
     Responder, Result,
 };
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize};
 use tezos_core::types::{
-    encoded::{Address, BlockHash, ImplicitAddress, PublicKey},
+    encoded::{Address, BlockHash, ImplicitAddress, PublicKey, Signature},
     mutez::Mutez,
     number::Nat,
 };
@@ -106,11 +106,34 @@ pub enum RequestContent {
 pub struct OperationRequest {
     pub branch: BlockHash,
     pub contents: Vec<RequestContent>,
+    pub signature: Option<Signature>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct RunOperationRequest {
     operation: OperationRequest,
+    //chain_id
+}
+
+#[derive(Deserialize)]
+pub struct SimulateOperationRequest {
+    operation: OperationRequest,
+    //blocks_before_activation: i32,
+    //latency: i16,
+    //chain_id
+}
+
+#[allow(dead_code)]
+#[derive(Deserialize)]
+pub struct SimulateOperationQueryParams {
+    successor_level: Option<bool>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct OperationResponse {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub signature: Option<Signature>,
+    pub contents: Vec<tezos_rpc::models::operation::OperationContent>,
 }
 
 impl TryInto<OperationContent> for RequestContent {
@@ -137,7 +160,7 @@ impl TryInto<SignedOperation> for OperationRequest {
         Ok(SignedOperation {
             branch: self.branch,
             contents: contents?,
-            signature: ZERO_SIGNATURE.try_into().unwrap(),
+            signature: self.signature.unwrap_or(ZERO_SIGNATURE.try_into().unwrap()),
         })
     }
 }
@@ -156,6 +179,29 @@ pub async fn run_operation<T: TezosHelpers>(
     Ok(json_response!(value))
 }
 
+pub async fn simulate_operation<T: TezosHelpers>(
+    client: Data<T>,
+    path: Path<(String,)>,
+    _query: Query<SimulateOperationQueryParams>,
+    request: Json<SimulateOperationRequest>,
+) -> Result<impl Responder> {
+    let value = client
+        .simulate_operation(
+            &path.0.as_str().try_into()?,
+            request.0.operation.try_into()?,
+        )
+        .await?;
+    let response = OperationResponse {
+        signature: value.signature,
+        contents: value
+            .contents
+            .into_iter()
+            .map(|c| c.try_into().unwrap())
+            .collect(),
+    };
+    Ok(json_response!(response))
+}
+
 pub async fn preapply_operations<T: TezosHelpers>(
     client: Data<T>,
     path: Path<(String,)>,
@@ -166,7 +212,15 @@ pub async fn preapply_operations<T: TezosHelpers>(
     let value = client
         .simulate_operation(&path.0.as_str().try_into()?, operation)
         .await?;
-    Ok(json_response!(vec![value]))
+    let response = OperationResponse {
+        signature: value.signature,
+        contents: value
+            .contents
+            .into_iter()
+            .map(|c| c.try_into().unwrap())
+            .collect(),
+    };
+    Ok(json_response!(vec![response]))
 }
 
 pub async fn forge_operation<T: TezosHelpers>(
@@ -195,7 +249,11 @@ mod test {
     use tezos_proto::context::{head::Head, TezosContext};
     use tezos_rpc::models::{error::RpcError, operation::Operation};
 
-    use crate::{rollup::mock_client::RollupMockClient, services::config, Result};
+    use crate::{
+        rollup::mock_client::RollupMockClient,
+        services::{config, helpers::OperationResponse},
+        Result,
+    };
 
     #[actix_web::test]
     async fn test_forge_operation() -> Result<()> {
@@ -327,8 +385,64 @@ mod test {
         let res: Operation = test::call_and_read_body_json(&app, req).await;
         assert_eq!(
             res.hash.unwrap().into_string(),
-            "oooHiZmTVQFVe48pqX2BqnywnH6PWDKUquYoPjtVkihLRpGQHZd"
+            "ooDLM1HCkn7kD9yNYDaickE6yB8re3hege7WVKYhUBMg33BFsUq"
         );
+        Ok(())
+    }
+
+    #[actix_web::test]
+    async fn test_simulate_operation() -> Result<()> {
+        let client = RollupMockClient::default();
+        client.patch(|context| {
+            context.set_head(Head::default()).unwrap();
+            context
+                .set_public_key(
+                    "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx",
+                    PublicKey::new(String::from(
+                        "edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav",
+                    ))
+                    .unwrap(),
+                )
+                .unwrap();
+            context
+                .set_balance(
+                    "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx",
+                    Mutez::from(100000u32),
+                )
+                .unwrap();
+            context.commit().unwrap();
+            Ok(())
+        })?;
+
+        let app = test::init_service(
+            App::new()
+                .configure(config::<RollupMockClient>)
+                .app_data(Data::new(client)),
+        )
+        .await;
+
+        let req = test::TestRequest::post()
+            .uri("/chains/main/blocks/head/helpers/scripts/simulate_operation?successor_level=true")
+            .set_json(json!({
+                "operation": {
+                    "branch": "BMGK5hqUdRZ6PMNtHmiB4KLt8Sy9q1GNZZbGXoGaeTTwAUqhUwU",
+                    "contents": [{
+                        "kind": "transaction",
+                        "source": "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx",
+                        "fee": "471",
+                        "counter": "80342938",
+                        "gas_limit": "1546",
+                        "storage_limit": "0",
+                        "amount": "0",
+                        "destination": "tz1dShXbbgJ4i1L6KMWAuuNdBPk5xCM1NRrU",
+                    }]
+                },
+                "chain_id": "NetXRc5LThNqBfZ"
+            }))
+            .to_request();
+
+        let res: OperationResponse = test::call_and_read_body_json(&app, req).await;
+        assert_eq!(res.contents.len(), 1);
         Ok(())
     }
 }

@@ -2,19 +2,32 @@
 //
 // SPDX-License-Identifier: MIT
 
+use std::{
+    collections::VecDeque,
+    sync::{Arc, Mutex},
+};
+
+use actix_web::web::{Bytes, Data};
 use async_trait::async_trait;
+use chrono::Utc;
 use layered_store::StoreType;
 use log::debug;
 use reqwest::Client;
 use serde::Deserialize;
-use tezos_core::types::encoded::{ChainId, Encoded, SmartRollupAddress};
-use tezos_rpc::models::version::{
-    AdditionalInfo, CommitInfo, NetworkVersion, Version, VersionInfo,
+use tezos_core::types::encoded::{BlockHash, ChainId, Encoded, SmartRollupAddress};
+use tezos_rpc::models::{
+    block::FullHeader,
+    version::{AdditionalInfo, CommitInfo, NetworkVersion, Version, VersionInfo},
+};
+use tokio::{
+    sync::mpsc::{channel, Receiver, Sender},
+    time::{sleep, Duration},
 };
 
 use crate::{
     internal_error,
     rollup::{BlockId, RollupClient},
+    services::blocks::HeaderShell,
     Error, Result,
 };
 
@@ -57,7 +70,11 @@ pub struct RollupRpcClient {
     client: Client,
     chain_id: Option<ChainId>,
     origination_level: Option<u32>,
+    ttl_blocks: Arc<Mutex<VecDeque<BlockHash>>>,
+    channels: Arc<Mutex<Vec<Sender<Result<Bytes>>>>>,
 }
+
+const MAX_TTL_BLOCKS_COUNT: i32 = 60;
 
 impl RollupRpcClient {
     pub fn new(endpoint: &str) -> Self {
@@ -66,6 +83,10 @@ impl RollupRpcClient {
             client: Client::new(),
             origination_level: None,
             chain_id: None,
+            ttl_blocks: Arc::new(Mutex::new(VecDeque::with_capacity(
+                MAX_TTL_BLOCKS_COUNT as usize,
+            ))),
+            channels: Arc::new(Mutex::new(Vec::new())),
         }
     }
 
@@ -186,6 +207,7 @@ impl RollupClient for RollupRpcClient {
             "Rollup origination level: {}",
             self.origination_level.as_ref().unwrap()
         );
+
         Ok(())
     }
 
@@ -270,4 +292,116 @@ impl RollupClient for RollupRpcClient {
             })
         }
     }
+
+    fn create_channel(&self) -> Result<Receiver<Result<Bytes>>> {
+        const LONG_POLL_CHANNEL_SIZE: usize = 1;
+        let (tx, rx) = channel::<Result<Bytes>>(LONG_POLL_CHANNEL_SIZE);
+        let mut channels = self.channels.lock().unwrap();
+        channels.push(tx);
+        Ok(rx)
+    }
+
+    fn get_ttl_blocks(&self) -> Result<Arc<Mutex<VecDeque<BlockHash>>>> {
+        Ok(Arc::clone(&self.ttl_blocks))
+    }
+
+    async fn broadcast_to_channels(&self, data: Bytes) -> Result<()> {
+        let mut channels = self.channels.lock().unwrap();
+        let mut i = 0;
+        while i < channels.len() {
+            if channels[i].is_closed() {
+                channels.remove(i);
+                continue;
+            }
+
+            let value = data.clone();
+            if let Err(_) = channels[i].try_send(Ok(value)) {
+                channels.remove(i);
+                continue;
+            }
+
+            i += 1;
+        }
+
+        Ok(())
+    }
+
+    fn channels_count(&self) -> usize {
+        let channels_ptr = self.channels.lock().unwrap();
+        channels_ptr.len()
+    }
+}
+
+pub fn run_block_updater<T: RollupClient + 'static>(client: &Data<T>) -> () {
+    const BLOCK_INTERVAL_SEC: i64 = 8;
+    const BLOCK_DELAY_SEC: i64 = 3;
+
+    let client = client.clone();
+    tokio::spawn(async move {
+        // TODO: wait chain sync?
+        let mut curr_level = 0;
+
+        loop {
+            let timestamp = Utc::now().timestamp();
+            let head = client.get_batch_receipt(&BlockId::Head).await.unwrap();
+            let head_timestamp = head.header.timestamp;
+
+            if curr_level == head.header.level {
+                sleep(Duration::from_secs(BLOCK_DELAY_SEC as u64)).await;
+                continue;
+            }
+
+            curr_level = std::cmp::max(curr_level, head.header.level - MAX_TTL_BLOCKS_COUNT);
+
+            while curr_level < head.header.level {
+                let batch_receipt = client
+                    .get_batch_receipt(&BlockId::Level(curr_level.try_into().unwrap()))
+                    .await
+                    .unwrap();
+
+                {
+                    let ttl_blocks_ptr = client.get_ttl_blocks().unwrap();
+                    let mut ttl_blocks: std::sync::MutexGuard<'_, VecDeque<BlockHash>> =
+                        ttl_blocks_ptr.lock().unwrap();
+
+                    if ttl_blocks.len() == MAX_TTL_BLOCKS_COUNT as usize {
+                        ttl_blocks.pop_front();
+                    }
+                    ttl_blocks.push_back(batch_receipt.hash.clone());
+                }
+
+                curr_level += 1;
+
+                if client.channels_count() == 0 {
+                    continue;
+                }
+
+                let full_header: FullHeader = batch_receipt.into();
+
+                let header = HeaderShell {
+                    hash: Some(full_header.hash),
+                    level: full_header.level,
+                    proto: full_header.proto,
+                    predecessor: full_header.predecessor,
+                    timestamp: full_header.timestamp,
+                    validation_pass: full_header.validation_pass,
+                    operations_hash: full_header.operations_hash,
+                    fitness: full_header.fitness,
+                    context: full_header.context,
+                    protocol_data: Some("".to_string()),
+                };
+
+                let header_json = serde_json::to_string(&header).unwrap();
+                let header_bytes = Bytes::from(header_json);
+
+                if let Err(_) = client.broadcast_to_channels(header_bytes).await {
+                    debug!("Error while broadcast header to long polls clients");
+                }
+            }
+
+            let next_block_timestamp = head_timestamp + BLOCK_INTERVAL_SEC + BLOCK_DELAY_SEC;
+            let waiting_interval = std::cmp::max(next_block_timestamp - timestamp, BLOCK_DELAY_SEC);
+            sleep(Duration::from_secs(waiting_interval as u64)).await;
+        }
+    });
 }
