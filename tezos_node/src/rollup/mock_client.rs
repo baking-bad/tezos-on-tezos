@@ -9,7 +9,7 @@ use log::debug;
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::{cell::RefCell, sync::Arc};
-use tezos_core::types::encoded::{BlockHash,ChainId, Encoded, OperationHash};
+use tezos_core::types::encoded::{BlockHash, ChainId, Encoded, OperationHash};
 use tezos_operation::operations::SignedOperation;
 use tezos_proto::{
     batcher::apply_batch,

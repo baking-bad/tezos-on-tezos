@@ -9,8 +9,8 @@ use std::{
 
 use actix_web::web::{Bytes, Data};
 use async_trait::async_trait;
-use layered_store::StoreType;
 use chrono::Utc;
+use layered_store::StoreType;
 use log::debug;
 use reqwest::Client;
 use serde::Deserialize;
