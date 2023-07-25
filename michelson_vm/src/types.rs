@@ -18,6 +18,7 @@ pub mod or;
 pub mod pair;
 pub mod set;
 pub mod timestamp;
+pub mod ticket;
 
 use derive_more::{Display, From, TryInto};
 use ibig::{IBig, UBig};
@@ -100,6 +101,7 @@ not_comparable!(LambdaItem);
 not_comparable!(ContractItem);
 not_comparable!(BigMapItem);
 not_comparable!(OperationItem);
+not_comparable!(TicketItem);
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum InternalContent {
@@ -157,6 +159,14 @@ pub enum BigMapItem {
     Ptr(i64),
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct TicketItem {
+    pub source: Address,
+    pub identifier: Micheline,
+    pub identifier_type: Type,
+    pub amount: UBig,
+}
+
 #[derive(Debug, Display, Clone, From, TryInto, PartialEq, PartialOrd, Eq, Ord)]
 pub enum StackItem {
     Unit(UnitItem),
@@ -182,6 +192,7 @@ pub enum StackItem {
     Map(MapItem),
     BigMap(BigMapItem),
     Lambda(LambdaItem),
+    Ticket(TicketItem),
 }
 
 impl AsMut<StackItem> for StackItem {

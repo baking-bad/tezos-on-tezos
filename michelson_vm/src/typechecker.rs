@@ -224,6 +224,7 @@ impl StackItem {
             StackItem::Operation(_) => Ok(types::operation()),
             StackItem::Lambda(item) => item.get_type(),
             StackItem::Contract(item) => Ok(item.get_type()),
+            StackItem::Ticket(item) => item.get_type(),
         }
     }
 

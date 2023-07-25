@@ -18,6 +18,10 @@ use crate::{
 };
 
 impl NatItem {
+    pub fn new(nat: UBig) -> Self {
+        Self(nat)
+    }
+
     pub fn from_data(data: Data) -> Result<StackItem> {
         let val: UBig = match data {
             Data::Int(val) => val.try_into()?,

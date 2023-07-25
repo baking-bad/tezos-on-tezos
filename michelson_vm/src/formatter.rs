@@ -113,6 +113,10 @@ impl Formatter for Instruction {
             Instruction::Blake2B(_) => "Blake2B".into(),
             Instruction::HashKey(_) => "HashKey".into(),
             Instruction::CheckSignature(_) => "CheckSignature".into(),
+            Instruction::Ticket(_) => "Ticket".into(),
+            Instruction::ReadTicket(_) => "ReadTicket".into(),
+            Instruction::SplitTicket(_) => "SplitTicket".into(),
+            Instruction::JoinTickets(_) => "JoinTicket".into(),
             _ => format!("{:?}", self),
         }
     }
@@ -166,6 +170,7 @@ impl Formatter for Type {
             Type::Operation(_) => "operation".into(),
             Type::Parameter(ty) => format!("(parameter {})", ty.r#type.format()),
             Type::Storage(ty) => format!("(storage {})", ty.r#type.format()),
+            Type::Ticket(ty) => format!("(ticket {})", ty.r#type.format()),
             ty => format!("{:?}", ty),
         }
     }
