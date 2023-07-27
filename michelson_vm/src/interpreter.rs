@@ -174,6 +174,10 @@ impl Interpreter for Instruction {
             Instruction::Blake2B(instr) => instr.execute(stack),
             Instruction::HashKey(instr) => instr.execute(stack),
             Instruction::CheckSignature(instr) => instr.execute(stack),
+            Instruction::Ticket(instr) => instr.execute(stack, scope),
+            Instruction::ReadTicket(instr) => instr.execute(stack),
+            Instruction::SplitTicket(instr) => instr.execute(stack),
+            Instruction::JoinTickets(instr) => instr.execute(stack),
             _ => err_unsupported!(self.format()),
         };
         trace_exit!(res.as_ref().err(), format!("Len {}", &stack.len()).as_str());

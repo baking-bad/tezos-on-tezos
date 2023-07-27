@@ -17,8 +17,8 @@ pub mod option;
 pub mod or;
 pub mod pair;
 pub mod set;
-pub mod timestamp;
 pub mod ticket;
+pub mod timestamp;
 
 use derive_more::{Display, From, TryInto};
 use ibig::{IBig, UBig};
@@ -161,10 +161,9 @@ pub enum BigMapItem {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TicketItem {
-    pub source: Address,
-    pub identifier: Micheline,
-    pub identifier_type: Type,
-    pub amount: UBig,
+    pub source: AddressItem,
+    pub identifier: Box<StackItem>,
+    pub amount: NatItem,
 }
 
 #[derive(Debug, Display, Clone, From, TryInto, PartialEq, PartialOrd, Eq, Ord)]

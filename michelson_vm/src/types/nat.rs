@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-use ibig::{IBig, UBig};
+use ibig::{ubig, IBig, UBig};
 use std::fmt::Display;
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Neg, Not, Shl, Shr, Sub};
 use tezos_michelson::michelson::{
@@ -39,6 +39,10 @@ impl NatItem {
 
     pub fn int(self) -> IntItem {
         IntItem(IBig::from(self.0))
+    }
+
+    pub fn is_zero(&self) -> bool {
+        self.0 == ubig!(0)
     }
 }
 

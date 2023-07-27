@@ -42,6 +42,11 @@ impl PureInterpreter for Dup {
         }
         // TODO: check if copyable
         let res = stack.dup_at(n - 1)?;
+
+        if let StackItem::Ticket(_) = res {
+            return err_unsupported!("TICKETS DUP");
+        }
+
         stack.push(res)
     }
 }
