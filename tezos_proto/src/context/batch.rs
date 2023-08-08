@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use tezos_core::types::encoded::{
-    BlockHash, BlockPayloadHash, ChainId, ContextHash, OperationListListHash, ProtocolHash,
+    BlockHash, BlockPayloadHash, ChainId, ContextHash, OperationListListHash, ProtocolHash, Signature, ImplicitAddress
 };
 use tezos_operation::block_header;
 use tezos_rpc::models::{
@@ -36,7 +36,7 @@ pub struct BatchHeader {
     pub operations_hash: OperationListListHash,
     pub payload_hash: BlockPayloadHash,
     pub context: ContextHash,
-    // pub signature: Option<Signature>
+    pub signature: Option<Signature>
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -46,7 +46,7 @@ pub struct BatchReceipt {
     pub hash: BlockHash,
     pub header: BatchHeader,
     pub balance_updates: Option<Vec<BalanceUpdate>>,
-    // pub batcher: ImplicitAddress
+    pub batcher: Option<ImplicitAddress>
 }
 
 impl From<BatchHeader> for block_header::BlockHeader {
@@ -67,9 +67,9 @@ impl From<BatchHeader> for block_header::BlockHeader {
                 .expect("Failed to convert pow nonce"),
             proto: 0,
             seed_nonce_hash: None,
-            signature: ZERO_SIGNATURE
-                .try_into()
-                .expect("Failed to convert signature"), // TODO: sign with builtin key?
+            signature: header.signature.unwrap_or_else(
+                || ZERO_SIGNATURE.try_into().expect("Failed to convert signature")
+            ),
             timestamp: ts2dt!(header.timestamp),
             validation_pass: 4,
         }
@@ -104,7 +104,8 @@ impl From<BatchReceipt> for Metadata {
     fn from(receipt: BatchReceipt) -> Self {
         let config = Config::default();
         Self {
-            baker: None, // TODO: + signature
+            baker: receipt.batcher,
+            proposer: receipt.batcher,
             balance_updates: receipt.balance_updates,
             // derived
             protocol: receipt.protocol.to_owned(),
@@ -140,7 +141,7 @@ impl From<BatchReceipt> for Metadata {
                 },
             ],
             max_block_header_length: config.max_block_header_length,
-            // null
+            // null / deprecated
             level: None,
             consumed_gas: None,
             deactivated: None,
@@ -154,7 +155,6 @@ impl From<BatchReceipt> for Metadata {
                 protocol: None,
                 expiration: None,
             },
-            proposer: None,
             nonce_hash: None,
             liquidity_baking_toggle_ema: None,
             liquidity_baking_escape_ema: None,
