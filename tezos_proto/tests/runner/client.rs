@@ -21,7 +21,8 @@ use tezos_rpc::models::operation::Operation;
 
 use tezos_proto::{
     batcher::apply_batch,
-    context::{head::Head, migrations::run_migrations, TezosContext},
+    context::{head::Head, TezosContext},
+    protocol::migrations::{Migrations, Seed},
 };
 
 pub struct Wallet {
@@ -91,7 +92,7 @@ impl<Context: TezosContext + InterpreterContext> Client<Context> {
     pub fn migrate(&mut self) -> &mut Self {
         let head = self.context.get_head().expect("Failed to get head");
 
-        run_migrations(&mut self.context, &head).expect("Failed to run context migrations");
+        Seed::run(&mut self.context, &head).expect("Failed to run context migrations");
 
         self
     }

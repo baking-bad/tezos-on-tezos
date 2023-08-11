@@ -12,7 +12,7 @@ use tezos_operation::operations::{OperationContent, SignedOperation};
 
 use crate::{
     context::TezosContext,
-    executor::rpc_errors::{RpcError, RpcErrors},
+    operations::rpc_errors::{RpcError, RpcErrors},
     Error, Result,
 };
 

@@ -1705,8 +1705,10 @@ name = "layered_store"
 version = "0.1.0"
 dependencies = [
  "derive_more",
+ "serde-json-wasm",
  "tezos-core",
  "tezos-michelson",
+ "tezos-rpc",
 ]
 
 [[package]]

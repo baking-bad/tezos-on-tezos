@@ -8,12 +8,12 @@ use actix_web::{
     HttpResponse, Responder, Result,
 };
 use tezos_core::types::encoded::ScriptExprHash;
-use tezos_proto::config::Config;
+use tezos_proto::constants::Constants;
 
 use crate::{json_response, rollup::TezosFacade, Error};
 
 pub async fn constants() -> Result<impl Responder> {
-    Ok(json_response!(Config::default()))
+    Ok(json_response!(Constants::default()))
 }
 
 pub async fn delegates() -> Result<impl Responder> {

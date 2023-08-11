@@ -68,7 +68,7 @@ mod test {
     use actix_web::{test, web::Data, App};
     use tezos_core::types::encoded::{BlockHash, Encoded};
     use tezos_proto::context::{
-        batch::{BatchHeader, BatchReceipt},
+        batch_receipt::{BatchHeader, BatchReceipt},
         head::Head,
         TezosContext,
     };

@@ -9,7 +9,9 @@ use std::path::PathBuf;
 use tezos_core::types::encoded::Encoded;
 use tezos_michelson::micheline::Micheline;
 
-use tezos_proto::{context::TezosEphemeralContext, executor::origination::originated_address};
+use tezos_proto::{
+    context::TezosEphemeralContext, operations::types::origination::originated_address,
+};
 
 use crate::runner::client::Client;
 

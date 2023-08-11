@@ -13,15 +13,15 @@ use tezos_rpc::models::operation::{
 
 use crate::{
     context::TezosContext,
-    executor::balance_updates::BalanceUpdates,
-    executor::contract::{execute_contract, expand_content, ContractOutput},
-    executor::lazy_diff::LazyDiff,
-    executor::result::ExecutionResult,
-    executor::rpc_errors::RpcErrors,
-    Error, Result,
+    contracts::michelson::{execute_contract, expand_content, ContractOutput},
+    operations::{
+        balance_updates::BalanceUpdates, lazy_diff::LazyDiff, result::ExecutionResult,
+        rpc_errors::RpcErrors,
+    },
+    Error, Result, config::Config,
 };
 
-pub fn execute_transaction(
+pub fn execute_transaction<C: Config>(
     context: &mut (impl TezosContext + InterpreterContext),
     transaction: &Transaction,
     sender: Option<Address>,
@@ -81,7 +81,7 @@ pub fn execute_transaction(
     }
 
     let internal_operations: Vec<OperationContent> =
-        match execute_contract(context, transaction, sender.clone(), balance) {
+        match execute_contract::<C>(context, transaction, sender.clone(), balance) {
             Ok(ContractOutput::Return(ret)) => {
                 storage = Some(ret.storage);
                 lazy_diff.update(ret.big_map_diff)?;
@@ -97,7 +97,7 @@ pub fn execute_transaction(
     for operation in internal_operations {
         match operation {
             OperationContent::Transaction(tx) => {
-                match execute_transaction(
+                match execute_transaction::<C>(
                     context,
                     &tx,
                     Some(transaction.destination.clone()),
@@ -127,7 +127,7 @@ mod test {
     use tezos_operation::operations::Transaction;
 
     use super::*;
-    use crate::{context::TezosEphemeralContext, Result};
+    use crate::{context::TezosEphemeralContext, Result, config::DefaultConfig};
 
     #[test]
     fn test_transaction_applied() -> Result<()> {
@@ -149,7 +149,7 @@ mod test {
             parameters: None,
         };
 
-        let res = execute_transaction(&mut context, &transaction, None, false);
+        let res = execute_transaction::<DefaultConfig>(&mut context, &transaction, None, false);
         assert!(res.is_ok());
         assert!(res.unwrap().ok());
 

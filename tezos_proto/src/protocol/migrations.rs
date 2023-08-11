@@ -22,32 +22,37 @@ const SEED_ACCOUNTS: [&str; 8] = [
 ];
 const SEED_BALANCE: u64 = 40_000_000_000_000u64;
 
-pub fn genesis_migration(context: &mut impl TezosContext) -> Result<Vec<BalanceUpdate>> {
-    let mut updates: Vec<BalanceUpdate> = Vec::with_capacity(SEED_ACCOUNTS.len());
-    let balance = Mutez::try_from(SEED_BALANCE).unwrap();
-
-    for account in SEED_ACCOUNTS.into_iter() {
-        context.set_balance(&account, balance)?;
-        updates.push(BalanceUpdate::Contract(Contract {
-            kind: Kind::Contract,
-            change: SEED_BALANCE.to_string(),
-            contract: account.to_string(),
-            origin: Some(Origin::Migration),
-        }));
-    }
-
-    context.commit()?;
-    Ok(updates)
+pub trait Migrations {
+    // TODO: migrations can potentially do more than just update balances
+    fn run(context: &mut impl TezosContext, head: &Head) -> Result<Vec<BalanceUpdate>>;
 }
 
-pub fn run_migrations(
-    context: &mut impl TezosContext,
-    head: &Head,
-) -> Result<Option<Vec<BalanceUpdate>>> {
-    context.check_no_pending_changes()?;
-    match head.level {
-        -1 => Ok(Some(genesis_migration(context)?)),
-        _ => Ok(None),
+pub struct SandboxSeed {}
+
+impl Migrations for SandboxSeed {
+    fn run(context: &mut impl TezosContext, head: &Head) -> Result<Vec<BalanceUpdate>> {
+        if head.level != -1 {
+            return Ok(vec![]);
+        }
+
+        context.check_no_pending_changes()?;
+
+        let mut updates: Vec<BalanceUpdate> = Vec::with_capacity(SEED_ACCOUNTS.len());
+        let balance = Mutez::try_from(SEED_BALANCE).unwrap();
+
+        for account in SEED_ACCOUNTS.into_iter() {
+            context.set_balance(&account, balance)?;
+            updates.push(BalanceUpdate::Contract(Contract {
+                kind: Kind::Contract,
+                change: SEED_BALANCE.to_string(),
+                contract: account.to_string(),
+                origin: Some(Origin::Migration),
+            }));
+        }
+
+        context.commit()?;
+
+        Ok(updates)
     }
 }
 
@@ -63,7 +68,7 @@ mod test {
         let head = context.get_head()?;
         assert_eq!(-1, head.level);
 
-        let updates = run_migrations(&mut context, &head)?.expect("Seed balance updates");
+        let updates = SandboxSeed::run(&mut context, &head)?;
         assert_eq!(8, updates.len());
 
         let balance = context

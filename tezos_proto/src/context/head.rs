@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
+use layered_store::{error::err_into, Result, StoreType};
 use serde::{Deserialize, Serialize};
 use tezos_core::types::encoded::{BlockHash, ChainId, Encoded, OperationHash};
 
@@ -54,5 +55,15 @@ impl std::fmt::Display for Head {
             self.hash.value(),
             self.operations.len(),
         ))
+    }
+}
+
+impl StoreType for Head {
+    fn from_bytes(bytes: &[u8]) -> Result<Self> {
+        serde_json_wasm::de::from_slice(bytes).map_err(err_into)
+    }
+
+    fn to_bytes(&self) -> Result<Vec<u8>> {
+        serde_json_wasm::ser::to_vec(self).map_err(err_into)
     }
 }

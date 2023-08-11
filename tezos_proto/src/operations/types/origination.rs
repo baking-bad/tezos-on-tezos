@@ -15,12 +15,12 @@ use tezos_rpc::models::operation::{
 
 use crate::{
     context::TezosContext,
-    executor::balance_updates::BalanceUpdates,
-    executor::contract::{deploy_contract, ContractOutput},
-    executor::lazy_diff::LazyDiff,
-    executor::result::ExecutionResult,
-    executor::rpc_errors::RpcErrors,
-    Error, Result,
+    contracts::michelson::{deploy_contract, ContractOutput},
+    operations::{
+        balance_updates::BalanceUpdates, lazy_diff::LazyDiff, result::ExecutionResult,
+        rpc_errors::RpcErrors,
+    },
+    Error, Result, config::Config,
 };
 
 pub fn originated_address(opg_hash: &OperationHash, index: i32) -> Result<ContractAddress> {
@@ -30,7 +30,7 @@ pub fn originated_address(opg_hash: &OperationHash, index: i32) -> Result<Contra
     Ok(ContractAddress::from_components(&hash, None))
 }
 
-pub fn execute_origination(
+pub fn execute_origination<C: Config>(
     context: &mut (impl TezosContext + InterpreterContext),
     origination: &Origination,
     hash: &OperationHash,
@@ -84,7 +84,7 @@ pub fn execute_origination(
         Err(err) => return Err(err),
     };
 
-    match deploy_contract(context, origination, self_address.clone(), balance) {
+    match deploy_contract::<C>(context, origination, self_address.clone(), balance) {
         Ok(ContractOutput::Return(ret)) => {
             lazy_diff.update(ret.big_map_diff)?;
             originated_contracts = Some(vec![self_address]);
@@ -109,7 +109,7 @@ mod test {
     use tezos_operation::operations::Script;
 
     use super::*;
-    use crate::{context::TezosEphemeralContext, Result};
+    use crate::{context::TezosEphemeralContext, Result, config::DefaultConfig};
 
     #[test]
     fn test_origination_applied() -> Result<()> {
@@ -133,7 +133,7 @@ mod test {
         };
 
         let mut index = 1i32;
-        let result = execute_origination(
+        let result = execute_origination::<DefaultConfig>(
             &mut context,
             &origination,
             &OperationHash::new("oneDGhZacw99EEFaYDTtWfz5QEhUW3PPVFsHa7GShnLPuDn7gSd".into())?,

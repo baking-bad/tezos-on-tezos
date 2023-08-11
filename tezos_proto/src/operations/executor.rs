@@ -8,17 +8,20 @@ use tezos_operation::operations::OperationContent;
 use tezos_rpc::models::operation::Operation as OperationReceipt;
 
 use crate::{
-    config::PROTOCOL,
     context::TezosContext,
     error::{Error, Result},
-    executor::{
-        balance_updates::BalanceUpdates, origination::execute_origination, reveal::execute_reveal,
-        transaction::execute_transaction,
+    operations::{
+        balance_updates::BalanceUpdates,
+        types::{
+            origination::execute_origination, reveal::execute_reveal,
+            transaction::execute_transaction,
+        },
+        validator::ValidOperation,
     },
-    validator::operation::ValidOperation,
+    protocol::constants::PROTOCOL, config::Config,
 };
 
-pub fn execute_operation(
+pub fn execute_operation<C: Config>(
     context: &mut (impl TezosContext + InterpreterContext),
     opg: &ValidOperation,
 ) -> Result<OperationReceipt> {
@@ -34,7 +37,7 @@ pub fn execute_operation(
         let skip = failed_idx.is_some();
         let result = match content {
             OperationContent::Reveal(reveal) => execute_reveal(context, reveal, skip)?,
-            OperationContent::Origination(origination) => execute_origination(
+            OperationContent::Origination(origination) => execute_origination::<C>(
                 context,
                 origination,
                 &opg.hash,
@@ -42,7 +45,7 @@ pub fn execute_operation(
                 skip,
             )?,
             OperationContent::Transaction(transaction) => {
-                execute_transaction(context, transaction, None, skip)?
+                execute_transaction::<C>(context, transaction, None, skip)?
             }
             _ => return Err(Error::OperationKindUnsupported),
         };
@@ -87,7 +90,7 @@ mod test {
     use tezos_rpc::models::operation::{operation_result::OperationResultStatus, OperationContent};
 
     use super::*;
-    use crate::{context::TezosEphemeralContext, validator::operation::ValidOperation, Result};
+    use crate::{context::TezosEphemeralContext, operations::validator::ValidOperation, Result, config::DefaultConfig};
 
     macro_rules! get_status {
         ($receipt: expr) => {
@@ -152,7 +155,7 @@ mod test {
             total_spent: 0u32.into(), // <-- not true, fot the sake of the test
         };
 
-        let receipt = execute_operation(&mut context, &opg)?;
+        let receipt = execute_operation::<DefaultConfig>(&mut context, &opg)?;
         //println!("{:#?}", receipt);
         assert_eq!(
             get_status(&receipt.contents[0]).expect("Backtracked"),

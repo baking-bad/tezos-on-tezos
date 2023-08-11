@@ -59,6 +59,8 @@ pub enum Error {
     CounterInThePast { counter: String },
     BatchNotFound { hash: String },
     OperationNotFound { hash: String },
+    InvalidBatchOperation { reason: String },
+    InvalidBatchHeader { reason: String },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

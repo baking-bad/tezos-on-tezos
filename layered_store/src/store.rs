@@ -106,6 +106,10 @@ impl<Backend: StoreBackend> LayeredStore<Backend> {
         Ok(())
     }
 
+    // TODO: implement state hash calculation
+    // state = blake2b(state, key, value)
+    // accept prev state as an optional argument
+    // if state is None skip hashing
     pub fn commit(&mut self) -> Result<()> {
         let modified_keys: Vec<String> = self.modified_keys.drain().collect();
         for key in modified_keys {

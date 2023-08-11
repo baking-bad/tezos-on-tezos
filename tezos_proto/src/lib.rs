@@ -2,12 +2,12 @@
 //
 // SPDX-License-Identifier: MIT
 
-pub mod batcher;
+pub mod batch;
 pub mod config;
 pub mod context;
+pub mod contracts;
 pub mod error;
-pub mod executor;
-pub mod validator;
-pub mod runner;
+pub mod operations;
+pub mod protocol;
 
 pub use error::{Error, Result};

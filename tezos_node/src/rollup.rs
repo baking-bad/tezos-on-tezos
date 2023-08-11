@@ -19,7 +19,7 @@ use tezos_core::types::encoded::{
 use tezos_core::types::{mutez::Mutez, number::Nat};
 use tezos_michelson::micheline::Micheline;
 use tezos_operation::operations::SignedOperation;
-use tezos_proto::context::{batch::BatchReceipt, head::Head, store::OperationReceipt};
+use tezos_proto::context::{batch_receipt::BatchReceipt, head::Head, store::OperationReceipt};
 use tezos_rpc::models::{
     block::{Block, FullHeader, Metadata},
     contract::{ContractEntrypoints, ContractInfo, ContractScript},

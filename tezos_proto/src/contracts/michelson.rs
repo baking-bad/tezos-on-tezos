@@ -16,7 +16,7 @@ use tezos_operation::operations::{
     Entrypoint, OperationContent, Origination, Parameters, Transaction,
 };
 
-use crate::{config, context::TezosContext, Error, Result};
+use crate::{context::TezosContext, protocol::constants::Constants, Error, Result, config::Config};
 
 #[derive(Debug, From)]
 pub enum ContractOutput {
@@ -24,7 +24,7 @@ pub enum ContractOutput {
     Return(ScriptReturn),
 }
 
-pub fn deploy_contract(
+pub fn deploy_contract<C: Config>(
     context: &mut (impl TezosContext + InterpreterContext),
     origination: &Origination,
     self_address: ContractAddress,
@@ -38,7 +38,7 @@ pub fn deploy_contract(
         balance,
         chain_id: head.chain_id,
         level: head.level + 1,
-        now: head.timestamp + config::BLOCK_TIME,
+        now: head.timestamp + C::Constants::constants().minimal_block_delay as i64,
         parameters: None,
         self_address,
         self_type: script.get_type(),
@@ -57,7 +57,7 @@ pub fn deploy_contract(
     }
 }
 
-pub fn execute_contract(
+pub fn execute_contract<C: Config>(
     context: &mut (impl TezosContext + InterpreterContext),
     transaction: &Transaction,
     sender: Option<Address>,
@@ -84,7 +84,7 @@ pub fn execute_contract(
         balance,
         chain_id: head.chain_id,
         level: head.level + 1,
-        now: head.timestamp + config::BLOCK_TIME,
+        now: head.timestamp + C::Constants::constants().minimal_block_delay as i64,
         parameters: match &transaction.parameters {
             Some(params) => Some((params.entrypoint.to_str().into(), params.value.clone())),
             None => None,

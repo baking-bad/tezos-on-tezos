@@ -9,7 +9,8 @@ use tezos_rpc::models::operation::operation_result::{
 };
 
 use crate::{
-    context::TezosContext, executor::result::ExecutionResult, executor::rpc_errors::RpcErrors,
+    context::TezosContext,
+    operations::{result::ExecutionResult, rpc_errors::RpcErrors},
     Result,
 };
 

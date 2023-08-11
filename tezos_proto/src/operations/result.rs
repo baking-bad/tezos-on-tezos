@@ -21,7 +21,7 @@ use tezos_rpc::models::operation::{
     OperationContent as OperationContentAndResult,
 };
 
-use crate::executor::balance_updates::BalanceUpdates;
+use crate::operations::balance_updates::BalanceUpdates;
 
 #[derive(Debug, Clone, TryInto, From)]
 pub enum ExecutionResult {
