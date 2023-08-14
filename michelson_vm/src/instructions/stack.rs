@@ -7,7 +7,11 @@ use std::borrow::Borrow;
 use tezos_michelson::michelson::data::instructions::{Dig, Drop, Dug, Dup, Push, Swap};
 
 use crate::{
-    err_unsupported, interpreter::PureInterpreter, stack::Stack, types::StackItem, Result,
+    err_unsupported,
+    interpreter::{Interpreter, PureInterpreter, TicketStorage},
+    stack::Stack,
+    types::StackItem,
+    InterpreterContext, OperationScope, Result,
 };
 
 impl PureInterpreter for Push {
@@ -18,14 +22,20 @@ impl PureInterpreter for Push {
     }
 }
 
-impl PureInterpreter for Drop {
-    fn execute(&self, stack: &mut Stack) -> Result<()> {
+impl Interpreter for Drop {
+    fn execute(
+        &self,
+        stack: &mut Stack,
+        scope: &OperationScope,
+        context: &mut impl InterpreterContext,
+    ) -> Result<()> {
         let count: usize = match &self.n {
             Some(n) => n.try_into()?,
             None => 1,
         };
         for _ in 0..count {
-            stack.pop()?;
+            let item = stack.pop()?;
+            item.drop_tickets(&scope.self_address, context)?;
         }
         Ok(())
     }
@@ -43,8 +53,8 @@ impl PureInterpreter for Dup {
         // TODO: check if copyable
         let res = stack.dup_at(n - 1)?;
 
-        if let StackItem::Ticket(_) = res {
-            return err_unsupported!("TICKETS DUP");
+        if res.has_tickets() {
+            return err_unsupported!("proto.alpha.michelson_v1.non_dupable_type");
         }
 
         stack.push(res)

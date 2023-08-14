@@ -9,7 +9,7 @@ use tezos_michelson::michelson::{
 
 use crate::{
     err_mismatch,
-    interpreter::{PureInterpreter, ScopedInterpreter},
+    interpreter::{Interpreter, InterpreterContext, PureInterpreter},
     pop_cast,
     stack::Stack,
     typechecker::check_type_comparable,
@@ -17,8 +17,13 @@ use crate::{
     OperationScope, Result,
 };
 
-impl ScopedInterpreter for Ticket {
-    fn execute(&self, stack: &mut Stack, scope: &OperationScope) -> Result<()> {
+impl Interpreter for Ticket {
+    fn execute(
+        &self,
+        stack: &mut Stack,
+        scope: &OperationScope,
+        context: &mut impl InterpreterContext,
+    ) -> Result<()> {
         let identifier = stack.pop()?;
         let identifier_ty = identifier.get_type()?;
         check_type_comparable(&identifier_ty)?;
@@ -33,8 +38,15 @@ impl ScopedInterpreter for Ticket {
         let ticket = TicketItem {
             source: AddressItem::new(scope.self_address.clone().into()),
             identifier: Box::new(identifier),
-            amount: amount,
+            amount: amount.clone(),
         };
+
+        context.update_ticket_balance(
+            scope.self_address.clone().into(),
+            ticket.identifier.clone().into_micheline(&identifier_ty)?,
+            scope.self_address.clone().into(),
+            amount.value().into(),
+        )?;
 
         stack.push(StackItem::Option(OptionItem::Some(Box::new(ticket.into()))))
     }
@@ -63,10 +75,7 @@ impl PureInterpreter for SplitTicket {
         let (n1, n2) = match pair_n1_n2.unpair() {
             (StackItem::Nat(n1), StackItem::Nat(n2)) => (n1, n2),
             (s1, s2) => {
-                return err_mismatch!(
-                    "Pair Nat Nat",
-                    StackItem::Pair(PairItem::new(s1, s2))
-                )
+                return err_mismatch!("Pair Nat Nat", StackItem::Pair(PairItem::new(s1, s2)))
             }
         };
 
@@ -97,10 +106,7 @@ impl PureInterpreter for JoinTickets {
         let (ticket_1, ticket_2) = match tickets.unpair() {
             (StackItem::Ticket(ticket_1), StackItem::Ticket(ticket_2)) => (ticket_1, ticket_2),
             (s1, s2) => {
-                return err_mismatch!(
-                    "Pair Ticket Ticket",
-                    StackItem::Pair(PairItem::new(s1, s2))
-                )
+                return err_mismatch!("Pair Ticket Ticket", StackItem::Pair(PairItem::new(s1, s2)))
             }
         };
 

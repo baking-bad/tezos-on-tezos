@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
+use ibig::IBig;
 use tezos_core::types::{
     encoded::{Address, ChainId, ContractAddress, ImplicitAddress, ScriptExprHash},
     mutez::Mutez,
@@ -14,7 +15,7 @@ use crate::{
     formatter::Formatter,
     stack::Stack,
     trace_enter, trace_exit,
-    types::{BigMapDiff, StackItem},
+    types::{BigMapDiff, StackItem, TicketItem},
     Result,
 };
 
@@ -35,6 +36,13 @@ pub trait InterpreterContext {
         ptr: i64,
         key_hash: ScriptExprHash,
         value: Option<Micheline>,
+    ) -> Result<()>;
+    fn update_ticket_balance(
+        &mut self,
+        tickiter: Address,
+        identifier: Micheline,
+        owner: Address,
+        value: IBig,
     ) -> Result<()>;
 }
 
@@ -82,6 +90,28 @@ pub trait LazyStorage {
     fn try_aggregate(&mut self, output: &mut Vec<BigMapDiff>, ty: &Type) -> Result<()>;
 }
 
+pub trait TicketStorage {
+    fn has_tickets(&self) -> bool;
+    fn iter_tickets(&self, action: &mut impl FnMut(&TicketItem) -> Result<()>) -> Result<()>;
+    fn drop_tickets(
+        &self,
+        owner: &ContractAddress,
+        context: &mut impl InterpreterContext,
+    ) -> Result<()> {
+        self.iter_tickets(&mut |t| {
+            let amount: IBig = t.amount.value().into();
+            context.update_ticket_balance(
+                t.source.clone().unwrap(),
+                t.identifier
+                    .clone()
+                    .into_micheline(&t.identifier.get_type()?)?,
+                owner.clone().into(),
+                -amount,
+            )
+        })
+    }
+}
+
 impl Interpreter for Instruction {
     fn execute(
         &self,
@@ -93,7 +123,7 @@ impl Interpreter for Instruction {
         let res = match self {
             Instruction::Sequence(seq) => return seq.execute(stack, scope, context),
             Instruction::Push(instr) => instr.execute(stack),
-            Instruction::Drop(instr) => instr.execute(stack),
+            Instruction::Drop(instr) => instr.execute(stack, scope, context),
             Instruction::Dup(instr) => instr.execute(stack),
             Instruction::Swap(instr) => instr.execute(stack),
             Instruction::Dig(instr) => instr.execute(stack),
@@ -174,7 +204,7 @@ impl Interpreter for Instruction {
             Instruction::Blake2B(instr) => instr.execute(stack),
             Instruction::HashKey(instr) => instr.execute(stack),
             Instruction::CheckSignature(instr) => instr.execute(stack),
-            Instruction::Ticket(instr) => instr.execute(stack, scope),
+            Instruction::Ticket(instr) => instr.execute(stack, scope, context),
             Instruction::ReadTicket(instr) => instr.execute(stack),
             Instruction::SplitTicket(instr) => instr.execute(stack),
             Instruction::JoinTickets(instr) => instr.execute(stack),

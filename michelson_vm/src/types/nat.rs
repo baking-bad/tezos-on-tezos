@@ -44,6 +44,10 @@ impl NatItem {
     pub fn is_zero(&self) -> bool {
         self.0 == ubig!(0)
     }
+
+    pub fn value(&self) -> &UBig {
+        &self.0
+    }
 }
 
 impl Display for NatItem {

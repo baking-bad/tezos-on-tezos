@@ -2,9 +2,10 @@
 //
 // SPDX-License-Identifier: MIT
 
+use ibig::IBig;
 use std::collections::HashMap;
 use tezos_core::types::{
-    encoded::{self, Encoded},
+    encoded::{self, Address, Encoded},
     mutez::Mutez,
 };
 use tezos_michelson::micheline::{primitive_application, Micheline};
@@ -140,5 +141,15 @@ impl InterpreterContext for MockContext {
             None => self.big_map_values.remove(&k),
         };
         Ok(())
+    }
+
+    fn update_ticket_balance(
+        &mut self,
+        tickiter: Address,
+        identifier: Micheline,
+        owner: Address,
+        value: IBig,
+    ) -> Result<()> {
+        todo!()
     }
 }

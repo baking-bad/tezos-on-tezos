@@ -2,8 +2,9 @@
 //
 // SPDX-License-Identifier: MIT
 
+use ibig::IBig;
 use layered_store::{LayeredStore, StoreBackend};
-use tezos_core::types::encoded::{ContractAddress, Encoded, ScriptExprHash};
+use tezos_core::types::encoded::{Address, ContractAddress, Encoded, ScriptExprHash};
 use tezos_michelson::micheline::Micheline;
 
 use crate::{error::err_into, InterpreterContext, Result};
@@ -76,5 +77,15 @@ impl<Backend: StoreBackend> InterpreterContext for LayeredStore<Backend> {
             value,
         )
         .map_err(err_into)
+    }
+
+    fn update_ticket_balance(
+        &mut self,
+        tickiter: Address,
+        identifier: Micheline,
+        owner: Address,
+        value: IBig,
+    ) -> Result<()> {
+        todo!()
     }
 }

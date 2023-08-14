@@ -2,12 +2,14 @@
 //
 // SPDX-License-Identifier: MIT
 
+use ibig::IBig;
 use tezos_core::types::{encoded, encoded::Encoded};
 use tezos_michelson::michelson::data::instructions::{
     Address, Contract, ImplicitAccount, Self_, TransferTokens,
 };
 use tezos_michelson::michelson::{annotations::Annotation, types, types::Type};
 
+use crate::interpreter::TicketStorage;
 use crate::{
     entrypoints::search_entrypoint,
     err_mismatch,
@@ -146,6 +148,19 @@ impl Interpreter for TransferTokens {
             param.try_acquire(kt, context)?;
             // TODO: support big_map ownership transfer
         }
+
+        param.iter_tickets(&mut |t| {
+            let amount: IBig = t.amount.value().into();
+            context.update_ticket_balance(
+                scope.self_address.clone().into(),
+                t.identifier
+                    .clone()
+                    .into_micheline(&t.identifier.get_type().unwrap())
+                    .unwrap(),
+                scope.self_address.clone().into(),
+                -amount,
+            )
+        })?;
 
         let content = InternalContent::Transaction {
             destination,
