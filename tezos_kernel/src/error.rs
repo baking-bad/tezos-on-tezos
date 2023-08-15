@@ -81,6 +81,9 @@ impl_from_error!(tezos_operation::Error);
 impl_from_error!(tezos_core::Error);
 impl_from_error!(tezos_smart_rollup_host::runtime::RuntimeError);
 impl_from_error!(tezos_smart_rollup_host::path::PathError);
+impl_from_error!(kernel_io::Error);
+impl_from_error!(layered_store::Error);
+
 
 impl From<tezos_proto::Error> for Error {
     fn from(error: tezos_proto::Error) -> Self {

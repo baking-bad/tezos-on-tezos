@@ -15,7 +15,7 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
 use crate::batch::header::{BatchHeader, POW_NONCE};
-use crate::protocol::constants::{Constants, ProtocolAlpha};
+use crate::protocol::constants::{Constants, ConstantsAlpha};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BatchReceipt {
@@ -49,7 +49,7 @@ impl From<BatchReceipt> for Metadata {
     fn from(receipt: BatchReceipt) -> Self {
         // TODO: this code is only used in sequencer, need to move it there
         // Constants should be retrieved separately and then merged with batch receipts
-        let constants = ProtocolAlpha::constants();
+        let constants = ConstantsAlpha::constants();
         Self {
             baker: receipt.batcher.clone(),
             proposer: receipt.batcher,

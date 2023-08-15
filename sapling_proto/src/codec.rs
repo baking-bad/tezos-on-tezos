@@ -216,7 +216,7 @@ impl TryInto<Vec<u8>> for &Ciphertext {
 
 #[cfg(test)]
 mod test {
-    use std::{borrow::Borrow, io};
+    use std::io;
 
     use crate::{storage::Ciphertext, types::SaplingTransaction};
 
@@ -238,7 +238,7 @@ mod test {
             .map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e.to_string()))?;
 
         let ciphertext = Ciphertext::try_from(payload.as_slice())?;
-        let res: Vec<u8> = ciphertext.borrow().try_into()?;
+        let res: Vec<u8> = (&ciphertext).try_into()?;
 
         assert_eq!(payload, res);
         Ok(())

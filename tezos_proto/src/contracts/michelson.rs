@@ -16,7 +16,7 @@ use tezos_operation::operations::{
     Entrypoint, OperationContent, Origination, Parameters, Transaction,
 };
 
-use crate::{context::TezosContext, protocol::constants::Constants, Error, Result, config::Config};
+use crate::{context::TezosContext, protocol::constants::Constants, Error, Result, protocol::Protocol};
 
 #[derive(Debug, From)]
 pub enum ContractOutput {
@@ -24,7 +24,7 @@ pub enum ContractOutput {
     Return(ScriptReturn),
 }
 
-pub fn deploy_contract<C: Config>(
+pub fn deploy_contract<Proto: Protocol>(
     context: &mut (impl TezosContext + InterpreterContext),
     origination: &Origination,
     self_address: ContractAddress,
@@ -32,13 +32,14 @@ pub fn deploy_contract<C: Config>(
 ) -> Result<ContractOutput> {
     let head = context.get_head()?;
     let script = MichelsonScript::try_from(origination.script.code.clone())?;
+    let minimal_block_delay = Proto::Constants::constants().minimal_block_delay as i64;
 
     let scope = OperationScope {
         amount: 0u32.into(),
         balance,
         chain_id: head.chain_id,
         level: head.level + 1,
-        now: head.timestamp + C::Constants::constants().minimal_block_delay as i64,
+        now: head.timestamp + minimal_block_delay,
         parameters: None,
         self_address,
         self_type: script.get_type(),
@@ -57,7 +58,7 @@ pub fn deploy_contract<C: Config>(
     }
 }
 
-pub fn execute_contract<C: Config>(
+pub fn execute_contract<Proto: Protocol>(
     context: &mut (impl TezosContext + InterpreterContext),
     transaction: &Transaction,
     sender: Option<Address>,
@@ -78,13 +79,14 @@ pub fn execute_contract<C: Config>(
 
     let head = context.get_head()?;
     let script = MichelsonScript::try_from(code)?;
+    let minimal_block_delay = Proto::Constants::constants().minimal_block_delay as i64;
 
     let scope = OperationScope {
         amount: transaction.amount.clone(),
         balance,
         chain_id: head.chain_id,
         level: head.level + 1,
-        now: head.timestamp + C::Constants::constants().minimal_block_delay as i64,
+        now: head.timestamp + minimal_block_delay,
         parameters: match &transaction.parameters {
             Some(params) => Some((params.entrypoint.to_str().into(), params.value.clone())),
             None => None,

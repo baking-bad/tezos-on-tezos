@@ -26,9 +26,9 @@ pub trait Constants {
     fn constants() -> ProtocolConstants;
 }
 
-pub struct ProtocolAlpha {}
+pub struct ConstantsAlpha {}
 
-impl Constants for ProtocolAlpha {
+impl Constants for ConstantsAlpha {
     fn protocol() -> ProtocolHash {
         PROTOCOL.try_into().unwrap()
     }

@@ -20,7 +20,7 @@ use crate::{
         balance_updates::BalanceUpdates, lazy_diff::LazyDiff, result::ExecutionResult,
         rpc_errors::RpcErrors,
     },
-    Error, Result, config::Config,
+    Error, Result, protocol::Protocol,
 };
 
 pub fn originated_address(opg_hash: &OperationHash, index: i32) -> Result<ContractAddress> {
@@ -30,7 +30,7 @@ pub fn originated_address(opg_hash: &OperationHash, index: i32) -> Result<Contra
     Ok(ContractAddress::from_components(&hash, None))
 }
 
-pub fn execute_origination<C: Config>(
+pub fn execute_origination<Proto: Protocol>(
     context: &mut (impl TezosContext + InterpreterContext),
     origination: &Origination,
     hash: &OperationHash,
@@ -84,7 +84,7 @@ pub fn execute_origination<C: Config>(
         Err(err) => return Err(err),
     };
 
-    match deploy_contract::<C>(context, origination, self_address.clone(), balance) {
+    match deploy_contract::<Proto>(context, origination, self_address.clone(), balance) {
         Ok(ContractOutput::Return(ret)) => {
             lazy_diff.update(ret.big_map_diff)?;
             originated_contracts = Some(vec![self_address]);
@@ -109,7 +109,7 @@ mod test {
     use tezos_operation::operations::Script;
 
     use super::*;
-    use crate::{context::TezosEphemeralContext, Result, config::DefaultConfig};
+    use crate::{context::TezosEphemeralContext, Result, protocol::ProtocolAlpha};
 
     #[test]
     fn test_origination_applied() -> Result<()> {
@@ -133,7 +133,7 @@ mod test {
         };
 
         let mut index = 1i32;
-        let result = execute_origination::<DefaultConfig>(
+        let result = execute_origination::<ProtocolAlpha>(
             &mut context,
             &origination,
             &OperationHash::new("oneDGhZacw99EEFaYDTtWfz5QEhUW3PPVFsHa7GShnLPuDn7gSd".into())?,

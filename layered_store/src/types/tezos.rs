@@ -8,6 +8,7 @@ use tezos_core::types::{
     number::Nat,
 };
 use tezos_michelson::micheline::Micheline;
+use tezos_operation::operations::SignedOperation;
 use tezos_rpc::models::operation::Operation;
 
 use crate::{error::err_into, internal_error, Result, StoreType};
@@ -45,5 +46,15 @@ impl StoreType for Operation {
 
     fn to_bytes(&self) -> Result<Vec<u8>> {
         serde_json_wasm::ser::to_vec(&self).map_err(err_into)
+    }
+}
+
+impl StoreType for SignedOperation {
+    fn from_bytes(bytes: &[u8]) -> Result<Self> {
+        SignedOperation::from_bytes(bytes).map_err(err_into)
+    }
+
+    fn to_bytes(&self) -> Result<Vec<u8>> {
+        SignedOperation::to_bytes(&self).map_err(err_into)
     }
 }

@@ -12,8 +12,8 @@ use tezos_operation::operations::SignedOperation;
 use tezos_proto::{
     batcher::apply_batch,
     context::{head::Head, migrations::run_migrations, TezosContext, TezosEphemeralContext},
-    executor::operation::execute_operation,
-    validator::operation::{validate_operation, ValidatedOperation},
+    operations::operation::execute_operation,
+    validator::validator::{validate_operation, ValidatedOperation},
 };
 use tezos_rpc::models::operation::Operation;
 use tezos_rpc::models::version::{

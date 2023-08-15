@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: MIT
 
 pub mod batch;
-pub mod config;
 pub mod context;
 pub mod contracts;
 pub mod error;

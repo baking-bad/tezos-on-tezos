@@ -1,13 +1,38 @@
 pub mod constants;
 pub mod migrations;
 
-use tezos_core::types::encoded::ChainId;
+use tezos_core::types::encoded::{ChainId, OperationHash, BlockHash};
 use tezos_operation::operations::SignedOperation;
 
-use crate::{batch::payload::BatchPayload, config::Config, context::TezosContext, protocol::constants::Constants, Result};
+use crate::{
+    protocol::{
+        constants::{Constants, ConstantsAlpha},
+        migrations::{Migrations, SandboxSeed}
+    },
+    batch::payload::BatchPayload,
+    context::TezosContext,
+    Result
+};
 
-pub fn initialize<C: Config>(context: &mut impl TezosContext, chain_id: ChainId) -> Result<()> {
+pub trait Protocol {
+    type Constants: Constants;
+    type Migrations: Migrations;
+    // type Fees: Fees;
+    // type Bridge: Bridge;
+    // type Contracts: Contracts;
+}
+
+pub struct ProtocolAlpha {}
+
+impl Protocol for ProtocolAlpha {
+    type Constants = ConstantsAlpha;
+    type Migrations = SandboxSeed;
+}
+
+
+pub fn initialize<Proto: Protocol>(context: &mut impl TezosContext, chain_id: ChainId) -> Result<bool> {
     let mut head = context.get_head()?;
+    context.log(format!("Protocol initialized: {}", head));
 
     if head.chain_id != chain_id {
         head.chain_id = chain_id;
@@ -15,24 +40,24 @@ pub fn initialize<C: Config>(context: &mut impl TezosContext, chain_id: ChainId)
         context.commit()?;
     }
 
-    Ok(())
+    Ok(false)
 }
 
-pub fn inject_operation<C: Config>(context: &mut impl TezosContext, operation: SignedOperation) -> Result<()> {
+pub fn inject_operation<Proto: Protocol>(context: &mut impl TezosContext, operation: SignedOperation) -> Result<OperationHash> {
     // TODO: validate and add operations to mempool
-    Ok(())
+    todo!()
 }
 
-pub fn inject_batch<C: Config>(context: &mut impl TezosContext, batch: BatchPayload) -> Result<()> {
-    // remove included mempool operations
+pub fn inject_batch<Proto: Protocol>(context: &mut impl TezosContext, batch: BatchPayload) -> Result<BlockHash> {
     // validate and execute batch
-    Ok(())
+    // remove included mempool operations
+    todo!()
 }
 
-pub fn finalize<C: Config>(context: &mut impl TezosContext, timestamp: i64) -> Result<()> {
+pub fn finalize<Proto: Protocol>(context: &mut impl TezosContext, timestamp: i64) -> Result<()> {
     let mut head = context.get_head()?;
 
-    let constants = C::Constants::constants();
+    let constants = Proto::Constants::constants();
     if timestamp - head.timestamp > (constants.minimal_block_delay * constants.blocks_per_cycle) as i64 {
         head.timestamp = timestamp;
         context.set_head(head.clone())?;

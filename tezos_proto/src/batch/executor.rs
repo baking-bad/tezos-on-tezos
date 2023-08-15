@@ -8,14 +8,14 @@ use tezos_rpc::models::operation::Operation as OperationReceipt;
 
 use crate::{
     batch::{header::BatchHeader, receipt::BatchReceipt},
-    config::Config,
+    protocol::Protocol,
     context::{head::Head, TezosContext},
     operations::{executor::execute_operation, validator::ValidOperation},
     protocol::{constants::Constants, migrations::Migrations},
     Result,
 };
 
-pub fn execute_batch<C: Config>(
+pub fn execute_batch<Proto: Protocol>(
     context: &mut (impl TezosContext + InterpreterContext),
     operations: Vec<ValidOperation>,
     header: Option<BatchHeader>,
@@ -23,14 +23,14 @@ pub fn execute_batch<C: Config>(
     context.check_no_pending_changes()?;
 
     let head = context.get_head()?;
-    let balance_updates = C::Migrations::run(context, &head)?;
+    let balance_updates = Proto::Migrations::run(context, &head)?;
     // TODO: implicit deployments C::System
     // TODO: implicit ticket updates C::Bridge
 
     let mut operation_receipts: Vec<OperationReceipt> = Vec::with_capacity(operations.len());
     let mut operation_hashes: Vec<OperationHash> = Vec::with_capacity(operations.len());
     for opg in operations.iter() {
-        operation_receipts.push(execute_operation::<C>(context, opg)?);
+        operation_receipts.push(execute_operation::<Proto>(context, opg)?);
         operation_hashes.push(opg.hash.clone());
     }
 
@@ -47,7 +47,7 @@ pub fn execute_batch<C: Config>(
     let hash = header.block_hash()?;
     let receipt = BatchReceipt {
         chain_id: head.chain_id.clone(),
-        protocol: C::Constants::protocol(),
+        protocol: Proto::Constants::protocol(),
         hash: hash.clone(),
         header: header.clone(),
         balance_updates: Some(balance_updates),

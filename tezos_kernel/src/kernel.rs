@@ -6,76 +6,94 @@ use kernel_io::{
     inbox::{read_inbox, InboxMessage},
     KernelStore, KernelStoreAsHost,
 };
-use tezos_core::types::encoded::{ChainId, Encoded, OperationHash};
+use tezos_core::types::encoded::{ChainId, Encoded};
+use tezos_proto::{config::{DefaultConfig, Config}, protocol};
 use tezos_operation::operations::SignedOperation;
-use tezos_proto::{batcher::apply_batch, context::TezosContext};
 use tezos_smart_rollup_core::SmartRollupCore;
 use tezos_smart_rollup_host::runtime::Runtime;
 
-use crate::{payload::TezosPayload, Error, Result};
+use crate::{payload::TezosPayload, Result};
+
+pub enum TezosPayload {
+    Operation(SignedOperation),
+    Batch(BatchPayload),
+}
+
+impl PayloadType for TezosPayload {
+    fn from_external_message(message: &[u8]) -> kernel_io::Result<Self> {
+        let opg = SignedOperation::from_bytes(message).map_err(err_into)?;
+        Ok(TezosPayload::Operation(opg))
+    }
+}
+
+pub fn kernel_dispatch<Host: SmartRollupCore, Cfg: Config>(context: &mut KernelStore<Host>, prefix: &[u8]) -> Result<(bool, bool)> {
+    match read_inbox(context.as_host(), prefix) {
+        Ok(InboxMessage::BeginBlock(_)) => {
+            let chain_id = ChainId::from_bytes(&prefix[..4])
+                .expect("Failed to decode chain ID");
+            let init = protocol::initialize::<Cfg>(context, chain_id)?;
+            Ok((init, init))
+        },
+        Ok(InboxMessage::LevelInfo(info)) => {
+            context.set("/time".into(), Some(info.predecessor_timestamp))?;
+            context.commit()?;
+            Ok((true, false))
+        }
+        Ok(InboxMessage::Payload(TezosPayload::Operation(operation))) => {
+            protocol::inject_operation::<Cfg>(context, operation)?;
+            context.as_host().mark_for_reboot()?;
+            Ok((true, true))
+        }
+        Ok(InboxMessage::Payload(TezosPayload::Batch(batch))) => {
+            protocol::inject_batch::<Cfg>(context, batch)?;
+            context.as_host().mark_for_reboot()?;
+            Ok((true, true))
+        }
+        Ok(InboxMessage::EndBlock(_)) => {
+            let timestamp: i64 = context.get("/time".into())?.unwrap_or(0i64);
+            protocol::finalize::<Cfg>(context, timestamp)?;
+            Ok((true, true))
+        }
+        Ok(InboxMessage::NoMoreData) => Ok((false, true)),
+        Ok(InboxMessage::Foreign(id)) => {
+            context.log(format!("Foreign message #{}", id));
+            Ok((false, false))
+        },
+        Ok(InboxMessage::Unknown(id)) => {
+            context.log(format!("Unknown message #{}", id));
+            Ok((false, false))
+        },
+        Err(err) => Err(err.into())
+    }
+}
 
 pub fn kernel_run<Host: SmartRollupCore>(host: &mut Host) {
     let mut context = KernelStore::attach(host);
+    context.log(format!("Kernel boots"));
+    context.clear();
 
     let metadata = Runtime::reveal_metadata(context.as_host());
-    let mut head = context.get_head().expect("Failed to get head");
-    head.chain_id =
-        ChainId::from_bytes(&metadata.raw_rollup_address[..4]).expect("Failed to decode chain ID");
-
-    context.log(format!("Kernel invoked, prev head: {}", head));
-
-    let mut batch_payload: Vec<(OperationHash, SignedOperation)> = Vec::new();
-    let res: Result<()> = loop {
-        match read_inbox(context.as_host(), &metadata.raw_rollup_address[..4]) {
-            Ok(InboxMessage::BeginBlock(inbox_level)) => {
-                // Origination level is the one before kernel is first time invoked
-                // We assume single rollup block per inbox block here
-                // Note that head level is the one prior to the current block
-                let expected = inbox_level - metadata.origination_level as i32 - 2;
-                if head.level != expected {
-                    break Err(Error::InconsistentHeadLevel {
-                        expected,
-                        found: head.level,
-                    });
+    loop {
+        match kernel_dispatch::<Host, DefaultConfig>(&mut context, &metadata.raw_rollup_address) {
+            Ok((save, exit)) => {
+                if save {
+                    context
+                        .as_mut()
+                        .persist()
+                        .expect("Failed to persist changes");
                 }
-            }
-            Ok(InboxMessage::LevelInfo(info)) => {
-                head.timestamp = info.predecessor_timestamp;
-            }
-            Ok(InboxMessage::Payload(TezosPayload::Operation { hash, opg })) => {
-                context.log(format!("Operation pending: {}", &hash.value()));
-                batch_payload.push((hash, opg));
-            }
-            Ok(InboxMessage::EndBlock(_)) => {
-                match apply_batch(&mut context, head.clone(), batch_payload, false) {
-                    Ok(new_head) => {
-                        head = new_head;
-                        context.log(format!("Batch applied: {}", head));
-                        break Ok(());
-                    }
-                    Err(err) => break Err(err.into()),
+                if exit {
+                    break;
                 }
+            },
+            Err(err) => {
+                context.clear();
+                context.log(err.format());
             }
-            Ok(InboxMessage::NoMoreData) => break Ok(()),
-            Ok(InboxMessage::Foreign(id)) => context.log(format!("Foreign message #{}", id)),
-            Ok(InboxMessage::Unknown(id)) => context.log(format!("Unknown message #{}", id)),
-            Err(err) => context.log(err.to_string()),
         }
     };
 
-    match res {
-        Ok(_) => {
-            context
-                .as_mut()
-                .persist()
-                .expect("Failed to persist changes");
-            context.log(format!("Kernel yields"));
-        }
-        Err(err) => {
-            context.log(err.format());
-            context.clear();
-        }
-    }
+    context.log(format!("Kernel yields"));
 }
 
 #[cfg(test)]

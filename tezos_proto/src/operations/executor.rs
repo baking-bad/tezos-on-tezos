@@ -18,10 +18,10 @@ use crate::{
         },
         validator::ValidOperation,
     },
-    protocol::constants::PROTOCOL, config::Config,
+    protocol::constants::PROTOCOL, protocol::Protocol,
 };
 
-pub fn execute_operation<C: Config>(
+pub fn execute_operation<Proto: Protocol>(
     context: &mut (impl TezosContext + InterpreterContext),
     opg: &ValidOperation,
 ) -> Result<OperationReceipt> {
@@ -37,7 +37,7 @@ pub fn execute_operation<C: Config>(
         let skip = failed_idx.is_some();
         let result = match content {
             OperationContent::Reveal(reveal) => execute_reveal(context, reveal, skip)?,
-            OperationContent::Origination(origination) => execute_origination::<C>(
+            OperationContent::Origination(origination) => execute_origination::<Proto>(
                 context,
                 origination,
                 &opg.hash,
@@ -45,7 +45,7 @@ pub fn execute_operation<C: Config>(
                 skip,
             )?,
             OperationContent::Transaction(transaction) => {
-                execute_transaction::<C>(context, transaction, None, skip)?
+                execute_transaction::<Proto>(context, transaction, None, skip)?
             }
             _ => return Err(Error::OperationKindUnsupported),
         };
@@ -90,7 +90,7 @@ mod test {
     use tezos_rpc::models::operation::{operation_result::OperationResultStatus, OperationContent};
 
     use super::*;
-    use crate::{context::TezosEphemeralContext, operations::validator::ValidOperation, Result, config::DefaultConfig};
+    use crate::{context::TezosEphemeralContext, operations::validator::ValidOperation, Result, protocol::ProtocolAlpha};
 
     macro_rules! get_status {
         ($receipt: expr) => {
@@ -155,7 +155,7 @@ mod test {
             total_spent: 0u32.into(), // <-- not true, fot the sake of the test
         };
 
-        let receipt = execute_operation::<DefaultConfig>(&mut context, &opg)?;
+        let receipt = execute_operation::<ProtocolAlpha>(&mut context, &opg)?;
         //println!("{:#?}", receipt);
         assert_eq!(
             get_status(&receipt.contents[0]).expect("Backtracked"),

@@ -14,6 +14,7 @@ crate-type = ["cdylib", "rlib"]
 derive_more = "0.99"
 kernel_io = { path = "../kernel_io" }
 tezos_proto = { path = "../tezos_proto" }
+layered_store = { path = "../layered_store", features = ["tezos"], default-features = false }
 tezos_core = { git = "https://github.com/baking-bad/tezos-rust-sdk", branch = "develop", package = "tezos-core", default-features = false }
 tezos_operation = { git = "https://github.com/baking-bad/tezos-rust-sdk", branch = "develop", package = "tezos-operation", default-features = false }
 tezos-smart-rollup-host = { version = "0.2.0", features = ["proto-nairobi"], default-features = false }

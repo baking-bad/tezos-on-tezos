@@ -4,7 +4,6 @@
 
 pub mod error;
 pub mod kernel;
-pub mod payload;
 
 pub use error::{Error, Result};
 

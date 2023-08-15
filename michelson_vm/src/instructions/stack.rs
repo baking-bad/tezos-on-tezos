@@ -2,8 +2,6 @@
 //
 // SPDX-License-Identifier: MIT
 
-use std::borrow::Borrow;
-
 use tezos_michelson::michelson::data::instructions::{Dig, Drop, Dug, Dup, Push, Swap};
 
 use crate::{
@@ -56,7 +54,7 @@ impl PureInterpreter for Swap {
 
 impl PureInterpreter for Dig {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
-        let item = stack.pop_at(self.n.borrow().try_into()?)?;
+        let item = stack.pop_at(self.n.clone().try_into()?)?;
         stack.push(item)
     }
 }
@@ -64,6 +62,6 @@ impl PureInterpreter for Dig {
 impl PureInterpreter for Dug {
     fn execute(&self, stack: &mut Stack) -> Result<()> {
         let item = stack.pop()?;
-        stack.push_at(self.n.borrow().try_into()?, item)
+        stack.push_at(self.n.clone().try_into()?, item)
     }
 }

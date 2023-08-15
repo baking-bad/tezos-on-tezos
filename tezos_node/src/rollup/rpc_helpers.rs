@@ -8,8 +8,8 @@ use layered_store::LayeredStore;
 use tezos_core::types::encoded::{Encoded, OperationHash, Signature};
 use tezos_operation::operations::{SignedOperation, UnsignedOperation};
 use tezos_proto::{
-    executor::operation::execute_operation,
-    validator::operation::{validate_operation, ValidatedOperation},
+    operations::operation::execute_operation,
+    validator::validator::{validate_operation, ValidatedOperation},
 };
 use tezos_rpc::models::operation::Operation;
 

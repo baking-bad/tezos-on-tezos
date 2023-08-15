@@ -14,7 +14,7 @@ use tezos_michelson::michelson::data;
 use tezos_operation::operations::{
     OperationContent, Origination, Reveal, Script, Transaction, UnsignedOperation,
 };
-use tezos_proto::executor::origination::originated_address;
+use tezos_proto::operations::origination::originated_address;
 use tezos_rpc::{client::TezosRpc, http::default::HttpClient, Result};
 use tokio::time::sleep;
 

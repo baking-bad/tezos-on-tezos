@@ -8,7 +8,7 @@ use tezos_operation::operations::SignedOperation;
 use crate::{
     context::TezosContext,
     operations::validator::{validate_operation, ValidOperation, ValidatedOperation},
-    Error, Result,
+    Result, Error
 };
 
 use super::payload::BatchPayload;
@@ -17,13 +17,8 @@ macro_rules! assert_attr_eq {
     ($expected: expr, $actual: expr) => {
         if $actual != $expected {
             return Err(Error::InvalidBatchHeader {
-                reason: format!(
-                    "{}: expected {:?}, got {:?}",
-                    stringify!($actual),
-                    $expected,
-                    $actual
-                ),
-            });
+                reason: format!("{}: expected {:?}, got {:?}", stringify!($actual), $expected, $actual)
+            })
         }
     };
 }
@@ -31,7 +26,7 @@ macro_rules! assert_attr_eq {
 pub fn validate_explicit_batch(
     context: &mut impl TezosContext,
     batch: BatchPayload,
-    dry_run: bool,
+    dry_run: bool
 ) -> Result<Vec<ValidOperation>> {
     context.check_no_pending_changes()?;
 
@@ -46,14 +41,11 @@ pub fn validate_explicit_batch(
                 "batch.header.timestamp: expected at least {}, got {}",
                 prev_head.timestamp + 1,
                 batch.header.timestamp
-            ),
-        });
+            )
+        })
     }
 
-    assert_attr_eq!(
-        batch.operation_list_list_hash()?,
-        batch.header.operations_hash
-    );
+    assert_attr_eq!(batch.operation_list_list_hash()?, batch.header.operations_hash);
 
     if !dry_run {
         // TODO: check signature against whitelisted sequencer account
@@ -70,15 +62,9 @@ pub fn validate_explicit_batch(
                 valid_operations.push(op);
             }
             Ok(ValidatedOperation::Invalid(errors)) => {
-                context.log(format!(
-                    "Invalid batch operation {}\n{:#?}",
-                    hash.value(),
-                    errors
-                ));
+                context.log(format!("Invalid batch operation {}\n{:#?}", hash.value(), errors));
                 context.rollback();
-                return Err(Error::InvalidBatchOperation {
-                    reason: format!("{:#?}", errors),
-                });
+                return Err(Error::InvalidBatchOperation { reason: format!("{:#?}", errors) });
             }
             Err(err) => {
                 context.log(format!(

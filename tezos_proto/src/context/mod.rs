@@ -11,6 +11,7 @@ use tezos_core::types::{
     number::Nat,
 };
 use tezos_michelson::micheline::Micheline;
+use tezos_operation::operations::SignedOperation;
 use tezos_rpc::models::operation::Operation;
 
 use crate::{batch::receipt::BatchReceipt, context::head::Head, error::err_into, Error, Result};
@@ -35,6 +36,9 @@ pub trait TezosContext {
     fn get_batch_receipt(&mut self, hash: &str) -> Result<BatchReceipt>;
     fn set_operation_receipt(&mut self, receipt: Operation) -> Result<()>;
     fn get_operation_receipt(&mut self, hash: &str) -> Result<Operation>;
+    fn set_pending_operation(&mut self, level: i32, operation: SignedOperation) -> Result<()>;
+    fn del_pending_operation(&mut self, hash: &str) -> Result<()>;
+    fn agg_pending_operations(&mut self, level: i32) -> Result<Vec<SignedOperation>>;
     fn check_no_pending_changes(&self) -> Result<()>;
     fn commit(&mut self) -> Result<()>;
     fn rollback(&mut self);
@@ -152,6 +156,18 @@ impl<Backend: StoreBackend> TezosContext for LayeredStore<Backend> {
         self.set(
             format!("/context/contracts/{}/storage", address),
             Some(storage),
+        )
+        .map_err(err_into)
+    }
+
+    fn add_pending_operation(&mut self, level: i32, operation: SignedOperation) -> Result<()> {
+        let hash = operation.hash()?;
+        self.set(
+            format!(
+                "/mempool/{}",
+                receipt.hash.as_ref().expect("Operation hash").value()
+            ),
+            Some(receipt),
         )
         .map_err(err_into)
     }
