@@ -116,7 +116,12 @@ pub enum InternalContent {
 #[derive(Debug, Clone)]
 pub struct OperationItem {
     // domain
-    content: InternalContent,
+    //content: InternalContent,
+    destination: Address,
+    param: Box<StackItem>,
+    param_type: Type,
+    amount: MutezItem,
+    source: ImplicitAddress,
     big_map_diff: Vec<BigMapDiff>,
 }
 

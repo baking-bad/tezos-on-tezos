@@ -21,7 +21,7 @@ use crate::{
     stack::Stack,
     trace_log,
     typechecker::check_types_equal,
-    types::{AddressItem, ContractItem, InternalContent, OperationItem, OptionItem, StackItem},
+    types::{AddressItem, ContractItem, OperationItem, OptionItem, StackItem},
     Error, Result,
 };
 
@@ -162,14 +162,15 @@ impl Interpreter for TransferTokens {
             )
         })?;
 
-        let content = InternalContent::Transaction {
-            destination,
-            parameter: param.into_micheline(&param_type)?,
-            amount: amount.try_into()?,
-            source: scope.source.clone(),
-        };
+        // let content = InternalContent::Transaction {
+        //     destination,
+        //     parameter: param.into_micheline(&param_type)?,
+        //     amount: amount.try_into()?,
+        //     source: scope.source.clone(),
+        // };
 
-        let res = OperationItem::new(content);
+        //let res = OperationItem::new(content);
+        let res = OperationItem::new(destination, param, param_type, amount, scope.source.clone());
         stack.push(res.into())
     }
 }

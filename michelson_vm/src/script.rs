@@ -97,7 +97,7 @@ impl MichelsonScript {
             match item {
                 StackItem::Operation(mut op) => {
                     op.aggregate_diff(&mut big_map_diff);
-                    operations.push(op.into_content())
+                    operations.push(op.into_content()?)
                 }
                 item => return err_mismatch!("OperationItem", item),
             }

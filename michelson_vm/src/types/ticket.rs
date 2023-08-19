@@ -64,24 +64,6 @@ impl TicketStorage for StackItem {
             _ => Ok(()),
         }
     }
-
-    // fn drop_tickets(
-    //     &self,
-    //     owner: &ContractAddress,
-    //     context: &mut impl InterpreterContext,
-    // ) -> Result<()> {
-    //     match self {
-    //         StackItem::BigMap(item) => item.drop_tickets(owner, context),
-    //         StackItem::Option(item) => item.drop_tickets(owner, context),
-    //         StackItem::Or(item) => item.drop_tickets(owner, context),
-    //         StackItem::Pair(item) => item.drop_tickets(owner, context),
-    //         StackItem::List(item) => item.drop_tickets(owner, context),
-    //         StackItem::Map(item) => item.drop_tickets(owner, context),
-    //         StackItem::Ticket(item) => item.drop_tickets(owner, context),
-    //         StackItem::Operation(item) => item.drop_tickets(owner, context),
-    //         _ => Ok(()),
-    //     }
-    // }
 }
 
 impl TicketStorage for TicketItem {
@@ -92,40 +74,24 @@ impl TicketStorage for TicketItem {
     fn iter_tickets(&self, action: &mut impl FnMut(&TicketItem) -> Result<()>) -> Result<()> {
         action(self)
     }
-
-    // fn drop_tickets(
-    //     &self,
-    //     owner: &ContractAddress,
-    //     context: &mut impl InterpreterContext,
-    // ) -> Result<()> {
-    //     let amount: IBig = self.amount.value().into();
-    //     context.update_ticket_balance(
-    //         self.source.clone().0,
-    //         self.identifier
-    //             .clone()
-    //             .into_micheline(&self.identifier.get_type()?)?,
-    //         owner.clone().into(),
-    //         -amount,
-    //     )
-    // }
 }
 
 impl TicketStorage for BigMapItem {
     fn has_tickets(&self) -> bool {
-        todo!()
+        match self {
+            BigMapItem::Diff(val) => todo!(),
+            BigMapItem::Map(val) => val.has_tickets(),
+            BigMapItem::Ptr(_) => false,
+        }
     }
 
     fn iter_tickets(&self, action: &mut impl FnMut(&TicketItem) -> Result<()>) -> Result<()> {
-        todo!()
+        match self {
+            BigMapItem::Diff(val) => todo!(),
+            BigMapItem::Map(val) => val.iter_tickets(action),
+            BigMapItem::Ptr(_) => Ok(()),
+        }
     }
-
-    // fn drop_tickets(
-    //     &self,
-    //     owner: &ContractAddress,
-    //     context: &mut impl InterpreterContext,
-    // ) -> Result<()> {
-    //     todo!()
-    // }
 }
 
 impl TicketStorage for OptionItem {
@@ -142,17 +108,6 @@ impl TicketStorage for OptionItem {
             Self::Some(val) => val.iter_tickets(action),
         }
     }
-
-    // fn drop_tickets(
-    //     &self,
-    //     owner: &ContractAddress,
-    //     context: &mut impl InterpreterContext,
-    // ) -> Result<()> {
-    //     match self {
-    //         Self::None(_) => Ok(()),
-    //         Self::Some(val) => val.drop_tickets(owner, context),
-    //     }
-    // }
 }
 
 impl TicketStorage for OrItem {
@@ -169,17 +124,6 @@ impl TicketStorage for OrItem {
             Self::Right(var) => var.value.iter_tickets(action),
         }
     }
-
-    // fn drop_tickets(
-    //     &self,
-    //     owner: &ContractAddress,
-    //     context: &mut impl InterpreterContext,
-    // ) -> Result<()> {
-    //     match self {
-    //         Self::Left(var) => var.value.drop_tickets(owner, context),
-    //         Self::Right(var) => var.value.drop_tickets(owner, context),
-    //     }
-    // }
 }
 
 impl TicketStorage for PairItem {
@@ -191,15 +135,6 @@ impl TicketStorage for PairItem {
         self.0 .0.iter_tickets(action)?;
         self.0 .1.iter_tickets(action)
     }
-
-    // fn drop_tickets(
-    //     &self,
-    //     owner: &ContractAddress,
-    //     context: &mut impl InterpreterContext,
-    // ) -> Result<()> {
-    //     self.0 .0.drop_tickets(owner, context)?;
-    //     self.0 .1.drop_tickets(owner, context)
-    // }
 }
 
 impl TicketStorage for ListItem {
@@ -218,17 +153,6 @@ impl TicketStorage for ListItem {
             .map(|e| e.iter_tickets(action))
             .collect()
     }
-
-    // fn drop_tickets(
-    //     &self,
-    //     owner: &ContractAddress,
-    //     context: &mut impl InterpreterContext,
-    // ) -> Result<()> {
-    //     self.outer_value
-    //         .iter()
-    //         .map(|e| e.drop_tickets(owner, context))
-    //         .collect()
-    // }
 }
 
 impl TicketStorage for MapItem {
@@ -250,36 +174,14 @@ impl TicketStorage for MapItem {
             })
             .collect()
     }
-
-    // fn drop_tickets(
-    //     &self,
-    //     owner: &ContractAddress,
-    //     context: &mut impl InterpreterContext,
-    // ) -> Result<()> {
-    //     self.outer_value
-    //         .iter()
-    //         .map(|(k, v)| -> Result<()> {
-    //             k.drop_tickets(owner, context)?;
-    //             v.drop_tickets(owner, context)
-    //         })
-    //         .collect()
-    // }
 }
 
 impl TicketStorage for OperationItem {
     fn has_tickets(&self) -> bool {
-        todo!()
+        self.param.has_tickets()
     }
 
     fn iter_tickets(&self, action: &mut impl FnMut(&TicketItem) -> Result<()>) -> Result<()> {
-        todo!()
+        self.param.iter_tickets(action)
     }
-
-    // fn drop_tickets(
-    //     &self,
-    //     owner: &ContractAddress,
-    //     context: &mut impl InterpreterContext,
-    // ) -> Result<()> {
-    //     todo!()
-    // }
 }
