@@ -169,7 +169,7 @@ impl InterpreterContext for MockContext {
         todo!()
     }
 
-    fn aggregate_ticket_updates(&self) -> Vec<TicketBalanceDiff> {
+    fn aggregate_ticket_updates(&mut self) -> Vec<TicketBalanceDiff> {
         todo!()
     }
 }

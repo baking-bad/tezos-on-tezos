@@ -52,7 +52,7 @@ pub trait InterpreterContext {
         owner: &Address,
         value: IBig,
     ) -> Result<()>;
-    fn aggregate_ticket_updates(&self) -> Vec<TicketBalanceDiff>;
+    fn aggregate_ticket_updates(&mut self) -> Vec<TicketBalanceDiff>;
 }
 
 pub struct OperationScope {

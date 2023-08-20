@@ -42,7 +42,7 @@ pub struct LayeredStore<Backend: StoreBackend> {
     backend: Backend,
     pending_state: HashMap<String, Option<(DynStoreType, StoreTypeSer)>>,
     modified_keys: HashSet<String>,
-    //tmp_state: HashMap<String, Option<(DynStoreType, StoreTypeSer)>>,
+    tmp_state: HashMap<String, Option<(DynStoreType, StoreTypeSer)>>,
 }
 
 impl<Backend: StoreBackend> LayeredStore<Backend> {
@@ -51,7 +51,7 @@ impl<Backend: StoreBackend> LayeredStore<Backend> {
             backend,
             pending_state: HashMap::new(),
             modified_keys: HashSet::new(),
-            //tmp_state: Hash
+            tmp_state: HashMap::new(),
         }
     }
 
@@ -111,14 +111,26 @@ impl<Backend: StoreBackend> LayeredStore<Backend> {
     pub fn set_tmp<T: StoreType>(&mut self, key: String, val: Option<T>) -> Result<()> {
         match val {
             Some(value) => self
-                .pending_state
+                .tmp_state
                 .insert(key.clone(), Some((Box::new(value), Box::new(T::serialize)))),
-            None => self.pending_state.insert(key.clone(), None),
+            None => self.tmp_state.insert(key.clone(), None),
         };
         Ok(())
     }
 
-    //pub fn iter_pending(&mut self, key_prefix: String, )
+    pub fn pop_tmp<T: StoreType>(&mut self) -> Result<Vec<T>> {
+        let values: Vec<T> = self
+            .tmp_state
+            .drain()
+            .filter(|v| v.1.is_some())
+            .map(|v| {
+                let (dyn_value, _) = v.1.expect("Value must be not None");
+                T::downcast_ref(&dyn_value).unwrap().clone()
+            })
+            .collect();
+
+        Ok(values)
+    }
 
     pub fn commit(&mut self) -> Result<()> {
         let modified_keys: Vec<String> = self.modified_keys.drain().collect();
@@ -145,12 +157,14 @@ impl<Backend: StoreBackend> LayeredStore<Backend> {
         for key in self.modified_keys.drain().into_iter() {
             self.pending_state.remove(&key);
         }
+        //self.tmp_state.clear();
     }
 
     pub fn clear(&mut self) {
         self.pending_state.clear();
         self.modified_keys.clear();
         self.backend.clear();
+        self.tmp_state.clear();
     }
 }
 

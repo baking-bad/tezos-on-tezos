@@ -248,7 +248,12 @@ impl TicketBalanceDiff {
             value,
         }
     }
+
     pub fn into_micheline(&self) -> Micheline {
+        todo!()
+    }
+
+    pub fn from_micheline(micheline: &Micheline) -> Self {
         todo!()
     }
 }

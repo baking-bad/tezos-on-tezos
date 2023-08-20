@@ -147,7 +147,11 @@ impl<Backend: StoreBackend> InterpreterContext for LayeredStore<Backend> {
         Ok(())
     }
 
-    fn aggregate_ticket_updates(&self) -> Vec<TicketBalanceDiff> {
-        todo!()
+    fn aggregate_ticket_updates(&mut self) -> Vec<TicketBalanceDiff> {
+        self.pop_tmp::<Micheline>()
+            .unwrap()
+            .iter()
+            .map(|v| TicketBalanceDiff::from_micheline(v))
+            .collect()
     }
 }
