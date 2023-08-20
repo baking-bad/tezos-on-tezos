@@ -2,16 +2,22 @@
 //
 // SPDX-License-Identifier: MIT
 
-use std::fmt::Display;
+use std::{fmt::Display, str::FromStr};
 
 use ibig::IBig;
-use tezos_core::types::encoded::{Address, ScriptExprHash};
+use tezos_core::{
+    internal::crypto::blake2b,
+    types::encoded::{Address, Encoded, ScriptExprHash},
+};
 use tezos_michelson::{
     micheline::Micheline,
-    michelson::types::{self, Type},
+    michelson::{
+        data::{self, Data},
+        types::{self, Type},
+    },
 };
 
-use crate::{interpreter::TicketStorage, types::TicketItem, Result};
+use crate::{err_mismatch, interpreter::TicketStorage, types::TicketItem, Result};
 
 use super::{
     AddressItem, BigMapDiff, BigMapItem, ListItem, MapItem, NatItem, OperationItem, OptionItem,
@@ -251,11 +257,64 @@ impl TicketBalanceDiff {
     }
 
     pub fn into_micheline(&self) -> Micheline {
-        todo!()
+        let tickiter = Micheline::from(Data::String(
+            data::String::from_string(self.tickiter.value().to_string()).unwrap(),
+        ));
+        let identifier_ty = Micheline::try_from(self.identifier_ty.clone()).unwrap();
+        let owner = Micheline::from(Data::String(
+            data::String::from_string(self.owner.value().to_string()).unwrap(),
+        ));
+        let value = Micheline::from(Data::String(
+            data::String::from_string(format!("{}", self.value)).unwrap(),
+        ));
+
+        let vec = vec![
+            tickiter,
+            self.identifier.clone(),
+            identifier_ty,
+            owner,
+            value,
+        ];
+
+        vec.into()
     }
 
-    pub fn from_micheline(micheline: &Micheline) -> Self {
-        todo!()
+    pub fn from_micheline(micheline: &Micheline) -> Result<Self> {
+        match micheline {
+            Micheline::Literal(_) => err_mismatch!("Sequence", "Literal"),
+            Micheline::PrimitiveApplication(_) => err_mismatch!("Sequence", "PrimitiveApplication"),
+            Micheline::Sequence(seq) => Ok(TicketBalanceDiff {
+                tickiter: Address::new(
+                    seq.values()[0]
+                        .clone()
+                        .into_literal()
+                        .unwrap()
+                        .into_micheline_string()
+                        .unwrap()
+                        .into_string(),
+                )?,
+                identifier: seq.values()[1].clone(),
+                identifier_ty: Type::try_from(seq.values()[2].clone())?,
+                owner: Address::new(
+                    seq.values()[3]
+                        .clone()
+                        .into_literal()
+                        .unwrap()
+                        .into_micheline_string()
+                        .unwrap()
+                        .into_string(),
+                )?,
+                value: IBig::from_str(
+                    seq.values()[4]
+                        .clone()
+                        .into_literal()
+                        .unwrap()
+                        .into_micheline_string()
+                        .unwrap()
+                        .to_str(),
+                )?,
+            }),
+        }
     }
 }
 
@@ -265,5 +324,26 @@ pub(crate) fn get_ticket_key_hash(
     identifier_ty: &Type,
     owner: &Address,
 ) -> ScriptExprHash {
-    todo!()
+    let vec = vec![
+        Micheline::from(Data::String(
+            data::String::from_string(tickiter.value().to_string()).unwrap(),
+        )),
+        Micheline::try_from(identifier_ty.clone()).unwrap(),
+        identifier.clone(),
+        Micheline::from(Data::String(
+            data::String::from_string(owner.value().to_string()).unwrap(),
+        )),
+    ];
+
+    let expr = Micheline::from(vec);
+    // let ty = types::Pair::new(vec![
+    //     types::Address::new(None).into(),
+    //     identifier_ty.clone(),
+    //     types::Address::new(None).into(),
+    // ], None);
+
+    //let schema: Micheline = Michelson::from(ty.clone()).into();
+    let payload = expr.pack(None).unwrap();
+    let hash = blake2b(payload.as_slice(), 32).unwrap();
+    ScriptExprHash::from_bytes(hash.as_slice()).unwrap()
 }

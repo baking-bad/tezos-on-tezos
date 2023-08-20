@@ -146,7 +146,7 @@ impl<Backend: StoreBackend> InterpreterContext for LayeredStore<Backend> {
         self.pop_tmp::<Micheline>()
             .unwrap()
             .iter()
-            .map(|v| TicketBalanceDiff::from_micheline(v))
+            .map(|v| TicketBalanceDiff::from_micheline(v).unwrap())
             .collect()
     }
 }
