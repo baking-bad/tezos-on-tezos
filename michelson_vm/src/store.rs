@@ -2,11 +2,19 @@
 //
 // SPDX-License-Identifier: MIT
 
+use ibig::{IBig, UBig};
 use layered_store::{LayeredStore, StoreBackend};
-use tezos_core::types::encoded::{ContractAddress, Encoded, ScriptExprHash};
-use tezos_michelson::micheline::Micheline;
+use tezos_core::types::{
+    encoded::{Address, ContractAddress, Encoded, ScriptExprHash},
+    number::Nat,
+};
+use tezos_michelson::{micheline::Micheline, michelson::types::Type};
 
-use crate::{error::err_into, InterpreterContext, Result};
+use crate::{
+    error::err_into,
+    types::ticket::{get_ticket_key_hash, TicketBalanceDiff},
+    Error, InterpreterContext, Result,
+};
 
 impl<Backend: StoreBackend> InterpreterContext for LayeredStore<Backend> {
     fn set_contract_type(&mut self, address: ContractAddress, value: Micheline) -> Result<()> {
@@ -76,5 +84,69 @@ impl<Backend: StoreBackend> InterpreterContext for LayeredStore<Backend> {
             value,
         )
         .map_err(err_into)
+    }
+
+    fn get_ticket_balance(
+        &mut self,
+        tickiter: &Address,
+        identifier: &Micheline,
+        identifier_ty: &Type,
+        owner: &Address,
+    ) -> Result<UBig> {
+        let key_hash = get_ticket_key_hash(tickiter, identifier, identifier_ty, owner);
+
+        let balance = match self
+            .get::<Nat>(format!("/context/tickets/{}", key_hash.value()))
+            .map_err(err_into)?
+        {
+            Some(nat) => UBig::from(nat),
+            None => UBig::from(0u32),
+        };
+        Ok(balance)
+    }
+
+    fn update_ticket_balance(
+        &mut self,
+        tickiter: &Address,
+        identifier: &Micheline,
+        identifier_ty: &Type,
+        owner: &Address,
+        value: IBig,
+    ) -> Result<()> {
+        let current_balance: UBig =
+            self.get_ticket_balance(tickiter, identifier, identifier_ty, owner)?;
+        let updated_balance: IBig = IBig::from(current_balance) + value.clone();
+        if updated_balance < IBig::from(0i32) {
+            return Err(Error::NegativeTicketBalance);
+        }
+        let value_nat: Option<Nat> =
+            Option::Some(From::<UBig>::from(UBig::try_from(updated_balance)?));
+        let key_hash = get_ticket_key_hash(tickiter, identifier, identifier_ty, owner);
+        self.set(format!("/context/tickets/{}", key_hash.value()), value_nat)
+            .map_err(err_into)?;
+
+        let ticket_balance_diff = TicketBalanceDiff::new(
+            tickiter.clone(),
+            identifier.clone(),
+            identifier_ty.clone(),
+            owner.clone(),
+            value,
+        );
+
+        self.set_tmp(
+            format!("/tmp/{}", key_hash.value()),
+            Option::Some(ticket_balance_diff.into_micheline()),
+        )
+        .map_err(err_into)?;
+
+        Ok(())
+    }
+
+    fn aggregate_ticket_updates(&mut self) -> Vec<TicketBalanceDiff> {
+        self.pop_tmp::<Micheline>()
+            .unwrap()
+            .iter()
+            .map(|v| TicketBalanceDiff::from_micheline(v).unwrap())
+            .collect()
     }
 }

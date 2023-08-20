@@ -2,17 +2,24 @@
 //
 // SPDX-License-Identifier: MIT
 
+use ibig::{IBig, UBig};
 use std::collections::HashMap;
 use tezos_core::types::{
-    encoded::{self, Encoded},
+    encoded::{self, Address, Encoded},
     mutez::Mutez,
+    number::Nat,
 };
-use tezos_michelson::micheline::{primitive_application, Micheline};
 use tezos_michelson::michelson::types::unit;
+use tezos_michelson::{
+    micheline::{primitive_application, Micheline},
+    michelson::types::Type,
+};
 
 use crate::{
     interpreter::{InterpreterContext, OperationScope},
-    trace_log, Result,
+    trace_log,
+    types::ticket::{get_ticket_key_hash, TicketBalanceDiff},
+    Error, Result,
 };
 
 pub const CHAIN_ID: &str = "NetXP2FfcNxFANL";
@@ -42,6 +49,8 @@ pub struct MockContext {
     pub big_map_values: HashMap<(i64, String), Micheline>,
     pub contracts: HashMap<String, Micheline>,
     pub balances: HashMap<String, Mutez>,
+    pub ticket_balances: HashMap<String, Nat>,
+    pub ticket_balance_diffs: Vec<TicketBalanceDiff>,
 }
 
 impl MockContext {
@@ -52,6 +61,8 @@ impl MockContext {
             big_map_values: HashMap::new(),
             contracts: HashMap::new(),
             balances: HashMap::new(),
+            ticket_balances: HashMap::new(),
+            ticket_balance_diffs: vec![],
         }
     }
 }
@@ -140,5 +151,57 @@ impl InterpreterContext for MockContext {
             None => self.big_map_values.remove(&k),
         };
         Ok(())
+    }
+
+    fn get_ticket_balance(
+        &mut self,
+        tickiter: &Address,
+        identifier: &Micheline,
+        identifier_ty: &Type,
+        owner: &Address,
+    ) -> Result<ibig::UBig> {
+        let key_hash = get_ticket_key_hash(tickiter, identifier, identifier_ty, owner);
+
+        match self.ticket_balances.get(key_hash.value()) {
+            Some(balance) => Ok(UBig::from(balance.clone())),
+            None => Ok(UBig::from(0u32)),
+        }
+    }
+
+    fn update_ticket_balance(
+        &mut self,
+        tickiter: &Address,
+        identifier: &Micheline,
+        identifier_ty: &Type,
+        owner: &Address,
+        value: IBig,
+    ) -> Result<()> {
+        let current_balance: UBig =
+            self.get_ticket_balance(tickiter, identifier, identifier_ty, owner)?;
+        let updated_balance: IBig = IBig::from(current_balance) + value.clone();
+        if updated_balance < IBig::from(0i32) {
+            return Err(Error::NegativeTicketBalance);
+        }
+        let value_nat: Nat = From::<UBig>::from(UBig::try_from(updated_balance)?);
+        let key_hash = get_ticket_key_hash(tickiter, identifier, identifier_ty, owner);
+
+        self.ticket_balances
+            .insert(key_hash.into_string(), value_nat);
+
+        let ticket_balance_diff = TicketBalanceDiff::new(
+            tickiter.clone(),
+            identifier.clone(),
+            identifier_ty.clone(),
+            owner.clone(),
+            value,
+        );
+
+        self.ticket_balance_diffs.push(ticket_balance_diff);
+
+        Ok(())
+    }
+
+    fn aggregate_ticket_updates(&mut self) -> Vec<TicketBalanceDiff> {
+        self.ticket_balance_diffs.clone()
     }
 }

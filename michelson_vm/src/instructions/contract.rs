@@ -2,12 +2,14 @@
 //
 // SPDX-License-Identifier: MIT
 
+use ibig::IBig;
 use tezos_core::types::{encoded, encoded::Encoded};
 use tezos_michelson::michelson::data::instructions::{
     Address, Contract, ImplicitAccount, Self_, TransferTokens,
 };
 use tezos_michelson::michelson::{annotations::Annotation, types, types::Type};
 
+use crate::interpreter::TicketStorage;
 use crate::{
     entrypoints::search_entrypoint,
     err_mismatch,
@@ -19,7 +21,7 @@ use crate::{
     stack::Stack,
     trace_log,
     typechecker::check_types_equal,
-    types::{AddressItem, ContractItem, InternalContent, OperationItem, OptionItem, StackItem},
+    types::{AddressItem, ContractItem, OperationItem, OptionItem, StackItem},
     Error, Result,
 };
 
@@ -147,14 +149,21 @@ impl Interpreter for TransferTokens {
             // TODO: support big_map ownership transfer
         }
 
-        let content = InternalContent::Transaction {
-            destination,
-            parameter: param.into_micheline(&param_type)?,
-            amount: amount.try_into()?,
-            source: scope.source.clone(),
-        };
+        param.iter_tickets(&mut |t| {
+            let amount: IBig = t.amount.value().into();
+            context.update_ticket_balance(
+                &scope.self_address.clone().into(),
+                &t.identifier
+                    .clone()
+                    .into_micheline(&t.identifier.get_type()?)
+                    .unwrap(),
+                &t.identifier.get_type()?,
+                &scope.self_address.clone().into(),
+                -amount,
+            )
+        })?;
 
-        let res = OperationItem::new(content);
+        let res = OperationItem::new(destination, param, param_type, amount, scope.source.clone());
         stack.push(res.into())
     }
 }

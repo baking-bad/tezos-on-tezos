@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
+use tezos_core::types::encoded::Address;
 use tezos_michelson::micheline::{primitive_application, sequence, sequence::Sequence, Micheline};
 use tezos_michelson::michelson::{
     data::Instruction,
@@ -9,6 +10,8 @@ use tezos_michelson::michelson::{
     types::{Code, Parameter, Storage, Type},
 };
 
+use crate::interpreter::TicketStorage;
+use crate::types::ticket::TicketBalanceDiff;
 use crate::{
     entrypoints::normalize_parameter,
     err_mismatch, err_unsupported, internal_error,
@@ -31,6 +34,7 @@ pub struct ScriptReturn {
     pub storage: Micheline,
     pub operations: Vec<InternalContent>,
     pub big_map_diff: Vec<BigMapDiff>,
+    pub ticket_balance_diff: Vec<TicketBalanceDiff>,
 }
 
 impl MichelsonScript {
@@ -59,6 +63,23 @@ impl MichelsonScript {
 
         let param = normalize_parameter(parameter, entrypoint, &self.parameter_type)?;
         let param_item = StackItem::from_micheline(param, &self.parameter_type)?;
+
+        // check tickets
+        let mut has_tickets = false;
+
+        param_item.iter_tickets(&mut |t| -> Result<()> {
+            has_tickets = true;
+            if t.amount.is_zero() {
+                return Err(Error::ForbiddenZeroAmountTicket);
+            }
+            Ok(())
+        })?;
+
+        if has_tickets {
+            if let Address::Implicit(_) = scope.sender {
+                return Err(Error::UnexpectedTicketOwner);
+            }
+        }
 
         let storage = scope.storage.clone().normalized();
         let storage_item = StackItem::from_micheline(storage, &self.storage_type)?;
@@ -97,16 +118,19 @@ impl MichelsonScript {
             match item {
                 StackItem::Operation(mut op) => {
                     op.aggregate_diff(&mut big_map_diff);
-                    operations.push(op.into_content())
+                    operations.push(op.into_content()?)
                 }
                 item => return err_mismatch!("OperationItem", item),
             }
         }
 
+        let ticket_balance_updates = context.aggregate_ticket_updates();
+
         let ret = ScriptReturn {
             big_map_diff,
             operations,
             storage: storage.into_micheline(&self.storage_type)?,
+            ticket_balance_diff: ticket_balance_updates,
         };
         Ok(ret)
     }
@@ -155,6 +179,7 @@ impl MichelsonScript {
             big_map_diff,
             storage: storage.into_micheline(&self.storage_type)?,
             operations: vec![],
+            ticket_balance_diff: vec![],
         };
         Ok(ret)
     }

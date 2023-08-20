@@ -17,6 +17,7 @@ pub mod option;
 pub mod or;
 pub mod pair;
 pub mod set;
+pub mod ticket;
 pub mod timestamp;
 
 use derive_more::{Display, From, TryInto};
@@ -100,6 +101,7 @@ not_comparable!(LambdaItem);
 not_comparable!(ContractItem);
 not_comparable!(BigMapItem);
 not_comparable!(OperationItem);
+not_comparable!(TicketItem);
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum InternalContent {
@@ -114,7 +116,11 @@ pub enum InternalContent {
 #[derive(Debug, Clone)]
 pub struct OperationItem {
     // domain
-    content: InternalContent,
+    destination: Address,
+    param: Box<StackItem>,
+    param_type: Type,
+    amount: MutezItem,
+    source: ImplicitAddress,
     big_map_diff: Vec<BigMapDiff>,
 }
 
@@ -157,6 +163,13 @@ pub enum BigMapItem {
     Ptr(i64),
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct TicketItem {
+    pub source: AddressItem,
+    pub identifier: Box<StackItem>,
+    pub amount: NatItem,
+}
+
 #[derive(Debug, Display, Clone, From, TryInto, PartialEq, PartialOrd, Eq, Ord)]
 pub enum StackItem {
     Unit(UnitItem),
@@ -182,6 +195,7 @@ pub enum StackItem {
     Map(MapItem),
     BigMap(BigMapItem),
     Lambda(LambdaItem),
+    Ticket(TicketItem),
 }
 
 impl AsMut<StackItem> for StackItem {

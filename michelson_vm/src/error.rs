@@ -88,6 +88,14 @@ pub enum Error {
     MutezUnderflow,
     #[display(fmt = "GeneralOverflow")]
     GeneralOverflow,
+    #[display(fmt = "NegativeTicketBalance")]
+    NegativeTicketBalance,
+    #[display(fmt = "NonDupableType")]
+    NonDupableType,
+    #[display(fmt = "UnexpectedTicketOwner")]
+    UnexpectedTicketOwner,
+    #[display(fmt = "ForbiddenZeroAmountTicket")]
+    ForbiddenZeroAmountTicket,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
