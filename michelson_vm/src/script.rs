@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
+use tezos_core::types::encoded::Address;
 use tezos_michelson::micheline::{primitive_application, sequence, sequence::Sequence, Micheline};
 use tezos_michelson::michelson::{
     data::Instruction,
@@ -9,6 +10,7 @@ use tezos_michelson::michelson::{
     types::{Code, Parameter, Storage, Type},
 };
 
+use crate::interpreter::TicketStorage;
 use crate::{
     entrypoints::normalize_parameter,
     err_mismatch, err_unsupported, internal_error,
@@ -59,6 +61,23 @@ impl MichelsonScript {
 
         let param = normalize_parameter(parameter, entrypoint, &self.parameter_type)?;
         let param_item = StackItem::from_micheline(param, &self.parameter_type)?;
+
+        // check tickets
+        let mut has_tickets = false;
+
+        param_item.iter_tickets(&mut |t| -> Result<()> {
+            has_tickets = true;
+            if t.amount.is_zero() {
+                return Err(Error::ForbiddenZeroAmountTicket);
+            }
+            Ok(())
+        })?;
+
+        if has_tickets {
+            if let Address::Implicit(_) = scope.sender {
+                return Err(Error::UnexpectedTicketOwner);
+            }
+        }
 
         let storage = scope.storage.clone().normalized();
         let storage_item = StackItem::from_micheline(storage, &self.storage_type)?;

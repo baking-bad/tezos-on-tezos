@@ -42,6 +42,7 @@ pub struct LayeredStore<Backend: StoreBackend> {
     backend: Backend,
     pending_state: HashMap<String, Option<(DynStoreType, StoreTypeSer)>>,
     modified_keys: HashSet<String>,
+    //tmp_state: HashMap<String, Option<(DynStoreType, StoreTypeSer)>>,
 }
 
 impl<Backend: StoreBackend> LayeredStore<Backend> {
@@ -50,6 +51,7 @@ impl<Backend: StoreBackend> LayeredStore<Backend> {
             backend,
             pending_state: HashMap::new(),
             modified_keys: HashSet::new(),
+            //tmp_state: Hash
         }
     }
 
@@ -105,6 +107,18 @@ impl<Backend: StoreBackend> LayeredStore<Backend> {
         self.modified_keys.insert(key);
         Ok(())
     }
+
+    pub fn set_tmp<T: StoreType>(&mut self, key: String, val: Option<T>) -> Result<()> {
+        match val {
+            Some(value) => self
+                .pending_state
+                .insert(key.clone(), Some((Box::new(value), Box::new(T::serialize)))),
+            None => self.pending_state.insert(key.clone(), None),
+        };
+        Ok(())
+    }
+
+    //pub fn iter_pending(&mut self, key_prefix: String, )
 
     pub fn commit(&mut self) -> Result<()> {
         let modified_keys: Vec<String> = self.modified_keys.drain().collect();

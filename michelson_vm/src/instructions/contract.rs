@@ -152,24 +152,17 @@ impl Interpreter for TransferTokens {
         param.iter_tickets(&mut |t| {
             let amount: IBig = t.amount.value().into();
             context.update_ticket_balance(
-                scope.self_address.clone().into(),
-                t.identifier
+                &scope.self_address.clone().into(),
+                &t.identifier
                     .clone()
-                    .into_micheline(&t.identifier.get_type().unwrap())
+                    .into_micheline(&t.identifier.get_type()?)
                     .unwrap(),
-                scope.self_address.clone().into(),
+                &t.identifier.get_type()?,
+                &scope.self_address.clone().into(),
                 -amount,
             )
         })?;
 
-        // let content = InternalContent::Transaction {
-        //     destination,
-        //     parameter: param.into_micheline(&param_type)?,
-        //     amount: amount.try_into()?,
-        //     source: scope.source.clone(),
-        // };
-
-        //let res = OperationItem::new(content);
         let res = OperationItem::new(destination, param, param_type, amount, scope.source.clone());
         stack.push(res.into())
     }

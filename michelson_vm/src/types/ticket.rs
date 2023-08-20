@@ -4,21 +4,26 @@
 
 use std::fmt::Display;
 
-use tezos_michelson::michelson::types::{self, Type};
+use ibig::IBig;
+use tezos_core::types::encoded::Address;
+use tezos_michelson::{
+    micheline::Micheline,
+    michelson::types::{self, Type},
+};
 
 use crate::{interpreter::TicketStorage, types::TicketItem, Result};
 
 use super::{
-    AddressItem, BigMapItem, ListItem, MapItem, NatItem, OperationItem, OptionItem, OrItem,
-    PairItem, StackItem,
+    AddressItem, BigMapDiff, BigMapItem, ListItem, MapItem, NatItem, OperationItem, OptionItem,
+    OrItem, PairItem, StackItem,
 };
 
 impl TicketItem {
     pub fn new(source: AddressItem, identifier: StackItem, amount: NatItem) -> Self {
         Self {
-            source: source,
+            source,
             identifier: Box::new(identifier),
-            amount: amount,
+            amount,
         }
     }
 
@@ -79,7 +84,7 @@ impl TicketStorage for TicketItem {
 impl TicketStorage for BigMapItem {
     fn has_tickets(&self) -> bool {
         match self {
-            BigMapItem::Diff(val) => todo!(),
+            BigMapItem::Diff(val) => val.has_tickets(),
             BigMapItem::Map(val) => val.has_tickets(),
             BigMapItem::Ptr(_) => false,
         }
@@ -87,10 +92,43 @@ impl TicketStorage for BigMapItem {
 
     fn iter_tickets(&self, action: &mut impl FnMut(&TicketItem) -> Result<()>) -> Result<()> {
         match self {
-            BigMapItem::Diff(val) => todo!(),
+            BigMapItem::Diff(val) => val.iter_tickets(action),
             BigMapItem::Map(val) => val.iter_tickets(action),
             BigMapItem::Ptr(_) => Ok(()),
         }
+    }
+}
+
+impl TicketStorage for BigMapDiff {
+    fn has_tickets(&self) -> bool {
+        for (_key_hash, (key, value)) in &self.updates {
+            let key_item = StackItem::from_micheline(key.clone(), &self.inner_type.0).unwrap();
+            if key_item.has_tickets() {
+                return true;
+            }
+            if let Some(value_micheline) = value {
+                let value_item =
+                    StackItem::from_micheline(value_micheline.clone(), &self.inner_type.1).unwrap();
+                if value_item.has_tickets() {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    fn iter_tickets(&self, action: &mut impl FnMut(&TicketItem) -> Result<()>) -> Result<()> {
+        for (_key_hash, (key, value_opt)) in &self.updates {
+            let key_item = StackItem::from_micheline(key.clone(), &self.inner_type.0).unwrap();
+            key_item.iter_tickets(action)?;
+
+            if let Some(value) = value_opt {
+                let value_item =
+                    StackItem::from_micheline(value.clone(), &self.inner_type.1).unwrap();
+                value_item.iter_tickets(action)?;
+            }
+        }
+        Ok(())
     }
 }
 
@@ -183,5 +221,34 @@ impl TicketStorage for OperationItem {
 
     fn iter_tickets(&self, action: &mut impl FnMut(&TicketItem) -> Result<()>) -> Result<()> {
         self.param.iter_tickets(action)
+    }
+}
+
+pub struct TicketBalanceDiff {
+    tickiter: Address,
+    identifier: Micheline,
+    identifier_ty: Type,
+    owner: Address,
+    value: IBig,
+}
+
+impl TicketBalanceDiff {
+    pub fn new(
+        tickiter: Address,
+        identifier: Micheline,
+        identifier_ty: Type,
+        owner: Address,
+        value: IBig,
+    ) -> Self {
+        TicketBalanceDiff {
+            tickiter,
+            identifier,
+            identifier_ty,
+            owner,
+            value,
+        }
+    }
+    pub fn into_micheline(&self) -> Micheline {
+        todo!()
     }
 }

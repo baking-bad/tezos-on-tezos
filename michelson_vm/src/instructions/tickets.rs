@@ -42,9 +42,10 @@ impl Interpreter for Ticket {
         };
 
         context.update_ticket_balance(
-            scope.self_address.clone().into(),
-            ticket.identifier.clone().into_micheline(&identifier_ty)?,
-            scope.self_address.clone().into(),
+            &scope.self_address.clone().into(),
+            &ticket.identifier.clone().into_micheline(&identifier_ty)?,
+            &identifier_ty,
+            &scope.self_address.clone().into(),
             amount.value().into(),
         )?;
 

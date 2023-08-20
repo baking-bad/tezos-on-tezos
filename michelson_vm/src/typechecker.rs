@@ -130,8 +130,6 @@ pub fn check_types_equal(lhs: &Type, rhs: &Type) -> Result<()> {
     }
 }
 
-//pub fn contains_types
-
 impl StackItem {
     pub fn from_data(data: Data, ty: &Type) -> Result<StackItem> {
         match ty {

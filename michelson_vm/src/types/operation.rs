@@ -13,13 +13,6 @@ use crate::Result;
 use super::{MutezItem, StackItem};
 
 impl OperationItem {
-    // pub fn new(content: InternalContent) -> Self {
-    //     Self {
-    //         content,
-    //         big_map_diff: Vec::new(),
-    //     }
-    // }
-
     pub fn new(
         destination: Address,
         param: StackItem,
@@ -28,11 +21,11 @@ impl OperationItem {
         source: ImplicitAddress,
     ) -> Self {
         Self {
-            destination: destination,
+            destination,
             param: Box::new(param),
-            param_type: param_type,
-            amount: amount,
-            source: source,
+            param_type,
+            amount,
+            source,
             big_map_diff: Vec::new(),
         }
     }

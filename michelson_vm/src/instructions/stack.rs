@@ -11,7 +11,7 @@ use crate::{
     interpreter::{Interpreter, PureInterpreter, TicketStorage},
     stack::Stack,
     types::StackItem,
-    InterpreterContext, OperationScope, Result,
+    Error, InterpreterContext, OperationScope, Result,
 };
 
 impl PureInterpreter for Push {
@@ -54,7 +54,7 @@ impl PureInterpreter for Dup {
         let res = stack.dup_at(n - 1)?;
 
         if res.has_tickets() {
-            return err_unsupported!("proto.alpha.michelson_v1.non_dupable_type");
+            return Err(Error::NonDupableType); // proto.alpha.michelson_v1.non_dupable_type
         }
 
         stack.push(res)

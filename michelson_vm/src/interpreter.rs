@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-use ibig::IBig;
+use ibig::{IBig, UBig};
 use tezos_core::types::{
     encoded::{Address, ChainId, ContractAddress, ImplicitAddress, ScriptExprHash},
     mutez::Mutez,
@@ -15,7 +15,7 @@ use crate::{
     formatter::Formatter,
     stack::Stack,
     trace_enter, trace_exit,
-    types::{BigMapDiff, StackItem, TicketItem},
+    types::{ticket::TicketBalanceDiff, BigMapDiff, StackItem, TicketItem},
     Result,
 };
 
@@ -37,13 +37,22 @@ pub trait InterpreterContext {
         key_hash: ScriptExprHash,
         value: Option<Micheline>,
     ) -> Result<()>;
+    fn get_ticket_balance(
+        &mut self,
+        tickiter: &Address,
+        identifier: &Micheline,
+        identifier_ty: &Type,
+        owner: &Address,
+    ) -> Result<UBig>;
     fn update_ticket_balance(
         &mut self,
-        tickiter: Address,
-        identifier: Micheline,
-        owner: Address,
+        tickiter: &Address,
+        identifier: &Micheline,
+        identifier_ty: &Type,
+        owner: &Address,
         value: IBig,
     ) -> Result<()>;
+    fn aggregate_ticket_updates(&self) -> Vec<TicketBalanceDiff>;
 }
 
 pub struct OperationScope {
@@ -101,11 +110,12 @@ pub trait TicketStorage {
         self.iter_tickets(&mut |t| {
             let amount: IBig = t.amount.value().into();
             context.update_ticket_balance(
-                t.source.clone().unwrap(),
-                t.identifier
+                &t.source.clone().unwrap(),
+                &t.identifier
                     .clone()
                     .into_micheline(&t.identifier.get_type()?)?,
-                owner.clone().into(),
+                &t.identifier.get_type()?,
+                &owner.clone().into(),
                 -amount,
             )
         })

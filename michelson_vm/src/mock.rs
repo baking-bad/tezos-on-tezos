@@ -8,12 +8,17 @@ use tezos_core::types::{
     encoded::{self, Address, Encoded},
     mutez::Mutez,
 };
-use tezos_michelson::micheline::{primitive_application, Micheline};
 use tezos_michelson::michelson::types::unit;
+use tezos_michelson::{
+    micheline::{primitive_application, Micheline},
+    michelson::types::Type,
+};
 
 use crate::{
     interpreter::{InterpreterContext, OperationScope},
-    trace_log, Result,
+    trace_log,
+    types::ticket::TicketBalanceDiff,
+    Result,
 };
 
 pub const CHAIN_ID: &str = "NetXP2FfcNxFANL";
@@ -143,13 +148,28 @@ impl InterpreterContext for MockContext {
         Ok(())
     }
 
+    fn get_ticket_balance(
+        &mut self,
+        tickiter: &Address,
+        identifier: &Micheline,
+        identifier_ty: &Type,
+        owner: &Address,
+    ) -> Result<ibig::UBig> {
+        todo!()
+    }
+
     fn update_ticket_balance(
         &mut self,
-        tickiter: Address,
-        identifier: Micheline,
-        owner: Address,
+        tickiter: &Address,
+        identifier: &Micheline,
+        identifier_ty: &Type,
+        owner: &Address,
         value: IBig,
     ) -> Result<()> {
+        todo!()
+    }
+
+    fn aggregate_ticket_updates(&self) -> Vec<TicketBalanceDiff> {
         todo!()
     }
 }

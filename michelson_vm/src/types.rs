@@ -116,7 +116,6 @@ pub enum InternalContent {
 #[derive(Debug, Clone)]
 pub struct OperationItem {
     // domain
-    //content: InternalContent,
     destination: Address,
     param: Box<StackItem>,
     param_type: Type,
