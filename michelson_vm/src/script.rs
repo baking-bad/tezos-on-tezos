@@ -11,6 +11,7 @@ use tezos_michelson::michelson::{
 };
 
 use crate::interpreter::TicketStorage;
+use crate::types::ticket::TicketBalanceDiff;
 use crate::{
     entrypoints::normalize_parameter,
     err_mismatch, err_unsupported, internal_error,
@@ -33,6 +34,7 @@ pub struct ScriptReturn {
     pub storage: Micheline,
     pub operations: Vec<InternalContent>,
     pub big_map_diff: Vec<BigMapDiff>,
+    pub ticket_balance_diff: Vec<TicketBalanceDiff>,
 }
 
 impl MichelsonScript {
@@ -122,10 +124,13 @@ impl MichelsonScript {
             }
         }
 
+        let ticket_balance_updates = context.aggregate_ticket_updates();
+
         let ret = ScriptReturn {
             big_map_diff,
             operations,
             storage: storage.into_micheline(&self.storage_type)?,
+            ticket_balance_diff: ticket_balance_updates,
         };
         Ok(ret)
     }
@@ -174,6 +179,7 @@ impl MichelsonScript {
             big_map_diff,
             storage: storage.into_micheline(&self.storage_type)?,
             operations: vec![],
+            ticket_balance_diff: vec![],
         };
         Ok(ret)
     }

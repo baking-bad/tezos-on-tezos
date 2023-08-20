@@ -5,7 +5,7 @@
 use std::fmt::Display;
 
 use ibig::IBig;
-use tezos_core::types::encoded::Address;
+use tezos_core::types::encoded::{Address, ScriptExprHash};
 use tezos_michelson::{
     micheline::Micheline,
     michelson::types::{self, Type},
@@ -224,6 +224,7 @@ impl TicketStorage for OperationItem {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct TicketBalanceDiff {
     tickiter: Address,
     identifier: Micheline,
@@ -256,4 +257,13 @@ impl TicketBalanceDiff {
     pub fn from_micheline(micheline: &Micheline) -> Self {
         todo!()
     }
+}
+
+pub(crate) fn get_ticket_key_hash(
+    tickiter: &Address,
+    identifier: &Micheline,
+    identifier_ty: &Type,
+    owner: &Address,
+) -> ScriptExprHash {
+    todo!()
 }

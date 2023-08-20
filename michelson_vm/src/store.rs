@@ -10,16 +10,11 @@ use tezos_core::types::{
 };
 use tezos_michelson::{micheline::Micheline, michelson::types::Type};
 
-use crate::{error::err_into, types::ticket::TicketBalanceDiff, Error, InterpreterContext, Result};
-
-fn get_ticket_key_hash(
-    tickiter: &Address,
-    identifier: &Micheline,
-    identifier_ty: &Type,
-    owner: &Address,
-) -> ScriptExprHash {
-    todo!()
-}
+use crate::{
+    error::err_into,
+    types::ticket::{get_ticket_key_hash, TicketBalanceDiff},
+    Error, InterpreterContext, Result,
+};
 
 impl<Backend: StoreBackend> InterpreterContext for LayeredStore<Backend> {
     fn set_contract_type(&mut self, address: ContractAddress, value: Micheline) -> Result<()> {
