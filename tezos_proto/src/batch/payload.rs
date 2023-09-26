@@ -11,6 +11,7 @@ use crate::Result;
 
 use super::header::BatchHeader;
 
+#[derive(Clone, Debug)]
 pub struct BatchPayload {
     pub header: BatchHeader,
     pub operations: BTreeMap<OperationHash, SignedOperation>,

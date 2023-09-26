@@ -18,7 +18,7 @@ use crate::{
         },
         validator::ValidOperation,
     },
-    protocol::constants::PROTOCOL, protocol::Protocol,
+    protocol::constants::Constants, protocol::Protocol,
 };
 
 pub fn execute_operation<Proto: Protocol>(
@@ -74,7 +74,7 @@ pub fn execute_operation<Proto: Protocol>(
 
     let head = context.get_head()?;
     Ok(OperationReceipt {
-        protocol: Some(PROTOCOL.try_into()?),
+        protocol: Some(Proto::Constants::protocol()),
         chain_id: Some(head.chain_id),
         hash: Some(opg.hash.to_owned()),
         branch: opg.origin.branch.clone(),

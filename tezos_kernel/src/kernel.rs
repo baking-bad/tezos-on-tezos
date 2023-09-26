@@ -3,16 +3,16 @@
 // SPDX-License-Identifier: MIT
 
 use kernel_io::{
-    inbox::{read_inbox, InboxMessage},
+    inbox::{read_inbox, InboxMessage, PayloadType},
     KernelStore, KernelStoreAsHost,
 };
 use tezos_core::types::encoded::{ChainId, Encoded};
-use tezos_proto::{config::{DefaultConfig, Config}, protocol};
+use tezos_proto::{batch::payload::BatchPayload, protocol::{self, Protocol}};
 use tezos_operation::operations::SignedOperation;
 use tezos_smart_rollup_core::SmartRollupCore;
 use tezos_smart_rollup_host::runtime::Runtime;
 
-use crate::{payload::TezosPayload, Result};
+use crate::Result;
 
 pub enum TezosPayload {
     Operation(SignedOperation),
@@ -26,12 +26,12 @@ impl PayloadType for TezosPayload {
     }
 }
 
-pub fn kernel_dispatch<Host: SmartRollupCore, Cfg: Config>(context: &mut KernelStore<Host>, prefix: &[u8]) -> Result<(bool, bool)> {
+pub fn kernel_dispatch<Host: SmartRollupCore, Proto: Protocol>(context: &mut KernelStore<Host>, prefix: &[u8]) -> Result<(bool, bool)> {
     match read_inbox(context.as_host(), prefix) {
         Ok(InboxMessage::BeginBlock(_)) => {
             let chain_id = ChainId::from_bytes(&prefix[..4])
                 .expect("Failed to decode chain ID");
-            let init = protocol::initialize::<Cfg>(context, chain_id)?;
+            let init = protocol::initialize::<Proto>(context, chain_id)?;
             Ok((init, init))
         },
         Ok(InboxMessage::LevelInfo(info)) => {
@@ -40,18 +40,18 @@ pub fn kernel_dispatch<Host: SmartRollupCore, Cfg: Config>(context: &mut KernelS
             Ok((true, false))
         }
         Ok(InboxMessage::Payload(TezosPayload::Operation(operation))) => {
-            protocol::inject_operation::<Cfg>(context, operation)?;
+            protocol::inject_operation::<Proto>(context, operation)?;
             context.as_host().mark_for_reboot()?;
             Ok((true, true))
         }
         Ok(InboxMessage::Payload(TezosPayload::Batch(batch))) => {
-            protocol::inject_batch::<Cfg>(context, batch)?;
+            protocol::inject_batch::<Proto>(context, batch)?;
             context.as_host().mark_for_reboot()?;
             Ok((true, true))
         }
         Ok(InboxMessage::EndBlock(_)) => {
             let timestamp: i64 = context.get("/time".into())?.unwrap_or(0i64);
-            protocol::finalize::<Cfg>(context, timestamp)?;
+            protocol::finalize::<Proto>(context, timestamp)?;
             Ok((true, true))
         }
         Ok(InboxMessage::NoMoreData) => Ok((false, true)),

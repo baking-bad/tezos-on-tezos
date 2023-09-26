@@ -47,6 +47,7 @@ pub enum Error {
     Internal(InternalError),
     ContextUnstagedError,
     DowncastingError,
+    InvalidBytes,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

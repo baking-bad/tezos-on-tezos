@@ -4,6 +4,8 @@
 
 pub mod error;
 pub mod kernel;
+pub mod shell;
+pub mod context;
 
 pub use error::{Error, Result};
 

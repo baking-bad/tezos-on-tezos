@@ -16,7 +16,6 @@ tezos_core = { git = "https://github.com/baking-bad/tezos-rust-sdk", optional = 
 tezos_michelson = { git = "https://github.com/baking-bad/tezos-rust-sdk", optional = true, branch = "develop", package = "tezos-michelson", default-features = false }
 tezos_rpc = { git = "https://github.com/baking-bad/tezos-rust-sdk", optional = true, branch = "develop", package = "tezos-rpc", default-features = false }
 tezos_operation = { git = "https://github.com/baking-bad/tezos-rust-sdk", optional = true, branch = "develop", package = "tezos-operation", default-features = false }
-
 serde-json-wasm = { git = "https://github.com/CosmWasm/serde-json-wasm", optional = true, branch = "main" }
 
 [features]

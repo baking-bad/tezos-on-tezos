@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 pub mod head;
+pub mod mempool;
 
 use layered_store::{LayeredStore, StoreBackend};
 use tezos_core::types::{
@@ -11,10 +12,11 @@ use tezos_core::types::{
     number::Nat,
 };
 use tezos_michelson::micheline::Micheline;
-use tezos_operation::operations::SignedOperation;
 use tezos_rpc::models::operation::Operation;
 
 use crate::{batch::receipt::BatchReceipt, context::head::Head, error::err_into, Error, Result};
+
+use self::mempool::{MempoolOperation, MempoolState};
 
 pub type TezosEphemeralContext = layered_store::EphemeralStore;
 
@@ -36,9 +38,10 @@ pub trait TezosContext {
     fn get_batch_receipt(&mut self, hash: &str) -> Result<BatchReceipt>;
     fn set_operation_receipt(&mut self, receipt: Operation) -> Result<()>;
     fn get_operation_receipt(&mut self, hash: &str) -> Result<Operation>;
-    fn set_pending_operation(&mut self, level: i32, operation: SignedOperation) -> Result<()>;
-    fn del_pending_operation(&mut self, hash: &str) -> Result<()>;
-    fn agg_pending_operations(&mut self, level: i32) -> Result<Vec<SignedOperation>>;
+    fn set_mempool_operation(&mut self, hash: &str, operation: Option<MempoolOperation>) -> Result<()>;
+    fn get_mempool_operation(&mut self, hash: &str) -> Result<Option<MempoolOperation>>;
+    fn set_mempool_state(&mut self, level: i32, state: Option<MempoolState>) -> Result<()>;
+    fn get_mempool_state(&mut self, level: i32) -> Result<MempoolState>;
     fn check_no_pending_changes(&self) -> Result<()>;
     fn commit(&mut self) -> Result<()>;
     fn rollback(&mut self);
@@ -160,16 +163,33 @@ impl<Backend: StoreBackend> TezosContext for LayeredStore<Backend> {
         .map_err(err_into)
     }
 
-    fn add_pending_operation(&mut self, level: i32, operation: SignedOperation) -> Result<()> {
-        let hash = operation.hash()?;
+    fn set_mempool_operation(&mut self, hash: &str, operation: Option<MempoolOperation>) -> Result<()> {
         self.set(
-            format!(
-                "/mempool/{}",
-                receipt.hash.as_ref().expect("Operation hash").value()
-            ),
-            Some(receipt),
+            format!("/mempool/index/{}", hash),
+            operation,
         )
         .map_err(err_into)
+    }
+
+    fn get_mempool_operation(&mut self, hash: &str) -> Result<Option<MempoolOperation>> {
+        self.get(format!("/mempool/index/{}", hash))
+            .map_err(err_into)
+    }
+
+    fn set_mempool_state(&mut self, level: i32, state: Option<MempoolState>) -> Result<()> {
+        self.set(
+            format!("/mempool/state/{}", level),
+            state,
+        )
+        .map_err(err_into)
+    }
+
+    fn get_mempool_state(&mut self, level: i32) -> Result<MempoolState> {
+        match self.get(format!("/mempool/state/{}", level)) {
+            Ok(Some(state)) => Ok(state),
+            Ok(None) => Ok(MempoolState::default()),
+            Err(err) => Err(err_into(err))
+        }
     }
 
     fn check_no_pending_changes(&self) -> Result<()> {

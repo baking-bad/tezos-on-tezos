@@ -140,6 +140,9 @@ pub fn validate_operation(
             OperationContent::Origination(origination) => &origination.counter,
             _ => return Err(Error::OperationKindUnsupported),
         };
+        // TODO: enforce incremental counter
+        // Because otherwise sequencer might choose not to include some of the operations from the mempool
+        // And it will be a valid behavior still
         if *next_counter <= counter {
             errors.counter_in_the_past(source.value(), &(counter + 1u32.into()), next_counter);
             return Ok(ValidatedOperation::Invalid(errors.unwrap()));

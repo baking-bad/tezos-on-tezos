@@ -5,10 +5,11 @@
 use serde::{Deserialize, Serialize};
 use tezos_core::types::{encoded::ProtocolHash, number::Nat};
 
-pub const PROTOCOL: &str = "ProtoALphaALphaALphaALphaALphaALphaALphaALphaDdp3zK";
+const PROTOCOL: &str = "ProtoALphaALphaALphaALphaALphaALphaALphaALphaDdp3zK";
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ProtocolConstants {
+    pub idle_time: i64,
     pub minimal_block_delay: i32,
     pub blocks_per_cycle: i32,
     pub max_operations_time_to_live: i32,
@@ -35,6 +36,7 @@ impl Constants for ConstantsAlpha {
 
     fn constants() -> ProtocolConstants {
         ProtocolConstants {
+            idle_time: 1,
             minimal_block_delay: 1,
             blocks_per_cycle: 512,
             max_operations_time_to_live: 240,
